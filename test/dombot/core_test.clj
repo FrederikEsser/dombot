@@ -1,13 +1,14 @@
 (ns dombot.core-test
   (:require [clojure.test :refer :all]
-            [dombot.core :refer :all]))
+            [dombot.operations :refer :all]
+            [dombot.cards :refer :all]))
 
 (deftest start-round-test
   (testing "Start round"
     (is (= (start-round {})
            {:actions 1
-            :coins 0
-            :buys 1}))))
+            :coins   0
+            :buys    1}))))
 
 (deftest shuffle-test
   (testing "Shuffle discard"
@@ -34,20 +35,20 @@
 
 (deftest gain-test
   (testing "Gain"
-    (is (= (-> {:board   {:supply [{:card {:name :province} :count 8}]}
+    (is (= (-> {:supply  [{:card {:name :province} :count 8}]
                 :players [{:discard []}]}
                (gain 0 :province))
-           {:board   {:supply [{:card {:name :province} :count 7}]}
+           {:supply  [{:card {:name :province} :count 7}]
             :players [{:discard [{:name :province}]}]}))
-    (is (= (-> {:board   {:supply [{:card {:name :province} :count 1}]}
+    (is (= (-> {:supply  [{:card {:name :province} :count 1}]
                 :players [{:discard []}]}
                (gain 0 :province))
-           {:board   {:supply [{:card {:name :province} :count 0}]}
+           {:supply  [{:card {:name :province} :count 0}]
             :players [{:discard [{:name :province}]}]}))
-    (is (thrown? AssertionError (-> {:board   {:supply [{:card {:name :province} :count 0}]}
+    (is (thrown? AssertionError (-> {:supply  [{:card {:name :province} :count 0}]
                                      :players [{:discard []}]}
                                     (gain 0 :province))))
-    (is (thrown? AssertionError (-> {:board   {:supply []}
+    (is (thrown? AssertionError (-> {:supply  []
                                      :players [{:discard []}]}
                                     (gain 0 :province))))))
 
@@ -110,6 +111,24 @@
         (is (thrown? AssertionError (play-action {:players [{:hand    [{:name :any-card}]
                                                              :actions 1}]}
                                                  0 :any-card)))))
+    (testing "Council Room"
+      (is (= (play-action {:players [{:deck      (repeat 5 {:name :copper})
+                                      :hand      [council-room]
+                                      :play-area []
+                                      :actions   1
+                                      :coins     0
+                                      :buys      1}
+                                     {:deck [{:name :copper} {:name :copper}]
+                                      :hand []}]}
+                          0 :council-room)
+             {:players [{:deck      [{:name :copper}]
+                         :hand      (repeat 4 {:name :copper})
+                         :play-area [council-room]
+                         :actions   0
+                         :coins     0
+                         :buys      2}
+                        {:deck [{:name :copper}]
+                         :hand [{:name :copper}]}]})))
     (testing "Festival"
       (is (= (play-action {:players [{:deck      [{:name :copper}]
                                       :hand      [festival]
@@ -206,40 +225,40 @@
   (testing "Buying a card"
     (testing "is impossible because"
       (testing "player has no buys left"
-        (is (thrown? AssertionError (buy-card {:board   {:supply [{:card {:name :copper :cost 0} :count 40}]}
+        (is (thrown? AssertionError (buy-card {:supply  [{:card {:name :copper :cost 0} :count 40}]
                                                :players [{:coins 0
                                                           :buys  0}]}
                                               0 :copper))))
       (testing "player has not enough coins"
-        (is (thrown? AssertionError (buy-card {:board   {:supply [{:card {:name :silver :cost 3} :count 40}]}
+        (is (thrown? AssertionError (buy-card {:supply  [{:card {:name :silver :cost 3} :count 40}]
                                                :players [{:coins 2
                                                           :buys  1}]}
                                               0 :silver))))
       (testing "supply is empty"
-        (is (thrown? AssertionError (buy-card {:board   {:supply [{:card {:name :copper :cost 0} :count 0}]}
+        (is (thrown? AssertionError (buy-card {:supply  [{:card {:name :copper :cost 0} :count 0}]
                                                :players [{:coins 0
                                                           :buys  1}]}
                                               0 :copper))))
       (testing "supply does not contain card-name"
-        (is (thrown? AssertionError (buy-card {:board   {:supply []}
+        (is (thrown? AssertionError (buy-card {:supply  []
                                                :players [{:coins 0
                                                           :buys  1}]}
                                               0 :copper)))))
-    (is (= (buy-card {:board   {:supply [{:card {:name :copper :cost 0} :count 40}]}
+    (is (= (buy-card {:supply  [{:card {:name :copper :cost 0} :count 40}]
                       :players [{:discard []
                                  :coins   0
                                  :buys    1}]}
                      0 :copper)
-           {:board   {:supply [{:card {:name :copper :cost 0} :count 39}]}
+           {:supply  [{:card {:name :copper :cost 0} :count 39}]
             :players [{:discard [{:name :copper :cost 0}]
                        :coins   0
                        :buys    0}]}))
-    (is (= (buy-card {:board   {:supply [{:card {:name :silver :cost 3} :count 40}]}
+    (is (= (buy-card {:supply  [{:card {:name :silver :cost 3} :count 40}]
                       :players [{:discard []
                                  :coins   6
                                  :buys    2}]}
                      0 :silver)
-           {:board   {:supply [{:card {:name :silver :cost 3} :count 39}]}
+           {:supply  [{:card {:name :silver :cost 3} :count 39}]
             :players [{:discard [{:name :silver :cost 3}]
                        :coins   3
                        :buys    1}]}))))
