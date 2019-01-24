@@ -118,23 +118,26 @@
     (reduce (fn [game' other-player-no]
               (apply f game' other-player-no args)) game other-players)))
 
-(defn get-vp [deck {:keys [:vp]}]
-  (if (fn? vp)
-    (vp deck)
-    vp))
+(defn get-victory-points [cards {:keys [victory-points]}]
+  (if (fn? victory-points)
+    (victory-points cards)
+    victory-points))
 
-(defn calc-victory-points [cards]
-  (->> cards
-       (filter (comp :victory :type))
-       (map (partial get-vp cards))
-       (apply +)))
+(defn calc-victory-points [{:keys [deck discard hand play-area]}]
+  (let [cards (concat deck discard hand play-area)]
+    (->> cards
+         (filter :victory-points)
+         (map (partial get-victory-points cards))
+         (apply + 0))))
 
 (defn view-player [player]
   (-> player
       (update :hand ut/frequencies-of :name)
       (update :play-area ut/frequencies-of :name)
       (update :deck count)
-      (update :discard count)))
+      (update :discard count)
+      (dissoc :triggers)
+      (assoc :victory-points (calc-victory-points player))))
 
 (defn view-supply [supply]
   (->> supply

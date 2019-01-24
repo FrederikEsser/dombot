@@ -2,10 +2,10 @@
   (:require [dombot.operations :refer [draw gain do-for-other-players]]
             [dombot.utils :refer [mapv-indexed]]))
 
-(def curse {:name :curse :type #{:curse} :cost 0 :vp -1})
-(def estate {:name :estate :type #{:victory} :cost 2 :vp 1})
-(def duchy {:name :duchy :type #{:victory} :cost 5 :vp 3})
-(def province {:name :province :type #{:victory} :cost 8 :vp 6})
+(def curse {:name :curse :type #{:curse} :cost 0 :victory-points -1})
+(def estate {:name :estate :type #{:victory} :cost 2 :victory-points 1})
+(def duchy {:name :duchy :type #{:victory} :cost 5 :victory-points 3})
+(def province {:name :province :type #{:victory} :cost 8 :victory-points 6})
 (def copper {:name :copper :type #{:treasure} :cost 0 :coin-value 1})
 (def silver {:name :silver :type #{:treasure} :cost 3 :coin-value 2})
 (def gold {:name :gold :type #{:treasure} :cost 6 :coin-value 3})
@@ -24,9 +24,9 @@
                                 (update-in [:players player-no :coins] + 2)
                                 (update-in [:players player-no :buys] + 1)))})
 
-(def gardens {:name :gardens :set :dominion :type #{:victory} :cost 4
-              :vp   (fn [deck]
-                      (Math/floorDiv (int (count deck)) (int 10)))})
+(def gardens {:name           :gardens :set :dominion :type #{:victory} :cost 4
+              :victory-points (fn [cards]
+                                (Math/floorDiv (int (count cards)) (int 10)))})
 
 (def laboratory {:name      :laboratory :set :dominion :type #{:action} :cost 5
                  :action-fn (fn laboratory-action [game player-no]

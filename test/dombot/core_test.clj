@@ -387,27 +387,29 @@
 
 (deftest view-test
   (testing "View player"
-    (is (= (view-player {:hand      [{:name :copper} {:name :copper} {:name :copper} {:name :estate} {:name :estate}]
+    (is (= (view-player {:hand      [{:name :copper} {:name :copper} {:name :copper} estate estate]
                          :play-area []
-                         :deck      [{:name :copper} {:name :copper} {:name :copper} {:name :copper} {:name :estate}]
+                         :deck      [{:name :copper} {:name :copper} {:name :copper} {:name :copper} estate]
                          :discard   []})
-           {:hand      {:copper 3 :estate 2}
-            :play-area {}
-            :deck      5
-            :discard   0})))
+           {:hand           {:copper 3 :estate 2}
+            :play-area      {}
+            :deck           5
+            :discard        0
+            :victory-points 3})))
   (testing "View supply"
     (is (= (view-supply (base-supply 2 8))
            {:copper 46 :silver 40 :gold 30 :estate 8 :duchy 8 :province 8 :curse 10})))
   (testing "View game"
     (is (= (view-game {:supply         (base-supply 2 8)
-                       :players        [{:hand      [{:name :copper} {:name :copper} {:name :copper} {:name :estate} {:name :estate}]
+                       :players        [{:hand      [{:name :copper} {:name :copper} {:name :copper} estate estate]
                                          :play-area []
-                                         :deck      [{:name :copper} {:name :copper} {:name :copper} {:name :copper} {:name :estate}]
+                                         :deck      [{:name :copper} {:name :copper} {:name :copper} {:name :copper} estate]
                                          :discard   []}]
                        :current-player 0})
            {:supply         {:copper 46 :silver 40 :gold 30 :estate 8 :duchy 8 :province 8 :curse 10}
-            :player         {:hand      {:copper 3 :estate 2}
-                             :play-area {}
-                             :deck      5
-                             :discard   0}
+            :player         {:hand           {:copper 3 :estate 2}
+                             :play-area      {}
+                             :deck           5
+                             :discard        0
+                             :victory-points 3}
             :current-player 0}))))
