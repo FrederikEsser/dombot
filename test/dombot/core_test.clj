@@ -45,9 +45,11 @@
                (gain 0 :province))
            {:supply  [{:card {:name :province} :count 0}]
             :players [{:discard [{:name :province}]}]}))
-    (is (thrown? AssertionError (-> {:supply  [{:card {:name :province} :count 0}]
-                                     :players [{:discard []}]}
-                                    (gain 0 :province))))
+    (is (= (-> {:supply  [{:card {:name :province} :count 0}]
+                :players [{:discard []}]}
+               (gain 0 :province))
+           {:supply  [{:card {:name :province} :count 0}]
+            :players [{:discard []}]}))
     (is (thrown? AssertionError (-> {:supply  []
                                      :players [{:discard []}]}
                                     (gain 0 :province))))))
@@ -154,25 +156,6 @@
                          :actions   2
                          :coins     2
                          :buys      2}]})))
-    (testing "Moat"
-      (is (= (play {:players [{:deck      [{:name :copper} {:name :copper} {:name :copper}]
-                               :hand      [moat]
-                               :play-area []
-                               :actions   1}]}
-                   0 :moat)
-             {:players [{:deck      [{:name :copper}]
-                         :hand      [{:name :copper} {:name :copper}]
-                         :play-area [moat]
-                         :actions   0}]}))
-      (is (= (play {:players [{:deck      [{:name :copper}]
-                               :hand      [moat]
-                               :play-area []
-                               :actions   1}]}
-                   0 :moat)
-             {:players [{:deck      []
-                         :hand      [{:name :copper}]
-                         :play-area [moat]
-                         :actions   0}]})))
     (testing "Laboratory"
       (is (= (play {:players [{:deck      [{:name :copper} {:name :copper} {:name :copper}]
                                :hand      [laboratory]
@@ -197,6 +180,80 @@
                          :actions   1
                          :coins     1
                          :buys      2}]})))
+    (testing "Merchant"
+      (is (= (-> {:players [{:deck      [copper copper]
+                             :hand      [merchant]
+                             :play-area []
+                             :actions   1
+                             :coins     0}]}
+                 (play 0 :merchant)
+                 (play 0 :copper))
+             {:players [{:deck      [copper]
+                         :hand      []
+                         :play-area [merchant copper]
+                         :triggers  [merchant-trigger]
+                         :actions   1
+                         :coins     1}]}))
+      (is (= (-> {:players [{:deck      [silver copper]
+                             :hand      [merchant]
+                             :play-area []
+                             :actions   1
+                             :coins     0}]}
+                 (play 0 :merchant)
+                 (play 0 :silver))
+             {:players [{:deck      [copper]
+                         :hand      []
+                         :play-area [merchant silver]
+                         :triggers  []
+                         :actions   1
+                         :coins     3}]}))
+      (is (= (-> {:players [{:deck      [silver copper]
+                             :hand      [silver merchant]
+                             :play-area []
+                             :actions   1
+                             :coins     0}]}
+                 (play 0 :merchant)
+                 (play 0 :silver)
+                 (play 0 :silver))
+             {:players [{:deck      [copper]
+                         :hand      []
+                         :play-area [merchant silver silver]
+                         :triggers  []
+                         :actions   1
+                         :coins     5}]}))
+      (is (= (-> {:players [{:deck      [silver copper]
+                             :hand      [merchant merchant]
+                             :play-area []
+                             :actions   1
+                             :coins     0}]}
+                 (play 0 :merchant)
+                 (play 0 :merchant)
+                 (play 0 :silver))
+             {:players [{:deck      []
+                         :hand      [copper]
+                         :play-area [merchant merchant silver]
+                         :triggers  []
+                         :actions   1
+                         :coins     4}]})))
+    (testing "Moat"
+      (is (= (play {:players [{:deck      [{:name :copper} {:name :copper} {:name :copper}]
+                               :hand      [moat]
+                               :play-area []
+                               :actions   1}]}
+                   0 :moat)
+             {:players [{:deck      [{:name :copper}]
+                         :hand      [{:name :copper} {:name :copper}]
+                         :play-area [moat]
+                         :actions   0}]}))
+      (is (= (play {:players [{:deck      [{:name :copper}]
+                               :hand      [moat]
+                               :play-area []
+                               :actions   1}]}
+                   0 :moat)
+             {:players [{:deck      []
+                         :hand      [{:name :copper}]
+                         :play-area [moat]
+                         :actions   0}]})))
     (testing "Smithy"
       (is (= (play {:players [{:deck      [{:name :copper} {:name :copper} {:name :copper}]
                                :hand      [smithy]
@@ -218,7 +275,7 @@
                          :play-area [village]
                          :actions   2}]})))
     (testing "Witch"
-      (is (= (play {:supply [{:card curse :count 10}]
+      (is (= (play {:supply  [{:card curse :count 10}]
                     :players [{:deck      (repeat 3 {:name :copper})
                                :hand      [witch]
                                :play-area []
@@ -229,7 +286,7 @@
                    0 :witch)
              {:supply  [{:card curse :count 9}]
               :players [{:deck      [{:name :copper}]
-                         :hand      [{:name :copper}{:name :copper}]
+                         :hand      [{:name :copper} {:name :copper}]
                          :play-area [witch]
                          :actions   0
                          :coins     0
@@ -317,6 +374,15 @@
            {:hand      (concat (repeat 3 {:name :silver}) (repeat 2 {:name :copper}))
             :play-area []
             :deck      [{:name :copper}]
+            :discard   []}))
+    (is (= (clean-up {:hand      []
+                      :play-area []
+                      :deck      []
+                      :discard   []
+                      :triggers  [merchant-trigger]})
+           {:hand      []
+            :play-area []
+            :deck      []
             :discard   []}))))
 
 (deftest view-test

@@ -24,10 +24,9 @@
                                 (update-in [:players player-no :coins] + 2)
                                 (update-in [:players player-no :buys] + 1)))})
 
-(def moat {:name      :moat :set :dominion :type #{:action :reaction} :cost 2
-           :action-fn (fn moat-action [game player-no]
-                        (-> game
-                            (draw player-no 2)))})
+(def gardens {:name :gardens :set :dominion :type #{:victory} :cost 4
+              :vp   (fn [deck]
+                      (Math/floorDiv (int (count deck)) (int 10)))})
 
 (def laboratory {:name      :laboratory :set :dominion :type #{:action} :cost 5
                  :action-fn (fn laboratory-action [game player-no]
@@ -43,6 +42,23 @@
                               (update-in [:players player-no :coins] + 1)
                               (update-in [:players player-no :buys] + 1)))})
 
+(def merchant-trigger {:trigger-id [:play :silver]
+                       :trigger-fn (fn [game player-no]
+                                     (-> game
+                                         (update-in [:players player-no :coins] + 1)))})
+
+(def merchant {:name      :merchant :set :dominion :type #{:action} :cost 3
+               :action-fn (fn merchant-action [game player-no]
+                            (-> game
+                                (draw player-no 1)
+                                (update-in [:players player-no :actions] + 1)
+                                (update-in [:players player-no :triggers] concat [merchant-trigger])))})
+
+(def moat {:name      :moat :set :dominion :type #{:action :reaction} :cost 2
+           :action-fn (fn moat-action [game player-no]
+                        (-> game
+                            (draw player-no 2)))})
+
 (def smithy {:name      :smithy :set :dominion :type #{:action} :cost 4
              :action-fn (fn smithy-action [game player-no]
                           (-> game
@@ -54,7 +70,7 @@
                                (draw player-no 1)
                                (update-in [:players player-no :actions] + 2)))})
 
-(def witch {:name :witch :set :dominion :type #{:action} :cost 5
+(def witch {:name      :witch :set :dominion :type #{:action} :cost 5
             :action-fn (fn witch-action [game player-no]
                          (-> game
                              (draw player-no 2)
@@ -69,13 +85,9 @@
 (def cellar {:name :cellar :set :dominion :type #{:action} :cost 2})
 (def chapel {:name :chapel :set :dominion :type #{:action} :cost 2})
 (def harbinger {:name :harbinger :set :dominion :type #{:action} :cost 3})
-(def merchant {:name :merchant :set :dominion :type #{:action} :cost 3})
 (def vassal {:name :vassal :set :dominion :type #{:action} :cost 3})
 (def workshop {:name :workshop :set :dominion :type #{:action} :cost 3})
 (def bureaucrat {:name :bureaucrat :set :dominion :type #{:action :attack} :cost 4})
-(def gardens {:name :gardens :set :dominion :type #{:victory} :cost 4
-              :vp   (fn [deck]
-                      (Math/floorDiv (int (count deck)) (int 10)))})
 (def militia {:name :militia :set :dominion :type #{:action} :cost 4})
 (def moneylender {:name :moneylender :set :dominion :type #{:action} :cost 4})
 (def poacher {:name :poacher :set :dominion :type #{:action} :cost 4})
@@ -87,13 +99,15 @@
 (def sentry {:name :sentry :set :dominion :type #{:action} :cost 5})
 (def artisan {:name :artisan :set :dominion :type #{:action} :cost 6})
 
-(def kingdom-cards [moat
-                    village
-                    smithy
-                    council-room
+(def kingdom-cards [council-room
                     festival
+                    gardens
                     laboratory
                     market
+                    merchant
+                    moat
+                    smithy
+                    village
                     witch])
 
 (defn base-supply [number-of-players victory-pile-size]
@@ -125,8 +139,8 @@
                             2 8
                             3 12
                             4 12)]
-    {:supply  (vec (concat (base-supply number-of-players victory-pile-size)
-                           (kingdom #{:dominion} victory-pile-size)))
-     :players (vec (repeatedly number-of-players player))
+    {:supply         (vec (concat (base-supply number-of-players victory-pile-size)
+                                  (kingdom #{:dominion} victory-pile-size)))
+     :players        (vec (repeatedly number-of-players player))
      :current-player 0}))
 
