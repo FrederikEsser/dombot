@@ -90,6 +90,17 @@
         (update-in [:players player-no :actions] - 1)
         (action-fn player-no))))
 
+(defn get-vp [deck {:keys [:vp]}]
+  (if (fn? vp)
+    (vp deck)
+    vp))
+
+(defn calc-victory-points [cards]
+  (->> cards
+       (filter (comp :victory :type))
+       (map (partial get-vp cards))
+       (apply +)))
+
 (defn view-player [player]
   (-> player
       (update :hand ut/frequencies-of :name)
