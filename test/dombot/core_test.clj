@@ -217,6 +217,24 @@
                          :hand      [{:name :copper}]
                          :play-area [village]
                          :actions   2}]})))
+    (testing "Witch"
+      (is (= (play {:supply [{:card curse :count 10}]
+                    :players [{:deck      (repeat 3 {:name :copper})
+                               :hand      [witch]
+                               :play-area []
+                               :actions   1
+                               :coins     0
+                               :buys      1}
+                              {:discard [{:name :copper} {:name :copper}]}]}
+                   0 :witch)
+             {:supply  [{:card curse :count 9}]
+              :players [{:deck      [{:name :copper}]
+                         :hand      [{:name :copper}{:name :copper}]
+                         :play-area [witch]
+                         :actions   0
+                         :coins     0
+                         :buys      1}
+                        {:discard [{:name :copper} {:name :copper} curse]}]})))
     (testing "Woodcutter"
       (is (= (play {:players [{:deck      [{:name :copper}]
                                :hand      [woodcutter]

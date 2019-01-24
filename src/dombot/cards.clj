@@ -1,5 +1,5 @@
 (ns dombot.cards
-  (:require [dombot.operations :refer [draw]]
+  (:require [dombot.operations :refer [draw gain do-for-other-players]]
             [dombot.utils :refer [mapv-indexed]]))
 
 (def curse {:name :curse :type #{:curse} :cost 0 :vp -1})
@@ -13,11 +13,9 @@
 (def council-room {:name      :council-room :set :dominion :type #{:action} :cost 5
                    :action-fn (fn council-room-action [game player-no]
                                 (-> game
-                                    (update-in [:players player-no] draw 4)
-                                    (update :players (partial mapv-indexed (fn [idx player]
-                                                                             (cond-> player
-                                                                                     (not= idx player-no) (draw 1)))))
-                                    (update-in [:players player-no :buys] + 1)))})
+                                    (draw player-no 4)
+                                    (update-in [:players player-no :buys] + 1)
+                                    (do-for-other-players player-no draw 1)))})
 
 (def festival {:name      :festival :set :dominion :type #{:action} :cost 5
                :action-fn (fn festival-action [game player-no]
@@ -29,18 +27,18 @@
 (def moat {:name      :moat :set :dominion :type #{:action :reaction} :cost 2
            :action-fn (fn moat-action [game player-no]
                         (-> game
-                            (update-in [:players player-no] draw 2)))})
+                            (draw player-no 2)))})
 
 (def laboratory {:name      :laboratory :set :dominion :type #{:action} :cost 5
                  :action-fn (fn laboratory-action [game player-no]
                               (-> game
-                                  (update-in [:players player-no] draw 2)
+                                  (draw player-no 2)
                                   (update-in [:players player-no :actions] + 1)))})
 
 (def market {:name      :market :set :dominion :type #{:action} :cost 5
              :action-fn (fn market-action [game player-no]
                           (-> game
-                              (update-in [:players player-no] draw 1)
+                              (draw player-no 1)
                               (update-in [:players player-no :actions] + 1)
                               (update-in [:players player-no :coins] + 1)
                               (update-in [:players player-no :buys] + 1)))})
@@ -48,13 +46,19 @@
 (def smithy {:name      :smithy :set :dominion :type #{:action} :cost 4
              :action-fn (fn smithy-action [game player-no]
                           (-> game
-                              (update-in [:players player-no] draw 3)))})
+                              (draw player-no 3)))})
 
 (def village {:name      :village :set :dominion :type #{:action} :cost 3
               :action-fn (fn village-action [game player-no]
                            (-> game
-                               (update-in [:players player-no] draw 1)
+                               (draw player-no 1)
                                (update-in [:players player-no :actions] + 2)))})
+
+(def witch {:name :witch :set :dominion :type #{:action} :cost 5
+            :action-fn (fn witch-action [game player-no]
+                         (-> game
+                             (draw player-no 2)
+                             (do-for-other-players player-no gain :curse)))})
 
 (def woodcutter {:name      :woodcutter :set :dominion :type #{:action} :cost 3
                  :action-fn (fn woodcutter-action [game player-no]
@@ -81,7 +85,6 @@
 (def library {:name :library :set :dominion :type #{:action} :cost 5})
 (def mine {:name :mine :set :dominion :type #{:action} :cost 5})
 (def sentry {:name :sentry :set :dominion :type #{:action} :cost 5})
-(def witch {:name :witch :set :dominion :type #{:action} :cost 5})
 (def artisan {:name :artisan :set :dominion :type #{:action} :cost 6})
 
 (def kingdom-cards [moat
@@ -90,13 +93,8 @@
                     council-room
                     festival
                     laboratory
-                    market])
-
-(defn player []
-  (let [deck (->> (concat (repeat 7 copper) (repeat 3 estate))
-                  shuffle)]
-    {:hand (take 5 deck)
-     :deck (drop 5 deck)}))
+                    market
+                    witch])
 
 (defn base-supply [number-of-players victory-pile-size]
   [{:card curse :count (* 10 (dec number-of-players))}
@@ -115,6 +113,12 @@
        (sort-by (juxt :cost :name))
        (map (fn [{:keys [:type] :as card}]
               {:card card :count (if (:victory type) victory-pile-size 10)}))))
+
+(defn player []
+  (let [deck (->> (concat (repeat 7 copper) (repeat 3 estate))
+                  shuffle)]
+    {:hand (take 5 deck)
+     :deck (drop 5 deck)}))
 
 (defn game [number-of-players]
   (let [victory-pile-size (case number-of-players

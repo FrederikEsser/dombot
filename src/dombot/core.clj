@@ -4,7 +4,7 @@
   (:gen-class))
 
 ; todo:
-; witch
+; undo
 ; view discard
 ; phases
 ; decisions

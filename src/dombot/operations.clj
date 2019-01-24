@@ -49,8 +49,12 @@
           (update :deck (partial drop 1))
           (update :hand conj card)))))
 
-(defn draw [player n]
-  (ut/redupeat player draw-one n))
+(defn draw
+  ([player n]
+   (ut/redupeat player draw-one n))
+  ([game player-no n]
+    (-> game
+        (update-in [:players player-no] draw n))))
 
 (defn clean-up [{:keys [play-area hand] :as player}]
   (-> player
@@ -105,6 +109,12 @@
       (:action type) (play-action game player-no card-name)
       (:treasure type) (play-treasure game player-no card-name)
       :else (assert false))))
+
+(defn do-for-other-players [{:keys [players] :as game} player-no f & args]
+  (let [other-players (keep-indexed (fn [idx _]
+                                      (when (not= idx player-no) idx)) players)]
+    (reduce (fn [game' other-player-no]
+              (apply f game' other-player-no args)) game other-players)))
 
 (defn get-vp [deck {:keys [:vp]}]
   (if (fn? vp)
