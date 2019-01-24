@@ -4,8 +4,6 @@
   (:gen-class))
 
 ; todo:
-; play-treasures
-; play instead of play-action and play-treasure
 ; witch
 ; view discard
 ; phases
@@ -20,16 +18,16 @@
                                       (update-in [:players current-player] op/start-round)))
     (op/view-game (:game @game-state))))
 
-(defn play-treasure [card-name]
+(defn play-treasures []
   (let [{:keys [current-player] :as game} (:game @game-state)]
     (swap! game-state assoc :game (-> game
-                                      (op/play-treasure current-player card-name)))
+                                      (op/play-treasures current-player)))
     (op/view-game (:game @game-state))))
 
-(defn play-action [card-name]
+(defn play [card-name]
   (let [{:keys [current-player] :as game} (:game @game-state)]
     (swap! game-state assoc :game (-> game
-                                      (op/play-action current-player card-name)))
+                                      (op/play current-player card-name)))
     (op/view-game (:game @game-state))))
 
 (defn buy [card-name]
@@ -46,6 +44,9 @@
                                       (assoc :current-player next-player)
                                       (update-in [:players next-player] op/start-round)))
     (op/view-game (:game @game-state))))
+
+(defn view []
+  (op/view-game (:game @game-state)))
 
 (defn -main
   "I don't do a whole lot ... yet."

@@ -66,7 +66,7 @@
                        (when (= card-name name) {:idx idx :card card})))
        first))
 
-(defn play [player card-name]
+(defn put-in-play [player card-name]
   (let [{:keys [idx card]} (get-hand-idx player card-name)]
     (assert card)
     (-> player
@@ -78,17 +78,33 @@
         {{:keys [coin-value]} :card} (get-hand-idx player card-name)]
     (assert coin-value)
     (-> game
-        (update-in [:players player-no] play card-name)
+        (update-in [:players player-no] put-in-play card-name)
         (update-in [:players player-no :coins] + coin-value))))
+
+(defn play-treasures [game player-no]
+  (let [{:keys [hand]} (get-in game [:players player-no])
+        treasures (->> hand
+                       (filter (comp :treasure :type))
+                       (map :name))]
+    (reduce (fn [game' card-name] (play-treasure game' player-no card-name)) game treasures)))
 
 (defn play-action [game player-no card-name]
   (let [{:keys [actions] :as player} (get-in game [:players player-no])
         {{:keys [action-fn]} :card} (get-hand-idx player card-name)]
     (assert (and action-fn actions (< 0 actions)))
     (-> game
-        (update-in [:players player-no] play card-name)
+        (update-in [:players player-no] put-in-play card-name)
         (update-in [:players player-no :actions] - 1)
         (action-fn player-no))))
+
+(defn play [game player-no card-name]
+  (let [player (get-in game [:players player-no])
+        {{:keys [type]} :card} (get-hand-idx player card-name)]
+    (assert type)
+    (cond
+      (:action type) (play-action game player-no card-name)
+      (:treasure type) (play-treasure game player-no card-name)
+      :else (assert false))))
 
 (defn get-vp [deck {:keys [:vp]}]
   (if (fn? vp)
