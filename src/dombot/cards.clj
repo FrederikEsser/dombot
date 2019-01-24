@@ -123,5 +123,6 @@
                             4 12)]
     {:supply  (vec (concat (base-supply number-of-players victory-pile-size)
                            (kingdom #{:dominion} victory-pile-size)))
-     :players (vec (repeatedly number-of-players player))}))
+     :players (vec (repeatedly number-of-players player))
+     :current-player 0}))
 

@@ -89,3 +89,21 @@
         (update-in [:players player-no] play card-name)
         (update-in [:players player-no :actions] - 1)
         (action-fn player-no))))
+
+(defn view-player [player]
+  (-> player
+      (update :hand ut/frequencies-of :name)
+      (update :play-area ut/frequencies-of :name)
+      (update :deck count)
+      (update :discard count)))
+
+(defn view-supply [supply]
+  (->> supply
+       (map (fn [{:keys [card count]}]
+              [(:name card) count]))
+       (into {})))
+
+(defn view-game [{:keys [supply players current-player] :as game}]
+  {:supply         (view-supply supply)
+   :player         (view-player (get players current-player))
+   :current-player current-player})

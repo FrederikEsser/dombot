@@ -15,3 +15,8 @@
   (->> coll
        (map-indexed f)
        vec))
+
+(defn frequencies-of [coll key]
+  (->> coll
+       (map key)
+       frequencies))
