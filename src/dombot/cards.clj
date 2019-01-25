@@ -1,5 +1,5 @@
 (ns dombot.cards
-  (:require [dombot.operations :refer [draw gain do-for-other-players]]
+  (:require [dombot.operations :refer [draw gain do-for-other-players move-card]]
             [dombot.utils :refer [mapv-indexed]]))
 
 (def curse {:name :curse :type #{:curse} :cost 0 :victory-points -1})
@@ -27,6 +27,25 @@
 (def gardens {:name           :gardens :set :dominion :type #{:victory} :cost 4
               :victory-points (fn [cards]
                                 (Math/floorDiv (int (count cards)) (int 10)))})
+
+(defn harbinger-topdeck [game player-no card-name]
+  (cond-> game
+          card-name (update-in [:players player-no] move-card card-name :discard :deck :top)))
+
+(defn give-harbinger-choice [{:keys [discard] :as player}]
+  (cond-> player
+          (not-empty discard) (assoc :choice {:choice-fn harbinger-topdeck
+                                              :choices   (->> discard
+                                                              (map :name)
+                                                              set)
+                                              :you-may?  true})))
+
+(def harbinger {:name      :harbinger :set :dominion :type #{:action} :cost 3
+                :action-fn (fn harbinger-action [game player-no]
+                             (-> game
+                                 (draw player-no 1)
+                                 (update-in [:players player-no :actions] + 1)
+                                 (update-in [:players player-no] give-harbinger-choice)))})
 
 (def laboratory {:name      :laboratory :set :dominion :type #{:action} :cost 5
                  :action-fn (fn laboratory-action [game player-no]
@@ -84,7 +103,6 @@
 
 (def cellar {:name :cellar :set :dominion :type #{:action} :cost 2})
 (def chapel {:name :chapel :set :dominion :type #{:action} :cost 2})
-(def harbinger {:name :harbinger :set :dominion :type #{:action} :cost 3})
 (def vassal {:name :vassal :set :dominion :type #{:action} :cost 3})
 (def workshop {:name :workshop :set :dominion :type #{:action} :cost 3})
 (def bureaucrat {:name :bureaucrat :set :dominion :type #{:action :attack} :cost 4})
@@ -102,6 +120,7 @@
 (def kingdom-cards [council-room
                     festival
                     gardens
+                    harbinger
                     laboratory
                     market
                     merchant

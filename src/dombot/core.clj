@@ -30,6 +30,12 @@
                                       (op/play current-player card-name)))
     (op/view-game (:game @game-state))))
 
+(defn chose [choice]
+  (let [{:keys [current-player] :as game} (:game @game-state)]
+    (swap! game-state assoc :game (-> game
+                                      (op/chose current-player choice)))
+    (op/view-game (:game @game-state))))
+
 (defn buy [card-name]
   (let [{:keys [current-player] :as game} (:game @game-state)]
     (swap! game-state assoc :game (-> game

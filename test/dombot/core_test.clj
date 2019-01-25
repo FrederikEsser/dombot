@@ -54,14 +54,14 @@
                                      :players [{:discard []}]}
                                     (gain 0 :province))))))
 
-(deftest put-in-play-test
+(deftest move-card-test
   (testing "Playing a card from hand to play-area"
-    (is (= (put-in-play {:hand [{:name :smithy}] :play-area []} :smithy)
+    (is (= (move-card {:hand [{:name :smithy}] :play-area []} :smithy :hand :play-area)
            {:hand [] :play-area [{:name :smithy}]}))
-    (is (thrown? AssertionError (put-in-play {:hand [{:name :smithy}] :play-area []} :copper)))
-    (is (= (put-in-play {:hand [{:name :copper} {:name :smithy}] :play-area []} :smithy)
+    (is (thrown? AssertionError (move-card {:hand [{:name :smithy}] :play-area []} :copper :hand :play-area)))
+    (is (= (move-card {:hand [{:name :copper} {:name :smithy}] :play-area []} :smithy :hand :play-area)
            {:hand [{:name :copper}] :play-area [{:name :smithy}]}))
-    (is (= (put-in-play {:hand [{:name :smithy} {:name :smithy}] :play-area []} :smithy)
+    (is (= (move-card {:hand [{:name :smithy} {:name :smithy}] :play-area []} :smithy :hand :play-area)
            {:hand [{:name :smithy}] :play-area [{:name :smithy}]}))))
 
 (deftest play-test
@@ -156,6 +156,70 @@
                          :actions   2
                          :coins     2
                          :buys      2}]})))
+    (testing "Harbinger"
+      (is (= (play {:players [{:hand      [harbinger]
+                               :deck      [{:name :copper} {:name :copper} {:name :copper}]
+                               :discard   [{:name :gold}]
+                               :play-area []
+                               :actions   1}]}
+                   0 :harbinger)
+             {:players [{:hand      [{:name :copper}]
+                         :deck      [{:name :copper} {:name :copper}]
+                         :discard   [{:name :gold}]
+                         :play-area [harbinger]
+                         :actions   1
+                         :choice    {:choice-fn harbinger-topdeck
+                                     :choices   #{:gold}
+                                     :you-may?  true}}]}))
+      (is (= (-> {:players [{:hand      [harbinger]
+                             :deck      [{:name :copper} {:name :copper} {:name :copper}]
+                             :discard   [{:name :gold}]
+                             :play-area []
+                             :actions   1}]}
+                 (play 0 :harbinger)
+                 (chose 0 :gold))
+             {:players [{:hand      [{:name :copper}]
+                         :deck      [{:name :gold} {:name :copper} {:name :copper}]
+                         :discard   []
+                         :play-area [harbinger]
+                         :actions   1}]}))
+      (is (= (-> {:players [{:hand      [harbinger]
+                             :deck      [{:name :copper} {:name :copper} {:name :copper}]
+                             :discard   [{:name :estate}]
+                             :play-area []
+                             :actions   1}]}
+                 (play 0 :harbinger)
+                 (chose 0 nil))
+             {:players [{:hand      [{:name :copper}]
+                         :deck      [{:name :copper} {:name :copper}]
+                         :discard   [{:name :estate}]
+                         :play-area [harbinger]
+                         :actions   1}]}))
+      (is (thrown? AssertionError (-> {:players [{:hand      [harbinger]
+                                                  :deck      [{:name :copper} {:name :copper} {:name :copper}]
+                                                  :discard   [{:name :estate}]
+                                                  :play-area []
+                                                  :actions   1}]}
+                                      (play 0 :harbinger)
+                                      (chose 0 :gold))))
+      (is (= (-> {:players [{:hand      [harbinger]
+                             :deck      [{:name :copper} {:name :copper} {:name :copper}]
+                             :discard   []
+                             :play-area []
+                             :actions   1}]}
+                 (play 0 :harbinger))
+             {:players [{:hand      [{:name :copper}]
+                         :deck      [{:name :copper} {:name :copper}]
+                         :discard   []
+                         :play-area [harbinger]
+                         :actions   1}]}))
+      (is (thrown? AssertionError (-> {:players [{:hand      [harbinger]
+                                                  :deck      [{:name :copper} {:name :copper} {:name :copper}]
+                                                  :discard   []
+                                                  :play-area []
+                                                  :actions   1}]}
+                                      (play 0 :harbinger)
+                                      (chose 0 nil)))))
     (testing "Laboratory"
       (is (= (play {:players [{:deck      [{:name :copper} {:name :copper} {:name :copper}]
                                :hand      [laboratory]
