@@ -15,7 +15,7 @@
 (defn start-game [number-of-players]
   (let [{:keys [current-player] :as game} (cards/game number-of-players)]
     (swap! game-state assoc :game (-> game
-                                      (update-in [:players current-player] op/start-round)))
+                                      (op/start-round current-player)))
     (op/view-game (:game @game-state))))
 
 (defn play-treasures []
@@ -40,9 +40,9 @@
   (let [{:keys [players current-player] :as game} (:game @game-state)
         next-player (mod (inc current-player) (count players))]
     (swap! game-state assoc :game (-> game
-                                      (update-in [:players current-player] op/clean-up)
+                                      (op/clean-up current-player)
                                       (assoc :current-player next-player)
-                                      (update-in [:players next-player] op/start-round)))
+                                      (op/start-round next-player)))
     (op/view-game (:game @game-state))))
 
 (defn view []

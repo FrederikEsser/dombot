@@ -1,10 +1,14 @@
 (ns dombot.operations
   (:require [dombot.utils :as ut]))
 
-(defn start-round [player]
-  (assoc player :actions 1
-                :coins 0
-                :buys 1))
+(defn start-round
+  ([player]
+   (assoc player :actions 1
+                 :coins 0
+                 :buys 1))
+  ([game player-no]
+   (-> game
+       (update-in [:players player-no] start-round))))
 
 (defn get-pile-idx [game card-name]
   (->> game
@@ -15,18 +19,18 @@
 
 (defn gain [game player-no card-name]
   (let [{:keys [idx card]} (get-pile-idx game card-name)
-        pile-size (get-in game [:supply idx :count])]
+        pile-size (get-in game [:supply idx :pile-size])]
     (assert pile-size)
     (if (< 0 pile-size)
       (-> game
-          (update-in [:supply idx :count] dec)
+          (update-in [:supply idx :pile-size] dec)
           (update-in [:players player-no :discard] concat [card]))
       game)))
 
 (defn buy-card [game player-no card-name]
   (let [{:keys [buys coins]} (get-in game [:players player-no])
         {{:keys [cost]} :card
-         pile-size      :count} (get-pile-idx game card-name)]
+         pile-size      :pile-size} (get-pile-idx game card-name)]
     (assert (and buys (> buys 0)))
     (assert (and coins cost (>= coins cost)))
     (assert (and pile-size (< 0 pile-size)))
@@ -60,13 +64,17 @@
    (-> game
        (update-in [:players player-no] draw n))))
 
-(defn clean-up [{:keys [play-area hand] :as player}]
-  (-> player
-      (update :discard concat play-area hand)
-      (assoc :play-area []
-             :hand [])
-      (dissoc :triggers)
-      (draw 5)))
+(defn clean-up
+  ([{:keys [play-area hand] :as player}]
+   (-> player
+       (update :discard concat play-area hand)
+       (assoc :play-area []
+              :hand [])
+       (dissoc :triggers)
+       (draw 5)))
+  ([game player-no]
+   (-> game
+       (update-in [:players player-no] clean-up))))
 
 (defn get-hand-idx [player card-name]
   (->> player
@@ -113,10 +121,12 @@
     (reduce (fn [game' card-name] (play game' player-no card-name)) game treasures)))
 
 (defn do-for-other-players [{:keys [players] :as game} player-no f & args]
-  (let [other-players (keep-indexed (fn [idx _]
-                                      (when (not= idx player-no) idx)) players)]
+  (let [other-player-nos (->> players
+                              (keep-indexed (fn [idx _] (when (not= idx player-no) idx))))]
     (reduce (fn [game' other-player-no]
-              (apply f game' other-player-no args)) game other-players)))
+              (apply f game' other-player-no args))
+            game
+            other-player-nos)))
 
 (defn get-victory-points [cards {:keys [victory-points]}]
   (if (fn? victory-points)
@@ -130,6 +140,13 @@
          (map (partial get-victory-points cards))
          (apply + 0))))
 
+(defn game-ended? [{:keys [supply] :as game}]
+  (let [{:keys [pile-size]} (get-pile-idx game :province)
+        empty-piles (->> supply
+                         (filter (comp zero? :pile-size)))]
+    (or (zero? pile-size)
+        (>= (count empty-piles) 3))))
+
 (defn view-player [player]
   (-> player
       (update :hand ut/frequencies-of :name)
@@ -139,13 +156,21 @@
       (dissoc :triggers)
       (assoc :victory-points (calc-victory-points player))))
 
+(defn view-end-player [{:keys [deck discard hand play-area] :as player}]
+  (let [cards (concat deck discard hand play-area)]
+    {:cards          (ut/frequencies-of cards :name)
+     :victory-points (calc-victory-points player)}))
+
 (defn view-supply [supply]
   (->> supply
-       (map (fn [{:keys [card count]}]
-              [(:name card) count]))
+       (map (fn [{:keys [card pile-size]}]
+              [(:name card) pile-size]))
        (into {})))
 
 (defn view-game [{:keys [supply players current-player] :as game}]
-  {:supply         (view-supply supply)
-   :player         (view-player (get players current-player))
-   :current-player current-player})
+  (if (game-ended? game)
+    {:players (map view-end-player players)}
+    {:supply         (view-supply supply)
+     :player         (view-player (get players current-player))
+     :current-player current-player}))
+

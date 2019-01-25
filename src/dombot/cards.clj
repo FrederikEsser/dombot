@@ -111,13 +111,13 @@
                     witch])
 
 (defn base-supply [number-of-players victory-pile-size]
-  [{:card curse :count (* 10 (dec number-of-players))}
-   {:card estate :count victory-pile-size}
-   {:card duchy :count victory-pile-size}
-   {:card province :count victory-pile-size}
-   {:card copper :count (- 60 (* 7 number-of-players))}
-   {:card silver :count 40}
-   {:card gold :count 30}])
+  [{:card curse :pile-size (* 10 (dec number-of-players))}
+   {:card estate :pile-size victory-pile-size}
+   {:card duchy :pile-size victory-pile-size}
+   {:card province :pile-size victory-pile-size}
+   {:card copper :pile-size (- 60 (* 7 number-of-players))}
+   {:card silver :pile-size 40}
+   {:card gold :pile-size 30}])
 
 (defn kingdom [sets victory-pile-size]
   (->> kingdom-cards
@@ -126,7 +126,7 @@
        (take 10)
        (sort-by (juxt :cost :name))
        (map (fn [{:keys [:type] :as card}]
-              {:card card :count (if (:victory type) victory-pile-size 10)}))))
+              {:card card :pile-size (if (:victory type) victory-pile-size 10)}))))
 
 (defn player []
   (let [deck (->> (concat (repeat 7 copper) (repeat 3 estate))

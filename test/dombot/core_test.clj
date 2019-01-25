@@ -35,20 +35,20 @@
 
 (deftest gain-test
   (testing "Gain"
-    (is (= (-> {:supply  [{:card {:name :province} :count 8}]
+    (is (= (-> {:supply  [{:card {:name :province} :pile-size 8}]
                 :players [{:discard []}]}
                (gain 0 :province))
-           {:supply  [{:card {:name :province} :count 7}]
+           {:supply  [{:card {:name :province} :pile-size 7}]
             :players [{:discard [{:name :province}]}]}))
-    (is (= (-> {:supply  [{:card {:name :province} :count 1}]
+    (is (= (-> {:supply  [{:card {:name :province} :pile-size 1}]
                 :players [{:discard []}]}
                (gain 0 :province))
-           {:supply  [{:card {:name :province} :count 0}]
+           {:supply  [{:card {:name :province} :pile-size 0}]
             :players [{:discard [{:name :province}]}]}))
-    (is (= (-> {:supply  [{:card {:name :province} :count 0}]
+    (is (= (-> {:supply  [{:card {:name :province} :pile-size 0}]
                 :players [{:discard []}]}
                (gain 0 :province))
-           {:supply  [{:card {:name :province} :count 0}]
+           {:supply  [{:card {:name :province} :pile-size 0}]
             :players [{:discard []}]}))
     (is (thrown? AssertionError (-> {:supply  []
                                      :players [{:discard []}]}
@@ -275,7 +275,7 @@
                          :play-area [village]
                          :actions   2}]})))
     (testing "Witch"
-      (is (= (play {:supply  [{:card curse :count 10}]
+      (is (= (play {:supply  [{:card curse :pile-size 10}]
                     :players [{:deck      (repeat 3 {:name :copper})
                                :hand      [witch]
                                :play-area []
@@ -284,7 +284,7 @@
                                :buys      1}
                               {:discard [{:name :copper} {:name :copper}]}]}
                    0 :witch)
-             {:supply  [{:card curse :count 9}]
+             {:supply  [{:card curse :pile-size 9}]
               :players [{:deck      [{:name :copper}]
                          :hand      [{:name :copper} {:name :copper}]
                          :play-area [witch]
@@ -311,17 +311,17 @@
   (testing "Buying a card"
     (testing "is impossible because"
       (testing "player has no buys left"
-        (is (thrown? AssertionError (buy-card {:supply  [{:card {:name :copper :cost 0} :count 40}]
+        (is (thrown? AssertionError (buy-card {:supply  [{:card {:name :copper :cost 0} :pile-size 40}]
                                                :players [{:coins 0
                                                           :buys  0}]}
                                               0 :copper))))
       (testing "player has not enough coins"
-        (is (thrown? AssertionError (buy-card {:supply  [{:card {:name :silver :cost 3} :count 40}]
+        (is (thrown? AssertionError (buy-card {:supply  [{:card {:name :silver :cost 3} :pile-size 40}]
                                                :players [{:coins 2
                                                           :buys  1}]}
                                               0 :silver))))
       (testing "supply is empty"
-        (is (thrown? AssertionError (buy-card {:supply  [{:card {:name :copper :cost 0} :count 0}]
+        (is (thrown? AssertionError (buy-card {:supply  [{:card {:name :copper :cost 0} :pile-size 0}]
                                                :players [{:coins 0
                                                           :buys  1}]}
                                               0 :copper))))
@@ -330,21 +330,21 @@
                                                :players [{:coins 0
                                                           :buys  1}]}
                                               0 :copper)))))
-    (is (= (buy-card {:supply  [{:card {:name :copper :cost 0} :count 40}]
+    (is (= (buy-card {:supply  [{:card {:name :copper :cost 0} :pile-size 40}]
                       :players [{:discard []
                                  :coins   0
                                  :buys    1}]}
                      0 :copper)
-           {:supply  [{:card {:name :copper :cost 0} :count 39}]
+           {:supply  [{:card {:name :copper :cost 0} :pile-size 39}]
             :players [{:discard [{:name :copper :cost 0}]
                        :coins   0
                        :buys    0}]}))
-    (is (= (buy-card {:supply  [{:card {:name :silver :cost 3} :count 40}]
+    (is (= (buy-card {:supply  [{:card {:name :silver :cost 3} :pile-size 40}]
                       :players [{:discard []
                                  :coins   6
                                  :buys    2}]}
                      0 :silver)
-           {:supply  [{:card {:name :silver :cost 3} :count 39}]
+           {:supply  [{:card {:name :silver :cost 3} :pile-size 39}]
             :players [{:discard [{:name :silver :cost 3}]
                        :coins   3
                        :buys    1}]}))))
@@ -385,6 +385,15 @@
             :deck      []
             :discard   []}))))
 
+(deftest game-end-test
+  (testing "Game ending conditions"
+    (is (not (game-ended? {:supply [{:card province :pile-size 1}]})))
+    (is (game-ended? {:supply [{:card province :pile-size 0}]}))
+    (is (not (game-ended? {:supply (concat [{:card province :pile-size 1}] (repeat 1 {:pile-size 0}))})))
+    (is (not (game-ended? {:supply (concat [{:card province :pile-size 1}] (repeat 2 {:pile-size 0}))})))
+    (is (game-ended? {:supply (concat [{:card province :pile-size 1}] (repeat 3 {:pile-size 0}))}))
+    (is (game-ended? {:supply (concat [{:card province :pile-size 1}] (repeat 4 {:pile-size 0}))}))))
+
 (deftest view-test
   (testing "View player"
     (is (= (view-player {:hand      [{:name :copper} {:name :copper} {:name :copper} estate estate]
@@ -412,4 +421,13 @@
                              :deck           5
                              :discard        0
                              :victory-points 3}
-            :current-player 0}))))
+            :current-player 0})))
+  (testing "View game end"
+    (is (= (view-game {:supply         [{:card province :pile-size 0}]
+                       :players        [{:hand      [{:name :copper} {:name :copper} {:name :copper} estate estate]
+                                         :play-area []
+                                         :deck      [{:name :copper} {:name :copper} {:name :copper} {:name :copper} estate]
+                                         :discard   []}]
+                       :current-player 0})
+           {:players [{:cards          {:copper 7 :estate 3}
+                       :victory-points 3}]}))))
