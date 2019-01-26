@@ -5,7 +5,7 @@
 
 ; todo:
 ; unit tests for do-for-other-players, give-choice, chose, gardens, calc-victory-points
-; make `chose` accept lists & single keywords - chapel
+; make `chose` accept lists & single keywords
 ; undo
 ; restricted view of discard
 ; phases
@@ -43,7 +43,7 @@
                                       (op/buy-card current-player card-name)))
     (op/view-game (:game @game-state))))
 
-(defn end-round []
+(defn end-turn []
   (let [{:keys [players current-player] :as game} (:game @game-state)
         next-player (mod (inc current-player) (count players))]
     (swap! game-state assoc :game (-> game

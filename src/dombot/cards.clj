@@ -11,16 +11,23 @@
 (def silver {:name :silver :type #{:treasure} :cost 3 :coin-value 2})
 (def gold {:name :gold :type #{:treasure} :cost 6 :coin-value 3})
 
+(defn trash [game player-no card-names]
+  (reduce (fn [game card-name] (move-card game player-no card-name :hand :trash)) game card-names))
+
+(def chapel {:name      :chapel :set :dominion :type #{:action} :cost 2
+             :action-fn (fn chapel-action [game player-no]
+                          (-> game
+                              (give-choice player-no trash ut/player-hand {:max 4})))})
+
 (defn cellar-sift [game player-no card-names]
   (-> (reduce (fn [game card-name] (move-card game player-no card-name :hand :discard)) game card-names)
       (update-in [:players player-no] draw (count card-names))))
 
 (def cellar {:name      :cellar :set :dominion :type #{:action} :cost 2
              :action-fn (fn cellar-action [game player-no]
-                          (let [{:keys [hand]} (get-in game [:players player-no])]
-                            (-> game
-                                (update-in [:players player-no :actions] + 1)
-                                (give-choice player-no cellar-sift ut/player-hand))))})
+                          (-> game
+                              (update-in [:players player-no :actions] + 1)
+                              (give-choice player-no cellar-sift ut/player-hand)))})
 
 (def council-room {:name      :council-room :set :dominion :type #{:action} :cost 5
                    :action-fn (fn council-room-action [game player-no]
@@ -101,7 +108,6 @@
                                   (update-in [:players player-no :buys] + 1)))})
 
 ;; ONE CHOICE
-(def chapel {:name :chapel :set :dominion :type #{:action} :cost 2})
 (def vassal {:name :vassal :set :dominion :type #{:action} :cost 3})
 (def workshop {:name :workshop :set :dominion :type #{:action} :cost 3})
 (def moneylender {:name :moneylender :set :dominion :type #{:action} :cost 4})
@@ -126,7 +132,8 @@
                         (-> game
                             (draw player-no 2)))})
 
-(def kingdom-cards [cellar
+(def kingdom-cards [chapel
+                    cellar
                     council-room
                     festival
                     gardens

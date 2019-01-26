@@ -127,6 +127,36 @@
                               (play {:players [{:hand    [{:name :village :type #{:action}}]
                                                 :actions 1}]}
                                     0 :village)))))
+    (testing "Chapel"
+      (is (= (play {:players [{:hand    [chapel {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
+                               :actions 1}]}
+                   0 :chapel)
+             {:players [{:hand      [{:name :copper} {:name :estate} {:name :estate} {:name :estate}]
+                         :play-area [chapel]
+                         :actions   0
+                         :choice    {:choice-fn trash
+                                     :choices   {:copper 1 :estate 3}
+                                     :max       4}}]}))
+      (is (= (-> {:players [{:hand    [chapel {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
+                             :actions 1}]}
+                 (play 0 :chapel)
+                 (chose 0 [:estate :estate :estate]))
+             {:players [{:hand      [{:name :copper}]
+                         :play-area [chapel]
+                         :actions   0}]
+              :trash   [{:name :estate} {:name :estate} {:name :estate}]}))
+      (is (= (-> {:players [{:hand    [chapel {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
+                             :actions 1}]}
+                 (play 0 :chapel)
+                 (chose 0 []))
+             {:players [{:hand      [{:name :copper} {:name :estate} {:name :estate} {:name :estate}]
+                         :play-area [chapel]
+                         :actions   0}]}))
+      (is (thrown-with-msg? AssertionError #"Chose error: You can only pick 4 items."
+                            (-> {:players [{:hand    (concat [chapel] (repeat 5 {:name :copper}))
+                                            :actions 1}]}
+                                (play 0 :chapel)
+                                (chose 0 (repeat 5 :copper))))))
     (testing "Cellar"
       (is (= (play {:players [{:hand    [cellar {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
                                :deck    (repeat 5 {:name :copper})
@@ -505,6 +535,7 @@
                                          :play-area []
                                          :deck      [{:name :copper} {:name :copper} {:name :copper} {:name :copper} estate]
                                          :discard   []}]
+                       :trash          [{:name :estate} {:name :estate} {:name :copper}]
                        :current-player 0})
            {:supply         {:copper 46 :silver 40 :gold 30 :estate 8 :duchy 8 :province 8 :curse 10}
             :player         {:hand           {:copper 3 :estate 2}
@@ -512,6 +543,7 @@
                              :deck           5
                              :discard        0
                              :victory-points 3}
+            :trash          {:copper 1 :estate 2}
             :current-player 0})))
   (testing "View game end"
     (is (= (view-game {:supply         [{:card province :pile-size 0}]

@@ -72,6 +72,9 @@
 (defn move-card [game player-no card-name from to & [position]]
   (let [player (get-in game [:players player-no])
         {:keys [idx card]} (ut/get-card-idx player from card-name)
+        to-path (if (= to :trash)
+                  [:trash]
+                  [:players player-no to])
         add-card-to-coll (fn [coll card']
                            (case position
                              :top (concat [card'] coll)
@@ -79,7 +82,7 @@
     (assert card (str "Move error: There is no " (ut/format-name card-name) " in your " (ut/format-name from) "."))
     (-> game
         (update-in [:players player-no from] ut/vec-remove idx)
-        (update-in [:players player-no to] add-card-to-coll card))))
+        (update-in to-path add-card-to-coll card))))
 
 (defn- apply-triggers [game player-no trigger-id]
   (let [{:keys [triggers]} (get-in game [:players player-no])
@@ -129,8 +132,11 @@
                                                                               opts)))))
 
 (defn chose [game player-no picked-choice]
-  (let [{{:keys [choice-fn choices] :as choice} :choice} (get-in game [:players player-no])]
-    (assert choice-fn "Chose error: You don't have a choice to make.")
+  (let [{{:keys [choice-fn choices max] :as choice} :choice} (get-in game [:players player-no])]
+    (assert choice "Chose error: You don't have a choice to make.")
+    (when (and max (> max 1))
+      (assert (<= (count picked-choice) max) (str "Chose error: You can only pick " max " items.")))
+    #_(assert ((comp set keys choices) picked-choice) (str "Chose error: " (ut/format-name picked-choice) " is not a valid choice."))
     #_(assert (not-empty choices))
     #_(assert (and (not-empty choices) (or you-may?
                                            (and (keyword? picked-choice) (choices picked-choice))
@@ -180,10 +186,11 @@
               [(:name card) pile-size]))
        (into {})))
 
-(defn view-game [{:keys [supply players current-player] :as game}]
+(defn view-game [{:keys [supply players trash current-player] :as game}]
   (if (game-ended? game)
     {:players (map view-end-player players)}
     {:supply         (view-supply supply)
      :player         (view-player (get players current-player))
+     :trash          (ut/frequencies-of trash :name)
      :current-player current-player}))
 
