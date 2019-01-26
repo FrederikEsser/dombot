@@ -14,7 +14,8 @@
   (testing "Shuffle discard"
     (is (= (shuffle-discard {:deck [] :discard [1]})
            {:deck [1] :discard []}))
-    (is (thrown? AssertionError (shuffle-discard {:deck [1] :discard [2]})))))
+    (is (thrown-with-msg? AssertionError #"Shuffle error: Your deck is not empty."
+                          (shuffle-discard {:deck [1] :discard [2]})))))
 
 (deftest draw-test
   (testing "Draw"
@@ -50,34 +51,42 @@
                (gain 0 :province))
            {:supply  [{:card {:name :province} :pile-size 0}]
             :players [{:discard []}]}))
-    (is (thrown? AssertionError (-> {:supply  []
-                                     :players [{:discard []}]}
-                                    (gain 0 :province))))))
+    (is (thrown-with-msg? AssertionError #"Gain error: The supply doesn't have a Province pile"
+                          (-> {:supply  []
+                               :players [{:discard []}]}
+                              (gain 0 :province))))))
 
 (deftest move-card-test
   (testing "Playing a card from hand to play-area"
     (is (= (move-card {:players [{:hand [{:name :smithy}] :play-area []}]} 0 :smithy :hand :play-area)
            {:players [{:hand [] :play-area [{:name :smithy}]}]}))
-    (is (thrown? AssertionError (move-card {:players [{:hand [{:name :smithy}] :play-area []}]} 0 :copper :hand :play-area)))
+    (is (thrown-with-msg? AssertionError #"Move error: There is no Copper in your Hand"
+                          (move-card {:players [{:hand [{:name :smithy}] :play-area []}]} 0 :copper :hand :play-area)))
     (is (= (move-card {:players [{:hand [{:name :copper} {:name :smithy}] :play-area []}]} 0 :smithy :hand :play-area)
            {:players [{:hand [{:name :copper}] :play-area [{:name :smithy}]}]}))
     (is (= (move-card {:players [{:hand [{:name :smithy} {:name :smithy}] :play-area []}]} 0 :smithy :hand :play-area)
            {:players [{:hand [{:name :smithy}] :play-area [{:name :smithy}]}]}))))
 
 (deftest play-test
-  (testing "Playing card is impossible because it has no/wrong type"
-    (is (thrown? AssertionError (play {:players [{:hand [{:name :estate}]}]}
-                                      0 :estate)))
-    (is (thrown? AssertionError (play {:players [{:hand [{:name :estate :type #{:victory}}]}]}
-                                      0 :estate))))
+  (testing "Playing card is impossible because"
+    (testing "it has no/wrong type"
+      (is (thrown-with-msg? AssertionError #"Play error: Estate has no type"
+                            (play {:players [{:hand [{:name :estate}]}]}
+                                  0 :estate)))
+      (is (thrown-with-msg? AssertionError #"Play error: Victory cards cannot be played."
+                            (play {:players [{:hand [{:name :estate :type #{:victory}}]}]}
+                                  0 :estate))))
+    (testing "player has no cards in hand"
+      (is (thrown-with-msg? AssertionError #"Play error: There is no Copper in your Hand."
+                            (play {:players [{:hand []}]}
+                                  0 :copper)))))
+
   (testing "Playing treasure"
     (testing "is impossible because"
-      (testing "player has no cards in hand"
-        (is (thrown? AssertionError (play {:players [{:hand []}]}
-                                          0 :copper))))
       (testing "card has no coin-value"
-        (is (thrown? AssertionError (play {:players [{:hand [{:name :copper :type #{:treasure}}]}]}
-                                          0 :copper)))))
+        (is (thrown-with-msg? AssertionError #"Play error: Copper has no coin value"
+                              (play {:players [{:hand [{:name :copper :type #{:treasure}}]}]}
+                                    0 :copper)))))
     (testing "Copper"
       (is (= (play {:players [{:hand  [copper]
                                :coins 0}]}
@@ -108,18 +117,16 @@
                          :coins     7}]}))))
   (testing "Playing action"
     (testing "is impossible because"
-      (testing "player has no cards in hand"
-        (is (thrown? AssertionError (play {:players [{:hand    []
-                                                      :actions 1}]}
-                                          0 :any-card))))
       (testing "player has no more actions"
-        (is (thrown? AssertionError (play {:hand    [{:name :any-card :type #{:action} :action-fn (fn [game _] game)}]
-                                           :actions 0}
-                                          0 :any-card))))
+        (is (thrown-with-msg? AssertionError #"Play error: You have no more actions."
+                              (play {:players [{:hand    [village]
+                                                :actions 0}]}
+                                    0 :village))))
       (testing "card has no action-fn"
-        (is (thrown? AssertionError (play {:players [{:hand    [{:name :any-card :type #{:action}}]
-                                                      :actions 1}]}
-                                          0 :any-card)))))
+        (is (thrown-with-msg? AssertionError #"Play error: Village has no action function."
+                              (play {:players [{:hand    [{:name :village :type #{:action}}]
+                                                :actions 1}]}
+                                    0 :village)))))
     (testing "Cellar"
       (is (= (play {:players [{:hand    [cellar {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
                                :deck    (repeat 5 {:name :copper})
@@ -158,11 +165,12 @@
                          :play-area [cellar]
                          :deck      (repeat 5 {:name :copper})
                          :actions   1}]}))
-      (is (thrown? AssertionError (-> {:players [{:hand    [cellar {:name :copper} {:name :estate}]
-                                                  :deck    (repeat 5 {:name :copper})
-                                                  :actions 1}]}
-                                      (play 0 :cellar)
-                                      (chose 0 [:estate :estate])))))
+      (is (thrown-with-msg? AssertionError #"Move error: There is no Estate in your Hand"
+                            (-> {:players [{:hand    [cellar {:name :copper} {:name :estate}]
+                                            :deck    (repeat 5 {:name :copper})
+                                            :actions 1}]}
+                                (play 0 :cellar)
+                                (chose 0 [:estate :estate])))))
     (testing "Council Room"
       (is (= (play {:players [{:deck    (repeat 5 {:name :copper})
                                :hand    [council-room]
@@ -227,13 +235,14 @@
                          :discard   [{:name :estate}]
                          :play-area [harbinger]
                          :actions   1}]}))
-      (is (thrown? AssertionError (-> {:players [{:hand      [harbinger]
-                                                  :deck      [{:name :copper} {:name :copper} {:name :copper}]
-                                                  :discard   [{:name :estate}]
-                                                  :play-area []
-                                                  :actions   1}]}
-                                      (play 0 :harbinger)
-                                      (chose 0 :gold))))
+      (is (thrown-with-msg? AssertionError #"Move error: There is no Gold in your Discard."
+                            (-> {:players [{:hand      [harbinger]
+                                            :deck      [{:name :copper} {:name :copper} {:name :copper}]
+                                            :discard   [{:name :estate}]
+                                            :play-area []
+                                            :actions   1}]}
+                                (play 0 :harbinger)
+                                (chose 0 :gold))))
       (is (= (-> {:players [{:hand    [harbinger]
                              :deck    [{:name :copper} {:name :copper} {:name :copper}]
                              :actions 1}]}
@@ -242,13 +251,14 @@
                          :deck      [{:name :copper} {:name :copper}]
                          :play-area [harbinger]
                          :actions   1}]}))
-      (is (thrown? AssertionError (-> {:players [{:hand      [harbinger]
-                                                  :deck      [{:name :copper} {:name :copper} {:name :copper}]
-                                                  :discard   []
-                                                  :play-area []
-                                                  :actions   1}]}
-                                      (play 0 :harbinger)
-                                      (chose 0 nil)))))
+      (is (thrown-with-msg? AssertionError #"Chose error: You don't have a choice to make."
+                            (-> {:players [{:hand      [harbinger]
+                                            :deck      [{:name :copper} {:name :copper} {:name :copper}]
+                                            :discard   []
+                                            :play-area []
+                                            :actions   1}]}
+                                (play 0 :harbinger)
+                                (chose 0 nil)))))
     (testing "Laboratory"
       (is (= (play {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
                                :hand    [laboratory]
@@ -388,25 +398,29 @@
   (testing "Buying a card"
     (testing "is impossible because"
       (testing "player has no buys left"
-        (is (thrown? AssertionError (buy-card {:supply  [{:card {:name :copper :cost 0} :pile-size 40}]
-                                               :players [{:coins 0
-                                                          :buys  0}]}
-                                              0 :copper))))
+        (is (thrown-with-msg? AssertionError #"Buy error: You have no more buys."
+                              (buy-card {:supply  [{:card {:name :copper :cost 0} :pile-size 40}]
+                                         :players [{:coins 0
+                                                    :buys  0}]}
+                                        0 :copper))))
       (testing "player has not enough coins"
-        (is (thrown? AssertionError (buy-card {:supply  [{:card {:name :silver :cost 3} :pile-size 40}]
-                                               :players [{:coins 2
-                                                          :buys  1}]}
-                                              0 :silver))))
+        (is (thrown-with-msg? AssertionError #"Buy error: Silver costs 3 and you only have 2 coins."
+                              (buy-card {:supply  [{:card {:name :silver :cost 3} :pile-size 40}]
+                                         :players [{:coins 2
+                                                    :buys  1}]}
+                                        0 :silver))))
       (testing "supply is empty"
-        (is (thrown? AssertionError (buy-card {:supply  [{:card {:name :copper :cost 0} :pile-size 0}]
-                                               :players [{:coins 0
-                                                          :buys  1}]}
-                                              0 :copper))))
+        (is (thrown-with-msg? AssertionError #"Buy error: Copper supply is empty."
+                              (buy-card {:supply  [{:card {:name :copper :cost 0} :pile-size 0}]
+                                         :players [{:coins 0
+                                                    :buys  1}]}
+                                        0 :copper))))
       (testing "supply does not contain card-name"
-        (is (thrown? AssertionError (buy-card {:supply  []
-                                               :players [{:coins 0
-                                                          :buys  1}]}
-                                              0 :copper)))))
+        (is (thrown-with-msg? AssertionError #"Buy error: The supply doesn't have a Copper pile."
+                              (buy-card {:supply  []
+                                         :players [{:coins 0
+                                                    :buys  1}]}
+                                        0 :copper)))))
     (is (= (buy-card {:supply  [{:card {:name :copper :cost 0} :pile-size 40}]
                       :players [{:discard []
                                  :coins   0

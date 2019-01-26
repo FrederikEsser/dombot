@@ -106,7 +106,6 @@
 (def workshop {:name :workshop :set :dominion :type #{:action} :cost 3})
 (def moneylender {:name :moneylender :set :dominion :type #{:action} :cost 4})
 (def poacher {:name :poacher :set :dominion :type #{:action} :cost 4})
-(def remodel {:name :remodel :set :dominion :type #{:action} :cost 4})
 (def throne-room {:name :throne-room :set :dominion :type #{:action} :cost 4})
 
 ;; ATTACK WITH CHOICE
@@ -115,10 +114,11 @@
 (def bandit {:name :bandit :set :dominion :type #{:action} :cost 5})
 
 ;; MULTI CHOICES
-(def library {:name :library :set :dominion :type #{:action} :cost 5})
+(def remodel {:name :remodel :set :dominion :type #{:action} :cost 4})
 (def mine {:name :mine :set :dominion :type #{:action} :cost 5})
 (def sentry {:name :sentry :set :dominion :type #{:action} :cost 5})
 (def artisan {:name :artisan :set :dominion :type #{:action} :cost 6})
+(def library {:name :library :set :dominion :type #{:action} :cost 5})
 
 ;; REACTION
 (def moat {:name      :moat :set :dominion :type #{:action :reaction} :cost 2
@@ -126,7 +126,8 @@
                         (-> game
                             (draw player-no 2)))})
 
-(def kingdom-cards [council-room
+(def kingdom-cards [cellar
+                    council-room
                     festival
                     gardens
                     harbinger

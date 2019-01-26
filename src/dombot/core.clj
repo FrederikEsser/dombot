@@ -4,10 +4,11 @@
   (:gen-class))
 
 ; todo:
+; unit tests for do-for-other-players, give-choice, chose, gardens, calc-victory-points
+; make `chose` accept lists & single keywords - chapel
 ; undo
-; view discard
+; restricted view of discard
 ; phases
-; decisions
 ; reactions
 
 (defonce game-state (atom {}))

@@ -1,4 +1,17 @@
-(ns dombot.utils)
+(ns dombot.utils
+  (:require [clojure.string :as s]))
+
+(defn format-name [kw]
+  (-> kw
+      name
+      (s/split #"-")
+      (->> (map s/capitalize)
+           (s/join " "))))
+
+(defn format-type [type]
+  (->> type
+       (map format-name)
+       (s/join "/")))
 
 (defn redupeat [val f n]
   (if (> n 0)

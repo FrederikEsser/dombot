@@ -13,7 +13,7 @@
 (defn gain [game player-no card-name]
   (let [{:keys [idx card]} (ut/get-pile-idx game card-name)
         pile-size (get-in game [:supply idx :pile-size])]
-    (assert pile-size)
+    (assert pile-size (str "Gain error: The supply doesn't have a " (ut/format-name card-name) " pile."))
     (cond-> game
             (< 0 pile-size) (-> (update-in [:supply idx :pile-size] dec)
                                 (update-in [:players player-no :discard] concat [card])))))
@@ -21,22 +21,24 @@
 (defn buy-card [game player-no card-name]
   (let [{:keys [buys coins]} (get-in game [:players player-no])
         {{:keys [cost]} :card
-         pile-size      :pile-size} (ut/get-pile-idx game card-name)]
-    (assert (and buys (> buys 0)))
-    (assert (and coins cost (>= coins cost)))
-    (assert (and pile-size (< 0 pile-size)))
+         pile-size      :pile-size
+         :as            supply-pile} (ut/get-pile-idx game card-name)]
+    (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
+    (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))
+    (assert (and coins cost (>= coins cost)) (str "Buy error: " (ut/format-name card-name) " costs " cost " and you only have " coins " coins."))
+    (assert (and pile-size (< 0 pile-size)) (str "Buy error: " (ut/format-name card-name) " supply is empty."))
     (-> game
         (gain player-no card-name)
         (update-in [:players player-no :coins] - cost)
         (update-in [:players player-no :buys] - 1))))
 
 (defn shuffle-discard [{:keys [deck discard] :as player}]
-  (assert (empty? deck))
+  (assert (empty? deck) "Shuffle error: Your deck is not empty.")
   (-> player
       (assoc :deck (shuffle discard))
       (assoc :discard [])))
 
-(defn draw-one [{:keys [:deck :discard] :as player}]
+(defn- draw-one [{:keys [:deck :discard] :as player}]
   (if (empty? deck)
     (if (empty? discard)
       player
@@ -74,12 +76,12 @@
                            (case position
                              :top (concat [card'] coll)
                              (concat coll [card'])))]
-    (assert card)
+    (assert card (str "Move error: There is no " (ut/format-name card-name) " in your " (ut/format-name from) "."))
     (-> game
         (update-in [:players player-no from] ut/vec-remove idx)
         (update-in [:players player-no to] add-card-to-coll card))))
 
-(defn apply-triggers [game player-no trigger-id]
+(defn- apply-triggers [game player-no trigger-id]
   (let [{:keys [triggers]} (get-in game [:players player-no])
         apply-trigger (fn [game' {:keys [trigger-fn]}] (trigger-fn game' player-no))
         matching-triggers (filter (comp #{trigger-id} :trigger-id) triggers)]
@@ -88,12 +90,14 @@
 
 (defn play [game player-no card-name]
   (let [{:keys [actions triggers] :as player} (get-in game [:players player-no])
-        {{:keys [type action-fn coin-value]} :card} (ut/get-card-idx player :hand card-name)]
-    (assert type)
+        {{:keys [type action-fn coin-value] :as card} :card} (ut/get-card-idx player :hand card-name)]
+    (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
+    (assert type (str "Play error: " (ut/format-name card-name) " has no type."))
     (cond
-      (:action type) (assert (and action-fn actions (< 0 actions)))
-      (:treasure type) (assert coin-value)
-      :else (assert false))
+      (:action type) (do (assert action-fn (str "Play error: " (ut/format-name card-name) " has no action function."))
+                         (assert (and actions (< 0 actions)) "Play error: You have no more actions."))
+      (:treasure type) (assert coin-value (str "Play error: " (ut/format-name card-name) " has no coin value"))
+      :else (assert false (str "Play error: " (ut/format-type type) " cards cannot be played.")))
     (-> game
         (move-card player-no card-name :hand :play-area)
         (cond->
@@ -125,8 +129,8 @@
                                                                               opts)))))
 
 (defn chose [game player-no picked-choice]
-  (let [{{:keys [choice-fn choices]} :choice} (get-in game [:players player-no])]
-    (assert choice-fn)
+  (let [{{:keys [choice-fn choices] :as choice} :choice} (get-in game [:players player-no])]
+    (assert choice-fn "Chose error: You don't have a choice to make.")
     #_(assert (not-empty choices))
     #_(assert (and (not-empty choices) (or you-may?
                                            (and (keyword? picked-choice) (choices picked-choice))
@@ -135,7 +139,7 @@
         (choice-fn player-no picked-choice)
         (update-in [:players player-no] dissoc :choice))))
 
-(defn get-victory-points [cards {:keys [victory-points]}]
+(defn- get-victory-points [cards {:keys [victory-points]}]
   (if (fn? victory-points)
     (victory-points cards)
     victory-points))
@@ -165,7 +169,7 @@
       (dissoc :triggers)
       (assoc :victory-points (calc-victory-points player))))
 
-(defn view-end-player [{:keys [deck discard hand play-area] :as player}]
+(defn- view-end-player [{:keys [deck discard hand play-area] :as player}]
   (let [cards (concat deck discard hand play-area)]
     {:cards          (ut/frequencies-of cards :name)
      :victory-points (calc-victory-points player)}))
