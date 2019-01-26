@@ -132,11 +132,13 @@
                                                                               opts)))))
 
 (defn chose [game player-no picked-choice]
-  (let [{{:keys [choice-fn choices max] :as choice} :choice} (get-in game [:players player-no])]
+  (let [{{:keys [choice-fn choices max] :as choice} :choice} (get-in game [:players player-no])
+        valid-choices (-> choices keys set)]
     (assert choice "Chose error: You don't have a choice to make.")
     (when (and max (> max 1))
       (assert (<= (count picked-choice) max) (str "Chose error: You can only pick " max " items.")))
-    #_(assert ((comp set keys choices) picked-choice) (str "Chose error: " (ut/format-name picked-choice) " is not a valid choice."))
+    (when (keyword? picked-choice)
+      (assert (valid-choices picked-choice) (str "Chose error: " (ut/format-name picked-choice) " is not a valid choice.")))
     #_(assert (not-empty choices))
     #_(assert (and (not-empty choices) (or you-may?
                                            (and (keyword? picked-choice) (choices picked-choice))

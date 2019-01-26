@@ -240,7 +240,7 @@
                          :discard   [{:name :gold}]
                          :play-area [harbinger]
                          :actions   1
-                         :choice    {:choice-fn discard?->topdeck
+                         :choice    {:choice-fn harbinger-topdeck
                                      :choices   {:gold 1}
                                      :max       1}}]}))
       (is (= (-> {:players [{:hand    [harbinger]
@@ -265,7 +265,7 @@
                          :discard   [{:name :estate}]
                          :play-area [harbinger]
                          :actions   1}]}))
-      (is (thrown-with-msg? AssertionError #"Move error: There is no Gold in your Discard."
+      (is (thrown-with-msg? AssertionError #"Chose error: Gold is not a valid choice."
                             (-> {:players [{:hand      [harbinger]
                                             :deck      [{:name :copper} {:name :copper} {:name :copper}]
                                             :discard   [{:name :estate}]
@@ -379,6 +379,51 @@
                          :hand      [{:name :copper}]
                          :play-area [moat]
                          :actions   0}]})))
+    (testing "Moneylender"
+      (is (= (play {:players [{:hand    [moneylender {:name :copper} {:name :copper} {:name :estate}]
+                               :actions 1}]}
+                   0 :moneylender)
+             {:players [{:hand      [{:name :copper} {:name :copper} {:name :estate}]
+                         :play-area [moneylender]
+                         :actions   0
+                         :choice    {:choice-fn moneylender-trash
+                                     :choices   {:copper 2}
+                                     :max       1}}]}))
+      (is (= (-> {:players [{:hand    [moneylender {:name :copper} {:name :copper} {:name :estate}]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :moneylender)
+                 (chose 0 :copper))
+             {:players [{:hand      [{:name :copper} {:name :estate}]
+                         :play-area [moneylender]
+                         :actions   0
+                         :coins     3}]
+              :trash   [{:name :copper}]}))
+      (is (= (-> {:players [{:hand    [moneylender {:name :copper} {:name :copper} {:name :estate}]
+                             :actions 1}]}
+                 (play 0 :moneylender)
+                 (chose 0 nil))
+             {:players [{:hand      [{:name :copper} {:name :copper} {:name :estate}]
+                         :play-area [moneylender]
+                         :actions   0}]}))
+      (is (= (-> {:players [{:hand    [moneylender {:name :estate}]
+                             :actions 1}]}
+                 (play 0 :moneylender))
+             {:players [{:hand      [{:name :estate}]
+                         :play-area [moneylender]
+                         :actions   0}]}))
+      (is (thrown-with-msg? AssertionError #"Chose error: Estate is not a valid choice."
+                            (-> {:players [{:hand    [moneylender {:name :copper} {:name :copper} {:name :estate}]
+                                            :actions 1
+                                            :coins   0}]}
+                                (play 0 :moneylender)
+                                (chose 0 :estate))))
+      #_(is (thrown-with-msg? AssertionError #"Chose error: You can only pick 1 items."
+                              (-> {:players [{:hand    [moneylender {:name :copper} {:name :copper} {:name :estate}]
+                                              :actions 1
+                                              :coins   0}]}
+                                  (play 0 :moneylender)
+                                  (chose 0 [:copper :copper])))))
     (testing "Smithy"
       (is (= (play {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
                                :hand    [smithy]

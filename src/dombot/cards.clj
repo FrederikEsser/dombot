@@ -47,7 +47,7 @@
               :victory-points (fn [cards]
                                 (Math/floorDiv (int (count cards)) (int 10)))})
 
-(defn discard?->topdeck [game player-no card-name]
+(defn harbinger-topdeck [game player-no card-name]
   (cond-> game
           card-name (move-card player-no card-name :discard :deck :top)))
 
@@ -56,7 +56,7 @@
                              (-> game
                                  (draw player-no 1)
                                  (update-in [:players player-no :actions] + 1)
-                                 (give-choice player-no discard?->topdeck ut/player-discard {:max 1})))})
+                                 (give-choice player-no harbinger-topdeck ut/player-discard {:max 1})))})
 
 (def laboratory {:name      :laboratory :set :dominion :type #{:action} :cost 5
                  :action-fn (fn laboratory-action [game player-no]
@@ -84,6 +84,18 @@
                                 (update-in [:players player-no :actions] + 1)
                                 (update-in [:players player-no :triggers] concat [merchant-trigger])))})
 
+(defn moneylender-trash [game player-no do-trash?]
+  (cond-> game
+          do-trash? (-> (move-card player-no :copper :hand :trash)
+                        (update-in [:players player-no :coins] + 3))))
+
+(def moneylender {:name      :moneylender :set :dominion :type #{:action} :cost 4
+                  :action-fn (fn moneylender-action [game player-no]
+                               (-> game
+                                   (give-choice player-no moneylender-trash
+                                                (comp #(select-keys % [:copper]) ut/player-hand)
+                                                {:max 1})))})
+
 (def smithy {:name      :smithy :set :dominion :type #{:action} :cost 4
              :action-fn (fn smithy-action [game player-no]
                           (-> game
@@ -110,7 +122,6 @@
 ;; ONE CHOICE
 (def vassal {:name :vassal :set :dominion :type #{:action} :cost 3})
 (def workshop {:name :workshop :set :dominion :type #{:action} :cost 3})
-(def moneylender {:name :moneylender :set :dominion :type #{:action} :cost 4})
 (def poacher {:name :poacher :set :dominion :type #{:action} :cost 4})
 (def throne-room {:name :throne-room :set :dominion :type #{:action} :cost 4})
 
@@ -142,6 +153,7 @@
                     market
                     merchant
                     moat
+                    moneylender
                     smithy
                     village
                     witch])
