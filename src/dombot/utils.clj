@@ -20,3 +20,26 @@
   (->> coll
        (map key)
        frequencies))
+
+(defn get-pile-idx [game card-name]
+  (->> game
+       :supply
+       (keep-indexed (fn [idx pile]
+                       (when ((comp #{card-name} :name :card) pile) (merge pile {:idx idx}))))
+       first))
+
+(defn get-card-idx [player area card-name]
+  (->> player
+       area
+       (keep-indexed (fn [idx {:keys [name] :as card}]
+                       (when (= card-name name) {:idx idx :card card})))
+       first))
+
+(defn player-hand [game player-no]
+  (-> (get-in game [:players player-no :hand])
+      (frequencies-of :name)))
+
+(defn player-discard [game player-no]
+  (-> (get-in game [:players player-no :discard])
+      (frequencies-of :name)))
+

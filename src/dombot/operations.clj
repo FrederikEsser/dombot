@@ -10,27 +10,18 @@
    (-> game
        (update-in [:players player-no] start-round))))
 
-(defn get-pile-idx [game card-name]
-  (->> game
-       :supply
-       (keep-indexed (fn [idx pile]
-                       (when ((comp #{card-name} :name :card) pile) (merge pile {:idx idx}))))
-       first))
-
 (defn gain [game player-no card-name]
-  (let [{:keys [idx card]} (get-pile-idx game card-name)
+  (let [{:keys [idx card]} (ut/get-pile-idx game card-name)
         pile-size (get-in game [:supply idx :pile-size])]
     (assert pile-size)
-    (if (< 0 pile-size)
-      (-> game
-          (update-in [:supply idx :pile-size] dec)
-          (update-in [:players player-no :discard] concat [card]))
-      game)))
+    (cond-> game
+            (< 0 pile-size) (-> (update-in [:supply idx :pile-size] dec)
+                                (update-in [:players player-no :discard] concat [card])))))
 
 (defn buy-card [game player-no card-name]
   (let [{:keys [buys coins]} (get-in game [:players player-no])
         {{:keys [cost]} :card
-         pile-size      :pile-size} (get-pile-idx game card-name)]
+         pile-size      :pile-size} (ut/get-pile-idx game card-name)]
     (assert (and buys (> buys 0)))
     (assert (and coins cost (>= coins cost)))
     (assert (and pile-size (< 0 pile-size)))
@@ -76,23 +67,17 @@
    (-> game
        (update-in [:players player-no] clean-up))))
 
-(defn get-card-idx [player area card-name]
-  (->> player
-       area
-       (keep-indexed (fn [idx {:keys [name] :as card}]
-                       (when (= card-name name) {:idx idx :card card})))
-       first))
-
-(defn move-card [player card-name from to & [position]]
-  (let [{:keys [idx card]} (get-card-idx player from card-name)
-        add-card (fn [area card']
-                   (case position
-                     :top (concat [card'] area)
-                     (concat area [card'])))]
+(defn move-card [game player-no card-name from to & [position]]
+  (let [player (get-in game [:players player-no])
+        {:keys [idx card]} (ut/get-card-idx player from card-name)
+        add-card-to-coll (fn [coll card']
+                           (case position
+                             :top (concat [card'] coll)
+                             (concat coll [card'])))]
     (assert card)
-    (-> player
-        (update from ut/vec-remove idx)
-        (update to add-card card))))
+    (-> game
+        (update-in [:players player-no from] ut/vec-remove idx)
+        (update-in [:players player-no to] add-card-to-coll card))))
 
 (defn apply-triggers [game player-no trigger-id]
   (let [{:keys [triggers]} (get-in game [:players player-no])
@@ -103,14 +88,14 @@
 
 (defn play [game player-no card-name]
   (let [{:keys [actions triggers] :as player} (get-in game [:players player-no])
-        {{:keys [type action-fn coin-value]} :card} (get-card-idx player :hand card-name)]
+        {{:keys [type action-fn coin-value]} :card} (ut/get-card-idx player :hand card-name)]
     (assert type)
     (cond
       (:action type) (assert (and action-fn actions (< 0 actions)))
       (:treasure type) (assert coin-value)
       :else (assert false))
     (-> game
-        (update-in [:players player-no] move-card card-name :hand :play-area)
+        (move-card player-no card-name :hand :play-area)
         (cond->
           (:action type) (update-in [:players player-no :actions] - 1)
           action-fn (action-fn player-no)
@@ -132,10 +117,20 @@
             game
             other-player-nos)))
 
+(defn give-choice [game player-no choice-fn choices-fn & [opts]]
+  (let [choices (choices-fn game player-no)]
+    (cond-> game
+            (not-empty choices) (assoc-in [:players player-no :choice] (merge {:choice-fn choice-fn
+                                                                               :choices   choices}
+                                                                              opts)))))
+
 (defn chose [game player-no picked-choice]
-  (let [{{:keys [choice-fn choices you-may?]} :choice} (get-in game [:players player-no])]
+  (let [{{:keys [choice-fn choices]} :choice} (get-in game [:players player-no])]
     (assert choice-fn)
-    (assert (and (set choices) (or you-may? (choices picked-choice))))
+    #_(assert (not-empty choices))
+    #_(assert (and (not-empty choices) (or you-may?
+                                           (and (keyword? picked-choice) (choices picked-choice))
+                                           (and (coll? picked-choice) (clojure.set/subset?)))))
     (-> game
         (choice-fn player-no picked-choice)
         (update-in [:players player-no] dissoc :choice))))
@@ -153,7 +148,7 @@
          (apply + 0))))
 
 (defn game-ended? [{:keys [supply] :as game}]
-  (let [{:keys [pile-size]} (get-pile-idx game :province)
+  (let [{:keys [pile-size]} (ut/get-pile-idx game :province)
         empty-piles (->> supply
                          (filter (comp zero? :pile-size)))]
     (or (zero? pile-size)

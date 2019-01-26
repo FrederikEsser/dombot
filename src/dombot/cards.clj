@@ -1,6 +1,7 @@
 (ns dombot.cards
-  (:require [dombot.operations :refer [draw gain do-for-other-players move-card]]
-            [dombot.utils :refer [mapv-indexed]]))
+  (:require [dombot.operations :refer [draw gain do-for-other-players move-card give-choice]]
+            [dombot.utils :refer [mapv-indexed]]
+            [dombot.utils :as ut]))
 
 (def curse {:name :curse :type #{:curse} :cost 0 :victory-points -1})
 (def estate {:name :estate :type #{:victory} :cost 2 :victory-points 1})
@@ -9,6 +10,17 @@
 (def copper {:name :copper :type #{:treasure} :cost 0 :coin-value 1})
 (def silver {:name :silver :type #{:treasure} :cost 3 :coin-value 2})
 (def gold {:name :gold :type #{:treasure} :cost 6 :coin-value 3})
+
+(defn cellar-sift [game player-no card-names]
+  (-> (reduce (fn [game card-name] (move-card game player-no card-name :hand :discard)) game card-names)
+      (update-in [:players player-no] draw (count card-names))))
+
+(def cellar {:name      :cellar :set :dominion :type #{:action} :cost 2
+             :action-fn (fn cellar-action [game player-no]
+                          (let [{:keys [hand]} (get-in game [:players player-no])]
+                            (-> game
+                                (update-in [:players player-no :actions] + 1)
+                                (give-choice player-no cellar-sift ut/player-hand))))})
 
 (def council-room {:name      :council-room :set :dominion :type #{:action} :cost 5
                    :action-fn (fn council-room-action [game player-no]
@@ -28,24 +40,16 @@
               :victory-points (fn [cards]
                                 (Math/floorDiv (int (count cards)) (int 10)))})
 
-(defn harbinger-topdeck [game player-no card-name]
+(defn discard?->topdeck [game player-no card-name]
   (cond-> game
-          card-name (update-in [:players player-no] move-card card-name :discard :deck :top)))
-
-(defn give-harbinger-choice [{:keys [discard] :as player}]
-  (cond-> player
-          (not-empty discard) (assoc :choice {:choice-fn harbinger-topdeck
-                                              :choices   (->> discard
-                                                              (map :name)
-                                                              set)
-                                              :you-may?  true})))
+          card-name (move-card player-no card-name :discard :deck :top)))
 
 (def harbinger {:name      :harbinger :set :dominion :type #{:action} :cost 3
                 :action-fn (fn harbinger-action [game player-no]
                              (-> game
                                  (draw player-no 1)
                                  (update-in [:players player-no :actions] + 1)
-                                 (update-in [:players player-no] give-harbinger-choice)))})
+                                 (give-choice player-no discard?->topdeck ut/player-discard {:max 1})))})
 
 (def laboratory {:name      :laboratory :set :dominion :type #{:action} :cost 5
                  :action-fn (fn laboratory-action [game player-no]
@@ -73,11 +77,6 @@
                                 (update-in [:players player-no :actions] + 1)
                                 (update-in [:players player-no :triggers] concat [merchant-trigger])))})
 
-(def moat {:name      :moat :set :dominion :type #{:action :reaction} :cost 2
-           :action-fn (fn moat-action [game player-no]
-                        (-> game
-                            (draw player-no 2)))})
-
 (def smithy {:name      :smithy :set :dominion :type #{:action} :cost 4
              :action-fn (fn smithy-action [game player-no]
                           (-> game
@@ -101,21 +100,31 @@
                                   (update-in [:players player-no :coins] + 2)
                                   (update-in [:players player-no :buys] + 1)))})
 
-(def cellar {:name :cellar :set :dominion :type #{:action} :cost 2})
+;; ONE CHOICE
 (def chapel {:name :chapel :set :dominion :type #{:action} :cost 2})
 (def vassal {:name :vassal :set :dominion :type #{:action} :cost 3})
 (def workshop {:name :workshop :set :dominion :type #{:action} :cost 3})
-(def bureaucrat {:name :bureaucrat :set :dominion :type #{:action :attack} :cost 4})
-(def militia {:name :militia :set :dominion :type #{:action} :cost 4})
 (def moneylender {:name :moneylender :set :dominion :type #{:action} :cost 4})
 (def poacher {:name :poacher :set :dominion :type #{:action} :cost 4})
 (def remodel {:name :remodel :set :dominion :type #{:action} :cost 4})
 (def throne-room {:name :throne-room :set :dominion :type #{:action} :cost 4})
+
+;; ATTACK WITH CHOICE
+(def bureaucrat {:name :bureaucrat :set :dominion :type #{:action :attack} :cost 4})
+(def militia {:name :militia :set :dominion :type #{:action} :cost 4})
 (def bandit {:name :bandit :set :dominion :type #{:action} :cost 5})
+
+;; MULTI CHOICES
 (def library {:name :library :set :dominion :type #{:action} :cost 5})
 (def mine {:name :mine :set :dominion :type #{:action} :cost 5})
 (def sentry {:name :sentry :set :dominion :type #{:action} :cost 5})
 (def artisan {:name :artisan :set :dominion :type #{:action} :cost 6})
+
+;; REACTION
+(def moat {:name      :moat :set :dominion :type #{:action :reaction} :cost 2
+           :action-fn (fn moat-action [game player-no]
+                        (-> game
+                            (draw player-no 2)))})
 
 (def kingdom-cards [council-room
                     festival
