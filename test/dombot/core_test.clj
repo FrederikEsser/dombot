@@ -895,19 +895,6 @@
     (is (game-ended? {:supply (concat [{:card province :pile-size 1}] (repeat 4 {:pile-size 0}))}))))
 
 (deftest view-test
-  (testing "View player"
-    (is (= (view-player {:hand      [{:name :copper} {:name :copper} {:name :copper} estate estate]
-                         :play-area []
-                         :deck      [{:name :copper} {:name :copper} {:name :copper} {:name :copper} estate]
-                         :discard   []})
-           {:hand           {:copper 3 :estate 2}
-            :play-area      {}
-            :deck           5
-            :discard        0
-            :victory-points 3})))
-  (testing "View supply"
-    (is (= (view-supply (base-supply 2 8))
-           {:copper 46 :silver 40 :gold 30 :estate 8 :duchy 8 :province 8 :curse 10})))
   (testing "View game"
     (is (= (view-game {:supply         (base-supply 2 8)
                        :players        [{:hand      [{:name :copper} {:name :copper} {:name :copper} estate estate]
@@ -916,11 +903,17 @@
                                          :discard   []}]
                        :trash          [{:name :estate} {:name :estate} {:name :copper}]
                        :current-player 0})
-           {:supply         {:copper 46 :silver 40 :gold 30 :estate 8 :duchy 8 :province 8 :curse 10}
+           {:supply         [{:card :curse :price 0 :count 10}
+                             {:card :copper :price 0 :count 46}
+                             {:card :silver :price 3 :count 40}
+                             {:card :gold :price 6 :count 30}
+                             {:card :estate :price 2 :count 8}
+                             {:card :duchy :price 5 :count 8}
+                             {:card :province :price 8 :count 8}]
             :player         {:hand           {:copper 3 :estate 2}
                              :play-area      {}
                              :deck           5
-                             :discard        0
+                             :discard        :empty
                              :victory-points 3}
             :trash          {:copper 1 :estate 2}
             :current-player 0})))

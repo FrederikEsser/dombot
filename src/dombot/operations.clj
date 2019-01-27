@@ -223,12 +223,22 @@
     (or (zero? pile-size)
         (>= (count empty-piles) 3))))
 
+(defn view-discard [discard]
+  (if (empty? discard)
+    :empty
+    (let [size (count discard)
+          variance (Math/round (/ size 4.0))]
+      {:top         (-> discard last :name)
+       :approx-size (- (+ size
+                          (rand-int (inc (* 2 variance))))
+                       variance)})))
+
 (defn view-player [{[{:keys [options]}] :play-stack :as player}]
   (-> player
       (update :hand ut/frequencies-of :name)
       (update :play-area ut/frequencies-of :name)
       (update :deck count)
-      (update :discard count)
+      (update :discard view-discard)
       (cond-> options (assoc :options options))
       (dissoc :play-stack)
       (dissoc :triggers)
@@ -241,9 +251,10 @@
 
 (defn view-supply [supply]
   (->> supply
-       (map (fn [{:keys [card pile-size]}]
-              [(:name card) pile-size]))
-       (into {})))
+       (sort-by (comp (juxt (comp first :type) :cost :name) :card))
+       (map (fn [{{:keys [name cost]} :card
+                  :keys               [pile-size]}]
+              {:card name :price cost :count pile-size}))))
 
 (defn view-game [{:keys [supply players trash current-player] :as game}]
   (if (game-ended? game)
