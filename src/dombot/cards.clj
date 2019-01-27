@@ -1,5 +1,5 @@
 (ns dombot.cards
-  (:require [dombot.operations :refer [draw gain do-for-other-players move-card give-choice]]
+  (:require [dombot.operations :refer [draw gain do-for-other-players move-card give-choice push-play-stack]]
             [dombot.utils :refer [mapv-indexed]]
             [dombot.utils :as ut]))
 
@@ -109,9 +109,8 @@
       (assert (:action type) (str "Play error: " (ut/format-name card-name) " is not an Action."))
       (assert action-fn (str "Play error: " (ut/format-name card-name) " has no action function."))
       (-> game
-          #_(update-in [:players player-no :play-stack] (partial concat [card]))
+          (push-play-stack player-no card)
           (move-card player-no card-name :hand :play-area)
-          (action-fn player-no)
           (action-fn player-no)))
     game))
 
@@ -179,6 +178,7 @@
                     moat
                     moneylender
                     smithy
+                    throne-room
                     village
                     witch
                     workshop])

@@ -484,20 +484,53 @@
                        :play-area  [throne-room]
                        :actions    0
                        :play-stack []}]}))
-    #_(is (= (-> {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
-                           :hand    [throne-room throne-room market {:name :copper}]
+    (is (= (-> {:players [{:deck    [witch copper copper silver]
+                           :hand    [throne-room throne-room merchant]
                            :actions 1}]}
                (play 0 :throne-room)
                (chose 0 :throne-room))
-           {:players [{:deck       [{:name :copper} {:name :copper} {:name :copper}]
-                       :hand       [market {:name :copper}]
+           {:players [{:deck       [witch copper copper silver]
+                       :hand       [merchant]
                        :play-area  [throne-room throne-room]
                        :actions    0
                        :play-stack [{:choice-fn play-action-twice
-                                     :options   [:market]
+                                     :options   [:merchant]
                                      :max       1}
-                                    throne-room]}]}))))
-
+                                    throne-room]}]}))
+    (is (= (-> {:players [{:deck    [witch copper copper silver]
+                           :hand    [throne-room throne-room merchant]
+                           :actions 1}]}
+               (play 0 :throne-room)
+               (chose 0 :throne-room)
+               (chose 0 :merchant))
+           {:players [{:deck       [copper silver]
+                       :hand       [witch copper]
+                       :play-area  [throne-room throne-room merchant]
+                       :triggers   [merchant-trigger merchant-trigger]
+                       :play-stack [{:choice-fn play-action-twice
+                                     :options   [:witch]
+                                     :max       1}]
+                       :actions    2}]}))
+    (is (= (-> {:supply [{:card curse :pile-size 10}]
+                :players [{:deck    [witch copper copper silver]
+                           :hand    [throne-room throne-room merchant]
+                           :actions 1
+                           :coins 0}
+                          {}]}
+               (play 0 :throne-room)
+               (chose 0 :throne-room)
+               (chose 0 :merchant)
+               (chose 0 :witch)
+               (play-treasures 0))
+           {:supply [{:card curse :pile-size 8}]
+            :players [{:deck       []
+                       :hand       []
+                       :play-area  [throne-room throne-room merchant witch copper copper silver]
+                       :play-stack []
+                       :triggers  []
+                       :actions    2
+                       :coins 6}
+                      {:discard [curse curse]}]}))))
 (deftest village-test
   (testing "Village"
     (is (= (play {:players [{:deck    [{:name :copper} {:name :copper}]

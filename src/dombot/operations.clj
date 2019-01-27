@@ -124,13 +124,18 @@
             game
             other-player-nos)))
 
+(defn push-play-stack [game player-no item]
+  (update-in game [:players player-no :play-stack] (partial concat [item])))
+
+(defn pop-play-stack [game player-no]
+  (update-in game [:players player-no :play-stack] (partial drop 1)))
+
 (defn give-choice [game player-no choice-fn options-fn & [args]]
   (let [options (options-fn game player-no)]
     (cond-> game
-            (not-empty options) (update-in [:players player-no :play-stack]
-                                           (partial concat [(merge {:choice-fn choice-fn
-                                                                    :options   options}
-                                                                   args)])))))
+            (not-empty options) (push-play-stack player-no (merge {:choice-fn choice-fn
+                                                                   :options   options}
+                                                                  args)))))
 
 (defn- chose-single [game player-no selection]
   (if (coll? selection)
@@ -145,7 +150,7 @@
       (assert ((set options) single-selection) (str "Chose error: " (ut/format-name single-selection) " is not a valid choice.")))
 
     (-> game
-        (update-in [:players player-no :play-stack] (partial drop 1))
+        (pop-play-stack player-no)
         (choice-fn player-no single-selection))))
 
 (defn- chose-multi [game player-no selection]
@@ -165,18 +170,26 @@
       (assert (valid-choices sel) (str "Chose error: " (ut/format-name sel) " is not a valid choice.")))
 
     (-> game
-        (update-in [:players player-no :play-stack] (partial drop 1))
+        (pop-play-stack player-no)
         (choice-fn player-no multi-selection))))
 
+(defn check-stack [game player-no]
+  (let [{[{:keys [action-fn]}] :play-stack} (get-in game [:players player-no])]
+    (cond-> game
+            action-fn (-> (pop-play-stack player-no)
+                          (action-fn player-no)
+                          (check-stack player-no)))))
+
 (defn chose [game player-no selection]
-  (let [{[{:keys [choice-fn options min max]}] :play-stack} (get-in game [:players player-no])]
+  (let [{[{:keys [choice-fn options min max]}] :play-stack} (get-in game [:players player-no])
+        chose-fn (if (= max 1) chose-single chose-multi)]
     (assert choice-fn "Chose error: You don't have a choice to make.")
     (assert (not-empty options) "Chose error: Choice has no options")
     (assert (or (nil? min) (nil? max) (<= min max)))
 
-    (if (= max 1)
-      (chose-single game player-no selection)
-      (chose-multi game player-no selection))))
+    (-> game
+        (chose-fn player-no selection)
+        (check-stack player-no))))
 
 (defn- get-victory-points [cards {:keys [victory-points]}]
   (if (fn? victory-points)
