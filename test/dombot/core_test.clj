@@ -328,14 +328,6 @@
                        :play-area  [harbinger]
                        :actions    1
                        :play-stack []}]}))
-    (is (thrown-with-msg? AssertionError #"Chose error: Gold is not a valid choice."
-                          (-> {:players [{:hand      [harbinger]
-                                          :deck      [{:name :copper} {:name :copper} {:name :copper}]
-                                          :discard   [{:name :estate}]
-                                          :play-area []
-                                          :actions   1}]}
-                              (play 0 :harbinger)
-                              (chose 0 :gold))))
     (is (= (-> {:players [{:hand    [harbinger]
                            :deck    [{:name :copper} {:name :copper} {:name :copper}]
                            :actions 1}]}
@@ -707,7 +699,15 @@
                        :discard    [silver]
                        :play-area  [workshop]
                        :actions    0
-                       :play-stack []}]}))))
+                       :play-stack []}]}))
+    (is (= (-> {:supply  [{:card province :pile-size 8}]
+                :players [{:hand    [workshop copper]
+                           :actions 1}]}
+               (play 0 :workshop))
+           {:supply  [{:card province :pile-size 8}]
+            :players [{:hand      [copper]
+                       :play-area [workshop]
+                       :actions   0}]}))))
 
 (deftest chose-test
   (testing "No/invalid choice"

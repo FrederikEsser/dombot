@@ -185,17 +185,17 @@
 ;; ONE CHOICE
 (def poacher {:name :poacher :set :dominion :type #{:action} :cost 4})
 
-;; ATTACK WITH CHOICE
-(def bureaucrat {:name :bureaucrat :set :dominion :type #{:action :attack} :cost 4})
-(def militia {:name :militia :set :dominion :type #{:action} :cost 4})
-(def bandit {:name :bandit :set :dominion :type #{:action} :cost 5})
-
 ;; MULTI CHOICES
 (def remodel {:name :remodel :set :dominion :type #{:action} :cost 4})
 (def mine {:name :mine :set :dominion :type #{:action} :cost 5})
 (def sentry {:name :sentry :set :dominion :type #{:action} :cost 5})
 (def artisan {:name :artisan :set :dominion :type #{:action} :cost 6})
 (def library {:name :library :set :dominion :type #{:action} :cost 5})
+
+;; ATTACK WITH CHOICE
+(def bandit {:name :bandit :set :dominion :type #{:action} :cost 5})
+(def militia {:name :militia :set :dominion :type #{:action} :cost 4})
+(def bureaucrat {:name :bureaucrat :set :dominion :type #{:action :attack} :cost 4})
 
 ;; REACTION
 (def moat {:name      :moat :set :dominion :type #{:action :reaction} :cost 2
