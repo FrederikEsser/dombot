@@ -135,7 +135,7 @@
                          :play-area [chapel]
                          :actions   0
                          :choice    {:choice-fn trash
-                                     :choices   {:copper 1 :estate 3}
+                                     :options   {:copper 1 :estate 3}
                                      :max       4}}]}))
       (is (= (-> {:players [{:hand    [chapel {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
                              :actions 1}]}
@@ -152,7 +152,7 @@
              {:players [{:hand      [{:name :copper} {:name :estate} {:name :estate} {:name :estate}]
                          :play-area [chapel]
                          :actions   0}]}))
-      (is (thrown-with-msg? AssertionError #"Chose error: You can only pick 4 items."
+      (is (thrown-with-msg? AssertionError #"Chose error: You can only pick 4 options."
                             (-> {:players [{:hand    (concat [chapel] (repeat 5 {:name :copper}))
                                             :actions 1}]}
                                 (play 0 :chapel)
@@ -167,7 +167,7 @@
                          :deck      (repeat 5 {:name :copper})
                          :actions   1
                          :choice    {:choice-fn cellar-sift
-                                     :choices   {:copper 1 :estate 3}}}]}))
+                                     :options   {:copper 1 :estate 3}}}]}))
       (is (= (-> {:players [{:hand    [cellar {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
                              :deck    (repeat 5 {:name :copper})
                              :actions 1}]}
@@ -241,7 +241,7 @@
                          :play-area [harbinger]
                          :actions   1
                          :choice    {:choice-fn harbinger-topdeck
-                                     :choices   {:gold 1}
+                                     :options   {:gold 1}
                                      :max       1}}]}))
       (is (= (-> {:players [{:hand    [harbinger]
                              :deck    [{:name :copper} {:name :copper} {:name :copper}]
@@ -280,15 +280,7 @@
              {:players [{:hand      [{:name :copper}]
                          :deck      [{:name :copper} {:name :copper}]
                          :play-area [harbinger]
-                         :actions   1}]}))
-      (is (thrown-with-msg? AssertionError #"Chose error: You don't have a choice to make."
-                            (-> {:players [{:hand      [harbinger]
-                                            :deck      [{:name :copper} {:name :copper} {:name :copper}]
-                                            :discard   []
-                                            :play-area []
-                                            :actions   1}]}
-                                (play 0 :harbinger)
-                                (chose 0 nil)))))
+                         :actions   1}]})))
     (testing "Laboratory"
       (is (= (play {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
                                :hand    [laboratory]
@@ -387,7 +379,7 @@
                          :play-area [moneylender]
                          :actions   0
                          :choice    {:choice-fn moneylender-trash
-                                     :choices   {:copper 2}
+                                     :options   {:copper 2}
                                      :max       1}}]}))
       (is (= (-> {:players [{:hand    [moneylender {:name :copper} {:name :copper} {:name :estate}]
                              :actions 1
@@ -411,19 +403,7 @@
                  (play 0 :moneylender))
              {:players [{:hand      [{:name :estate}]
                          :play-area [moneylender]
-                         :actions   0}]}))
-      (is (thrown-with-msg? AssertionError #"Chose error: Estate is not a valid choice."
-                            (-> {:players [{:hand    [moneylender {:name :copper} {:name :copper} {:name :estate}]
-                                            :actions 1
-                                            :coins   0}]}
-                                (play 0 :moneylender)
-                                (chose 0 :estate))))
-      #_(is (thrown-with-msg? AssertionError #"Chose error: You can only pick 1 items."
-                              (-> {:players [{:hand    [moneylender {:name :copper} {:name :copper} {:name :estate}]
-                                              :actions 1
-                                              :coins   0}]}
-                                  (play 0 :moneylender)
-                                  (chose 0 [:copper :copper])))))
+                         :actions   0}]})))
     (testing "Smithy"
       (is (= (play {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
                                :hand    [smithy]
@@ -478,7 +458,7 @@
                          :play-area [workshop]
                          :actions   0
                          :choice    {:choice-fn gain
-                                     :choices   {:curse 10 :copper 46 :silver 40 :estate 8}
+                                     :options   {:curse 10 :copper 46 :silver 40 :estate 8}
                                      :min       1
                                      :max       1}}]}))
       (is (= (-> {:supply  [{:card silver :pile-size 40}]
@@ -491,6 +471,102 @@
                          :discard   [silver]
                          :play-area [workshop]
                          :actions   0}]})))))
+
+(deftest chose-test
+  (testing "No/invalid choice"
+    (is (thrown-with-msg? AssertionError #"Chose error: You don't have a choice to make."
+                          (chose {:players [{}]} 0 :copper)))
+    (is (thrown-with-msg? AssertionError #"Chose error: Choice has no choice function"
+                          (chose {:players [{:choice {:options {:copper 1}}}]} 0 :copper)))
+    (is (thrown-with-msg? AssertionError #"Chose error: Choice has no options"
+                          (chose {:players [{:choice {:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)}}]} 0 :copper))))
+  (testing "Optional single choice"
+    (is (= (chose {:players [{:choice {:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+                                       :options   {:copper 1}
+                                       :max       1}}]}
+                  0 nil)
+           {:players [{:chosen nil}]}))
+    (is (= (chose {:players [{:choice {:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+                                       :options   {:copper 1}
+                                       :max       1}}]}
+                  0 :copper)
+           {:players [{:chosen :copper}]}))
+    (is (= (chose {:players [{:choice {:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+                                       :options   {:copper 1}
+                                       :max       1}}]}
+                  0 [])
+           {:players [{:chosen nil}]}))
+    (is (= (chose {:players [{:choice {:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+                                       :options   {:copper 1}
+                                       :max       1}}]}
+                  0 [:copper])
+           {:players [{:chosen :copper}]}))
+    (is (thrown-with-msg? AssertionError #"Chose error: You can only pick 1 option."
+                          (chose {:players [{:choice {:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+                                                      :options   {:copper 2}
+                                                      :max       1}}]}
+                                 0 [:copper :copper])))
+    (is (thrown-with-msg? AssertionError #"Chose error: Estate is not a valid choice."
+                          (chose {:players [{:choice {:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+                                                      :options   {:copper 1}
+                                                      :max       1}}]}
+                                 0 :estate))))
+  (testing "Mandatory single choice"
+    (is (thrown-with-msg? AssertionError #"Chose error: You must pick an option"
+                          (chose {:players [{:choice {:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+                                                      :options   {:copper 1}
+                                                      :min       1
+                                                      :max       1}}]}
+                                 0 nil)))
+    (is (= (chose {:players [{:choice {:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+                                       :options   {:copper 1}
+                                       :min       1
+                                       :max       1}}]}
+                  0 :copper)
+           {:players [{:chosen :copper}]}))
+    (is (thrown-with-msg? AssertionError #"Chose error: You must pick an option"
+                          (chose {:players [{:choice {:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+                                                      :options   {:copper 1}
+                                                      :min       1
+                                                      :max       1}}]}
+                                 0 [])))
+    (is (= (chose {:players [{:choice {:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+                                       :options   {:copper 1}
+                                       :min       1
+                                       :max       1}}]}
+                  0 [:copper])
+           {:players [{:chosen :copper}]}))
+    (is (thrown-with-msg? AssertionError #"Chose error: You can only pick 1 option."
+                          (chose {:players [{:choice {:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+                                                      :options   {:copper 2}
+                                                      :min       1
+                                                      :max       1}}]}
+                                 0 [:copper :copper]))))
+  (testing "Multi choice"
+    (is (= (chose {:players [{:choice {:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+                                                      :options   {:copper 1}}}]}
+                                 0 nil)
+           {:players [{:chosen []}]}))
+    (is (= (chose {:players [{:choice {:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+                                       :options   {:copper 1}}}]}
+                  0 :copper)
+           {:players [{:chosen [:copper]}]}))
+    (is (= (chose {:players [{:choice {:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+                                                      :options   {:copper 1}}}]}
+                                 0 [])
+           {:players [{:chosen []}]}))
+    (is (= (chose {:players [{:choice {:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+                                       :options   {:copper 1}}}]}
+                  0 [:copper])
+           {:players [{:chosen [:copper]}]}))
+    (is (= (chose {:players [{:choice {:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+                                                      :options   {:copper 2}}}]}
+                                 0 [:copper :copper])
+           {:players [{:chosen [:copper :copper]}]}))
+    (is (thrown-with-msg? AssertionError #"Chose error: Estate is not a valid choice."
+                          (chose {:players [{:choice {:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+                                                      :options   {:copper 1}}}]}
+                                 0 [:copper :estate :silver])))))
 
 (deftest buy-test
   (testing "Buying a card"

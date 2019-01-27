@@ -124,28 +124,60 @@
             game
             other-player-nos)))
 
-(defn give-choice [game player-no choice-fn choices-fn & [opts]]
-  (let [choices (choices-fn game player-no)]
+(defn give-choice [game player-no choice-fn options-fn & [args]]
+  (let [options (options-fn game player-no)]
     (cond-> game
-            (not-empty choices) (assoc-in [:players player-no :choice] (merge {:choice-fn choice-fn
-                                                                               :choices   choices}
-                                                                              opts)))))
+            (not-empty options) (assoc-in [:players player-no :choice] (merge {:choice-fn choice-fn
+                                                                               :options   options}
+                                                                              args)))))
 
-(defn chose [game player-no picked-choice]
-  (let [{{:keys [choice-fn choices max] :as choice} :choice} (get-in game [:players player-no])
-        valid-choices (-> choices keys set)]
-    (assert choice "Chose error: You don't have a choice to make.")
-    (when (and max (> max 1))
-      (assert (<= (count picked-choice) max) (str "Chose error: You can only pick " max " items.")))
-    (when (keyword? picked-choice)
-      (assert (valid-choices picked-choice) (str "Chose error: " (ut/format-name picked-choice) " is not a valid choice.")))
-    #_(assert (not-empty choices))
-    #_(assert (and (not-empty choices) (or you-may?
-                                           (and (keyword? picked-choice) (choices picked-choice))
-                                           (and (coll? picked-choice) (clojure.set/subset?)))))
+(defn- chose-single [game player-no selection]
+  (if (coll? selection)
+    (assert (<= (count selection) 1) "Chose error: You can only pick 1 option."))
+  (let [{{:keys [choice-fn options min]} :choice} (get-in game [:players player-no])
+        valid-choices (-> options keys set)
+        single-selection (if (coll? selection)
+                           (first selection)
+                           selection)]
+    (if (= min 1)
+      (assert single-selection "Chose error: You must pick an option"))
+    (when single-selection
+      (assert (valid-choices single-selection) (str "Chose error: " (ut/format-name single-selection) " is not a valid choice.")))
+
     (-> game
-        (choice-fn player-no picked-choice)
-        (update-in [:players player-no] dissoc :choice))))
+        (update-in [:players player-no] dissoc :choice)
+        (choice-fn player-no single-selection))))
+
+(defn- chose-multi [game player-no selection]
+  (let [{{:keys [choice-fn options min max]} :choice} (get-in game [:players player-no])
+        valid-choices (-> options keys set)
+        multi-selection (if (coll? selection)
+                          selection
+                          (if selection
+                            [selection]
+                            []))]
+
+    (when min
+      (assert (<= min (count multi-selection)) (str "Chose error: You must pick at least " min " options.")))
+    (when max
+      (assert (<= (count multi-selection) max) (str "Chose error: You can only pick " max " options.")))
+    (doseq [sel multi-selection]
+      (assert (valid-choices sel) (str "Chose error: " (ut/format-name sel) " is not a valid choice.")))
+
+    (-> game
+        (update-in [:players player-no] dissoc :choice)
+        (choice-fn player-no multi-selection))))
+
+(defn chose [game player-no selection]
+  (let [{{:keys [choice-fn options min max] :as choice} :choice} (get-in game [:players player-no])]
+    (assert choice "Chose error: You don't have a choice to make.")
+    (assert choice-fn "Chose error: Choice has no choice function")
+    (assert (not-empty options) "Chose error: Choice has no options")
+    (assert (or (nil? min) (nil? max) (<= min max)))
+
+    (if (= max 1)
+      (chose-single game player-no selection)
+      (chose-multi game player-no selection))))
 
 (defn- get-victory-points [cards {:keys [victory-points]}]
   (if (fn? victory-points)
@@ -172,7 +204,7 @@
       (update :play-area ut/frequencies-of :name)
       (update :deck count)
       (update :discard count)
-      (cond-> choice (assoc :choices (:choices choice)))
+      (cond-> choice (assoc :options (:options choice)))
       (dissoc :choice)
       (dissoc :triggers)
       (assoc :victory-points (calc-victory-points player))))

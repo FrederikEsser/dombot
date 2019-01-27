@@ -5,11 +5,9 @@
 
 ; todo:
 ; unit tests for do-for-other-players, give-choice, chose, gardens, calc-victory-points
-; make `chose` accept lists & single keywords
 ; undo
 ; restricted view of discard
 ; phases
-; reactions
 
 (defonce game-state (atom {}))
 
