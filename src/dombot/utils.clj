@@ -56,3 +56,12 @@
   (-> (get-in game [:players player-no :discard])
       (frequencies-of :name)))
 
+(defn supply-piles [max-cost {:keys [supply]} player-no]
+  (->> supply
+       (keep (fn [{{:keys [name cost]} :card
+                   pile-size           :pile-size}]
+               (when (and (<= cost max-cost)
+                          (< 0 pile-size))
+                 [name pile-size])))
+       (into {})))
+

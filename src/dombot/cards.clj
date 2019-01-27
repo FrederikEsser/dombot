@@ -119,9 +119,13 @@
                                   (update-in [:players player-no :coins] + 2)
                                   (update-in [:players player-no :buys] + 1)))})
 
+(def workshop {:name      :workshop :set :dominion :type #{:action} :cost 3
+               :action-fn (fn workshop-action [game player-no]
+                            (-> game
+                                (give-choice player-no gain (partial ut/supply-piles 4) {:min 1 :max 1})))})
+
 ;; ONE CHOICE
 (def vassal {:name :vassal :set :dominion :type #{:action} :cost 3})
-(def workshop {:name :workshop :set :dominion :type #{:action} :cost 3})
 (def poacher {:name :poacher :set :dominion :type #{:action} :cost 4})
 (def throne-room {:name :throne-room :set :dominion :type #{:action} :cost 4})
 
@@ -156,7 +160,8 @@
                     moneylender
                     smithy
                     village
-                    witch])
+                    witch
+                    workshop])
 
 (defn base-supply [number-of-players victory-pile-size]
   [{:card curse :pile-size (* 10 (dec number-of-players))}

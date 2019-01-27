@@ -467,7 +467,30 @@
                          :play-area [woodcutter]
                          :actions   0
                          :coins     2
-                         :buys      2}]})))))
+                         :buys      2}]})))
+    (testing "Workshop"
+      (is (= (play {:supply  (base-supply 2 8)
+                    :players [{:hand    [workshop copper]
+                               :actions 1}]}
+                   0 :workshop)
+             {:supply  (base-supply 2 8)
+              :players [{:hand      [copper]
+                         :play-area [workshop]
+                         :actions   0
+                         :choice    {:choice-fn gain
+                                     :choices   {:curse 10 :copper 46 :silver 40 :estate 8}
+                                     :min       1
+                                     :max       1}}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [workshop copper]
+                             :actions 1}]}
+                 (play 0 :workshop)
+                 (chose 0 :silver))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:hand      [copper]
+                         :discard   [silver]
+                         :play-area [workshop]
+                         :actions   0}]})))))
 
 (deftest buy-test
   (testing "Buying a card"
