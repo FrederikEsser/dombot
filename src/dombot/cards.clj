@@ -136,6 +136,29 @@
                                                 (partial ut/player-hand (comp :action :type))
                                                 {:max 1})))})
 
+(defn play-discard-action [game player-no card-name]
+  (let [{:keys [discard]} (get-in game [:players player-no])
+        {:keys [name action-fn]} (last discard)]
+    (cond-> game
+            (= name card-name) (-> (move-card player-no {:card-name     card-name
+                                                         :from          :discard
+                                                         :from-position :bottom
+                                                         :to            :play-area})
+                                   (action-fn player-no)))))
+
+(def vassal {:name      :vassal :set :dominion :type #{:action} :cost 3
+             :action-fn (fn vassal-action [game player-no]
+                          (-> game
+                              (update-in [:players player-no :coins] + 2)
+                              (move-card player-no {:from          :deck
+                                                    :from-position :top
+                                                    :to            :discard})
+                              ((fn [game]
+                                 (let [{:keys [discard]} (get-in game [:players player-no])
+                                       {:keys [name action-fn]} (last discard)]
+                                   (cond-> game
+                                           action-fn (give-choice player-no play-discard-action (constantly [name]) {:max 1})))))))})
+
 (def village {:name      :village :set :dominion :type #{:action} :cost 3
               :action-fn (fn village-action [game player-no]
                            (-> game
@@ -160,7 +183,6 @@
                                 (give-choice player-no gain (partial ut/supply-piles 4) {:min 1 :max 1})))})
 
 ;; ONE CHOICE
-(def vassal {:name :vassal :set :dominion :type #{:action} :cost 3})
 (def poacher {:name :poacher :set :dominion :type #{:action} :cost 4})
 
 ;; ATTACK WITH CHOICE
@@ -194,6 +216,7 @@
                     moneylender
                     smithy
                     throne-room
+                    vassal
                     village
                     witch
                     workshop])

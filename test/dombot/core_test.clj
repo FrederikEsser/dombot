@@ -575,6 +575,75 @@
                        :actions    2
                        :coins      6}
                       {:discard [curse curse]}]}))))
+
+(deftest vassal-test
+  (testing "Vassal"
+    (is (= (play {:players [{:hand    [vassal]
+                             :deck    [copper]
+                             :actions 1
+                             :coins   0}]}
+                 0 :vassal)
+           {:players [{:hand      []
+                       :play-area [vassal]
+                       :deck      []
+                       :discard   [copper]
+                       :actions   0
+                       :coins     2}]}))
+    (is (= (play {:players [{:hand    [vassal]
+                             :deck    []
+                             :actions 1
+                             :coins   0}]}
+                 0 :vassal)
+           {:players [{:hand      []
+                       :play-area [vassal]
+                       :deck      []
+                       :actions   0
+                       :coins     2}]}))
+    (is (= (play {:players [{:hand    [vassal]
+                             :deck    [market copper]
+                             :discard [market copper]
+                             :actions 1
+                             :coins   0}]}
+                 0 :vassal)
+           {:players [{:hand       []
+                       :play-area  [vassal]
+                       :play-stack [{:choice-fn play-discard-action
+                                     :options   [:market]
+                                     :max       1}]
+                       :deck       [copper]
+                       :discard    [market copper market]
+                       :actions    0
+                       :coins      2}]}))
+    (is (= (-> {:players [{:hand    [vassal]
+                           :deck    [market copper]
+                           :discard [market copper]
+                           :actions 1
+                           :coins   0
+                           :buys    1}]}
+               (play 0 :vassal)
+               (chose 0 :market))
+           {:players [{:hand       [copper]
+                       :play-area  [vassal market]
+                       :play-stack []
+                       :deck       []
+                       :discard    [market copper]
+                       :actions    1
+                       :coins      3
+                       :buys       2}]}))
+    (is (= (-> {:players [{:hand    [vassal]
+                           :deck    [market copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :vassal)
+               (chose 0 nil))
+           {:players [{:hand       []
+                       :play-area  [vassal]
+                       :play-stack []
+                       :deck       [copper]
+                       :discard    [market]
+                       :actions    0
+                       :coins      2}]}))))
+
 (deftest village-test
   (testing "Village"
     (is (= (play {:players [{:deck    [{:name :copper} {:name :copper}]

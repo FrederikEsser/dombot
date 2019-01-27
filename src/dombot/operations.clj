@@ -77,6 +77,7 @@
           (move-card player-no args))
       (let [{:keys [idx card]} (case from-position
                                  :top {:idx 0 :card (first (get player from))}
+                                 :bottom {:idx (dec (count (get player from))) :card (last (get player from))}
                                  (ut/get-card-idx player from card-name))
             from-path (if (= from :trash)
                         [:trash]
