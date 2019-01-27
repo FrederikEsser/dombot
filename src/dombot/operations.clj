@@ -69,20 +69,30 @@
    (-> game
        (update-in [:players player-no] clean-up))))
 
-(defn move-card [game player-no card-name from to & [position]]
-  (let [player (get-in game [:players player-no])
-        {:keys [idx card]} (ut/get-card-idx player from card-name)
-        to-path (if (= to :trash)
-                  [:trash]
-                  [:players player-no to])
-        add-card-to-coll (fn [coll card']
-                           (case position
-                             :top (concat [card'] coll)
-                             (concat coll [card'])))]
-    (assert card (str "Move error: There is no " (ut/format-name card-name) " in your " (ut/format-name from) "."))
-    (-> game
-        (update-in [:players player-no from] ut/vec-remove idx)
-        (update-in to-path add-card-to-coll card))))
+(defn move-card [game player-no {:keys [card-name from to from-position to-position] :as args}]
+  (let [{:keys [deck discard] :as player} (get-in game [:players player-no])]
+    (if (and (= :deck from) (empty? deck) (not-empty discard))
+      (-> game
+          (update-in [:players player-no] shuffle-discard)
+          (move-card player-no args))
+      (let [{:keys [idx card]} (case from-position
+                                 :top {:idx 0 :card (first (get player from))}
+                                 (ut/get-card-idx player from card-name))
+            from-path (if (= from :trash)
+                        [:trash]
+                        [:players player-no from])
+            to-path (if (= to :trash)
+                      [:trash]
+                      [:players player-no to])
+            add-card-to-coll (fn [coll card']
+                               (case to-position
+                                 :top (concat [card'] coll)
+                                 (concat coll [card'])))]
+        (when card-name
+          (assert card (str "Move error: There is no " (ut/format-name card-name) " in your " (ut/format-name from) ".")))
+        (cond-> game
+                card (-> (update-in from-path ut/vec-remove idx)
+                         (update-in to-path add-card-to-coll card)))))))
 
 (defn- apply-triggers [game player-no trigger-id]
   (let [{:keys [triggers]} (get-in game [:players player-no])
@@ -102,7 +112,9 @@
       (:treasure type) (assert coin-value (str "Play error: " (ut/format-name card-name) " has no coin value"))
       :else (assert false (str "Play error: " (ut/format-type type) " cards cannot be played.")))
     (-> game
-        (move-card player-no card-name :hand :play-area)
+        (move-card player-no {:card-name card-name
+                              :from      :hand
+                              :to        :play-area})
         (cond->
           (:action type) (update-in [:players player-no :actions] - 1)
           action-fn (action-fn player-no)

@@ -58,14 +58,58 @@
 
 (deftest move-card-test
   (testing "Playing a card from hand to play-area"
-    (is (= (move-card {:players [{:hand [{:name :smithy}] :play-area []}]} 0 :smithy :hand :play-area)
+    (is (= (move-card {:players [{:hand [{:name :smithy}] :play-area []}]} 0
+                      {:card-name :smithy
+                       :from      :hand
+                       :to        :play-area})
            {:players [{:hand [] :play-area [{:name :smithy}]}]}))
     (is (thrown-with-msg? AssertionError #"Move error: There is no Copper in your Hand"
-                          (move-card {:players [{:hand [{:name :smithy}] :play-area []}]} 0 :copper :hand :play-area)))
-    (is (= (move-card {:players [{:hand [{:name :copper} {:name :smithy}] :play-area []}]} 0 :smithy :hand :play-area)
+                          (move-card {:players [{:hand [{:name :smithy}] :play-area []}]} 0
+                                     {:card-name :copper
+                                      :from      :hand
+                                      :to        :play-area})))
+    (is (= (move-card {:players [{:hand [{:name :copper} {:name :smithy}] :play-area []}]} 0
+                      {:card-name :smithy
+                       :from      :hand
+                       :to        :play-area})
            {:players [{:hand [{:name :copper}] :play-area [{:name :smithy}]}]}))
-    (is (= (move-card {:players [{:hand [{:name :smithy} {:name :smithy}] :play-area []}]} 0 :smithy :hand :play-area)
-           {:players [{:hand [{:name :smithy}] :play-area [{:name :smithy}]}]}))))
+    (is (= (move-card {:players [{:hand [{:name :smithy} {:name :smithy}] :play-area []}]} 0
+                      {:card-name :smithy
+                       :from      :hand
+                       :to        :play-area})
+           {:players [{:hand [{:name :smithy}] :play-area [{:name :smithy}]}]}))
+    (is (= (move-card {:players [{:hand [{:name :smithy}]
+                                  :deck [{:name :copper}]}]} 0
+                      {:card-name   :smithy
+                       :from        :hand
+                       :to          :deck
+                       :to-position :top})
+           {:players [{:hand []
+                       :deck [{:name :smithy} {:name :copper}]}]}))
+    (is (= (move-card {:players [{:hand [{:name :smithy}]}]} 0
+                      {:card-name :smithy
+                       :from      :hand
+                       :to        :trash})
+           {:players [{:hand []}]
+            :trash   [{:name :smithy}]}))
+    (is (= (move-card {:players [{:deck [{:name :copper} {:name :smithy}]}]} 0
+                      {:from          :deck
+                       :from-position :top
+                       :to            :discard})
+           {:players [{:deck    [{:name :smithy}]
+                       :discard [{:name :copper}]}]}))
+    (is (= (move-card {:players [{:deck []}]} 0
+                      {:from          :deck
+                       :from-position :top
+                       :to            :discard})
+           {:players [{:deck []}]}))
+    (is (= (move-card {:players [{:deck    []
+                                  :discard [{:name :copper} {:name :copper}]}]} 0
+                      {:from          :deck
+                       :from-position :top
+                       :to            :discard})
+           {:players [{:deck    [{:name :copper}]
+                       :discard [{:name :copper}]}]}))))
 
 (deftest play-test
   (testing "Playing card is impossible because"
@@ -511,25 +555,25 @@
                                      :options   [:witch]
                                      :max       1}]
                        :actions    2}]}))
-    (is (= (-> {:supply [{:card curse :pile-size 10}]
+    (is (= (-> {:supply  [{:card curse :pile-size 10}]
                 :players [{:deck    [witch copper copper silver]
                            :hand    [throne-room throne-room merchant]
                            :actions 1
-                           :coins 0}
+                           :coins   0}
                           {}]}
                (play 0 :throne-room)
                (chose 0 :throne-room)
                (chose 0 :merchant)
                (chose 0 :witch)
                (play-treasures 0))
-           {:supply [{:card curse :pile-size 8}]
+           {:supply  [{:card curse :pile-size 8}]
             :players [{:deck       []
                        :hand       []
                        :play-area  [throne-room throne-room merchant witch copper copper silver]
                        :play-stack []
-                       :triggers  []
+                       :triggers   []
                        :actions    2
-                       :coins 6}
+                       :coins      6}
                       {:discard [curse curse]}]}))))
 (deftest village-test
   (testing "Village"

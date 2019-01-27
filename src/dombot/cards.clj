@@ -12,7 +12,11 @@
 (def gold {:name :gold :type #{:treasure} :cost 6 :coin-value 3})
 
 (defn trash [game player-no card-names]
-  (reduce (fn [game card-name] (move-card game player-no card-name :hand :trash)) game card-names))
+  (reduce (fn [game card-name] (move-card game player-no {:card-name card-name
+                                                          :from      :hand
+                                                          :to        :trash}))
+          game
+          card-names))
 
 (def chapel {:name      :chapel :set :dominion :type #{:action} :cost 2
              :action-fn (fn chapel-action [game player-no]
@@ -20,7 +24,11 @@
                               (give-choice player-no trash ut/player-hand {:max 4})))})
 
 (defn cellar-sift [game player-no card-names]
-  (-> (reduce (fn [game card-name] (move-card game player-no card-name :hand :discard)) game card-names)
+  (-> (reduce (fn [game card-name] (move-card game player-no {:card-name card-name
+                                                              :from      :hand
+                                                              :to        :discard}))
+              game
+              card-names)
       (update-in [:players player-no] draw (count card-names))))
 
 (def cellar {:name      :cellar :set :dominion :type #{:action} :cost 2
@@ -49,7 +57,10 @@
 
 (defn harbinger-topdeck [game player-no card-name]
   (cond-> game
-          card-name (move-card player-no card-name :discard :deck :top)))
+          card-name (move-card player-no {:card-name   card-name
+                                          :from        :discard
+                                          :to          :deck
+                                          :to-position :top})))
 
 (def harbinger {:name      :harbinger :set :dominion :type #{:action} :cost 3
                 :action-fn (fn harbinger-action [game player-no]
@@ -86,7 +97,9 @@
 
 (defn moneylender-trash [game player-no do-trash?]
   (cond-> game
-          do-trash? (-> (move-card player-no :copper :hand :trash)
+          do-trash? (-> (move-card player-no {:card-name :copper
+                                              :from      :hand
+                                              :to        :trash})
                         (update-in [:players player-no :coins] + 3))))
 
 (def moneylender {:name      :moneylender :set :dominion :type #{:action} :cost 4
@@ -110,7 +123,9 @@
       (assert action-fn (str "Play error: " (ut/format-name card-name) " has no action function."))
       (-> game
           (push-play-stack player-no card)
-          (move-card player-no card-name :hand :play-area)
+          (move-card player-no {:card-name card-name
+                                :from      :hand
+                                :to        :play-area})
           (action-fn player-no)))
     game))
 
