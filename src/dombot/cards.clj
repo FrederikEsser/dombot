@@ -109,6 +109,7 @@
       (assert (:action type) (str "Play error: " (ut/format-name card-name) " is not an Action."))
       (assert action-fn (str "Play error: " (ut/format-name card-name) " has no action function."))
       (-> game
+          #_(update-in [:players player-no :play-stack] (partial concat [card]))
           (move-card player-no card-name :hand :play-area)
           (action-fn player-no)
           (action-fn player-no)))

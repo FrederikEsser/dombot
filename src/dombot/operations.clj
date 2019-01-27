@@ -127,14 +127,15 @@
 (defn give-choice [game player-no choice-fn options-fn & [args]]
   (let [options (options-fn game player-no)]
     (cond-> game
-            (not-empty options) (assoc-in [:players player-no :choice] (merge {:choice-fn choice-fn
-                                                                               :options   options}
-                                                                              args)))))
+            (not-empty options) (update-in [:players player-no :play-stack]
+                                           (partial concat [(merge {:choice-fn choice-fn
+                                                                    :options   options}
+                                                                   args)])))))
 
 (defn- chose-single [game player-no selection]
   (if (coll? selection)
     (assert (<= (count selection) 1) "Chose error: You can only pick 1 option."))
-  (let [{{:keys [choice-fn options min]} :choice} (get-in game [:players player-no])
+  (let [{[{:keys [choice-fn options min]}] :play-stack} (get-in game [:players player-no])
         single-selection (if (coll? selection)
                            (first selection)
                            selection)]
@@ -144,11 +145,11 @@
       (assert ((set options) single-selection) (str "Chose error: " (ut/format-name single-selection) " is not a valid choice.")))
 
     (-> game
-        (update-in [:players player-no] dissoc :choice)
+        (update-in [:players player-no :play-stack] (partial drop 1))
         (choice-fn player-no single-selection))))
 
 (defn- chose-multi [game player-no selection]
-  (let [{{:keys [choice-fn options min max]} :choice} (get-in game [:players player-no])
+  (let [{[{:keys [choice-fn options min max]}] :play-stack} (get-in game [:players player-no])
         valid-choices (-> options set)
         multi-selection (if (coll? selection)
                           selection
@@ -164,13 +165,12 @@
       (assert (valid-choices sel) (str "Chose error: " (ut/format-name sel) " is not a valid choice.")))
 
     (-> game
-        (update-in [:players player-no] dissoc :choice)
+        (update-in [:players player-no :play-stack] (partial drop 1))
         (choice-fn player-no multi-selection))))
 
 (defn chose [game player-no selection]
-  (let [{{:keys [choice-fn options min max] :as choice} :choice} (get-in game [:players player-no])]
-    (assert choice "Chose error: You don't have a choice to make.")
-    (assert choice-fn "Chose error: Choice has no choice function")
+  (let [{[{:keys [choice-fn options min max]}] :play-stack} (get-in game [:players player-no])]
+    (assert choice-fn "Chose error: You don't have a choice to make.")
     (assert (not-empty options) "Chose error: Choice has no options")
     (assert (or (nil? min) (nil? max) (<= min max)))
 
@@ -197,14 +197,14 @@
     (or (zero? pile-size)
         (>= (count empty-piles) 3))))
 
-(defn view-player [{:keys [choice] :as player}]
+(defn view-player [{[{:keys [options]}] :play-stack :as player}]
   (-> player
       (update :hand ut/frequencies-of :name)
       (update :play-area ut/frequencies-of :name)
       (update :deck count)
       (update :discard count)
-      (cond-> choice (assoc :options (:options choice)))
-      (dissoc :choice)
+      (cond-> options (assoc :options options))
+      (dissoc :play-stack)
       (dissoc :triggers)
       (assoc :victory-points (calc-victory-points player))))
 
