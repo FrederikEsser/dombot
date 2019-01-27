@@ -135,14 +135,13 @@
   (if (coll? selection)
     (assert (<= (count selection) 1) "Chose error: You can only pick 1 option."))
   (let [{{:keys [choice-fn options min]} :choice} (get-in game [:players player-no])
-        valid-choices (-> options keys set)
         single-selection (if (coll? selection)
                            (first selection)
                            selection)]
     (if (= min 1)
       (assert single-selection "Chose error: You must pick an option"))
     (when single-selection
-      (assert (valid-choices single-selection) (str "Chose error: " (ut/format-name single-selection) " is not a valid choice.")))
+      (assert ((set options) single-selection) (str "Chose error: " (ut/format-name single-selection) " is not a valid choice.")))
 
     (-> game
         (update-in [:players player-no] dissoc :choice)
@@ -150,7 +149,7 @@
 
 (defn- chose-multi [game player-no selection]
   (let [{{:keys [choice-fn options min max]} :choice} (get-in game [:players player-no])
-        valid-choices (-> options keys set)
+        valid-choices (-> options set)
         multi-selection (if (coll? selection)
                           selection
                           (if selection

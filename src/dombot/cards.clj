@@ -93,7 +93,7 @@
                   :action-fn (fn moneylender-action [game player-no]
                                (-> game
                                    (give-choice player-no moneylender-trash
-                                                (comp #(select-keys % [:copper]) ut/player-hand)
+                                                (comp (partial filter #{:copper}) ut/player-hand)
                                                 {:max 1})))})
 
 (def smithy {:name      :smithy :set :dominion :type #{:action} :cost 4

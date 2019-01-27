@@ -49,12 +49,12 @@
        first))
 
 (defn player-hand [game player-no]
-  (-> (get-in game [:players player-no :hand])
-      (frequencies-of :name)))
+  (->> (get-in game [:players player-no :hand])
+       (map :name)))
 
 (defn player-discard [game player-no]
-  (-> (get-in game [:players player-no :discard])
-      (frequencies-of :name)))
+  (->> (get-in game [:players player-no :discard])
+       (map :name)))
 
 (defn supply-piles [max-cost {:keys [supply]} player-no]
   (->> supply
@@ -62,6 +62,5 @@
                    pile-size           :pile-size}]
                (when (and (<= cost max-cost)
                           (< 0 pile-size))
-                 [name pile-size])))
-       (into {})))
+                 name)))))
 
