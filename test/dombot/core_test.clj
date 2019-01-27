@@ -439,6 +439,54 @@
                        :play-area [smithy]
                        :actions   0}]}))))
 
+(deftest throne-room-test
+  (testing "Throne Room"
+    (is (= (play {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
+                             :hand    [throne-room market {:name :copper}]
+                             :actions 1}]}
+                 0 :throne-room)
+           {:players [{:deck      [{:name :copper} {:name :copper} {:name :copper}]
+                       :hand      [market {:name :copper}]
+                       :play-area [throne-room]
+                       :actions   0
+                       :choice    {:choice-fn play-action-twice
+                                   :options   [:market]
+                                   :max       1}}]}))
+    (is (= (-> {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
+                           :hand    [throne-room market {:name :copper}]
+                           :actions 1
+                           :coins   0
+                           :buys    1}]}
+               (play 0 :throne-room)
+               (chose 0 :market))
+           {:players [{:deck      [{:name :copper}]
+                       :hand      [{:name :copper} {:name :copper} {:name :copper}]
+                       :play-area [throne-room market]
+                       :actions   2
+                       :coins     2
+                       :buys      3}]}))
+    (is (= (-> {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
+                           :hand    [throne-room market {:name :copper}]
+                           :actions 1}]}
+               (play 0 :throne-room)
+               (chose 0 nil))
+           {:players [{:deck      [{:name :copper} {:name :copper} {:name :copper}]
+                       :hand      [market {:name :copper}]
+                       :play-area [throne-room]
+                       :actions   0}]}))
+    (is (= (-> {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
+                           :hand    [throne-room throne-room market {:name :copper}]
+                           :actions 1}]}
+               (play 0 :throne-room)
+               (chose 0 :throne-room))
+           {:players [{:deck      [{:name :copper} {:name :copper} {:name :copper}]
+                       :hand      [market {:name :copper}]
+                       :play-area [throne-room throne-room]
+                       :actions   0
+                       :choice    {:choice-fn play-action-twice
+                                   :options   [:market]
+                                   :max       1}}]}))))
+
 (deftest village-test
   (testing "Village"
     (is (= (play {:players [{:deck    [{:name :copper} {:name :copper}]

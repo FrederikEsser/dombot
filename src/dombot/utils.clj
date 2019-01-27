@@ -48,9 +48,14 @@
                        (when (= card-name name) {:idx idx :card card})))
        first))
 
-(defn player-hand [game player-no]
-  (->> (get-in game [:players player-no :hand])
-       (map :name)))
+(defn player-hand
+  ([game player-no]
+   (->> (get-in game [:players player-no :hand])
+        (map :name)))
+  ([filter-fn game player-no]
+   (->> (get-in game [:players player-no :hand])
+        (filter filter-fn)
+        (map :name))))
 
 (defn player-discard [game player-no]
   (->> (get-in game [:players player-no :discard])

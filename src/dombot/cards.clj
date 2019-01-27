@@ -101,6 +101,26 @@
                           (-> game
                               (draw player-no 3)))})
 
+(defn play-action-twice [game player-no card-name]
+  (if card-name
+    (let [player (get-in game [:players player-no])
+          {{:keys [type action-fn] :as card} :card} (ut/get-card-idx player :hand card-name)]
+      (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
+      (assert (:action type) (str "Play error: " (ut/format-name card-name) " is not an Action."))
+      (assert action-fn (str "Play error: " (ut/format-name card-name) " has no action function."))
+      (-> game
+          (move-card player-no card-name :hand :play-area)
+          (action-fn player-no)
+          (action-fn player-no)))
+    game))
+
+(def throne-room {:name      :throne-room :set :dominion :type #{:action} :cost 4
+                  :action-fn (fn throne-room-action [game player-no]
+                               (-> game
+                                   (give-choice player-no play-action-twice
+                                                (partial ut/player-hand (comp :action :type))
+                                                {:max 1})))})
+
 (def village {:name      :village :set :dominion :type #{:action} :cost 3
               :action-fn (fn village-action [game player-no]
                            (-> game
@@ -127,7 +147,6 @@
 ;; ONE CHOICE
 (def vassal {:name :vassal :set :dominion :type #{:action} :cost 3})
 (def poacher {:name :poacher :set :dominion :type #{:action} :cost 4})
-(def throne-room {:name :throne-room :set :dominion :type #{:action} :cost 4})
 
 ;; ATTACK WITH CHOICE
 (def bureaucrat {:name :bureaucrat :set :dominion :type #{:action :attack} :cost 4})
