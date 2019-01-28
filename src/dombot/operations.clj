@@ -10,13 +10,17 @@
    (-> game
        (update-in [:players player-no] start-round))))
 
-(defn gain [game player-no card-name]
+(defn gain [game player-no card-name & [{:keys [to]
+                                         :or   {to :discard}}]]
   (let [{:keys [idx card]} (ut/get-pile-idx game card-name)
         pile-size (get-in game [:supply idx :pile-size])]
     (assert pile-size (str "Gain error: The supply doesn't have a " (ut/format-name card-name) " pile."))
     (cond-> game
             (< 0 pile-size) (-> (update-in [:supply idx :pile-size] dec)
-                                (update-in [:players player-no :discard] concat [card])))))
+                                (update-in [:players player-no to] concat [card])))))
+
+(defn gain-to-hand [game player-no card-name]
+  (gain game player-no card-name {:to :hand}))
 
 (defn buy-card [game player-no card-name]
   (let [{:keys [buys coins]} (get-in game [:players player-no])
@@ -69,7 +73,7 @@
    (-> game
        (update-in [:players player-no] clean-up))))
 
-(defn move-card [game player-no {:keys [card-name from to from-position to-position] :as args}]
+(defn move-card [game player-no {:keys [card-name from from-position to to-position] :as args}]
   (let [{:keys [deck discard] :as player} (get-in game [:players player-no])]
     (if (and (= :deck from) (empty? deck) (not-empty discard))
       (-> game
@@ -245,9 +249,10 @@
       (dissoc :triggers)
       (assoc :victory-points (calc-victory-points player))))
 
-(defn- view-end-player [{:keys [deck discard hand play-area] :as player}]
+(defn- view-end-player [{:keys [name deck discard hand play-area] :as player}]
   (let [cards (concat deck discard hand play-area)]
-    {:cards          (ut/frequencies-of cards :name)
+    {:name           name
+     :cards          (ut/frequencies-of cards :name)
      :victory-points (calc-victory-points player)}))
 
 (defn view-supply [supply]

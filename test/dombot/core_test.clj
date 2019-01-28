@@ -435,6 +435,62 @@
                        :actions   1
                        :coins     4}]}))))
 
+(deftest mine-test
+  (testing "Mine"
+    (is (= (play {:players [{:hand    [mine copper estate]
+                             :actions 1}]}
+                 0 :mine)
+           {:players [{:hand       [copper estate]
+                       :play-area  [mine]
+                       :actions    0
+                       :play-stack [{:choice-fn mine-trash
+                                     :options   [:copper]
+                                     :min       1
+                                     :max       1}]}]}))
+    (is (= (play {:players [{:hand    [mine estate]
+                             :actions 1}]}
+                 0 :mine)
+           {:players [{:hand      [estate]
+                       :play-area [mine]
+                       :actions   0}]}))
+    (is (= (-> {:supply  (base-supply 2 8)
+                :players [{:hand    [mine copper estate]
+                           :actions 1}]}
+               (play 0 :mine)
+               (chose 0 :copper))
+           {:supply  (base-supply 2 8)
+            :players [{:hand       [estate]
+                       :play-area  [mine]
+                       :actions    0
+                       :play-stack [{:choice-fn gain-to-hand
+                                     :options   [:copper :silver]
+                                     :min       1
+                                     :max       1}]}]
+            :trash   [copper]}))
+    (is (= (-> {:supply  [{:card copper :pile-size 0} {:card gold :pile-size 30}]
+                :players [{:hand    [mine copper estate]
+                           :actions 1}]}
+               (play 0 :mine)
+               (chose 0 :copper))
+           {:supply  [{:card copper :pile-size 0} {:card gold :pile-size 30}]
+            :players [{:hand       [estate]
+                       :play-area  [mine]
+                       :actions    0
+                       :play-stack []}]
+            :trash   [copper]}))
+    (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                :players [{:hand    [mine silver estate]
+                           :actions 1}]}
+               (play 0 :mine)
+               (chose 0 :silver)
+               (chose 0 :gold))
+           {:supply  [{:card gold :pile-size 29}]
+            :players [{:hand       [estate gold]
+                       :play-area  [mine]
+                       :actions    0
+                       :play-stack []}]
+            :trash   [silver]}))))
+
 (deftest moat-test
   (testing "Moat"
     (is (= (play {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
@@ -1086,10 +1142,12 @@
             :current-player :dombot})))
   (testing "View game end"
     (is (= (view-game {:supply         [{:card province :pile-size 0}]
-                       :players        [{:hand      [{:name :copper} {:name :copper} {:name :copper} estate estate]
+                       :players        [{:name      :dombot
+                                         :hand      [{:name :copper} {:name :copper} {:name :copper} estate estate]
                                          :play-area []
                                          :deck      [{:name :copper} {:name :copper} {:name :copper} {:name :copper} estate]
                                          :discard   []}]
                        :current-player 0})
-           {:players [{:cards          {:copper 7 :estate 3}
+           {:players [{:name           :dombot
+                       :cards          {:copper 7 :estate 3}
                        :victory-points 3}]}))))

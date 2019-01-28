@@ -1,5 +1,5 @@
 (ns dombot.cards
-  (:require [dombot.operations :refer [draw gain do-for-other-players move-card give-choice push-play-stack]]
+  (:require [dombot.operations :refer [draw gain gain-to-hand do-for-other-players move-card give-choice push-play-stack]]
             [dombot.utils :as ut]))
 
 (def curse {:name :curse :type #{:curse} :cost 0 :victory-points -1})
@@ -94,6 +94,20 @@
                                 (update-in [:players player-no :actions] + 1)
                                 (update-in [:players player-no :triggers] concat [merchant-trigger])))})
 
+(defn mine-trash [game player-no card-name]
+  (let [player (get-in game [:players player-no])
+        {{:keys [cost]} :card} (ut/get-card-idx player :hand card-name)]
+    (-> game
+        (move-card player-no {:card-name card-name
+                              :from      :hand
+                              :to        :trash})
+        (give-choice player-no gain-to-hand (ut/supply-piles {:max-cost (+ 3 cost) :type :treasure}) {:min 1 :max 1}))))
+
+(def mine {:name      :mine :set :dominion :type #{:action} :cost 4
+           :action-fn (fn mine-action [game player-no]
+                        (-> game
+                            (give-choice player-no mine-trash (ut/player-hand (comp :treasure :type)) {:min 1 :max 1})))})
+
 (defn moneylender-trash [game player-no do-trash?]
   (cond-> game
           do-trash? (-> (move-card player-no {:card-name :copper
@@ -146,10 +160,7 @@
 (defn play-action-twice [game player-no card-name]
   (if card-name
     (let [player (get-in game [:players player-no])
-          {{:keys [type action-fn] :as card} :card} (ut/get-card-idx player :hand card-name)]
-      (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
-      (assert (:action type) (str "Play error: " (ut/format-name card-name) " is not an Action."))
-      (assert action-fn (str "Play error: " (ut/format-name card-name) " has no action function."))
+          {{:keys [action-fn] :as card} :card} (ut/get-card-idx player :hand card-name)]
       (-> game
           (push-play-stack player-no card)
           (move-card player-no {:card-name card-name
@@ -212,9 +223,8 @@
                                 (give-choice player-no gain (ut/supply-piles {:max-cost 4}) {:min 1 :max 1})))})
 
 ;; MULTI CHOICES
-(def mine {:name :mine :set :dominion :type #{:action} :cost 5})
-(def sentry {:name :sentry :set :dominion :type #{:action} :cost 5})
 (def artisan {:name :artisan :set :dominion :type #{:action} :cost 6})
+(def sentry {:name :sentry :set :dominion :type #{:action} :cost 5})
 (def library {:name :library :set :dominion :type #{:action} :cost 5})
 
 ;; ATTACK WITH CHOICE
@@ -237,6 +247,7 @@
                     laboratory
                     market
                     merchant
+                    mine
                     moat
                     moneylender
                     poacher
@@ -282,5 +293,5 @@
     {:supply         (vec (concat (base-supply number-of-players victory-pile-size)
                                   (kingdom #{:dominion} victory-pile-size)))
      :players        (vec (map player player-names))
-     :current-player 0}))
+     :current-player (rand-int number-of-players)}))
 

@@ -27,7 +27,8 @@
 (defn frequencies-of [coll key]
   (->> coll
        (map key)
-       frequencies))
+       frequencies
+       (into (sorted-map))))
 
 (defn ensure-coll [data]
   (if (coll? data)
@@ -66,13 +67,14 @@
   ([]
    (player-discard nil)))
 
-(defn supply-piles [{:keys [max-cost]}]
+(defn supply-piles [{:keys [max-cost type]}]
   (fn [{:keys [supply]} player-no]
     (cond->> supply
              max-cost (filter (fn [{{:keys [cost]} :card
                                     pile-size      :pile-size}]
                                 (and (<= cost max-cost)
                                      (< 0 pile-size))))
+             type (filter (comp type :type :card))
              :always (map (comp :name :card)))))
 
 (defn empty-supply-piles [{:keys [supply] :as game}]
