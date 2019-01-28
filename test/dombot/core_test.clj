@@ -591,6 +591,63 @@
                                      :min       1
                                      :max       1}]}]}))))
 
+(deftest remodel-test
+  (testing "Remodel"
+    (is (= (play {:players [{:hand    [remodel copper estate]
+                             :actions 1}]}
+                 0 :remodel)
+           {:players [{:hand       [copper estate]
+                       :play-area  [remodel]
+                       :actions    0
+                       :play-stack [{:choice-fn remodel-trash
+                                     :options   [:copper :estate]
+                                     :min       1
+                                     :max       1}]}]}))
+    (is (= (play {:players [{:hand    [remodel]
+                             :actions 1}]}
+                 0 :remodel)
+           {:players [{:hand      []
+                       :play-area [remodel]
+                       :actions   0}]}))
+    (is (= (-> {:supply  (base-supply 2 8)
+                :players [{:hand    [remodel copper estate]
+                           :actions 1}]}
+               (play 0 :remodel)
+               (chose 0 :estate))
+           {:supply  (base-supply 2 8)
+            :players [{:hand       [copper]
+                       :play-area  [remodel]
+                       :actions    0
+                       :play-stack [{:choice-fn gain
+                                     :options   [:curse :estate :copper :silver]
+                                     :min       1
+                                     :max       1}]}]
+            :trash   [estate]}))
+    (is (= (-> {:supply  [{:card estate :pile-size 0} {:card silver :pile-size 40}]
+                :players [{:hand    [remodel copper estate]
+                           :actions 1}]}
+               (play 0 :remodel)
+               (chose 0 :copper))
+           {:supply  [{:card estate :pile-size 0} {:card silver :pile-size 40}]
+            :players [{:hand       [estate]
+                       :play-area  [remodel]
+                       :actions    0
+                       :play-stack []}]
+            :trash   [copper]}))
+    (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                :players [{:hand    [remodel silver estate]
+                           :actions 1}]}
+               (play 0 :remodel)
+               (chose 0 :silver)
+               (chose 0 :duchy))
+           {:supply  [{:card duchy :pile-size 7}]
+            :players [{:hand       [estate]
+                       :play-area  [remodel]
+                       :discard    [duchy]
+                       :actions    0
+                       :play-stack []}]
+            :trash   [silver]}))))
+
 (deftest throne-room-test
   (testing "Throne Room"
     (is (= (play {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
@@ -1005,7 +1062,8 @@
 (deftest view-test
   (testing "View game"
     (is (= (view-game {:supply         (base-supply 2 8)
-                       :players        [{:hand      [{:name :copper} {:name :copper} {:name :copper} estate estate]
+                       :players        [{:name      :dombot
+                                         :hand      [{:name :copper} {:name :copper} {:name :copper} estate estate]
                                          :play-area []
                                          :deck      [{:name :copper} {:name :copper} {:name :copper} {:name :copper} estate]
                                          :discard   []}]
@@ -1018,13 +1076,14 @@
                              {:card :estate :price 2 :count 8}
                              {:card :duchy :price 5 :count 8}
                              {:card :province :price 8 :count 8}]
-            :player         {:hand           {:copper 3 :estate 2}
+            :player         {:name           :dombot
+                             :hand           {:copper 3 :estate 2}
                              :play-area      {}
                              :deck           5
                              :discard        :empty
                              :victory-points 3}
             :trash          {:copper 1 :estate 2}
-            :current-player 0})))
+            :current-player :dombot})))
   (testing "View game end"
     (is (= (view-game {:supply         [{:card province :pile-size 0}]
                        :players        [{:hand      [{:name :copper} {:name :copper} {:name :copper} estate estate]

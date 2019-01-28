@@ -124,6 +124,20 @@
                                  (cond-> (< 0 empty-piles) (give-choice player-no discard-cards ut/player-hand {:min empty-piles
                                                                                                                 :max empty-piles})))))})
 
+(defn remodel-trash [game player-no card-name]
+  (let [player (get-in game [:players player-no])
+        {{:keys [cost]} :card} (ut/get-card-idx player :hand card-name)]
+    (-> game
+        (move-card player-no {:card-name card-name
+                              :from      :hand
+                              :to        :trash})
+        (give-choice player-no gain (partial ut/supply-piles (+ 2 cost)) {:min 1 :max 1}))))
+
+(def remodel {:name      :remodel :set :dominion :type #{:action} :cost 4
+              :action-fn (fn remodel-action [game player-no]
+                           (-> game
+                               (give-choice player-no remodel-trash ut/player-hand {:min 1 :max 1})))})
+
 (def smithy {:name      :smithy :set :dominion :type #{:action} :cost 4
              :action-fn (fn smithy-action [game player-no]
                           (-> game
@@ -198,7 +212,6 @@
                                 (give-choice player-no gain (partial ut/supply-piles 4) {:min 1 :max 1})))})
 
 ;; MULTI CHOICES
-(def remodel {:name :remodel :set :dominion :type #{:action} :cost 4})
 (def mine {:name :mine :set :dominion :type #{:action} :cost 5})
 (def sentry {:name :sentry :set :dominion :type #{:action} :cost 5})
 (def artisan {:name :artisan :set :dominion :type #{:action} :cost 6})
@@ -227,6 +240,7 @@
                     moat
                     moneylender
                     poacher
+                    remodel
                     smithy
                     throne-room
                     vassal
