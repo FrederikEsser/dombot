@@ -195,6 +195,15 @@
                        :actions    0
                        :play-stack []}]
             :trash   [{:name :estate} {:name :estate} {:name :estate}]}))
+    (is (= (-> {:players [{:hand    [chapel {:name :copper}]
+                           :actions 1}]}
+               (play 0 :chapel)
+               (chose 0 :copper))
+           {:players [{:hand       []
+                       :play-area  [chapel]
+                       :actions    0
+                       :play-stack []}]
+            :trash   [{:name :copper}]}))
     (is (= (-> {:players [{:hand    [chapel {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
                            :actions 1}]}
                (play 0 :chapel)
@@ -230,6 +239,16 @@
                        :play-area  [cellar]
                        :deck       [{:name :copper} {:name :copper}]
                        :discard    [{:name :estate} {:name :estate} {:name :estate}]
+                       :actions    1
+                       :play-stack []}]}))
+    (is (= (-> {:players [{:hand    [cellar {:name :copper}]
+                           :actions 1}]}
+               (play 0 :cellar)
+               (chose 0 :copper))
+           {:players [{:hand       [{:name :copper}]
+                       :play-area  [cellar]
+                       :deck       []
+                       :discard    []
                        :actions    1
                        :play-stack []}]}))
     (is (= (-> {:players [{:hand    [cellar {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
@@ -482,6 +501,95 @@
                        :hand      [{:name :copper} {:name :copper} {:name :copper}]
                        :play-area [smithy]
                        :actions   0}]}))))
+
+(deftest poacher-test
+  (testing "Poacher"
+    (is (= (play {:players [{:deck    [copper copper]
+                             :hand    [poacher estate]
+                             :actions 1}]}
+                 0 :poacher)
+           {:players [{:deck      [copper]
+                       :hand      [estate copper]
+                       :play-area [poacher]
+                       :actions   1}]}))
+    (is (= (play {:supply  [{:pile-size 0} {:pile-size 1}]
+                  :players [{:deck    [copper copper]
+                             :hand    [poacher estate]
+                             :actions 1}]}
+                 0 :poacher)
+           {:supply  [{:pile-size 0} {:pile-size 1}]
+            :players [{:deck       [copper]
+                       :hand       [estate copper]
+                       :play-area  [poacher]
+                       :actions    1
+                       :play-stack [{:choice-fn discard-cards
+                                     :options   [:estate :copper]
+                                     :min       1
+                                     :max       1}]}]}))
+    (is (= (-> {:supply  [{:pile-size 0} {:pile-size 1}]
+                :players [{:deck    [copper copper]
+                           :hand    [poacher estate]
+                           :actions 1}]}
+               (play 0 :poacher)
+               (chose 0 [:estate]))
+           {:supply  [{:pile-size 0} {:pile-size 1}]
+            :players [{:deck       [copper]
+                       :discard    [estate]
+                       :hand       [copper]
+                       :play-area  [poacher]
+                       :actions    1
+                       :play-stack []}]}))
+    (is (= (play {:supply  [{:pile-size 0} {:pile-size 0}]
+                  :players [{:deck    [copper copper]
+                             :hand    [poacher estate silver]
+                             :actions 1}]}
+                 0 :poacher)
+           {:supply  [{:pile-size 0} {:pile-size 0}]
+            :players [{:deck       [copper]
+                       :hand       [estate silver copper]
+                       :play-area  [poacher]
+                       :actions    1
+                       :play-stack [{:choice-fn discard-cards
+                                     :options   [:estate :silver :copper]
+                                     :min       2
+                                     :max       2}]}]}))
+    (is (= (-> {:supply  [{:pile-size 0} {:pile-size 0}]
+                :players [{:deck    [copper copper]
+                           :hand    [poacher estate silver]
+                           :actions 1}]}
+               (play 0 :poacher)
+               (chose 0 [:copper :estate]))
+           {:supply  [{:pile-size 0} {:pile-size 0}]
+            :players [{:hand       [silver]
+                       :deck       [copper]
+                       :discard    [copper estate]
+                       :play-area  [poacher]
+                       :actions    1
+                       :play-stack []}]}))
+    (is (= (play {:supply  [{:pile-size 0}]
+                  :players [{:deck    []
+                             :hand    [poacher]
+                             :actions 1}]}
+                 0 :poacher)
+           {:supply  [{:pile-size 0}]
+            :players [{:deck      []
+                       :hand      []
+                       :play-area [poacher]
+                       :actions   1}]}))
+    (is (= (play {:supply  [{:pile-size 0} {:pile-size 0}]
+                  :players [{:deck    [copper copper]
+                             :hand    [poacher]
+                             :actions 1}]}
+                 0 :poacher)
+           {:supply  [{:pile-size 0} {:pile-size 0}]
+            :players [{:deck       [copper]
+                       :hand       [copper]
+                       :play-area  [poacher]
+                       :actions    1
+                       :play-stack [{:choice-fn discard-cards
+                                     :options   [:copper]
+                                     :min       1
+                                     :max       1}]}]}))))
 
 (deftest throne-room-test
   (testing "Throne Room"

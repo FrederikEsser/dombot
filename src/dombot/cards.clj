@@ -1,6 +1,5 @@
 (ns dombot.cards
   (:require [dombot.operations :refer [draw gain do-for-other-players move-card give-choice push-play-stack]]
-            [dombot.utils :refer [mapv-indexed]]
             [dombot.utils :as ut]))
 
 (def curse {:name :curse :type #{:curse} :cost 0 :victory-points -1})
@@ -16,7 +15,7 @@
                                                           :from      :hand
                                                           :to        :trash}))
           game
-          card-names))
+          (ut/ensure-coll card-names)))
 
 (def chapel {:name      :chapel :set :dominion :type #{:action} :cost 2
              :action-fn (fn chapel-action [game player-no]
@@ -28,7 +27,7 @@
                                                               :from      :hand
                                                               :to        :discard}))
               game
-              card-names)
+              (ut/ensure-coll card-names))
       (update-in [:players player-no] draw (count card-names))))
 
 (def cellar {:name      :cellar :set :dominion :type #{:action} :cost 2
@@ -109,6 +108,22 @@
                                                 (comp (partial filter #{:copper}) ut/player-hand)
                                                 {:max 1})))})
 
+(defn discard-cards [game player-no card-names]
+  (reduce (fn [game card-name] (move-card game player-no {:card-name card-name
+                                                          :from      :hand
+                                                          :to        :discard}))
+          game
+          (ut/ensure-coll card-names)))
+
+(def poacher {:name      :poacher :set :dominion :type #{:action} :cost 4
+              :action-fn (fn poacher-action [game player-no]
+                           (let [empty-piles (ut/empty-supply-piles game)]
+                             (-> game
+                                 (draw player-no 1)
+                                 (update-in [:players player-no :actions] + 1)
+                                 (cond-> (< 0 empty-piles) (give-choice player-no discard-cards ut/player-hand {:min empty-piles
+                                                                                                                :max empty-piles})))))})
+
 (def smithy {:name      :smithy :set :dominion :type #{:action} :cost 4
              :action-fn (fn smithy-action [game player-no]
                           (-> game
@@ -182,9 +197,6 @@
                             (-> game
                                 (give-choice player-no gain (partial ut/supply-piles 4) {:min 1 :max 1})))})
 
-;; ONE CHOICE
-(def poacher {:name :poacher :set :dominion :type #{:action} :cost 4})
-
 ;; MULTI CHOICES
 (def remodel {:name :remodel :set :dominion :type #{:action} :cost 4})
 (def mine {:name :mine :set :dominion :type #{:action} :cost 5})
@@ -214,6 +226,7 @@
                     merchant
                     moat
                     moneylender
+                    poacher
                     smithy
                     throne-room
                     vassal

@@ -24,15 +24,15 @@
   (let [vcoll (vec coll)]
     (vec (concat (subvec vcoll 0 pos) (subvec vcoll (inc pos))))))
 
-(defn mapv-indexed [f coll]
-  (->> coll
-       (map-indexed f)
-       vec))
-
 (defn frequencies-of [coll key]
   (->> coll
        (map key)
        frequencies))
+
+(defn ensure-coll [data]
+  (if (coll? data)
+    data
+    [data]))
 
 (defn get-pile-idx [game card-name]
   (->> game
@@ -68,4 +68,9 @@
                (when (and (<= cost max-cost)
                           (< 0 pile-size))
                  name)))))
+
+(defn empty-supply-piles [{:keys [supply] :as game}]
+  (->> supply
+       (filter (comp zero? :pile-size))
+       count))
 

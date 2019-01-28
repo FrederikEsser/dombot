@@ -143,8 +143,11 @@
 (defn pop-play-stack [game player-no]
   (update-in game [:players player-no :play-stack] (partial drop 1)))
 
-(defn give-choice [game player-no choice-fn options-fn & [args]]
-  (let [options (options-fn game player-no)]
+(defn give-choice [game player-no choice-fn options-fn & [{:keys [min max] :as args}]]
+  (let [options (options-fn game player-no)
+        args (cond-> args
+                     min (update :min clojure.core/min (count options))
+                     max (update :max clojure.core/min (count options)))]
     (cond-> game
             (not-empty options) (push-play-stack player-no (merge {:choice-fn choice-fn
                                                                    :options   options}
@@ -216,12 +219,10 @@
          (map (partial get-victory-points cards))
          (apply + 0))))
 
-(defn game-ended? [{:keys [supply] :as game}]
-  (let [{:keys [pile-size]} (ut/get-pile-idx game :province)
-        empty-piles (->> supply
-                         (filter (comp zero? :pile-size)))]
-    (or (zero? pile-size)
-        (>= (count empty-piles) 3))))
+(defn game-ended? [game]
+  (let [{province-pile-size :pile-size} (ut/get-pile-idx game :province)]
+    (or (zero? province-pile-size)
+        (>= (ut/empty-supply-piles game) 3))))
 
 (defn view-discard [discard]
   (if (empty? discard)
@@ -230,8 +231,8 @@
           variance (Math/round (/ size 4.0))]
       {:top         (-> discard last :name)
        :approx-size (- (+ size
-                          (rand-int (inc (* 2 variance))))
-                       variance)})))
+                          (rand-int (inc variance)))
+                       (rand-int (inc variance)))})))
 
 (defn view-player [{[{:keys [options]}] :play-stack :as player}]
   (-> player
