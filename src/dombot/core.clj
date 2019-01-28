@@ -10,8 +10,8 @@
 
 (defonce game-state (atom {}))
 
-(defn start-game [number-of-players]
-  (let [{:keys [current-player] :as game} (cards/game number-of-players)]
+(defn start-game [player-names]
+  (let [{:keys [current-player] :as game} (cards/game player-names)]
     (swap! game-state assoc :game (-> game
                                       (op/start-round current-player)))
     (op/view-game (:game @game-state))))

@@ -252,19 +252,21 @@
        (map (fn [{:keys [:type] :as card}]
               {:card card :pile-size (if (:victory type) victory-pile-size 10)}))))
 
-(defn player []
+(defn player [name]
   (let [deck (->> (concat (repeat 7 copper) (repeat 3 estate))
                   shuffle)]
-    {:hand (take 5 deck)
+    {:name name
+     :hand (take 5 deck)
      :deck (drop 5 deck)}))
 
-(defn game [number-of-players]
-  (let [victory-pile-size (case number-of-players
+(defn game [player-names]
+  (let [number-of-players (count player-names)
+        victory-pile-size (case number-of-players
                             2 8
                             3 12
                             4 12)]
     {:supply         (vec (concat (base-supply number-of-players victory-pile-size)
                                   (kingdom #{:dominion} victory-pile-size)))
-     :players        (vec (repeatedly number-of-players player))
+     :players        (vec (map player player-names))
      :current-player 0}))
 

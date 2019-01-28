@@ -240,7 +240,7 @@
       (update :play-area ut/frequencies-of :name)
       (update :deck count)
       (update :discard view-discard)
-      (cond-> options (assoc :options options))
+      (cond-> options (assoc :options (frequencies options)))
       (dissoc :play-stack)
       (dissoc :triggers)
       (assoc :victory-points (calc-victory-points player))))
@@ -263,5 +263,5 @@
     {:supply         (view-supply supply)
      :player         (view-player (get players current-player))
      :trash          (ut/frequencies-of trash :name)
-     :current-player current-player}))
+     :current-player (get-in players [current-player :name])}))
 
