@@ -49,25 +49,31 @@
        first))
 
 (defn player-hand
-  ([game player-no]
-   (->> (get-in game [:players player-no :hand])
-        (map :name)))
-  ([filter-fn game player-no]
-   (->> (get-in game [:players player-no :hand])
-        (filter filter-fn)
-        (map :name))))
+  ([filter-fn]
+   (fn [game player-no]
+     (cond->> (get-in game [:players player-no :hand])
+              filter-fn (filter filter-fn)
+              :always (map :name))))
+  ([]
+   (player-hand nil)))
 
-(defn player-discard [game player-no]
-  (->> (get-in game [:players player-no :discard])
-       (map :name)))
+(defn player-discard
+  ([filter-fn]
+   (fn [game player-no]
+     (cond->> (get-in game [:players player-no :discard])
+              filter-fn (filter filter-fn)
+              :always (map :name))))
+  ([]
+   (player-discard nil)))
 
-(defn supply-piles [max-cost {:keys [supply]} player-no]
-  (->> supply
-       (keep (fn [{{:keys [name cost]} :card
-                   pile-size           :pile-size}]
-               (when (and (<= cost max-cost)
-                          (< 0 pile-size))
-                 name)))))
+(defn supply-piles [{:keys [max-cost]}]
+  (fn [{:keys [supply]} player-no]
+    (cond->> supply
+             max-cost (filter (fn [{{:keys [cost]} :card
+                                    pile-size      :pile-size}]
+                                (and (<= cost max-cost)
+                                     (< 0 pile-size))))
+             :always (map (comp :name :card)))))
 
 (defn empty-supply-piles [{:keys [supply] :as game}]
   (->> supply
