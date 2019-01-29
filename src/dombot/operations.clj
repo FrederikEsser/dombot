@@ -147,15 +147,15 @@
 (defn pop-play-stack [game player-no]
   (update-in game [:players player-no :play-stack] (partial drop 1)))
 
-(defn give-choice [game player-no choice-fn options-fn & [{:keys [min max] :as args}]]
-  (let [options (options-fn game player-no)
+(defn give-choice [game player-no {:keys [options-fn options min max] :as args}]
+  (let [options (if options-fn (options-fn game player-no) options)
         args (cond-> args
                      min (update :min clojure.core/min (count options))
                      max (update :max clojure.core/min (count options)))]
     (cond-> game
-            (not-empty options) (push-play-stack player-no (merge {:choice-fn choice-fn
-                                                                   :options   options}
-                                                                  args)))))
+            (not-empty options) (push-play-stack player-no (-> args
+                                                               (dissoc :options-fn)
+                                                               (assoc :options options))))))
 
 (defn- chose-single [game player-no selection]
   (if (coll? selection)
@@ -238,13 +238,14 @@
                           (rand-int (inc variance)))
                        (rand-int (inc variance)))})))
 
-(defn view-player [{[{:keys [options]}] :play-stack :as player}]
+(defn view-player [{[{:keys [options text]}] :play-stack :as player}]
   (-> player
       (update :hand ut/frequencies-of :name)
       (update :play-area ut/frequencies-of :name)
       (update :deck count)
       (update :discard view-discard)
-      (cond-> options (assoc :options (frequencies options)))
+      (cond-> options (assoc :choice {:text    text
+                                      :options options}))
       (dissoc :play-stack)
       (dissoc :triggers)
       (assoc :victory-points (calc-victory-points player))))

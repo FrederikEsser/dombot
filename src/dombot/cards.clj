@@ -10,18 +10,6 @@
 (def silver {:name :silver :type #{:treasure} :cost 3 :coin-value 2})
 (def gold {:name :gold :type #{:treasure} :cost 6 :coin-value 3})
 
-(defn trash [game player-no card-names]
-  (reduce (fn [game card-name] (move-card game player-no {:card-name card-name
-                                                          :from      :hand
-                                                          :to        :trash}))
-          game
-          (ut/ensure-coll card-names)))
-
-(def chapel {:name      :chapel :set :dominion :type #{:action} :cost 2
-             :action-fn (fn chapel-action [game player-no]
-                          (-> game
-                              (give-choice player-no trash (ut/player-hand) {:max 4})))})
-
 (defn cellar-sift [game player-no card-names]
   (-> (reduce (fn [game card-name] (move-card game player-no {:card-name card-name
                                                               :from      :hand
@@ -34,7 +22,24 @@
              :action-fn (fn cellar-action [game player-no]
                           (-> game
                               (update-in [:players player-no :actions] + 1)
-                              (give-choice player-no cellar-sift (ut/player-hand))))})
+                              (give-choice player-no {:text       "Discard any number of cards, then draw that many."
+                                                      :choice-fn  cellar-sift
+                                                      :options-fn (ut/player-hand)})))})
+
+(defn trash [game player-no card-names]
+  (reduce (fn [game card-name] (move-card game player-no {:card-name card-name
+                                                          :from      :hand
+                                                          :to        :trash}))
+          game
+          (ut/ensure-coll card-names)))
+
+(def chapel {:name      :chapel :set :dominion :type #{:action} :cost 2
+             :action-fn (fn chapel-action [game player-no]
+                          (-> game
+                              (give-choice player-no {:text       "Trash up to 4 cards from your hand."
+                                                      :choice-fn  trash
+                                                      :options-fn (ut/player-hand)
+                                                      :max        4})))})
 
 (def council-room {:name      :council-room :set :dominion :type #{:action} :cost 5
                    :action-fn (fn council-room-action [game player-no]
@@ -66,7 +71,10 @@
                              (-> game
                                  (draw player-no 1)
                                  (update-in [:players player-no :actions] + 1)
-                                 (give-choice player-no harbinger-topdeck (ut/player-discard) {:max 1})))})
+                                 (give-choice player-no {:text       "You may put a card from it onto your deck."
+                                                         :choice-fn  harbinger-topdeck
+                                                         :options-fn (ut/player-discard)
+                                                         :max        1})))})
 
 (def laboratory {:name      :laboratory :set :dominion :type #{:action} :cost 5
                  :action-fn (fn laboratory-action [game player-no]
@@ -96,17 +104,26 @@
 
 (defn mine-trash [game player-no card-name]
   (let [player (get-in game [:players player-no])
-        {{:keys [cost]} :card} (ut/get-card-idx player :hand card-name)]
+        {{:keys [cost]} :card} (ut/get-card-idx player :hand card-name)
+        max-cost (+ 3 cost)]
     (-> game
         (move-card player-no {:card-name card-name
                               :from      :hand
                               :to        :trash})
-        (give-choice player-no gain-to-hand (ut/supply-piles {:max-cost (+ 3 cost) :type :treasure}) {:min 1 :max 1}))))
+        (give-choice player-no {:text       (str "Gain a Treasure to your hand costing up to $" max-cost ".")
+                                :choice-fn  gain-to-hand
+                                :options-fn (ut/supply-piles {:max-cost max-cost :type :treasure})
+                                :min        1
+                                :max        1}))))
 
-(def mine {:name      :mine :set :dominion :type #{:action} :cost 4
+(def mine {:name      :mine :set :dominion :type #{:action} :cost 5
            :action-fn (fn mine-action [game player-no]
                         (-> game
-                            (give-choice player-no mine-trash (ut/player-hand (comp :treasure :type)) {:min 1 :max 1})))})
+                            (give-choice player-no {:text       "You may trash a Treasure from your hand."
+                                                    :choice-fn  mine-trash
+                                                    :options-fn (ut/player-hand (comp :treasure :type))
+                                                    :min        1
+                                                    :max        1})))})
 
 (defn moneylender-trash [game player-no do-trash?]
   (cond-> game
@@ -118,9 +135,10 @@
 (def moneylender {:name      :moneylender :set :dominion :type #{:action} :cost 4
                   :action-fn (fn moneylender-action [game player-no]
                                (-> game
-                                   (give-choice player-no moneylender-trash
-                                                (ut/player-hand (comp #{:copper} :name))
-                                                {:max 1})))})
+                                   (give-choice player-no {:text       "You may trash a Copper from your hand for +$3"
+                                                           :choice-fn  moneylender-trash
+                                                           :options-fn (ut/player-hand (comp #{:copper} :name))
+                                                           :max        1})))})
 
 (defn discard-cards [game player-no card-names]
   (reduce (fn [game card-name] (move-card game player-no {:card-name card-name
@@ -135,22 +153,34 @@
                              (-> game
                                  (draw player-no 1)
                                  (update-in [:players player-no :actions] + 1)
-                                 (cond-> (< 0 empty-piles) (give-choice player-no discard-cards (ut/player-hand) {:min empty-piles
-                                                                                                                  :max empty-piles})))))})
+                                 (cond-> (< 0 empty-piles) (give-choice player-no {:text       (str "Discard a card per empty supply pile [" empty-piles "].")
+                                                                                   :choice-fn  discard-cards
+                                                                                   :options-fn (ut/player-hand)
+                                                                                   :min        empty-piles
+                                                                                   :max        empty-piles})))))})
 
 (defn remodel-trash [game player-no card-name]
   (let [player (get-in game [:players player-no])
-        {{:keys [cost]} :card} (ut/get-card-idx player :hand card-name)]
+        {{:keys [cost]} :card} (ut/get-card-idx player :hand card-name)
+        max-cost (+ 2 cost)]
     (-> game
         (move-card player-no {:card-name card-name
                               :from      :hand
                               :to        :trash})
-        (give-choice player-no gain (ut/supply-piles {:max-cost (+ 2 cost)}) {:min 1 :max 1}))))
+        (give-choice player-no {:text       (str "Gain a card costing up to $" max-cost ".")
+                                :choice-fn  gain
+                                :options-fn (ut/supply-piles {:max-cost max-cost})
+                                :min        1
+                                :max        1}))))
 
 (def remodel {:name      :remodel :set :dominion :type #{:action} :cost 4
               :action-fn (fn remodel-action [game player-no]
                            (-> game
-                               (give-choice player-no remodel-trash (ut/player-hand) {:min 1 :max 1})))})
+                               (give-choice player-no {:text       "Trash a card from your hand."
+                                                       :choice-fn  remodel-trash
+                                                       :options-fn (ut/player-hand)
+                                                       :min        1
+                                                       :max        1})))})
 
 (def smithy {:name      :smithy :set :dominion :type #{:action} :cost 4
              :action-fn (fn smithy-action [game player-no]
@@ -172,9 +202,10 @@
 (def throne-room {:name      :throne-room :set :dominion :type #{:action} :cost 4
                   :action-fn (fn throne-room-action [game player-no]
                                (-> game
-                                   (give-choice player-no play-action-twice
-                                                (ut/player-hand (comp :action :type))
-                                                {:max 1})))})
+                                   (give-choice player-no {:text       "You may play an Action card from your hand twice."
+                                                           :choice-fn  play-action-twice
+                                                           :options-fn (ut/player-hand (comp :action :type))
+                                                           :max        1})))})
 
 (defn play-discard-action [game player-no card-name]
   (let [{:keys [discard]} (get-in game [:players player-no])
@@ -197,7 +228,10 @@
                                  (let [{:keys [discard]} (get-in game [:players player-no])
                                        {:keys [name action-fn]} (last discard)]
                                    (cond-> game
-                                           action-fn (give-choice player-no play-discard-action (constantly [name]) {:max 1})))))))})
+                                           action-fn (give-choice player-no {:text      "Discard the top card of your deck. If it is an Action card, you may play it."
+                                                                             :choice-fn play-discard-action
+                                                                             :options   [name]
+                                                                             :max       1})))))))})
 
 (def village {:name      :village :set :dominion :type #{:action} :cost 3
               :action-fn (fn village-action [game player-no]
@@ -220,7 +254,11 @@
 (def workshop {:name      :workshop :set :dominion :type #{:action} :cost 3
                :action-fn (fn workshop-action [game player-no]
                             (-> game
-                                (give-choice player-no gain (ut/supply-piles {:max-cost 4}) {:min 1 :max 1})))})
+                                (give-choice player-no {:text       "Gain a card costing up to $4."
+                                                        :choice-fn  gain
+                                                        :options-fn (ut/supply-piles {:max-cost 4})
+                                                        :min        1
+                                                        :max        1})))})
 
 ;; MULTI CHOICES
 (def artisan {:name :artisan :set :dominion :type #{:action} :cost 6})
@@ -238,8 +276,8 @@
                         (-> game
                             (draw player-no 2)))})
 
-(def kingdom-cards [chapel
-                    cellar
+(def kingdom-cards [cellar
+                    chapel
                     council-room
                     festival
                     gardens

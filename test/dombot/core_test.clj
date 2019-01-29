@@ -175,49 +175,6 @@
                        :play-area [gold silver copper copper]
                        :coins     7}]}))))
 
-(deftest chapel-test
-  (testing "Chapel"
-    (is (= (play {:players [{:hand    [chapel {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
-                             :actions 1}]}
-                 0 :chapel)
-           {:players [{:hand       [{:name :copper} {:name :estate} {:name :estate} {:name :estate}]
-                       :play-area  [chapel]
-                       :actions    0
-                       :play-stack [{:choice-fn trash
-                                     :options   [:copper :estate :estate :estate]
-                                     :max       4}]}]}))
-    (is (= (-> {:players [{:hand    [chapel {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
-                           :actions 1}]}
-               (play 0 :chapel)
-               (chose 0 [:estate :estate :estate]))
-           {:players [{:hand       [{:name :copper}]
-                       :play-area  [chapel]
-                       :actions    0
-                       :play-stack []}]
-            :trash   [{:name :estate} {:name :estate} {:name :estate}]}))
-    (is (= (-> {:players [{:hand    [chapel {:name :copper}]
-                           :actions 1}]}
-               (play 0 :chapel)
-               (chose 0 :copper))
-           {:players [{:hand       []
-                       :play-area  [chapel]
-                       :actions    0
-                       :play-stack []}]
-            :trash   [{:name :copper}]}))
-    (is (= (-> {:players [{:hand    [chapel {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
-                           :actions 1}]}
-               (play 0 :chapel)
-               (chose 0 []))
-           {:players [{:hand       [{:name :copper} {:name :estate} {:name :estate} {:name :estate}]
-                       :play-area  [chapel]
-                       :actions    0
-                       :play-stack []}]}))
-    (is (thrown-with-msg? AssertionError #"Chose error: You can only pick 4 options."
-                          (-> {:players [{:hand    (concat [chapel] (repeat 5 {:name :copper}))
-                                          :actions 1}]}
-                              (play 0 :chapel)
-                              (chose 0 (repeat 5 :copper)))))))
-
 (deftest cellar-test
   (testing "Cellar"
     (is (= (play {:players [{:hand    [cellar {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
@@ -228,7 +185,8 @@
                        :play-area  [cellar]
                        :deck       (repeat 5 {:name :copper})
                        :actions    1
-                       :play-stack [{:choice-fn cellar-sift
+                       :play-stack [{:text      "Discard any number of cards, then draw that many."
+                                     :choice-fn cellar-sift
                                      :options   [:copper :estate :estate :estate]}]}]}))
     (is (= (-> {:players [{:hand    [cellar {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
                            :deck    (repeat 5 {:name :copper})
@@ -276,6 +234,50 @@
                               (play 0 :cellar)
                               (chose 0 [:estate :estate]))))))
 
+(deftest chapel-test
+  (testing "Chapel"
+    (is (= (play {:players [{:hand    [chapel {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
+                             :actions 1}]}
+                 0 :chapel)
+           {:players [{:hand       [{:name :copper} {:name :estate} {:name :estate} {:name :estate}]
+                       :play-area  [chapel]
+                       :actions    0
+                       :play-stack [{:text      "Trash up to 4 cards from your hand."
+                                     :choice-fn trash
+                                     :options   [:copper :estate :estate :estate]
+                                     :max       4}]}]}))
+    (is (= (-> {:players [{:hand    [chapel {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
+                           :actions 1}]}
+               (play 0 :chapel)
+               (chose 0 [:estate :estate :estate]))
+           {:players [{:hand       [{:name :copper}]
+                       :play-area  [chapel]
+                       :actions    0
+                       :play-stack []}]
+            :trash   [{:name :estate} {:name :estate} {:name :estate}]}))
+    (is (= (-> {:players [{:hand    [chapel {:name :copper}]
+                           :actions 1}]}
+               (play 0 :chapel)
+               (chose 0 :copper))
+           {:players [{:hand       []
+                       :play-area  [chapel]
+                       :actions    0
+                       :play-stack []}]
+            :trash   [{:name :copper}]}))
+    (is (= (-> {:players [{:hand    [chapel {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
+                           :actions 1}]}
+               (play 0 :chapel)
+               (chose 0 []))
+           {:players [{:hand       [{:name :copper} {:name :estate} {:name :estate} {:name :estate}]
+                       :play-area  [chapel]
+                       :actions    0
+                       :play-stack []}]}))
+    (is (thrown-with-msg? AssertionError #"Chose error: You can only pick 4 options."
+                          (-> {:players [{:hand    (concat [chapel] (repeat 5 {:name :copper}))
+                                          :actions 1}]}
+                              (play 0 :chapel)
+                              (chose 0 (repeat 5 :copper)))))))
+
 (deftest council-room-test
   (testing "Council Room"
     (is (= (play {:players [{:deck    (repeat 5 {:name :copper})
@@ -320,7 +322,8 @@
                        :discard    [{:name :gold}]
                        :play-area  [harbinger]
                        :actions    1
-                       :play-stack [{:choice-fn harbinger-topdeck
+                       :play-stack [{:text      "You may put a card from it onto your deck."
+                                     :choice-fn harbinger-topdeck
                                      :options   [:gold]
                                      :max       1}]}]}))
     (is (= (-> {:players [{:hand    [harbinger]
@@ -443,7 +446,8 @@
            {:players [{:hand       [copper estate]
                        :play-area  [mine]
                        :actions    0
-                       :play-stack [{:choice-fn mine-trash
+                       :play-stack [{:text      "You may trash a Treasure from your hand."
+                                     :choice-fn mine-trash
                                      :options   [:copper]
                                      :min       1
                                      :max       1}]}]}))
@@ -462,7 +466,8 @@
             :players [{:hand       [estate]
                        :play-area  [mine]
                        :actions    0
-                       :play-stack [{:choice-fn gain-to-hand
+                       :play-stack [{:text      "Gain a Treasure to your hand costing up to $3."
+                                     :choice-fn gain-to-hand
                                      :options   [:copper :silver]
                                      :min       1
                                      :max       1}]}]
@@ -518,7 +523,8 @@
            {:players [{:hand       [{:name :copper} {:name :copper} {:name :estate}]
                        :play-area  [moneylender]
                        :actions    0
-                       :play-stack [{:choice-fn moneylender-trash
+                       :play-stack [{:text      "You may trash a Copper from your hand for +$3"
+                                     :choice-fn moneylender-trash
                                      :options   [:copper :copper]
                                      :max       1}]}]}))
     (is (= (-> {:players [{:hand    [moneylender {:name :copper} {:name :copper} {:name :estate}]
@@ -578,7 +584,8 @@
                        :hand       [estate copper]
                        :play-area  [poacher]
                        :actions    1
-                       :play-stack [{:choice-fn discard-cards
+                       :play-stack [{:text      "Discard a card per empty supply pile [1]."
+                                     :choice-fn discard-cards
                                      :options   [:estate :copper]
                                      :min       1
                                      :max       1}]}]}))
@@ -605,7 +612,8 @@
                        :hand       [estate silver copper]
                        :play-area  [poacher]
                        :actions    1
-                       :play-stack [{:choice-fn discard-cards
+                       :play-stack [{:text      "Discard a card per empty supply pile [2]."
+                                     :choice-fn discard-cards
                                      :options   [:estate :silver :copper]
                                      :min       2
                                      :max       2}]}]}))
@@ -642,7 +650,8 @@
                        :hand       [copper]
                        :play-area  [poacher]
                        :actions    1
-                       :play-stack [{:choice-fn discard-cards
+                       :play-stack [{:text      "Discard a card per empty supply pile [2]."
+                                     :choice-fn discard-cards
                                      :options   [:copper]
                                      :min       1
                                      :max       1}]}]}))))
@@ -655,7 +664,8 @@
            {:players [{:hand       [copper estate]
                        :play-area  [remodel]
                        :actions    0
-                       :play-stack [{:choice-fn remodel-trash
+                       :play-stack [{:text      "Trash a card from your hand."
+                                     :choice-fn remodel-trash
                                      :options   [:copper :estate]
                                      :min       1
                                      :max       1}]}]}))
@@ -674,7 +684,8 @@
             :players [{:hand       [copper]
                        :play-area  [remodel]
                        :actions    0
-                       :play-stack [{:choice-fn gain
+                       :play-stack [{:text      "Gain a card costing up to $4."
+                                     :choice-fn gain
                                      :options   [:curse :estate :copper :silver]
                                      :min       1
                                      :max       1}]}]
@@ -714,7 +725,8 @@
                        :hand       [market {:name :copper}]
                        :play-area  [throne-room]
                        :actions    0
-                       :play-stack [{:choice-fn play-action-twice
+                       :play-stack [{:text      "You may play an Action card from your hand twice."
+                                     :choice-fn play-action-twice
                                      :options   [:market]
                                      :max       1}]}]}))
     (is (= (-> {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
@@ -750,7 +762,8 @@
                        :hand       [merchant]
                        :play-area  [throne-room throne-room]
                        :actions    0
-                       :play-stack [{:choice-fn play-action-twice
+                       :play-stack [{:text      "You may play an Action card from your hand twice."
+                                     :choice-fn play-action-twice
                                      :options   [:merchant]
                                      :max       1}
                                     throne-room]}]}))
@@ -764,7 +777,8 @@
                        :hand       [witch copper]
                        :play-area  [throne-room throne-room merchant]
                        :triggers   [merchant-trigger merchant-trigger]
-                       :play-stack [{:choice-fn play-action-twice
+                       :play-stack [{:text      "You may play an Action card from your hand twice."
+                                     :choice-fn play-action-twice
                                      :options   [:witch]
                                      :max       1}]
                        :actions    2}]}))
@@ -820,7 +834,8 @@
                  0 :vassal)
            {:players [{:hand       []
                        :play-area  [vassal]
-                       :play-stack [{:choice-fn play-discard-action
+                       :play-stack [{:text      "Discard the top card of your deck. If it is an Action card, you may play it."
+                                     :choice-fn play-discard-action
                                      :options   [:market]
                                      :max       1}]
                        :deck       [copper]
@@ -906,7 +921,8 @@
             :players [{:hand       [copper]
                        :play-area  [workshop]
                        :actions    0
-                       :play-stack [{:choice-fn gain
+                       :play-stack [{:text "Gain a card costing up to $4."
+                                     :choice-fn gain
                                      :options   [:curse :estate :copper :silver]
                                      :min       1
                                      :max       1}]}]}))
