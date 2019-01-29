@@ -120,7 +120,7 @@
   (let [{:keys [hand]} (get-in game [:players player-no])
         {:keys [type name]} (last hand)]
     (cond-> game
-            (:action type) (give-choice player-no {:text      "Skip any Action cards you choose to; set those aside, discarding them afterwards."
+            (:action type) (give-choice player-no {:text      (str "You may skip the " (ut/format-name name) "; set it aside, discarding it afterwards.")
                                                    :choice-fn library-set-aside
                                                    :options   [name]
                                                    :max       1}))))
@@ -179,7 +179,6 @@
                             (give-choice player-no {:text       "You may trash a Treasure from your hand."
                                                     :choice-fn  mine-trash
                                                     :options-fn (ut/player-area :hand (comp :treasure :type))
-                                                    :min        1
                                                     :max        1})))})
 
 (defn moneylender-trash [game player-no do-trash?]
@@ -210,6 +209,7 @@
                              (-> game
                                  (draw player-no 1)
                                  (update-in [:players player-no :actions] + 1)
+                                 (update-in [:players player-no :coins] + 1)
                                  (cond-> (< 0 empty-piles) (give-choice player-no {:text       (str "Discard a card per empty supply pile [" empty-piles "].")
                                                                                    :choice-fn  discard
                                                                                    :options-fn (ut/player-area :hand)
@@ -329,7 +329,7 @@
                                  (let [{:keys [discard]} (get-in game [:players player-no])
                                        {:keys [name action-fn]} (last discard)]
                                    (cond-> game
-                                           action-fn (give-choice player-no {:text      "Discard the top card of your deck. If it is an Action card, you may play it."
+                                           action-fn (give-choice player-no {:text      (str "You may play the discarded " (ut/format-name name) ".")
                                                                              :choice-fn play-discard-action
                                                                              :options   [name]
                                                                              :max       1})))))))})

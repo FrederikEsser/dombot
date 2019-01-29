@@ -455,7 +455,7 @@
                        :play-area    [library]
                        :deck         [estate duchy smithy province]
                        :actions      0
-                       :effect-stack [{:text      "Skip any Action cards you choose to; set those aside, discarding them afterwards."
+                       :effect-stack [{:text      "You may skip the Village; set it aside, discarding it afterwards."
                                        :choice-fn library-set-aside
                                        :options   [:village]
                                        :max       1}
@@ -480,7 +480,7 @@
                        :set-aside    [village]
                        :deck         [province]
                        :actions      0
-                       :effect-stack [{:text      "Skip any Action cards you choose to; set those aside, discarding them afterwards."
+                       :effect-stack [{:text      "You may skip the Smithy; set it aside, discarding it afterwards."
                                        :choice-fn library-set-aside
                                        :options   [:smithy]
                                        :max       1}
@@ -577,7 +577,6 @@
                        :effect-stack [{:text      "You may trash a Treasure from your hand."
                                        :choice-fn mine-trash
                                        :options   [:copper]
-                                       :min       1
                                        :max       1}]}]}))
     (is (= (play {:players [{:hand    [mine estate]
                              :actions 1}]}
@@ -685,22 +684,26 @@
   (testing "Poacher"
     (is (= (play {:players [{:deck    [copper copper]
                              :hand    [poacher estate]
-                             :actions 1}]}
+                             :actions 1
+                             :coins   0}]}
                  0 :poacher)
            {:players [{:deck      [copper]
                        :hand      [estate copper]
                        :play-area [poacher]
-                       :actions   1}]}))
+                       :actions   1
+                       :coins     1}]}))
     (is (= (play {:supply  [{:pile-size 0} {:pile-size 1}]
                   :players [{:deck    [copper copper]
                              :hand    [poacher estate]
-                             :actions 1}]}
+                             :actions 1
+                             :coins   0}]}
                  0 :poacher)
            {:supply  [{:pile-size 0} {:pile-size 1}]
             :players [{:deck         [copper]
                        :hand         [estate copper]
                        :play-area    [poacher]
                        :actions      1
+                       :coins        1
                        :effect-stack [{:text      "Discard a card per empty supply pile [1]."
                                        :choice-fn discard
                                        :options   [:estate :copper]
@@ -709,7 +712,8 @@
     (is (= (-> {:supply  [{:pile-size 0} {:pile-size 1}]
                 :players [{:deck    [copper copper]
                            :hand    [poacher estate]
-                           :actions 1}]}
+                           :actions 1
+                           :coins   0}]}
                (play 0 :poacher)
                (chose 0 [:estate]))
            {:supply  [{:pile-size 0} {:pile-size 1}]
@@ -718,17 +722,20 @@
                        :hand         [copper]
                        :play-area    [poacher]
                        :actions      1
+                       :coins        1
                        :effect-stack []}]}))
     (is (= (play {:supply  [{:pile-size 0} {:pile-size 0}]
                   :players [{:deck    [copper copper]
                              :hand    [poacher estate silver]
-                             :actions 1}]}
+                             :actions 1
+                             :coins   0}]}
                  0 :poacher)
            {:supply  [{:pile-size 0} {:pile-size 0}]
             :players [{:deck         [copper]
                        :hand         [estate silver copper]
                        :play-area    [poacher]
                        :actions      1
+                       :coins        1
                        :effect-stack [{:text      "Discard a card per empty supply pile [2]."
                                        :choice-fn discard
                                        :options   [:estate :silver :copper]
@@ -737,7 +744,8 @@
     (is (= (-> {:supply  [{:pile-size 0} {:pile-size 0}]
                 :players [{:deck    [copper copper]
                            :hand    [poacher estate silver]
-                           :actions 1}]}
+                           :actions 1
+                           :coins   0}]}
                (play 0 :poacher)
                (chose 0 [:copper :estate]))
            {:supply  [{:pile-size 0} {:pile-size 0}]
@@ -746,27 +754,32 @@
                        :discard      [copper estate]
                        :play-area    [poacher]
                        :actions      1
+                       :coins        1
                        :effect-stack []}]}))
     (is (= (play {:supply  [{:pile-size 0}]
                   :players [{:deck    []
                              :hand    [poacher]
-                             :actions 1}]}
+                             :actions 1
+                             :coins   0}]}
                  0 :poacher)
            {:supply  [{:pile-size 0}]
             :players [{:deck      []
                        :hand      []
                        :play-area [poacher]
-                       :actions   1}]}))
+                       :actions   1
+                       :coins     1}]}))
     (is (= (play {:supply  [{:pile-size 0} {:pile-size 0}]
                   :players [{:deck    [copper copper]
                              :hand    [poacher]
-                             :actions 1}]}
+                             :actions 1
+                             :coins   0}]}
                  0 :poacher)
            {:supply  [{:pile-size 0} {:pile-size 0}]
             :players [{:deck         [copper]
                        :hand         [copper]
                        :play-area    [poacher]
                        :actions      1
+                       :coins        1
                        :effect-stack [{:text      "Discard a card per empty supply pile [2]."
                                        :choice-fn discard
                                        :options   [:copper]
@@ -927,7 +940,19 @@
                        :look-at      []
                        :deck         [market silver gold]
                        :actions      1
-                       :effect-stack []}]}))))
+                       :effect-stack []}]}))
+    (is (= (-> {:players [{:deck    [market copper]
+                           :hand    [sentry]
+                           :actions 1}]}
+               (play 0 :sentry))
+           {:players [{:hand         [market]
+                       :play-area    [sentry]
+                       :look-at      [copper]
+                       :deck         []
+                       :actions      1
+                       :effect-stack [{:text      "Trash any number of the top 2 cards of your deck."
+                                       :choice-fn sentry-trash
+                                       :options   [:copper]}]}]}))))
 
 (deftest smithy-test
   (testing "Smithy"
@@ -1059,7 +1084,7 @@
                  0 :vassal)
            {:players [{:hand         []
                        :play-area    [vassal]
-                       :effect-stack [{:text      "Discard the top card of your deck. If it is an Action card, you may play it."
+                       :effect-stack [{:text      "You may play the discarded Market."
                                        :choice-fn play-discard-action
                                        :options   [:market]
                                        :max       1}]

@@ -240,14 +240,18 @@
                           (rand-int (inc variance)))
                        (rand-int (inc variance)))})))
 
-(defn view-player [{[{:keys [options text]}] :effect-stack :as player}]
+(defn view-player [{:keys                    [look-at]
+                    [{:keys [text options]}] :effect-stack
+                    :as                      player}]
   (-> player
       (update :hand ut/frequencies-of :name)
       (update :play-area ut/frequencies-of :name)
+      (update :look-at ut/frequencies-of :name)
       (update :deck count)
       (update :discard view-discard)
-      (cond-> options (assoc :choice {:text    text
-                                      :options options}))
+      (cond-> (empty? look-at) (dissoc :look-at)
+              (or text (not-empty options)) (assoc :choice {:text    text
+                                                            :options options}))
       (dissoc :effect-stack)
       (dissoc :triggers)
       (assoc :victory-points (calc-victory-points player))))
