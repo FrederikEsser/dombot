@@ -175,6 +175,63 @@
                        :play-area [gold silver copper copper]
                        :coins     7}]}))))
 
+(deftest artisan-test
+  (testing "Artisan"
+    (is (= (play {:supply  (base-supply 2 8)
+                  :players [{:hand    [artisan silver]
+                             :actions 1}]}
+                 0 :artisan)
+           {:supply  (base-supply 2 8)
+            :players [{:hand       [silver]
+                       :play-area  [artisan]
+                       :actions    0
+                       :play-stack [{:text      "Gain a card to your hand costing up to $5."
+                                     :choice-fn gain-to-hand
+                                     :options   [:curse :estate :duchy :copper :silver]
+                                     :min       1
+                                     :max       1}
+                                    {:action-fn artisan-topdeck-choice}]}]}))
+    (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                :players [{:hand    [artisan silver]
+                           :actions 1}]}
+               (play 0 :artisan)
+               (chose 0 :duchy))
+           {:supply  [{:card duchy :pile-size 7}]
+            :players [{:hand       [silver duchy]
+                       :play-area  [artisan]
+                       :actions    0
+                       :play-stack [{:text      "Put a card from your hand onto your deck."
+                                     :choice-fn topdeck-from-hand
+                                     :options   [:silver :duchy]
+                                     :min       1
+                                     :max       1}]}]}))
+    (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                :players [{:hand    [artisan silver]
+                           :deck    [gold]
+                           :actions 1}]}
+               (play 0 :artisan)
+               (chose 0 :duchy)
+               (chose 0 :silver))
+           {:supply  [{:card duchy :pile-size 7}]
+            :players [{:hand       [duchy]
+                       :play-area  [artisan]
+                       :deck       [silver gold]
+                       :actions    0
+                       :play-stack []}]}))
+    (is (= (play {:supply  []                               ; totally hypothetical supply with no cards costing 5 or less
+                  :players [{:hand    [artisan silver]
+                             :actions 1}]}
+                 0 :artisan)
+           {:supply  []
+            :players [{:hand       [silver]
+                       :play-area  [artisan]
+                       :actions    0
+                       :play-stack [{:text      "Put a card from your hand onto your deck."
+                                     :choice-fn topdeck-from-hand
+                                     :options   [:silver]
+                                     :min       1
+                                     :max       1}]}]}))))
+
 (deftest cellar-test
   (testing "Cellar"
     (is (= (play {:players [{:hand    [cellar {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
@@ -322,8 +379,8 @@
                        :discard    [{:name :gold}]
                        :play-area  [harbinger]
                        :actions    1
-                       :play-stack [{:text      "You may put a card from it onto your deck."
-                                     :choice-fn harbinger-topdeck
+                       :play-stack [{:text      "You may put a card from your discard pile onto your deck."
+                                     :choice-fn topdeck-from-discard
                                      :options   [:gold]
                                      :max       1}]}]}))
     (is (= (-> {:players [{:hand    [harbinger]
@@ -585,7 +642,7 @@
                        :play-area  [poacher]
                        :actions    1
                        :play-stack [{:text      "Discard a card per empty supply pile [1]."
-                                     :choice-fn discard-cards
+                                     :choice-fn discard
                                      :options   [:estate :copper]
                                      :min       1
                                      :max       1}]}]}))
@@ -613,7 +670,7 @@
                        :play-area  [poacher]
                        :actions    1
                        :play-stack [{:text      "Discard a card per empty supply pile [2]."
-                                     :choice-fn discard-cards
+                                     :choice-fn discard
                                      :options   [:estate :silver :copper]
                                      :min       2
                                      :max       2}]}]}))
@@ -651,7 +708,7 @@
                        :play-area  [poacher]
                        :actions    1
                        :play-stack [{:text      "Discard a card per empty supply pile [2]."
-                                     :choice-fn discard-cards
+                                     :choice-fn discard
                                      :options   [:copper]
                                      :min       1
                                      :max       1}]}]}))))
@@ -921,7 +978,7 @@
             :players [{:hand       [copper]
                        :play-area  [workshop]
                        :actions    0
-                       :play-stack [{:text "Gain a card costing up to $4."
+                       :play-stack [{:text      "Gain a card costing up to $4."
                                      :choice-fn gain
                                      :options   [:curse :estate :copper :silver]
                                      :min       1

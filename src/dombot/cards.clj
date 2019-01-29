@@ -10,6 +10,31 @@
 (def silver {:name :silver :type #{:treasure} :cost 3 :coin-value 2})
 (def gold {:name :gold :type #{:treasure} :cost 6 :coin-value 3})
 
+(defn topdeck-from-hand [game player-no card-name]
+  (cond-> game
+          card-name (move-card player-no {:card-name   card-name
+                                          :from        :hand
+                                          :to          :deck
+                                          :to-position :top})))
+
+(defn artisan-topdeck-choice [game player-no]
+  (-> game
+      (give-choice player-no {:text       "Put a card from your hand onto your deck."
+                              :choice-fn  topdeck-from-hand
+                              :options-fn (ut/player-hand)
+                              :min        1
+                              :max        1})))
+
+(def artisan {:name      :artisan :set :dominion :type #{:action} :cost 6
+              :action-fn (fn cellar-action [game player-no]
+                           (-> game
+                               (push-play-stack player-no {:action-fn artisan-topdeck-choice})
+                               (give-choice player-no {:text       "Gain a card to your hand costing up to $5."
+                                                       :choice-fn  gain-to-hand
+                                                       :options-fn (ut/supply-piles {:max-cost 5})
+                                                       :min        1
+                                                       :max        1})))})
+
 (defn cellar-sift [game player-no card-names]
   (-> (reduce (fn [game card-name] (move-card game player-no {:card-name card-name
                                                               :from      :hand
@@ -59,7 +84,7 @@
               :victory-points (fn [cards]
                                 (Math/floorDiv (int (count cards)) (int 10)))})
 
-(defn harbinger-topdeck [game player-no card-name]
+(defn topdeck-from-discard [game player-no card-name]
   (cond-> game
           card-name (move-card player-no {:card-name   card-name
                                           :from        :discard
@@ -71,8 +96,8 @@
                              (-> game
                                  (draw player-no 1)
                                  (update-in [:players player-no :actions] + 1)
-                                 (give-choice player-no {:text       "You may put a card from it onto your deck."
-                                                         :choice-fn  harbinger-topdeck
+                                 (give-choice player-no {:text       "You may put a card from your discard pile onto your deck."
+                                                         :choice-fn  topdeck-from-discard
                                                          :options-fn (ut/player-discard)
                                                          :max        1})))})
 
@@ -140,7 +165,7 @@
                                                            :options-fn (ut/player-hand (comp #{:copper} :name))
                                                            :max        1})))})
 
-(defn discard-cards [game player-no card-names]
+(defn discard [game player-no card-names]
   (reduce (fn [game card-name] (move-card game player-no {:card-name card-name
                                                           :from      :hand
                                                           :to        :discard}))
@@ -154,7 +179,7 @@
                                  (draw player-no 1)
                                  (update-in [:players player-no :actions] + 1)
                                  (cond-> (< 0 empty-piles) (give-choice player-no {:text       (str "Discard a card per empty supply pile [" empty-piles "].")
-                                                                                   :choice-fn  discard-cards
+                                                                                   :choice-fn  discard
                                                                                    :options-fn (ut/player-hand)
                                                                                    :min        empty-piles
                                                                                    :max        empty-piles})))))})
@@ -261,7 +286,6 @@
                                                         :max        1})))})
 
 ;; MULTI CHOICES
-(def artisan {:name :artisan :set :dominion :type #{:action} :cost 6})
 (def sentry {:name :sentry :set :dominion :type #{:action} :cost 5})
 (def library {:name :library :set :dominion :type #{:action} :cost 5})
 
@@ -276,7 +300,8 @@
                         (-> game
                             (draw player-no 2)))})
 
-(def kingdom-cards [cellar
+(def kingdom-cards [artisan
+                    cellar
                     chapel
                     council-room
                     festival

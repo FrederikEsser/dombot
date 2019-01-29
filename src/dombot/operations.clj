@@ -147,16 +147,6 @@
 (defn pop-play-stack [game player-no]
   (update-in game [:players player-no :play-stack] (partial drop 1)))
 
-(defn give-choice [game player-no {:keys [options-fn options min max] :as args}]
-  (let [options (if options-fn (options-fn game player-no) options)
-        args (cond-> args
-                     min (update :min clojure.core/min (count options))
-                     max (update :max clojure.core/min (count options)))]
-    (cond-> game
-            (not-empty options) (push-play-stack player-no (-> args
-                                                               (dissoc :options-fn)
-                                                               (assoc :options options))))))
-
 (defn- chose-single [game player-no selection]
   (if (coll? selection)
     (assert (<= (count selection) 1) "Chose error: You can only pick 1 option."))
@@ -209,6 +199,17 @@
 
     (-> game
         (chose-fn player-no selection)
+        (check-stack player-no))))
+
+(defn give-choice [game player-no {:keys [options-fn options min max] :as args}]
+  (let [options (if options-fn (options-fn game player-no) options)
+        args (cond-> args
+                     min (update :min clojure.core/min (count options))
+                     max (update :max clojure.core/min (count options)))]
+    (-> game
+        (cond-> (not-empty options) (push-play-stack player-no (-> args
+                                                                   (dissoc :options-fn)
+                                                                   (assoc :options options))))
         (check-stack player-no))))
 
 (defn- get-victory-points [cards {:keys [victory-points]}]
