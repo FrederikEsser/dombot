@@ -610,17 +610,6 @@
                        :play-area [moneylender]
                        :actions   0}]}))))
 
-(deftest smithy-test
-  (testing "Smithy"
-    (is (= (play {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
-                             :hand    [smithy]
-                             :actions 1}]}
-                 0 :smithy)
-           {:players [{:deck      []
-                       :hand      [{:name :copper} {:name :copper} {:name :copper}]
-                       :play-area [smithy]
-                       :actions   0}]}))))
-
 (deftest poacher-test
   (testing "Poacher"
     (is (= (play {:players [{:deck    [copper copper]
@@ -771,6 +760,114 @@
                        :actions      0
                        :effect-stack []}]
             :trash   [silver]}))))
+
+(deftest sentry-test
+  (testing "Sentry"
+    (is (= (play {:players [{:deck    [copper silver estate gold]
+                             :hand    [sentry]
+                             :actions 1}]}
+                 0 :sentry)
+           {:players [{:hand         [copper]
+                       :play-area    [sentry]
+                       :look-at      [silver estate]
+                       :deck         [gold]
+                       :actions      1
+                       :effect-stack [{:text      "Trash any number of the top 2 cards of your deck."
+                                       :choice-fn sentry-trash
+                                       :options   [:silver :estate]}]}]}))
+    (is (= (-> {:players [{:deck    [copper silver estate gold]
+                           :hand    [sentry]
+                           :actions 1}]}
+               (play 0 :sentry)
+               (chose 0 :estate))
+           {:players [{:hand         [copper]
+                       :play-area    [sentry]
+                       :look-at      [silver]
+                       :deck         [gold]
+                       :actions      1
+                       :effect-stack [{:text      "Discard any number of the top 2 cards of your deck."
+                                       :choice-fn sentry-discard
+                                       :options   [:silver]}]}]
+            :trash   [estate]}))
+    (is (= (-> {:players [{:deck    [copper silver estate gold]
+                           :hand    [sentry]
+                           :actions 1}]}
+               (play 0 :sentry)
+               (chose 0 :estate)
+               (chose 0 nil))
+           {:players [{:hand         [copper]
+                       :play-area    [sentry]
+                       :look-at      [silver]
+                       :deck         [gold]
+                       :actions      1
+                       :effect-stack [{:text      "Put the rest back on top in any order."
+                                       :choice-fn sentry-topdeck
+                                       :options   [:silver]
+                                       :min       1}]}]
+            :trash   [estate]}))
+    (is (= (-> {:players [{:deck    [copper silver estate gold]
+                           :hand    [sentry]
+                           :actions 1}]}
+               (play 0 :sentry)
+               (chose 0 :estate)
+               (chose 0 nil)
+               (chose 0 :silver))
+           {:players [{:hand         [copper]
+                       :play-area    [sentry]
+                       :look-at      []
+                       :deck         [silver gold]
+                       :actions      1
+                       :effect-stack []}]
+            :trash   [estate]}))
+    (is (= (-> {:players [{:deck    [silver copper estate gold]
+                           :hand    [sentry]
+                           :actions 1}]}
+               (play 0 :sentry)
+               (chose 0 [:estate :copper]))
+           {:players [{:hand         [silver]
+                       :play-area    [sentry]
+                       :look-at      []
+                       :deck         [gold]
+                       :actions      1
+                       :effect-stack []}]
+            :trash   [estate copper]}))
+    (is (= (-> {:players [{:deck    [silver province province gold]
+                           :hand    [sentry]
+                           :actions 1}]}
+               (play 0 :sentry)
+               (chose 0 [])
+               (chose 0 [:province :province]))
+           {:players [{:hand         [silver]
+                       :play-area    [sentry]
+                       :look-at      []
+                       :deck         [gold]
+                       :discard      [province province]
+                       :actions      1
+                       :effect-stack []}]}))
+    (is (= (-> {:players [{:deck    [market silver market gold]
+                           :hand    [sentry]
+                           :actions 1}]}
+               (play 0 :sentry)
+               (chose 0 [])
+               (chose 0 [])
+               (chose 0 [:silver :market]))
+           {:players [{:hand         [market]
+                       :play-area    [sentry]
+                       :look-at      []
+                       :deck         [market silver gold]
+                       :actions      1
+                       :effect-stack []}]}))))
+
+(deftest smithy-test
+  (testing "Smithy"
+    (is (= (play {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
+                             :hand    [smithy]
+                             :actions 1}]}
+                 0 :smithy)
+           {:players [{:deck      []
+                       :hand      [{:name :copper} {:name :copper} {:name :copper}]
+                       :play-area [smithy]
+                       :actions   0}]}))))
 
 (deftest throne-room-test
   (testing "Throne Room"

@@ -21,7 +21,7 @@
   (-> game
       (give-choice player-no {:text       "Put a card from your hand onto your deck."
                               :choice-fn  topdeck-from-hand
-                              :options-fn (ut/player-hand)
+                              :options-fn (ut/player-area :hand)
                               :min        1
                               :max        1})))
 
@@ -49,7 +49,7 @@
                               (update-in [:players player-no :actions] + 1)
                               (give-choice player-no {:text       "Discard any number of cards, then draw that many."
                                                       :choice-fn  cellar-sift
-                                                      :options-fn (ut/player-hand)})))})
+                                                      :options-fn (ut/player-area :hand)})))})
 
 (defn trash [game player-no card-names]
   (reduce (fn [game card-name] (move-card game player-no {:card-name card-name
@@ -63,7 +63,7 @@
                           (-> game
                               (give-choice player-no {:text       "Trash up to 4 cards from your hand."
                                                       :choice-fn  trash
-                                                      :options-fn (ut/player-hand)
+                                                      :options-fn (ut/player-area :hand)
                                                       :max        4})))})
 
 (def council-room {:name      :council-room :set :dominion :type #{:action} :cost 5
@@ -98,7 +98,7 @@
                                  (update-in [:players player-no :actions] + 1)
                                  (give-choice player-no {:text       "You may put a card from your discard pile onto your deck."
                                                          :choice-fn  topdeck-from-discard
-                                                         :options-fn (ut/player-discard)
+                                                         :options-fn (ut/player-area :discard)
                                                          :max        1})))})
 
 (def laboratory {:name      :laboratory :set :dominion :type #{:action} :cost 5
@@ -146,7 +146,7 @@
                         (-> game
                             (give-choice player-no {:text       "You may trash a Treasure from your hand."
                                                     :choice-fn  mine-trash
-                                                    :options-fn (ut/player-hand (comp :treasure :type))
+                                                    :options-fn (ut/player-area :hand (comp :treasure :type))
                                                     :min        1
                                                     :max        1})))})
 
@@ -162,7 +162,7 @@
                                (-> game
                                    (give-choice player-no {:text       "You may trash a Copper from your hand for +$3"
                                                            :choice-fn  moneylender-trash
-                                                           :options-fn (ut/player-hand (comp #{:copper} :name))
+                                                           :options-fn (ut/player-area :hand (comp #{:copper} :name))
                                                            :max        1})))})
 
 (defn discard [game player-no card-names]
@@ -180,7 +180,7 @@
                                  (update-in [:players player-no :actions] + 1)
                                  (cond-> (< 0 empty-piles) (give-choice player-no {:text       (str "Discard a card per empty supply pile [" empty-piles "].")
                                                                                    :choice-fn  discard
-                                                                                   :options-fn (ut/player-hand)
+                                                                                   :options-fn (ut/player-area :hand)
                                                                                    :min        empty-piles
                                                                                    :max        empty-piles})))))})
 
@@ -203,9 +203,53 @@
                            (-> game
                                (give-choice player-no {:text       "Trash a card from your hand."
                                                        :choice-fn  remodel-trash
-                                                       :options-fn (ut/player-hand)
+                                                       :options-fn (ut/player-area :hand)
                                                        :min        1
                                                        :max        1})))})
+
+(defn sentry-topdeck [game player-no card-names]
+  (-> (reduce (fn [game card-name] (move-card game player-no {:card-name   card-name
+                                                              :from        :look-at
+                                                              :to          :deck
+                                                              :to-position :top}))
+              game
+              (ut/ensure-coll card-names))))
+
+(defn sentry-discard [game player-no card-names]
+  (-> (reduce (fn [game card-name] (move-card game player-no {:card-name card-name
+                                                              :from      :look-at
+                                                              :to        :discard}))
+              game
+              (ut/ensure-coll card-names))
+      (give-choice player-no {:text       "Put the rest back on top in any order."
+                              :choice-fn  sentry-topdeck
+                              :options-fn (ut/player-area :look-at)
+                              :min        2})))
+
+(defn sentry-trash [game player-no card-names]
+  (-> (reduce (fn [game card-name] (move-card game player-no {:card-name card-name
+                                                              :from      :look-at
+                                                              :to        :trash}))
+              game
+              (ut/ensure-coll card-names))
+      (give-choice player-no {:text       "Discard any number of the top 2 cards of your deck."
+                              :choice-fn  sentry-discard
+                              :options-fn (ut/player-area :look-at)})))
+
+(def sentry {:name      :sentry :set :dominion :type #{:action} :cost 5
+             :action-fn (fn sentry-action [game player-no]
+                          (-> game
+                              (draw player-no 1)
+                              (update-in [:players player-no :actions] + 1)
+                              (move-card player-no {:from          :deck
+                                                    :from-position :top
+                                                    :to            :look-at})
+                              (move-card player-no {:from          :deck
+                                                    :from-position :top
+                                                    :to            :look-at})
+                              (give-choice player-no {:text       "Trash any number of the top 2 cards of your deck."
+                                                      :choice-fn  sentry-trash
+                                                      :options-fn (ut/player-area :look-at)})))})
 
 (def smithy {:name      :smithy :set :dominion :type #{:action} :cost 4
              :action-fn (fn smithy-action [game player-no]
@@ -229,7 +273,7 @@
                                (-> game
                                    (give-choice player-no {:text       "You may play an Action card from your hand twice."
                                                            :choice-fn  play-action-twice
-                                                           :options-fn (ut/player-hand (comp :action :type))
+                                                           :options-fn (ut/player-area :hand (comp :action :type))
                                                            :max        1})))})
 
 (defn play-discard-action [game player-no card-name]
@@ -286,7 +330,6 @@
                                                         :max        1})))})
 
 ;; MULTI CHOICES
-(def sentry {:name :sentry :set :dominion :type #{:action} :cost 5})
 (def library {:name :library :set :dominion :type #{:action} :cost 5})
 
 ;; ATTACK WITH CHOICE
@@ -315,6 +358,7 @@
                     moneylender
                     poacher
                     remodel
+                    sentry
                     smithy
                     throne-room
                     vassal

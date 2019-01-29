@@ -49,23 +49,14 @@
                        (when (= card-name name) {:idx idx :card card})))
        first))
 
-(defn player-hand
-  ([filter-fn]
+(defn player-area
+  ([area filter-fn]
    (fn [game player-no]
-     (cond->> (get-in game [:players player-no :hand])
+     (cond->> (get-in game [:players player-no area])
               filter-fn (filter filter-fn)
               :always (map :name))))
-  ([]
-   (player-hand nil)))
-
-(defn player-discard
-  ([filter-fn]
-   (fn [game player-no]
-     (cond->> (get-in game [:players player-no :discard])
-              filter-fn (filter filter-fn)
-              :always (map :name))))
-  ([]
-   (player-discard nil)))
+  ([area]
+   (player-area area nil)))
 
 (defn supply-piles [{:keys [max-cost type]}]
   (fn [{:keys [supply]} player-no]
