@@ -107,6 +107,38 @@
                                   (draw player-no 2)
                                   (update-in [:players player-no :actions] + 1)))})
 
+(defn library-set-aside [game player-no card-name]
+  (let [{:keys [hand]} (get-in game [:players player-no])
+        {:keys [name]} (last hand)]
+    (cond-> game
+            (= name card-name) (move-card player-no {:card-name     card-name
+                                                     :from          :hand
+                                                     :from-position :bottom
+                                                     :to            :set-aside}))))
+
+(defn library-check-for-action [game player-no]
+  (let [{:keys [hand]} (get-in game [:players player-no])
+        {:keys [type name]} (last hand)]
+    (cond-> game
+            (:action type) (give-choice player-no {:text      "Skip any Action cards you choose to; set those aside, discarding them afterwards."
+                                                   :choice-fn library-set-aside
+                                                   :options   [name]
+                                                   :max       1}))))
+
+(defn library-action [game player-no]
+  (let [{:keys [hand deck discard set-aside]} (get-in game [:players player-no])]
+    (if (or (>= (count hand) 7) (empty? (concat deck discard)))
+      (cond-> game
+              (not-empty set-aside) (-> (update-in [:players player-no :discard] concat set-aside)
+                                        (update-in [:players player-no] dissoc :set-aside)))
+      (-> game
+          (push-effect-stack player-no {:action-fn library-action})
+          (draw player-no 1)
+          (library-check-for-action player-no)))))
+
+(def library {:name      :library :set :dominion :type #{:action} :cost 5
+              :action-fn library-action})
+
 (def market {:name      :market :set :dominion :type #{:action} :cost 5
              :action-fn (fn market-action [game player-no]
                           (-> game
@@ -329,9 +361,6 @@
                                                         :min        1
                                                         :max        1})))})
 
-;; MULTI CHOICES
-(def library {:name :library :set :dominion :type #{:action} :cost 5})
-
 ;; ATTACK WITH CHOICE
 (def bandit {:name :bandit :set :dominion :type #{:action} :cost 5})
 (def militia {:name :militia :set :dominion :type #{:action} :cost 4})
@@ -351,6 +380,7 @@
                     gardens
                     harbinger
                     laboratory
+                    library
                     market
                     merchant
                     mine

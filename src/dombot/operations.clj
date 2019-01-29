@@ -99,40 +99,6 @@
                 card (-> (update-in from-path ut/vec-remove idx)
                          (update-in to-path add-card-to-coll card)))))))
 
-(defn- apply-triggers [game player-no trigger-id]
-  (let [{:keys [triggers]} (get-in game [:players player-no])
-        apply-trigger (fn [game' {:keys [trigger-fn]}] (trigger-fn game' player-no))
-        matching-triggers (filter (comp #{trigger-id} :trigger-id) triggers)]
-    (-> (reduce apply-trigger game matching-triggers)
-        (update-in [:players player-no :triggers] (partial remove (comp #{trigger-id} :trigger-id))))))
-
-(defn play [game player-no card-name]
-  (let [{:keys [actions triggers] :as player} (get-in game [:players player-no])
-        {{:keys [type action-fn coin-value] :as card} :card} (ut/get-card-idx player :hand card-name)]
-    (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
-    (assert type (str "Play error: " (ut/format-name card-name) " has no type."))
-    (cond
-      (:action type) (do (assert action-fn (str "Play error: " (ut/format-name card-name) " has no action function."))
-                         (assert (and actions (< 0 actions)) "Play error: You have no more actions."))
-      (:treasure type) (assert coin-value (str "Play error: " (ut/format-name card-name) " has no coin value"))
-      :else (assert false (str "Play error: " (ut/format-type type) " cards cannot be played.")))
-    (-> game
-        (move-card player-no {:card-name card-name
-                              :from      :hand
-                              :to        :play-area})
-        (cond->
-          (:action type) (update-in [:players player-no :actions] - 1)
-          action-fn (action-fn player-no)
-          coin-value (update-in [:players player-no :coins] + coin-value)
-          (not-empty triggers) (apply-triggers player-no [:play card-name])))))
-
-(defn play-treasures [game player-no]
-  (let [{:keys [hand]} (get-in game [:players player-no])
-        treasures (->> hand
-                       (filter (comp :treasure :type))
-                       (map :name))]
-    (reduce (fn [game' card-name] (play game' player-no card-name)) game treasures)))
-
 (defn do-for-other-players [{:keys [players] :as game} player-no f & args]
   (let [other-player-nos (->> players
                               (keep-indexed (fn [idx _] (when (not= idx player-no) idx))))]
@@ -211,6 +177,41 @@
                                                                      (dissoc :options-fn)
                                                                      (assoc :options options))))
         (check-stack player-no))))
+
+(defn- apply-triggers [game player-no trigger-id]
+  (let [{:keys [triggers]} (get-in game [:players player-no])
+        apply-trigger (fn [game' {:keys [trigger-fn]}] (trigger-fn game' player-no))
+        matching-triggers (filter (comp #{trigger-id} :trigger-id) triggers)]
+    (-> (reduce apply-trigger game matching-triggers)
+        (update-in [:players player-no :triggers] (partial remove (comp #{trigger-id} :trigger-id))))))
+
+(defn play [game player-no card-name]
+  (let [{:keys [actions triggers] :as player} (get-in game [:players player-no])
+        {{:keys [type action-fn coin-value] :as card} :card} (ut/get-card-idx player :hand card-name)]
+    (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
+    (assert type (str "Play error: " (ut/format-name card-name) " has no type."))
+    (cond
+      (:action type) (do (assert action-fn (str "Play error: " (ut/format-name card-name) " has no action function."))
+                         (assert (and actions (< 0 actions)) "Play error: You have no more actions."))
+      (:treasure type) (assert coin-value (str "Play error: " (ut/format-name card-name) " has no coin value"))
+      :else (assert false (str "Play error: " (ut/format-type type) " cards cannot be played.")))
+    (-> game
+        (move-card player-no {:card-name card-name
+                              :from      :hand
+                              :to        :play-area})
+        (cond->
+          (:action type) (update-in [:players player-no :actions] - 1)
+          action-fn (action-fn player-no)
+          coin-value (update-in [:players player-no :coins] + coin-value)
+          (not-empty triggers) (apply-triggers player-no [:play card-name]))
+        (check-stack player-no))))
+
+(defn play-treasures [game player-no]
+  (let [{:keys [hand]} (get-in game [:players player-no])
+        treasures (->> hand
+                       (filter (comp :treasure :type))
+                       (map :name))]
+    (reduce (fn [game' card-name] (play game' player-no card-name)) game treasures)))
 
 (defn- get-victory-points [cards {:keys [victory-points]}]
   (if (fn? victory-points)

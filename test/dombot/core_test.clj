@@ -427,6 +427,77 @@
                        :play-area [laboratory]
                        :actions   1}]}))))
 
+(deftest library-test
+  (testing "Library"
+    (is (= (play {:players [{:hand    [library]
+                             :deck    (repeat 8 copper)
+                             :actions 1}]}
+                 0 :library)
+           {:players [{:hand         (repeat 7 copper)
+                       :play-area    [library]
+                       :deck         [copper]
+                       :actions      0
+                       :effect-stack []}]}))
+    (is (= (play {:players [{:hand    [library]
+                             :deck    (repeat 6 copper)
+                             :actions 1}]}
+                 0 :library)
+           {:players [{:hand         (repeat 6 copper)
+                       :play-area    [library]
+                       :deck         []
+                       :actions      0
+                       :effect-stack []}]}))
+    (is (= (play {:players [{:hand    [smithy library copper]
+                             :deck    [silver gold village estate duchy smithy province]
+                             :actions 1}]}
+                 0 :library)
+           {:players [{:hand         [smithy copper silver gold village]
+                       :play-area    [library]
+                       :deck         [estate duchy smithy province]
+                       :actions      0
+                       :effect-stack [{:text      "Skip any Action cards you choose to; set those aside, discarding them afterwards."
+                                       :choice-fn library-set-aside
+                                       :options   [:village]
+                                       :max       1}
+                                      {:action-fn library-action}]}]}))
+    (is (= (-> {:players [{:hand    [smithy library copper]
+                           :deck    [silver gold village estate duchy smithy province]
+                           :actions 1}]}
+               (play 0 :library)
+               (chose 0 nil))
+           {:players [{:hand         [smithy copper silver gold village estate duchy]
+                       :play-area    [library]
+                       :deck         [smithy province]
+                       :actions      0
+                       :effect-stack []}]}))
+    (is (= (-> {:players [{:hand    [smithy library copper]
+                           :deck    [silver gold village estate duchy smithy province]
+                           :actions 1}]}
+               (play 0 :library)
+               (chose 0 :village))
+           {:players [{:hand         [smithy copper silver gold estate duchy smithy]
+                       :play-area    [library]
+                       :set-aside    [village]
+                       :deck         [province]
+                       :actions      0
+                       :effect-stack [{:text      "Skip any Action cards you choose to; set those aside, discarding them afterwards."
+                                       :choice-fn library-set-aside
+                                       :options   [:smithy]
+                                       :max       1}
+                                      {:action-fn library-action}]}]}))
+    (is (= (-> {:players [{:hand    [smithy library copper]
+                           :deck    [silver gold village estate duchy smithy province]
+                           :actions 1}]}
+               (play 0 :library)
+               (chose 0 :village)
+               (chose 0 :smithy))
+           {:players [{:hand         [smithy copper silver gold estate duchy province]
+                       :play-area    [library]
+                       :deck         []
+                       :discard      [village smithy]
+                       :actions      0
+                       :effect-stack []}]}))))
+
 (deftest market-test
   (testing "Market"
     (is (= (play {:players [{:deck    [copper copper copper]
