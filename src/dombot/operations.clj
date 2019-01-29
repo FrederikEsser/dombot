@@ -141,16 +141,16 @@
             game
             other-player-nos)))
 
-(defn push-play-stack [game player-no item]
-  (update-in game [:players player-no :play-stack] (partial concat [item])))
+(defn push-effect-stack [game player-no item]
+  (update-in game [:players player-no :effect-stack] (partial concat [item])))
 
-(defn pop-play-stack [game player-no]
-  (update-in game [:players player-no :play-stack] (partial drop 1)))
+(defn pop-effect-stack [game player-no]
+  (update-in game [:players player-no :effect-stack] (partial drop 1)))
 
 (defn- chose-single [game player-no selection]
   (if (coll? selection)
     (assert (<= (count selection) 1) "Chose error: You can only pick 1 option."))
-  (let [{[{:keys [choice-fn options min]}] :play-stack} (get-in game [:players player-no])
+  (let [{[{:keys [choice-fn options min]}] :effect-stack} (get-in game [:players player-no])
         single-selection (if (coll? selection)
                            (first selection)
                            selection)]
@@ -160,11 +160,11 @@
       (assert ((set options) single-selection) (str "Chose error: " (ut/format-name single-selection) " is not a valid choice.")))
 
     (-> game
-        (pop-play-stack player-no)
+        (pop-effect-stack player-no)
         (choice-fn player-no single-selection))))
 
 (defn- chose-multi [game player-no selection]
-  (let [{[{:keys [choice-fn options min max]}] :play-stack} (get-in game [:players player-no])
+  (let [{[{:keys [choice-fn options min max]}] :effect-stack} (get-in game [:players player-no])
         valid-choices (-> options set)
         multi-selection (if (coll? selection)
                           selection
@@ -180,18 +180,18 @@
       (assert (valid-choices sel) (str "Chose error: " (ut/format-name sel) " is not a valid choice.")))
 
     (-> game
-        (pop-play-stack player-no)
+        (pop-effect-stack player-no)
         (choice-fn player-no multi-selection))))
 
 (defn check-stack [game player-no]
-  (let [{[{:keys [action-fn]}] :play-stack} (get-in game [:players player-no])]
+  (let [{[{:keys [action-fn]}] :effect-stack} (get-in game [:players player-no])]
     (cond-> game
-            action-fn (-> (pop-play-stack player-no)
+            action-fn (-> (pop-effect-stack player-no)
                           (action-fn player-no)
                           (check-stack player-no)))))
 
 (defn chose [game player-no selection]
-  (let [{[{:keys [choice-fn options min max]}] :play-stack} (get-in game [:players player-no])
+  (let [{[{:keys [choice-fn options min max]}] :effect-stack} (get-in game [:players player-no])
         chose-fn (if (= max 1) chose-single chose-multi)]
     (assert choice-fn "Chose error: You don't have a choice to make.")
     (assert (not-empty options) "Chose error: Choice has no options")
@@ -207,9 +207,9 @@
                      min (update :min clojure.core/min (count options))
                      max (update :max clojure.core/min (count options)))]
     (-> game
-        (cond-> (not-empty options) (push-play-stack player-no (-> args
-                                                                   (dissoc :options-fn)
-                                                                   (assoc :options options))))
+        (cond-> (not-empty options) (push-effect-stack player-no (-> args
+                                                                     (dissoc :options-fn)
+                                                                     (assoc :options options))))
         (check-stack player-no))))
 
 (defn- get-victory-points [cards {:keys [victory-points]}]
@@ -239,7 +239,7 @@
                           (rand-int (inc variance)))
                        (rand-int (inc variance)))})))
 
-(defn view-player [{[{:keys [options text]}] :play-stack :as player}]
+(defn view-player [{[{:keys [options text]}] :effect-stack :as player}]
   (-> player
       (update :hand ut/frequencies-of :name)
       (update :play-area ut/frequencies-of :name)
@@ -247,7 +247,7 @@
       (update :discard view-discard)
       (cond-> options (assoc :choice {:text    text
                                       :options options}))
-      (dissoc :play-stack)
+      (dissoc :effect-stack)
       (dissoc :triggers)
       (assoc :victory-points (calc-victory-points player))))
 

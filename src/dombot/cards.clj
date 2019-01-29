@@ -1,5 +1,5 @@
 (ns dombot.cards
-  (:require [dombot.operations :refer [draw gain gain-to-hand do-for-other-players move-card give-choice push-play-stack]]
+  (:require [dombot.operations :refer [draw gain gain-to-hand do-for-other-players move-card give-choice push-effect-stack]]
             [dombot.utils :as ut]))
 
 (def curse {:name :curse :type #{:curse} :cost 0 :victory-points -1})
@@ -26,9 +26,9 @@
                               :max        1})))
 
 (def artisan {:name      :artisan :set :dominion :type #{:action} :cost 6
-              :action-fn (fn cellar-action [game player-no]
+              :action-fn (fn artisan-action [game player-no]
                            (-> game
-                               (push-play-stack player-no {:action-fn artisan-topdeck-choice})
+                               (push-effect-stack player-no {:action-fn artisan-topdeck-choice})
                                (give-choice player-no {:text       "Gain a card to your hand costing up to $5."
                                                        :choice-fn  gain-to-hand
                                                        :options-fn (ut/supply-piles {:max-cost 5})
@@ -217,7 +217,7 @@
     (let [player (get-in game [:players player-no])
           {{:keys [action-fn] :as card} :card} (ut/get-card-idx player :hand card-name)]
       (-> game
-          (push-play-stack player-no card)
+          (push-effect-stack player-no card)
           (move-card player-no {:card-name card-name
                                 :from      :hand
                                 :to        :play-area})
