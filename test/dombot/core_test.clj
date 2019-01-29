@@ -36,20 +36,20 @@
 
 (deftest gain-test
   (testing "Gain"
-    (is (= (-> {:supply  [{:card {:name :province} :pile-size 8}]
+    (is (= (-> {:supply  [{:card province :pile-size 8}]
                 :players [{:discard []}]}
                (gain 0 :province))
-           {:supply  [{:card {:name :province} :pile-size 7}]
-            :players [{:discard [{:name :province}]}]}))
-    (is (= (-> {:supply  [{:card {:name :province} :pile-size 1}]
+           {:supply  [{:card province :pile-size 7}]
+            :players [{:discard [province]}]}))
+    (is (= (-> {:supply  [{:card province :pile-size 1}]
                 :players [{:discard []}]}
                (gain 0 :province))
-           {:supply  [{:card {:name :province} :pile-size 0}]
-            :players [{:discard [{:name :province}]}]}))
-    (is (= (-> {:supply  [{:card {:name :province} :pile-size 0}]
+           {:supply  [{:card province :pile-size 0}]
+            :players [{:discard [province]}]}))
+    (is (= (-> {:supply  [{:card province :pile-size 0}]
                 :players [{:discard []}]}
                (gain 0 :province))
-           {:supply  [{:card {:name :province} :pile-size 0}]
+           {:supply  [{:card province :pile-size 0}]
             :players [{:discard []}]}))
     (is (thrown-with-msg? AssertionError #"Gain error: The supply doesn't have a Province pile"
                           (-> {:supply  []
@@ -58,67 +58,67 @@
 
 (deftest move-card-test
   (testing "Playing a card from hand to play-area"
-    (is (= (move-card {:players [{:hand [{:name :smithy}] :play-area []}]} 0
+    (is (= (move-card {:players [{:hand [smithy] :play-area []}]} 0
                       {:card-name :smithy
                        :from      :hand
                        :to        :play-area})
-           {:players [{:hand [] :play-area [{:name :smithy}]}]}))
+           {:players [{:hand [] :play-area [smithy]}]}))
     (is (thrown-with-msg? AssertionError #"Move error: There is no Copper in your Hand"
-                          (move-card {:players [{:hand [{:name :smithy}] :play-area []}]} 0
+                          (move-card {:players [{:hand [smithy] :play-area []}]} 0
                                      {:card-name :copper
                                       :from      :hand
                                       :to        :play-area})))
-    (is (= (move-card {:players [{:hand [{:name :copper} {:name :smithy}] :play-area []}]} 0
+    (is (= (move-card {:players [{:hand [copper smithy] :play-area []}]} 0
                       {:card-name :smithy
                        :from      :hand
                        :to        :play-area})
-           {:players [{:hand [{:name :copper}] :play-area [{:name :smithy}]}]}))
-    (is (= (move-card {:players [{:hand [{:name :smithy} {:name :smithy}] :play-area []}]} 0
+           {:players [{:hand [copper] :play-area [smithy]}]}))
+    (is (= (move-card {:players [{:hand [smithy smithy] :play-area []}]} 0
                       {:card-name :smithy
                        :from      :hand
                        :to        :play-area})
-           {:players [{:hand [{:name :smithy}] :play-area [{:name :smithy}]}]}))
-    (is (= (move-card {:players [{:hand [{:name :smithy}]
-                                  :deck [{:name :copper}]}]} 0
+           {:players [{:hand [smithy] :play-area [smithy]}]}))
+    (is (= (move-card {:players [{:hand [smithy]
+                                  :deck [copper]}]} 0
                       {:card-name   :smithy
                        :from        :hand
                        :to          :deck
                        :to-position :top})
            {:players [{:hand []
-                       :deck [{:name :smithy} {:name :copper}]}]}))
-    (is (= (move-card {:players [{:hand [{:name :smithy}]}]} 0
+                       :deck [smithy copper]}]}))
+    (is (= (move-card {:players [{:hand [smithy]}]} 0
                       {:card-name :smithy
                        :from      :hand
                        :to        :trash})
            {:players [{:hand []}]
-            :trash   [{:name :smithy}]}))
-    (is (= (move-card {:players [{:deck [{:name :copper} {:name :smithy}]}]} 0
+            :trash   [smithy]}))
+    (is (= (move-card {:players [{:deck [copper smithy]}]} 0
                       {:from          :deck
                        :from-position :top
                        :to            :discard})
-           {:players [{:deck    [{:name :smithy}]
-                       :discard [{:name :copper}]}]}))
+           {:players [{:deck    [smithy]
+                       :discard [copper]}]}))
     (is (= (move-card {:players [{:deck []}]} 0
                       {:from          :deck
                        :from-position :top
                        :to            :discard})
            {:players [{:deck []}]}))
     (is (= (move-card {:players [{:deck    []
-                                  :discard [{:name :copper} {:name :copper}]}]} 0
+                                  :discard [copper copper]}]} 0
                       {:from          :deck
                        :from-position :top
                        :to            :discard})
-           {:players [{:deck    [{:name :copper}]
-                       :discard [{:name :copper}]}]}))))
+           {:players [{:deck    [copper]
+                       :discard [copper]}]}))))
 
 (deftest play-test
   (testing "Playing card is impossible because"
     (testing "it has no/wrong type"
-      (is (thrown-with-msg? AssertionError #"Play error: Estate has no type"
-                            (play {:players [{:hand [{:name :estate}]}]}
-                                  0 :estate)))
+      (is (thrown-with-msg? AssertionError #"Play error: No Card has no type"
+                            (play {:players [{:hand [{:name :no-card}]}]}
+                                  0 :no-card)))
       (is (thrown-with-msg? AssertionError #"Play error: Victory cards cannot be played."
-                            (play {:players [{:hand [{:name :estate :type #{:victory}}]}]}
+                            (play {:players [{:hand [estate]}]}
                                   0 :estate))))
     (testing "player has no cards in hand"
       (is (thrown-with-msg? AssertionError #"Play error: There is no Copper in your Hand."
@@ -127,9 +127,9 @@
   (testing "Playing treasure"
     (testing "is impossible because"
       (testing "card has no coin-value"
-        (is (thrown-with-msg? AssertionError #"Play error: Copper has no coin value"
-                              (play {:players [{:hand [{:name :copper :type #{:treasure}}]}]}
-                                    0 :copper))))))
+        (is (thrown-with-msg? AssertionError #"Play error: Kopper has no coin value"
+                              (play {:players [{:hand [{:name :kopper :type #{:treasure}}]}]}
+                                    0 :kopper))))))
   (testing "Playing action"
     (testing "is impossible because"
       (testing "player has no more actions"
@@ -138,10 +138,10 @@
                                                 :actions 0}]}
                                     0 :village))))
       (testing "card has no action-fn"
-        (is (thrown-with-msg? AssertionError #"Play error: Village has no action function."
-                              (play {:players [{:hand    [{:name :village :type #{:action}}]
+        (is (thrown-with-msg? AssertionError #"Play error: Willage has no action function."
+                              (play {:players [{:hand    [{:name :willage :type #{:action}}]
                                                 :actions 1}]}
-                                    0 :village)))))))
+                                    0 :willage)))))))
 
 (deftest treasure-test
   (testing "Copper"
@@ -168,10 +168,10 @@
 
 (deftest play-treasures-test
   (testing "All treasures"
-    (is (= (play-treasures {:players [{:hand  [gold silver copper {:name :smithy} copper]
+    (is (= (play-treasures {:players [{:hand  [gold silver copper smithy copper]
                                        :coins 0}]}
                            0)
-           {:players [{:hand      [{:name :smithy}]
+           {:players [{:hand      [smithy]
                        :play-area [gold silver copper copper]
                        :coins     7}]}))))
 
@@ -234,85 +234,85 @@
 
 (deftest cellar-test
   (testing "Cellar"
-    (is (= (play {:players [{:hand    [cellar {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
-                             :deck    (repeat 5 {:name :copper})
+    (is (= (play {:players [{:hand    [cellar copper estate estate estate]
+                             :deck    (repeat 5 copper)
                              :actions 1}]}
                  0 :cellar)
-           {:players [{:hand         [{:name :copper} {:name :estate} {:name :estate} {:name :estate}]
+           {:players [{:hand         [copper estate estate estate]
                        :play-area    [cellar]
-                       :deck         (repeat 5 {:name :copper})
+                       :deck         (repeat 5 copper)
                        :actions      1
                        :effect-stack [{:text      "Discard any number of cards, then draw that many."
                                        :choice-fn cellar-sift
                                        :options   [:copper :estate :estate :estate]}]}]}))
-    (is (= (-> {:players [{:hand    [cellar {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
-                           :deck    (repeat 5 {:name :copper})
+    (is (= (-> {:players [{:hand    [cellar copper estate estate estate]
+                           :deck    (repeat 5 copper)
                            :actions 1}]}
                (play 0 :cellar)
                (chose 0 [:estate :estate :estate]))
-           {:players [{:hand         [{:name :copper} {:name :copper} {:name :copper} {:name :copper}]
+           {:players [{:hand         [copper copper copper copper]
                        :play-area    [cellar]
-                       :deck         [{:name :copper} {:name :copper}]
-                       :discard      [{:name :estate} {:name :estate} {:name :estate}]
+                       :deck         [copper copper]
+                       :discard      [estate estate estate]
                        :actions      1
                        :effect-stack []}]}))
-    (is (= (-> {:players [{:hand    [cellar {:name :copper}]
+    (is (= (-> {:players [{:hand    [cellar copper]
                            :actions 1}]}
                (play 0 :cellar)
                (chose 0 :copper))
-           {:players [{:hand         [{:name :copper}]
+           {:players [{:hand         [copper]
                        :play-area    [cellar]
                        :deck         []
                        :discard      []
                        :actions      1
                        :effect-stack []}]}))
-    (is (= (-> {:players [{:hand    [cellar {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
-                           :deck    (repeat 5 {:name :copper})
+    (is (= (-> {:players [{:hand    [cellar copper estate estate estate]
+                           :deck    (repeat 5 copper)
                            :actions 1}]}
                (play 0 :cellar)
                (chose 0 []))
-           {:players [{:hand         [{:name :copper} {:name :estate} {:name :estate} {:name :estate}]
+           {:players [{:hand         [copper estate estate estate]
                        :play-area    [cellar]
-                       :deck         (repeat 5 {:name :copper})
+                       :deck         (repeat 5 copper)
                        :actions      1
                        :effect-stack []}]}))
     (is (= (-> {:players [{:hand    [cellar]
-                           :deck    (repeat 5 {:name :copper})
+                           :deck    (repeat 5 copper)
                            :actions 1}]}
                (play 0 :cellar))
            {:players [{:hand      []
                        :play-area [cellar]
-                       :deck      (repeat 5 {:name :copper})
+                       :deck      (repeat 5 copper)
                        :actions   1}]}))
     (is (thrown-with-msg? AssertionError #"Move error: There is no Estate in your Hand"
-                          (-> {:players [{:hand    [cellar {:name :copper} {:name :estate}]
-                                          :deck    (repeat 5 {:name :copper})
+                          (-> {:players [{:hand    [cellar copper estate]
+                                          :deck    (repeat 5 copper)
                                           :actions 1}]}
                               (play 0 :cellar)
                               (chose 0 [:estate :estate]))))))
 
 (deftest chapel-test
   (testing "Chapel"
-    (is (= (play {:players [{:hand    [chapel {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
+    (is (= (play {:players [{:hand    [chapel copper estate estate estate]
                              :actions 1}]}
                  0 :chapel)
-           {:players [{:hand         [{:name :copper} {:name :estate} {:name :estate} {:name :estate}]
+           {:players [{:hand         [copper estate estate estate]
                        :play-area    [chapel]
                        :actions      0
                        :effect-stack [{:text      "Trash up to 4 cards from your hand."
                                        :choice-fn trash
                                        :options   [:copper :estate :estate :estate]
                                        :max       4}]}]}))
-    (is (= (-> {:players [{:hand    [chapel {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
+    (is (= (-> {:players [{:hand    [chapel copper estate estate estate]
                            :actions 1}]}
                (play 0 :chapel)
                (chose 0 [:estate :estate :estate]))
-           {:players [{:hand         [{:name :copper}]
+           {:players [{:hand         [copper]
                        :play-area    [chapel]
                        :actions      0
                        :effect-stack []}]
-            :trash   [{:name :estate} {:name :estate} {:name :estate}]}))
-    (is (= (-> {:players [{:hand    [chapel {:name :copper}]
+            :trash   [estate estate estate]}))
+    (is (= (-> {:players [{:hand    [chapel copper]
                            :actions 1}]}
                (play 0 :chapel)
                (chose 0 :copper))
@@ -320,47 +320,47 @@
                        :play-area    [chapel]
                        :actions      0
                        :effect-stack []}]
-            :trash   [{:name :copper}]}))
-    (is (= (-> {:players [{:hand    [chapel {:name :copper} {:name :estate} {:name :estate} {:name :estate}]
+            :trash   [copper]}))
+    (is (= (-> {:players [{:hand    [chapel copper estate estate estate]
                            :actions 1}]}
                (play 0 :chapel)
                (chose 0 []))
-           {:players [{:hand         [{:name :copper} {:name :estate} {:name :estate} {:name :estate}]
+           {:players [{:hand         [copper estate estate estate]
                        :play-area    [chapel]
                        :actions      0
                        :effect-stack []}]}))
     (is (thrown-with-msg? AssertionError #"Chose error: You can only pick 4 options."
-                          (-> {:players [{:hand    (concat [chapel] (repeat 5 {:name :copper}))
+                          (-> {:players [{:hand    (concat [chapel] (repeat 5 copper))
                                           :actions 1}]}
                               (play 0 :chapel)
                               (chose 0 (repeat 5 :copper)))))))
 
 (deftest council-room-test
   (testing "Council Room"
-    (is (= (play {:players [{:deck    (repeat 5 {:name :copper})
+    (is (= (play {:players [{:deck    (repeat 5 copper)
                              :hand    [council-room]
                              :actions 1
                              :buys    1}
-                            {:deck [{:name :copper} {:name :copper}]
+                            {:deck [copper copper]
                              :hand []}]}
                  0 :council-room)
-           {:players [{:deck      [{:name :copper}]
-                       :hand      (repeat 4 {:name :copper})
+           {:players [{:deck      [copper]
+                       :hand      (repeat 4 copper)
                        :play-area [council-room]
                        :actions   0
                        :buys      2}
-                      {:deck [{:name :copper}]
-                       :hand [{:name :copper}]}]}))))
+                      {:deck [copper]
+                       :hand [copper]}]}))))
 
 (deftest festival-test
   (testing "Festival"
-    (is (= (play {:players [{:deck    [{:name :copper}]
+    (is (= (play {:players [{:deck    [copper]
                              :hand    [festival]
                              :actions 1
                              :coins   0
                              :buys    1}]}
                  0 :festival)
-           {:players [{:deck      [{:name :copper}]
+           {:players [{:deck      [copper]
                        :hand      []
                        :play-area [festival]
                        :actions   2
@@ -370,13 +370,13 @@
 (deftest harbinger-test
   (testing "Harbinger"
     (is (= (play {:players [{:hand    [harbinger]
-                             :deck    [{:name :copper} {:name :copper} {:name :copper}]
-                             :discard [{:name :gold}]
+                             :deck    [copper copper copper]
+                             :discard [gold]
                              :actions 1}]}
                  0 :harbinger)
-           {:players [{:hand         [{:name :copper}]
-                       :deck         [{:name :copper} {:name :copper}]
-                       :discard      [{:name :gold}]
+           {:players [{:hand         [copper]
+                       :deck         [copper copper]
+                       :discard      [gold]
                        :play-area    [harbinger]
                        :actions      1
                        :effect-stack [{:text      "You may put a card from your discard pile onto your deck."
@@ -384,59 +384,59 @@
                                        :options   [:gold]
                                        :max       1}]}]}))
     (is (= (-> {:players [{:hand    [harbinger]
-                           :deck    [{:name :copper} {:name :copper} {:name :copper}]
-                           :discard [{:name :gold}]
+                           :deck    [copper copper copper]
+                           :discard [gold]
                            :actions 1}]}
                (play 0 :harbinger)
                (chose 0 :gold))
-           {:players [{:hand         [{:name :copper}]
-                       :deck         [{:name :gold} {:name :copper} {:name :copper}]
+           {:players [{:hand         [copper]
+                       :deck         [gold copper copper]
                        :discard      []
                        :play-area    [harbinger]
                        :actions      1
                        :effect-stack []}]}))
     (is (= (-> {:players [{:hand    [harbinger]
-                           :deck    [{:name :copper} {:name :copper} {:name :copper}]
-                           :discard [{:name :estate}]
+                           :deck    [copper copper copper]
+                           :discard [estate]
                            :actions 1}]}
                (play 0 :harbinger)
                (chose 0 nil))
-           {:players [{:hand         [{:name :copper}]
-                       :deck         [{:name :copper} {:name :copper}]
-                       :discard      [{:name :estate}]
+           {:players [{:hand         [copper]
+                       :deck         [copper copper]
+                       :discard      [estate]
                        :play-area    [harbinger]
                        :actions      1
                        :effect-stack []}]}))
     (is (= (-> {:players [{:hand    [harbinger]
-                           :deck    [{:name :copper} {:name :copper} {:name :copper}]
+                           :deck    [copper copper copper]
                            :actions 1}]}
                (play 0 :harbinger))
-           {:players [{:hand      [{:name :copper}]
-                       :deck      [{:name :copper} {:name :copper}]
+           {:players [{:hand      [copper]
+                       :deck      [copper copper]
                        :play-area [harbinger]
                        :actions   1}]}))))
 
 (deftest laboratory-test
   (testing "Laboratory"
-    (is (= (play {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
+    (is (= (play {:players [{:deck    [copper copper copper]
                              :hand    [laboratory]
                              :actions 1}]}
                  0 :laboratory)
-           {:players [{:deck      [{:name :copper}]
-                       :hand      [{:name :copper} {:name :copper}]
+           {:players [{:deck      [copper]
+                       :hand      [copper copper]
                        :play-area [laboratory]
                        :actions   1}]}))))
 
 (deftest market-test
   (testing "Market"
-    (is (= (play {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
+    (is (= (play {:players [{:deck    [copper copper copper]
                              :hand    [market]
                              :actions 1
                              :coins   0
                              :buys    1}]}
                  0 :market)
-           {:players [{:deck      [{:name :copper} {:name :copper}]
-                       :hand      [{:name :copper}]
+           {:players [{:deck      [copper copper]
+                       :hand      [copper]
                        :play-area [market]
                        :actions   1
                        :coins     1
@@ -555,58 +555,58 @@
 
 (deftest moat-test
   (testing "Moat"
-    (is (= (play {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
+    (is (= (play {:players [{:deck    [copper copper copper]
                              :hand    [moat]
                              :actions 1}]}
                  0 :moat)
-           {:players [{:deck      [{:name :copper}]
-                       :hand      [{:name :copper} {:name :copper}]
+           {:players [{:deck      [copper]
+                       :hand      [copper copper]
                        :play-area [moat]
                        :actions   0}]}))
-    (is (= (play {:players [{:deck    [{:name :copper}]
+    (is (= (play {:players [{:deck    [copper]
                              :hand    [moat]
                              :actions 1}]}
                  0 :moat)
            {:players [{:deck      []
-                       :hand      [{:name :copper}]
+                       :hand      [copper]
                        :play-area [moat]
                        :actions   0}]}))))
 
 (deftest moneylender-test
   (testing "Moneylender"
-    (is (= (play {:players [{:hand    [moneylender {:name :copper} {:name :copper} {:name :estate}]
+    (is (= (play {:players [{:hand    [moneylender copper copper estate]
                              :actions 1}]}
                  0 :moneylender)
-           {:players [{:hand         [{:name :copper} {:name :copper} {:name :estate}]
+           {:players [{:hand         [copper copper estate]
                        :play-area    [moneylender]
                        :actions      0
                        :effect-stack [{:text      "You may trash a Copper from your hand for +$3"
                                        :choice-fn moneylender-trash
                                        :options   [:copper :copper]
                                        :max       1}]}]}))
-    (is (= (-> {:players [{:hand    [moneylender {:name :copper} {:name :copper} {:name :estate}]
+    (is (= (-> {:players [{:hand    [moneylender copper copper estate]
                            :actions 1
                            :coins   0}]}
                (play 0 :moneylender)
                (chose 0 :copper))
-           {:players [{:hand         [{:name :copper} {:name :estate}]
+           {:players [{:hand         [copper estate]
                        :play-area    [moneylender]
                        :actions      0
                        :coins        3
                        :effect-stack []}]
-            :trash   [{:name :copper}]}))
-    (is (= (-> {:players [{:hand    [moneylender {:name :copper} {:name :copper} {:name :estate}]
+            :trash   [copper]}))
+    (is (= (-> {:players [{:hand    [moneylender copper copper estate]
                            :actions 1}]}
                (play 0 :moneylender)
                (chose 0 nil))
-           {:players [{:hand         [{:name :copper} {:name :copper} {:name :estate}]
+           {:players [{:hand         [copper copper estate]
                        :play-area    [moneylender]
                        :actions      0
                        :effect-stack []}]}))
-    (is (= (-> {:players [{:hand    [moneylender {:name :estate}]
+    (is (= (-> {:players [{:hand    [moneylender estate]
                            :actions 1}]}
                (play 0 :moneylender))
-           {:players [{:hand      [{:name :estate}]
+           {:players [{:hand      [estate]
                        :play-area [moneylender]
                        :actions   0}]}))))
 
@@ -860,50 +860,50 @@
 
 (deftest smithy-test
   (testing "Smithy"
-    (is (= (play {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
+    (is (= (play {:players [{:deck    [copper copper copper]
                              :hand    [smithy]
                              :actions 1}]}
                  0 :smithy)
            {:players [{:deck      []
-                       :hand      [{:name :copper} {:name :copper} {:name :copper}]
+                       :hand      [copper copper copper]
                        :play-area [smithy]
                        :actions   0}]}))))
 
 (deftest throne-room-test
   (testing "Throne Room"
-    (is (= (play {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
-                             :hand    [throne-room market {:name :copper}]
+    (is (= (play {:players [{:deck    [copper copper copper]
+                             :hand    [throne-room market copper]
                              :actions 1}]}
                  0 :throne-room)
-           {:players [{:deck         [{:name :copper} {:name :copper} {:name :copper}]
-                       :hand         [market {:name :copper}]
+           {:players [{:deck         [copper copper copper]
+                       :hand         [market copper]
                        :play-area    [throne-room]
                        :actions      0
                        :effect-stack [{:text      "You may play an Action card from your hand twice."
                                        :choice-fn play-action-twice
                                        :options   [:market]
                                        :max       1}]}]}))
-    (is (= (-> {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
-                           :hand    [throne-room market {:name :copper}]
+    (is (= (-> {:players [{:deck    [copper copper copper]
+                           :hand    [throne-room market copper]
                            :actions 1
                            :coins   0
                            :buys    1}]}
                (play 0 :throne-room)
                (chose 0 :market))
-           {:players [{:deck         [{:name :copper}]
-                       :hand         [{:name :copper} {:name :copper} {:name :copper}]
+           {:players [{:deck         [copper]
+                       :hand         [copper copper copper]
                        :play-area    [throne-room market]
                        :actions      2
                        :coins        2
                        :buys         3
                        :effect-stack []}]}))
-    (is (= (-> {:players [{:deck    [{:name :copper} {:name :copper} {:name :copper}]
-                           :hand    [throne-room market {:name :copper}]
+    (is (= (-> {:players [{:deck    [copper copper copper]
+                           :hand    [throne-room market copper]
                            :actions 1}]}
                (play 0 :throne-room)
                (chose 0 nil))
-           {:players [{:deck         [{:name :copper} {:name :copper} {:name :copper}]
-                       :hand         [market {:name :copper}]
+           {:players [{:deck         [copper copper copper]
+                       :hand         [market copper]
                        :play-area    [throne-room]
                        :actions      0
                        :effect-stack []}]}))
@@ -1028,38 +1028,38 @@
 
 (deftest village-test
   (testing "Village"
-    (is (= (play {:players [{:deck    [{:name :copper} {:name :copper}]
+    (is (= (play {:players [{:deck    [copper copper]
                              :hand    [village]
                              :actions 1}]}
                  0 :village)
-           {:players [{:deck      [{:name :copper}]
-                       :hand      [{:name :copper}]
+           {:players [{:deck      [copper]
+                       :hand      [copper]
                        :play-area [village]
                        :actions   2}]}))))
 (deftest witch-test
   (testing "Witch"
     (is (= (play {:supply  [{:card curse :pile-size 10}]
-                  :players [{:deck    (repeat 3 {:name :copper})
+                  :players [{:deck    (repeat 3 copper)
                              :hand    [witch]
                              :actions 1}
-                            {:discard [{:name :copper} {:name :copper}]}]}
+                            {:discard [copper copper]}]}
                  0 :witch)
            {:supply  [{:card curse :pile-size 9}]
-            :players [{:deck      [{:name :copper}]
-                       :hand      [{:name :copper} {:name :copper}]
+            :players [{:deck      [copper]
+                       :hand      [copper copper]
                        :play-area [witch]
                        :actions   0}
-                      {:discard [{:name :copper} {:name :copper} curse]}]}))))
+                      {:discard [copper copper curse]}]}))))
 
 (deftest woodcutter-test
   (testing "Woodcutter"
-    (is (= (play {:players [{:deck    [{:name :copper}]
+    (is (= (play {:players [{:deck    [copper]
                              :hand    [woodcutter]
                              :actions 1
                              :coins   0
                              :buys    1}]}
                  0 :woodcutter)
-           {:players [{:deck      [{:name :copper}]
+           {:players [{:deck      [copper]
                        :hand      []
                        :play-area [woodcutter]
                        :actions   0
@@ -1199,19 +1199,19 @@
     (testing "is impossible because"
       (testing "player has no buys left"
         (is (thrown-with-msg? AssertionError #"Buy error: You have no more buys."
-                              (buy-card {:supply  [{:card {:name :copper :cost 0} :pile-size 40}]
+                              (buy-card {:supply  [{:card copper :pile-size 40}]
                                          :players [{:coins 0
                                                     :buys  0}]}
                                         0 :copper))))
       (testing "player has not enough coins"
         (is (thrown-with-msg? AssertionError #"Buy error: Silver costs 3 and you only have 2 coins."
-                              (buy-card {:supply  [{:card {:name :silver :cost 3} :pile-size 40}]
+                              (buy-card {:supply  [{:card silver :pile-size 40}]
                                          :players [{:coins 2
                                                     :buys  1}]}
                                         0 :silver))))
       (testing "supply is empty"
         (is (thrown-with-msg? AssertionError #"Buy error: Copper supply is empty."
-                              (buy-card {:supply  [{:card {:name :copper :cost 0} :pile-size 0}]
+                              (buy-card {:supply  [{:card copper :pile-size 0}]
                                          :players [{:coins 0
                                                     :buys  1}]}
                                         0 :copper))))
@@ -1221,50 +1221,50 @@
                                          :players [{:coins 0
                                                     :buys  1}]}
                                         0 :copper)))))
-    (is (= (buy-card {:supply  [{:card {:name :copper :cost 0} :pile-size 40}]
+    (is (= (buy-card {:supply  [{:card copper :pile-size 40}]
                       :players [{:discard []
                                  :coins   0
                                  :buys    1}]}
                      0 :copper)
-           {:supply  [{:card {:name :copper :cost 0} :pile-size 39}]
-            :players [{:discard [{:name :copper :cost 0}]
+           {:supply  [{:card copper :pile-size 39}]
+            :players [{:discard [copper]
                        :coins   0
                        :buys    0}]}))
-    (is (= (buy-card {:supply  [{:card {:name :silver :cost 3} :pile-size 40}]
+    (is (= (buy-card {:supply  [{:card silver :pile-size 40}]
                       :players [{:discard []
                                  :coins   6
                                  :buys    2}]}
                      0 :silver)
-           {:supply  [{:card {:name :silver :cost 3} :pile-size 39}]
-            :players [{:discard [{:name :silver :cost 3}]
+           {:supply  [{:card silver :pile-size 39}]
+            :players [{:discard [silver]
                        :coins   3
                        :buys    1}]}))))
 
 (deftest clean-up-test
   (testing "Clean up"
-    (is (= (clean-up {:hand      [{:name :estate}]
-                      :play-area [{:name :silver}]
-                      :deck      (repeat 5 {:name :copper})
-                      :discard   [{:name :cellar}]})
-           {:hand      (repeat 5 {:name :copper})
+    (is (= (clean-up {:hand      [estate]
+                      :play-area [silver]
+                      :deck      (repeat 5 copper)
+                      :discard   [cellar]})
+           {:hand      (repeat 5 copper)
             :play-area []
             :deck      []
-            :discard   [{:name :cellar} {:name :silver} {:name :estate}]}))
-    (is (= (clean-up {:hand      [{:name :copper}]
-                      :play-area [{:name :copper}]
-                      :deck      [{:name :copper}]
-                      :discard   [{:name :copper}]})
-           {:hand      (repeat 4 {:name :copper})
+            :discard   [cellar silver estate]}))
+    (is (= (clean-up {:hand      [copper]
+                      :play-area [copper]
+                      :deck      [copper]
+                      :discard   [copper]})
+           {:hand      (repeat 4 copper)
             :play-area []
             :deck      []
             :discard   []}))
-    (is (= (clean-up {:hand      [{:name :copper}]
-                      :play-area [{:name :copper}]
-                      :deck      (repeat 3 {:name :silver})
-                      :discard   [{:name :copper}]})
-           {:hand      (concat (repeat 3 {:name :silver}) (repeat 2 {:name :copper}))
+    (is (= (clean-up {:hand      [copper]
+                      :play-area [copper]
+                      :deck      (repeat 3 silver)
+                      :discard   [copper]})
+           {:hand      (concat (repeat 3 silver) (repeat 2 copper))
             :play-area []
-            :deck      [{:name :copper}]
+            :deck      [copper]
             :discard   []}))
     (is (= (clean-up {:hand      []
                       :play-area []
@@ -1289,11 +1289,11 @@
   (testing "View game"
     (is (= (view-game {:supply         (base-supply 2 8)
                        :players        [{:name      :dombot
-                                         :hand      [{:name :copper} {:name :copper} {:name :copper} estate estate]
+                                         :hand      [copper copper copper estate estate]
                                          :play-area []
-                                         :deck      [{:name :copper} {:name :copper} {:name :copper} {:name :copper} estate]
+                                         :deck      [copper copper copper copper estate]
                                          :discard   []}]
-                       :trash          [{:name :estate} {:name :estate} {:name :copper}]
+                       :trash          [estate estate copper]
                        :current-player 0})
            {:supply         [{:card :curse :price 0 :count 10}
                              {:card :copper :price 0 :count 46}
@@ -1313,9 +1313,9 @@
   (testing "View game end"
     (is (= (view-game {:supply         [{:card province :pile-size 0}]
                        :players        [{:name      :dombot
-                                         :hand      [{:name :copper} {:name :copper} {:name :copper} estate estate]
+                                         :hand      [copper copper copper estate estate]
                                          :play-area []
-                                         :deck      [{:name :copper} {:name :copper} {:name :copper} {:name :copper} estate]
+                                         :deck      [copper copper copper copper estate]
                                          :discard   []}]
                        :current-player 0})
            {:players [{:name           :dombot
