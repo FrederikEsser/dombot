@@ -1,5 +1,5 @@
 (ns dombot.cards
-  (:require [dombot.operations :refer [draw gain gain-to-hand do-for-other-players move-card give-choice push-effect-stack]]
+  (:require [dombot.operations :refer [draw gain gain-to-hand do-for-other-players move-card move-cards give-choice push-effect-stack]]
             [dombot.utils :as ut]))
 
 (def curse {:name :curse :type #{:curse} :cost 0 :victory-points -1})
@@ -36,11 +36,10 @@
                                                        :max        1})))})
 
 (defn cellar-sift [game player-no card-names]
-  (-> (reduce (fn [game card-name] (move-card game player-no {:card-name card-name
-                                                              :from      :hand
-                                                              :to        :discard}))
-              game
-              (ut/ensure-coll card-names))
+  (-> game
+      (move-cards player-no {:card-names card-names
+                             :from       :hand
+                             :to         :discard})
       (update-in [:players player-no] draw (count card-names))))
 
 (def cellar {:name      :cellar :set :dominion :type #{:action} :cost 2
@@ -52,11 +51,9 @@
                                                       :options-fn (ut/player-area :hand)})))})
 
 (defn trash [game player-no card-names]
-  (reduce (fn [game card-name] (move-card game player-no {:card-name card-name
-                                                          :from      :hand
-                                                          :to        :trash}))
-          game
-          (ut/ensure-coll card-names)))
+  (move-cards game player-no {:card-names card-names
+                              :from       :hand
+                              :to         :trash}))
 
 (def chapel {:name      :chapel :set :dominion :type #{:action} :cost 2
              :action-fn (fn chapel-action [game player-no]
@@ -197,11 +194,9 @@
                                                            :max        1})))})
 
 (defn discard [game player-no card-names]
-  (reduce (fn [game card-name] (move-card game player-no {:card-name card-name
-                                                          :from      :hand
-                                                          :to        :discard}))
-          game
-          (ut/ensure-coll card-names)))
+  (move-cards game player-no {:card-names card-names
+                              :from       :hand
+                              :to         :discard}))
 
 (def poacher {:name      :poacher :set :dominion :type #{:action} :cost 4
               :action-fn (fn poacher-action [game player-no]
@@ -240,30 +235,27 @@
                                                        :max        1})))})
 
 (defn sentry-topdeck [game player-no card-names]
-  (-> (reduce (fn [game card-name] (move-card game player-no {:card-name   card-name
-                                                              :from        :look-at
-                                                              :to          :deck
-                                                              :to-position :top}))
-              game
-              (ut/ensure-coll card-names))))
+  (-> game
+      (move-cards player-no {:card-names  card-names
+                             :from        :look-at
+                             :to          :deck
+                             :to-position :top})))
 
 (defn sentry-discard [game player-no card-names]
-  (-> (reduce (fn [game card-name] (move-card game player-no {:card-name card-name
-                                                              :from      :look-at
-                                                              :to        :discard}))
-              game
-              (ut/ensure-coll card-names))
+  (-> game
+      (move-cards player-no {:card-names card-names
+                             :from       :look-at
+                             :to         :discard})
       (give-choice player-no {:text       "Put the rest back on top in any order."
                               :choice-fn  sentry-topdeck
                               :options-fn (ut/player-area :look-at)
                               :min        2})))
 
 (defn sentry-trash [game player-no card-names]
-  (-> (reduce (fn [game card-name] (move-card game player-no {:card-name card-name
-                                                              :from      :look-at
-                                                              :to        :trash}))
-              game
-              (ut/ensure-coll card-names))
+  (-> game
+      (move-cards player-no {:card-names card-names
+                             :from       :look-at
+                             :to         :trash})
       (give-choice player-no {:text       "Discard any number of the top 2 cards of your deck."
                               :choice-fn  sentry-discard
                               :options-fn (ut/player-area :look-at)})))

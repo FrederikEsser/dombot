@@ -89,15 +89,20 @@
             to-path (if (= to :trash)
                       [:trash]
                       [:players player-no to])
-            add-card-to-coll (fn [coll card']
+            add-card-to-coll (fn [coll card]
                                (case to-position
-                                 :top (concat [card'] coll)
-                                 (concat coll [card'])))]
+                                 :top (concat [card] coll)
+                                 (concat coll [card])))]
         (when card-name
           (assert card (str "Move error: There is no " (ut/format-name card-name) " in your " (ut/format-name from) ".")))
         (cond-> game
                 card (-> (update-in from-path ut/vec-remove idx)
                          (update-in to-path add-card-to-coll card)))))))
+
+(defn move-cards [game player-no {:keys [card-names] :as args}]
+  (reduce (fn [game card-name] (move-card game player-no (assoc args :card-name card-name)))
+          game
+          (ut/ensure-coll card-names)))
 
 (defn do-for-other-players [{:keys [players] :as game} player-no f & args]
   (let [other-player-nos (->> players
@@ -180,7 +185,7 @@
 
 (defn- apply-triggers [game player-no trigger-id]
   (let [{:keys [triggers]} (get-in game [:players player-no])
-        apply-trigger (fn [game' {:keys [trigger-fn]}] (trigger-fn game' player-no))
+        apply-trigger (fn [game {:keys [trigger-fn]}] (trigger-fn game player-no))
         matching-triggers (filter (comp #{trigger-id} :trigger-id) triggers)]
     (-> (reduce apply-trigger game matching-triggers)
         (update-in [:players player-no :triggers] (partial remove (comp #{trigger-id} :trigger-id))))))
@@ -211,7 +216,7 @@
         treasures (->> hand
                        (filter (comp :treasure :type))
                        (map :name))]
-    (reduce (fn [game' card-name] (play game' player-no card-name)) game treasures)))
+    (reduce (fn [game card-name] (play game player-no card-name)) game treasures)))
 
 (defn- get-victory-points [cards {:keys [victory-points]}]
   (if (fn? victory-points)
