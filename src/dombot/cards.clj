@@ -35,6 +35,43 @@
                                                        :min        1
                                                        :max        1})))})
 
+(defn trash-revealed [game player-no card-name]
+  (-> game
+      (move-card player-no {:card-name card-name
+                            :from      :reveal
+                            :to        :trash})))
+
+(defn discard-revealed [game player-no]
+  (let [{:keys [reveal]} (get-in game [:players player-no])]
+    (-> game
+        (move-cards player-no {:card-names (map :name reveal)
+                               :from       :reveal
+                               :to         :discard}))))
+
+(defn bandit-attack [game player-no]
+  (-> game
+      (move-card player-no {:from          :deck
+                            :from-position :top
+                            :to            :reveal})
+      (move-card player-no {:from          :deck
+                            :from-position :top
+                            :to            :reveal})
+      (push-effect-stack player-no {:action-fn discard-revealed})
+      (give-choice player-no {:text       "Trash a revealed Treasure other than Copper, and discards the rest."
+                              :player-no  player-no
+                              :choice-fn  trash-revealed
+                              :options-fn (ut/player-area :reveal (fn [{:keys [name type]}]
+                                                                    (and (:treasure type)
+                                                                         (not= :copper name))))
+                              :min        1
+                              :max        1})))
+
+(def bandit {:name      :bandit :set :dominion :type #{:action} :cost 5
+             :action-fn (fn bandit-action [game player-no]
+                          (-> game
+                              (gain player-no :gold)
+                              (do-for-other-players player-no bandit-attack)))})
+
 (defn cellar-sift [game player-no card-names]
   (-> game
       (move-cards player-no {:card-names card-names
@@ -128,7 +165,7 @@
       (-> game
           (move-cards player-no {:card-names (map :name set-aside)
                                  :from       :set-aside
-                                                           :to   :discard}))
+                                 :to         :discard}))
       (-> game
           (push-effect-stack player-no {:action-fn library-action})
           (draw player-no 1)
@@ -355,7 +392,6 @@
                                                         :max        1})))})
 
 ;; ATTACK WITH CHOICE
-(def bandit {:name :bandit :set :dominion :type #{:action} :cost 5})
 (def militia {:name :militia :set :dominion :type #{:action} :cost 4})
 (def bureaucrat {:name :bureaucrat :set :dominion :type #{:action :attack} :cost 4})
 
@@ -366,6 +402,7 @@
                             (draw player-no 2)))})
 
 (def kingdom-cards [artisan
+                    bandit
                     cellar
                     chapel
                     council-room

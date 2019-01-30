@@ -236,6 +236,124 @@
                             :min       1
                             :max       1}]}))))
 
+(deftest bandit-test
+  (testing "Bandit"
+    (is (= (play {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [bandit]
+                             :actions 1}
+                            {:deck [estate estate estate]}]}
+                 0 :bandit)
+           {:supply       [{:card gold :pile-size 29}]
+            :players      [{:hand      []
+                            :play-area [bandit]
+                            :discard   [gold]
+                            :actions   0}
+                           {:deck    [estate]
+                            :discard [estate estate]
+                            :reveal  []}]
+            :effect-stack []}))
+    (is (= (play {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [bandit]
+                             :actions 1}
+                            {:deck [estate silver gold]}]}
+                 0 :bandit)
+           {:supply       [{:card gold :pile-size 29}]
+            :players      [{:hand      []
+                            :play-area [bandit]
+                            :discard   [gold]
+                            :actions   0}
+                           {:deck   [gold]
+                            :reveal [estate silver]}]
+            :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
+                            :player-no 1
+                            :choice-fn trash-revealed
+                            :options   [:silver]
+                            :min       1
+                            :max       1}
+                           {:player-no 1
+                            :action-fn discard-revealed}]}))
+    (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                :players [{:hand    [bandit]
+                           :actions 1}
+                          {:deck [estate silver gold]}]}
+               (play 0 :bandit)
+               (chose :silver))
+           {:supply       [{:card gold :pile-size 29}]
+            :players      [{:hand      []
+                            :play-area [bandit]
+                            :discard   [gold]
+                            :actions   0}
+                           {:deck    [gold]
+                            :reveal  []
+                            :discard [estate]}]
+            :effect-stack []
+            :trash        [silver]}))
+    (is (= (play {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [bandit]
+                             :actions 1}
+                            {:deck [silver gold estate]}
+                            {:deck [copper gold estate]}]}
+                 0 :bandit)
+           {:supply       [{:card gold :pile-size 29}]
+            :players      [{:hand      []
+                            :play-area [bandit]
+                            :discard   [gold]
+                            :actions   0}
+                           {:deck   [estate]
+                            :reveal [silver gold]}
+                           {:deck [copper gold estate]}]
+            :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
+                            :player-no 1
+                            :choice-fn trash-revealed
+                            :options   [:silver :gold]
+                            :min       1
+                            :max       1}
+                           {:player-no 1
+                            :action-fn discard-revealed}
+                           {:player-no 2
+                            :action-fn bandit-attack}]}))
+    (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                :players [{:hand    [bandit]
+                           :actions 1}
+                          {:deck [silver gold estate]}
+                          {:deck [copper gold estate]}]}
+               (play 0 :bandit)
+               (chose :silver))
+           {:supply       [{:card gold :pile-size 29}]
+            :players      [{:hand      []
+                            :play-area [bandit]
+                            :discard   [gold]
+                            :actions   0}
+                           {:deck    [estate]
+                            :discard [gold]
+                            :reveal  []}
+                           {:deck   [estate]
+                            :reveal [copper gold]}]
+            :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
+                            :player-no 2
+                            :choice-fn trash-revealed
+                            :options   [:gold]
+                            :min       1
+                            :max       1}
+                           {:player-no 2
+                            :action-fn discard-revealed}]
+            :trash        [silver]}))
+    (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                :players [{:hand    [bandit]
+                           :actions 1}
+                          {:deck [silver]}]}
+               (play 0 :bandit)
+               (chose :silver))
+           {:supply       [{:card gold :pile-size 29}]
+            :players      [{:hand      []
+                            :play-area [bandit]
+                            :discard   [gold]
+                            :actions   0}
+                           {:deck   []
+                            :reveal []}]
+            :effect-stack []
+            :trash        [silver]}))))
+
 (deftest cellar-test
   (testing "Cellar"
     (is (= (play {:players [{:hand    [cellar copper estate estate estate]
