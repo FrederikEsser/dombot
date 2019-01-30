@@ -697,6 +697,51 @@
                        :actions   1
                        :coins     4}]}))))
 
+(deftest militia-test
+  (testing "Militia"
+    (is (= (play {:players [{:hand    [militia]
+                             :actions 1
+                             :coins   0}
+                            {:hand (repeat 5 copper)}]}
+                 0 :militia)
+           {:players      [{:hand      []
+                            :play-area [militia]
+                            :actions   0
+                            :coins     2}
+                           {:hand (repeat 5 copper)}]
+            :effect-stack [{:text      "Discard down to 3 cards in hand."
+                            :player-no 1
+                            :choice-fn discard
+                            :options   (repeat 5 :copper)
+                            :min       2
+                            :max       2}]}))
+    (is (= (-> {:players [{:hand    [militia]
+                           :actions 1
+                           :coins   0}
+                          {:hand (repeat 5 copper)}]}
+               (play 0 :militia)
+               (chose [:copper :copper]))
+           {:players      [{:hand      []
+                            :play-area [militia]
+                            :actions   0
+                            :coins     2}
+                           {:hand    (repeat 3 copper)
+                            :discard [copper copper]}]
+            :effect-stack []}))
+    (is (= (-> {:players [{:hand    [militia]
+                           :actions 1
+                           :coins   0}
+                          {:hand (repeat 6 copper)}]}
+               (play 0 :militia)
+               (chose [:copper :copper :copper]))
+           {:players      [{:hand      []
+                            :play-area [militia]
+                            :actions   0
+                            :coins     2}
+                           {:hand    (repeat 3 copper)
+                            :discard (repeat 3 copper)}]
+            :effect-stack []}))))
+
 (deftest mine-test
   (testing "Mine"
     (is (= (play {:players [{:hand    [mine copper estate]

@@ -208,6 +208,26 @@
                                 :min        1
                                 :max        1}))))
 
+(defn discard [game player-no card-names]
+  (move-cards game player-no {:card-names card-names
+                              :from       :hand
+                              :to         :discard}))
+
+(defn militia-attack [game player-no]
+  (let [hand (get-in game [:players player-no :hand])]
+    (cond-> game
+            (> (count hand) 3) (give-choice player-no {:text       "Discard down to 3 cards in hand."
+                                                       :choice-fn  discard
+                                                       :options-fn (ut/player-area :hand)
+                                                       :min        (- (count hand) 3)
+                                                       :max        (- (count hand) 3)}))))
+
+(def militia {:name      :militia :set :dominion :type #{:action} :cost 4
+              :action-fn (fn militia-action [game player-no]
+                           (-> game
+                               (update-in [:players player-no :coins] + 2)
+                               (do-for-other-players player-no militia-attack)))})
+
 (def mine {:name      :mine :set :dominion :type #{:action} :cost 5
            :action-fn (fn mine-action [game player-no]
                         (-> game
@@ -230,11 +250,6 @@
                                                            :choice-fn  moneylender-trash
                                                            :options-fn (ut/player-area :hand (comp #{:copper} :name))
                                                            :max        1})))})
-
-(defn discard [game player-no card-names]
-  (move-cards game player-no {:card-names card-names
-                              :from       :hand
-                              :to         :discard}))
 
 (def poacher {:name      :poacher :set :dominion :type #{:action} :cost 4
               :action-fn (fn poacher-action [game player-no]
@@ -392,7 +407,6 @@
                                                         :max        1})))})
 
 ;; ATTACK WITH CHOICE
-(def militia {:name :militia :set :dominion :type #{:action} :cost 4})
 (def bureaucrat {:name :bureaucrat :set :dominion :type #{:action :attack} :cost 4})
 
 ;; REACTION
@@ -413,6 +427,7 @@
                     library
                     market
                     merchant
+                    militia
                     mine
                     moat
                     moneylender
