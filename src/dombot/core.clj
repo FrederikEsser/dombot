@@ -7,6 +7,7 @@
 ; unit tests for do-for-other-players, give-choice, chose, gardens, calc-victory-points
 ; undo
 ; phases
+; swift mode
 
 (defonce game-state (atom {}))
 
@@ -31,7 +32,7 @@
 (defn chose [choice]
   (let [{:keys [current-player] :as game} (:game @game-state)]
     (swap! game-state assoc :game (-> game
-                                      (op/chose current-player choice)))
+                                      (op/chose choice)))
     (op/view-game (:game @game-state))))
 
 (defn buy [card-name]

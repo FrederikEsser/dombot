@@ -102,21 +102,21 @@
 (defn do-for-other-players [{:keys [players] :as game} player-no f & args]
   (let [other-player-nos (->> players
                               (keep-indexed (fn [idx _] (when (not= idx player-no) idx))))]
-    (reduce (fn [game' other-player-no]
-              (apply f game' other-player-no args))
+    (reduce (fn [game other-player-no]
+              (apply f game other-player-no args))
             game
             other-player-nos)))
 
 (defn push-effect-stack [game player-no item]
-  (update-in game [:players player-no :effect-stack] (partial concat [item])))
+  (update game :effect-stack (partial concat [(assoc item :player-no player-no)])))
 
-(defn pop-effect-stack [game player-no]
-  (update-in game [:players player-no :effect-stack] (partial drop 1)))
+(defn pop-effect-stack [game]
+  (update game :effect-stack (partial drop 1)))
 
-(defn- chose-single [game player-no selection]
+(defn- chose-single [game selection]
   (if (coll? selection)
     (assert (<= (count selection) 1) "Chose error: You can only pick 1 option."))
-  (let [{[{:keys [choice-fn options min]}] :effect-stack} (get-in game [:players player-no])
+  (let [[{:keys [player-no choice-fn options min]}] (get game :effect-stack)
         single-selection (if (coll? selection)
                            (first selection)
                            selection)]
@@ -126,11 +126,11 @@
       (assert ((set options) single-selection) (str "Chose error: " (ut/format-name single-selection) " is not a valid choice.")))
 
     (-> game
-        (pop-effect-stack player-no)
+        pop-effect-stack
         (choice-fn player-no single-selection))))
 
-(defn- chose-multi [game player-no selection]
-  (let [{[{:keys [choice-fn options min max]}] :effect-stack} (get-in game [:players player-no])
+(defn- chose-multi [game selection]
+  (let [[{:keys [player-no choice-fn options min max]}] (get game :effect-stack)
         valid-choices (-> options set)
         multi-selection (if (coll? selection)
                           selection
@@ -146,26 +146,26 @@
       (assert (valid-choices sel) (str "Chose error: " (ut/format-name sel) " is not a valid choice.")))
 
     (-> game
-        (pop-effect-stack player-no)
+        pop-effect-stack
         (choice-fn player-no multi-selection))))
 
-(defn check-stack [game player-no]
-  (let [{[{:keys [action-fn]}] :effect-stack} (get-in game [:players player-no])]
+(defn check-stack [game]
+  (let [[{:keys [player-no action-fn]}] (get game :effect-stack)]
     (cond-> game
-            action-fn (-> (pop-effect-stack player-no)
+            action-fn (-> pop-effect-stack
                           (action-fn player-no)
-                          (check-stack player-no)))))
+                          check-stack))))
 
-(defn chose [game player-no selection]
-  (let [{[{:keys [choice-fn options min max]}] :effect-stack} (get-in game [:players player-no])
+(defn chose [game selection]
+  (let [[{:keys [choice-fn options min max]}] (get game :effect-stack)
         chose-fn (if (= max 1) chose-single chose-multi)]
     (assert choice-fn "Chose error: You don't have a choice to make.")
     (assert (not-empty options) "Chose error: Choice has no options")
     (assert (or (nil? min) (nil? max) (<= min max)))
 
     (-> game
-        (chose-fn player-no selection)
-        (check-stack player-no))))
+        (chose-fn selection)
+        check-stack)))
 
 (defn give-choice [game player-no {:keys [options-fn options min max] :as args}]
   (let [options (if options-fn (options-fn game player-no) options)
@@ -176,7 +176,7 @@
         (cond-> (not-empty options) (push-effect-stack player-no (-> args
                                                                      (dissoc :options-fn)
                                                                      (assoc :options options))))
-        (check-stack player-no))))
+        check-stack)))
 
 (defn- apply-triggers [game player-no trigger-id]
   (let [{:keys [triggers]} (get-in game [:players player-no])
@@ -204,7 +204,7 @@
           action-fn (action-fn player-no)
           coin-value (update-in [:players player-no :coins] + coin-value)
           (not-empty triggers) (apply-triggers player-no [:play card-name]))
-        (check-stack player-no))))
+        check-stack)))
 
 (defn play-treasures [game player-no]
   (let [{:keys [hand]} (get-in game [:players player-no])
@@ -240,19 +240,15 @@
                           (rand-int (inc variance)))
                        (rand-int (inc variance)))})))
 
-(defn view-player [{:keys                    [look-at]
-                    [{:keys [text options]}] :effect-stack
-                    :as                      player}]
+(defn view-player [{:keys [look-at]
+                    :as   player}]
   (-> player
       (update :hand ut/frequencies-of :name)
       (update :play-area ut/frequencies-of :name)
       (update :look-at ut/frequencies-of :name)
+      (cond-> (empty? look-at) (dissoc :look-at))
       (update :deck count)
       (update :discard view-discard)
-      (cond-> (empty? look-at) (dissoc :look-at)
-              (or text (not-empty options)) (assoc :choice {:text    text
-                                                            :options options}))
-      (dissoc :effect-stack)
       (dissoc :triggers)
       (assoc :victory-points (calc-victory-points player))))
 
@@ -269,11 +265,15 @@
                   :keys               [pile-size]}]
               {:card name :price cost :count pile-size}))))
 
-(defn view-game [{:keys [supply players trash current-player] :as game}]
+(defn view-game [{:keys [supply players trash effect-stack current-player] :as game}]
   (if (game-ended? game)
     {:players (map view-end-player players)}
-    {:supply         (view-supply supply)
-     :player         (view-player (get players current-player))
-     :trash          (ut/frequencies-of trash :name)
-     :current-player (get-in players [current-player :name])}))
+    (let [{:keys [player-no text options]} effect-stack]
+      (cond-> {:supply         (view-supply supply)
+               :player         (view-player (get players current-player))
+               :trash          (ut/frequencies-of trash :name)
+               :current-player (get-in players [current-player :name])}
+              (or text (not-empty options)) (assoc :choice {:text    text
+                                                            :player  (get-in players [player-no :name])
+                                                            :options options})))))
 
