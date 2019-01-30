@@ -104,19 +104,21 @@
           game
           (ut/ensure-coll card-names)))
 
-(defn do-for-other-players [{:keys [players] :as game} player-no f & args]
-  (let [other-player-nos (->> players
-                              (keep-indexed (fn [idx _] (when (not= idx player-no) idx))))]
-    (reduce (fn [game other-player-no]
-              (apply f game other-player-no args))
-            game
-            other-player-nos)))
-
 (defn push-effect-stack [game player-no item]
   (update game :effect-stack (partial concat [(assoc item :player-no player-no)])))
 
 (defn pop-effect-stack [game]
   (update game :effect-stack (partial drop 1)))
+
+(defn do-for-other-players [{:keys [players] :as game} player-no f & args]
+  (let [other-player-nos (->> (range 1 (count players))
+                              (map (fn [n] (-> n (+ player-no) (mod (count players)))))
+                              reverse)]
+    (reduce (fn [game other-player-no]
+              (push-effect-stack game other-player-no (merge {:action-fn f}
+                                                             (when args {:args args}))))
+            game
+            other-player-nos)))
 
 (defn- chose-single [game selection]
   (if (coll? selection)
@@ -155,10 +157,10 @@
         (choice-fn player-no multi-selection))))
 
 (defn check-stack [game]
-  (let [[{:keys [player-no action-fn]}] (get game :effect-stack)]
+  (let [[{:keys [player-no action-fn args]}] (get game :effect-stack)]
     (cond-> game
             action-fn (-> pop-effect-stack
-                          (action-fn player-no)
+                          (as-> game (apply action-fn game player-no args))
                           check-stack))))
 
 (defn chose [game selection]
@@ -273,7 +275,7 @@
 (defn view-game [{:keys [supply players trash effect-stack current-player] :as game}]
   (if (game-ended? game)
     {:players (map view-end-player players)}
-    (let [{:keys [player-no text options]} effect-stack]
+    (let [[{:keys [player-no text options]}] effect-stack]
       (cond-> {:supply         (view-supply supply)
                :player         (view-player (get players current-player))
                :trash          (ut/frequencies-of trash :name)

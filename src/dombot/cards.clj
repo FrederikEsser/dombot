@@ -125,9 +125,10 @@
 (defn library-action [game player-no]
   (let [{:keys [hand deck discard set-aside]} (get-in game [:players player-no])]
     (if (or (>= (count hand) 7) (empty? (concat deck discard)))
-      (cond-> game
-              (not-empty set-aside) (-> (update-in [:players player-no :discard] concat set-aside)
-                                        (update-in [:players player-no] dissoc :set-aside)))
+      (-> game
+          (move-cards player-no {:card-names (map :name set-aside)
+                                 :from       :set-aside
+                                                           :to   :discard}))
       (-> game
           (push-effect-stack player-no {:action-fn library-action})
           (draw player-no 1)
@@ -317,14 +318,14 @@
                               (move-card player-no {:from          :deck
                                                     :from-position :top
                                                     :to            :discard})
-                              ((fn [game]
-                                 (let [{:keys [discard]} (get-in game [:players player-no])
-                                       {:keys [name action-fn]} (last discard)]
-                                   (cond-> game
-                                           action-fn (give-choice player-no {:text      (str "You may play the discarded " (ut/format-name name) ".")
-                                                                             :choice-fn play-discard-action
-                                                                             :options   [name]
-                                                                             :max       1})))))))})
+                              (as-> game
+                                    (let [{:keys [discard]} (get-in game [:players player-no])
+                                          {:keys [name action-fn]} (last discard)]
+                                      (cond-> game
+                                              action-fn (give-choice player-no {:text      (str "You may play the discarded " (ut/format-name name) ".")
+                                                                                :choice-fn play-discard-action
+                                                                                :options   [name]
+                                                                                :max       1}))))))})
 
 (def village {:name      :village :set :dominion :type #{:action} :cost 3
               :action-fn (fn village-action [game player-no]

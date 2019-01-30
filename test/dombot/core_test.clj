@@ -350,13 +350,14 @@
                             {:deck [copper copper]
                              :hand []}]}
                  0 :council-room)
-           {:players [{:deck      [copper]
-                       :hand      (repeat 4 copper)
-                       :play-area [council-room]
-                       :actions   0
-                       :buys      2}
-                      {:deck [copper]
-                       :hand [copper]}]}))))
+           {:players      [{:deck      [copper]
+                            :hand      (repeat 4 copper)
+                            :play-area [council-room]
+                            :actions   0
+                            :buys      2}
+                           {:deck [copper]
+                            :hand [copper]}]
+            :effect-stack []}))))
 
 (deftest festival-test
   (testing "Festival"
@@ -505,6 +506,7 @@
            {:players      [{:hand      [smithy copper silver gold estate duchy province]
                             :play-area [library]
                             :deck      []
+                            :set-aside []
                             :discard   [village smithy]
                             :actions   0}]
             :effect-stack []}))))
@@ -1161,18 +1163,51 @@
                        :actions   2}]}))))
 (deftest witch-test
   (testing "Witch"
-    (is (= (play {:supply  [{:card curse :pile-size 10}]
+    (is (= (play {:supply  [{:card curse :pile-size 20}]
                   :players [{:deck    (repeat 3 copper)
                              :hand    [witch]
                              :actions 1}
-                            {:discard [copper copper]}]}
+                            {:discard [copper copper]}
+                            {:discard []}]}
                  0 :witch)
-           {:supply  [{:card curse :pile-size 9}]
-            :players [{:deck      [copper]
-                       :hand      [copper copper]
-                       :play-area [witch]
-                       :actions   0}
-                      {:discard [copper copper curse]}]}))))
+           {:supply       [{:card curse :pile-size 18}]
+            :players      [{:deck      [copper]
+                            :hand      [copper copper]
+                            :play-area [witch]
+                            :actions   0}
+                           {:discard [copper copper curse]}
+                           {:discard [curse]}]
+            :effect-stack []}))
+    (is (= (play {:supply  [{:card curse :pile-size 1}]
+                  :players [{:deck    (repeat 3 copper)
+                             :hand    [witch]
+                             :actions 1}
+                            {:discard [copper copper]}
+                            {:discard []}]}
+                 0 :witch)
+           {:supply       [{:card curse :pile-size 0}]
+            :players      [{:deck      [copper]
+                            :hand      [copper copper]
+                            :play-area [witch]
+                            :actions   0}
+                           {:discard [copper copper curse]}
+                           {:discard []}]
+            :effect-stack []}))
+    (is (= (play {:supply  [{:card curse :pile-size 1}]
+                  :players [{:discard [copper copper]}
+                            {:deck    (repeat 3 copper)
+                             :hand    [witch]
+                             :actions 1}
+                            {:discard []}]}
+                 1 :witch)
+           {:supply       [{:card curse :pile-size 0}]
+            :players      [{:discard [copper copper]}
+                           {:deck      [copper]
+                            :hand      [copper copper]
+                            :play-area [witch]
+                            :actions   0}
+                           {:discard [curse]}]
+            :effect-stack []}))))
 
 (deftest woodcutter-test
   (testing "Woodcutter"
