@@ -354,6 +354,57 @@
             :effect-stack []
             :trash        [silver]}))))
 
+(deftest bureaucrat-test
+  (testing "Bureaucrat"
+    (is (= (play {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [bureaucrat]
+                             :deck    [copper]
+                             :actions 1}
+                            {:hand (repeat 5 copper)}]}
+                 0 :bureaucrat)
+           {:supply       [{:card silver :pile-size 39}]
+            :players      [{:hand      []
+                            :play-area [bureaucrat]
+                            :deck      [silver copper]
+                            :actions   0}
+                           {:hand (repeat 5 copper)}]
+            :reveal       {1 (repeat 5 copper)}
+            :effect-stack []}))
+    (is (= (play {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [bureaucrat]
+                             :deck    [copper]
+                             :actions 1}
+                            {:hand [copper copper copper estate estate]}]}
+                 0 :bureaucrat)
+           {:supply       [{:card silver :pile-size 39}]
+            :players      [{:hand      []
+                            :play-area [bureaucrat]
+                            :deck      [silver copper]
+                            :actions   0}
+                           {:hand [copper copper copper estate estate]}]
+            :effect-stack [{:text      "Reveal a Victory card from your hand and put it onto your deck."
+                            :player-no 1
+                            :choice-fn topdeck-from-hand
+                            :options   [:estate :estate]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                :players [{:hand    [bureaucrat]
+                           :deck    [copper]
+                           :actions 1}
+                          {:hand [copper copper copper estate estate]
+                           :deck [gold]}]}
+               (play 0 :bureaucrat)
+               (chose :estate))
+           {:supply       [{:card silver :pile-size 39}]
+            :players      [{:hand      []
+                            :play-area [bureaucrat]
+                            :deck      [silver copper]
+                            :actions   0}
+                           {:hand [copper copper copper estate]
+                            :deck [estate gold]}]
+            :effect-stack []}))))
+
 (deftest cellar-test
   (testing "Cellar"
     (is (= (play {:players [{:hand    [cellar copper estate estate estate]

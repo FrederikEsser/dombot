@@ -1,5 +1,6 @@
 (ns dombot.cards
-  (:require [dombot.operations :refer [draw gain gain-to-hand do-for-other-players move-card move-cards give-choice push-effect-stack]]
+  (:require [dombot.operations :refer [draw gain gain-to-hand gain-to-topdeck do-for-other-players
+                                       move-card move-cards give-choice push-effect-stack]]
             [dombot.utils :as ut]))
 
 (def curse {:name :curse :type #{:curse} :cost 0 :victory-points -1})
@@ -71,6 +72,23 @@
                           (-> game
                               (gain player-no :gold)
                               (do-for-other-players player-no bandit-attack)))})
+
+(defn bureaucrat-attack [game player-no]
+  (let [hand (get-in game [:players player-no :hand])]
+    (if (some (comp :victory :type) hand)
+      (give-choice game player-no {:text       "Reveal a Victory card from your hand and put it onto your deck."
+                                   :choice-fn  topdeck-from-hand
+                                   :options-fn (ut/player-area :hand (comp :victory :type))
+                                   :min        1
+                                   :max        1})
+      (-> game
+          (assoc-in [:reveal player-no] hand)))))
+
+(def bureaucrat {:name      :bureaucrat :set :dominion :type #{:action :attack} :cost 4
+                 :action-fn (fn bureaucrat-action [game player-no]
+                              (-> game
+                                  (gain-to-topdeck player-no :silver)
+                                  (do-for-other-players player-no bureaucrat-attack)))})
 
 (defn cellar-sift [game player-no card-names]
   (-> game
@@ -194,20 +212,6 @@
                                 (update-in [:players player-no :actions] + 1)
                                 (update-in [:players player-no :triggers] concat [merchant-trigger])))})
 
-(defn mine-trash [game player-no card-name]
-  (let [player (get-in game [:players player-no])
-        {{:keys [cost]} :card} (ut/get-card-idx player :hand card-name)
-        max-cost (+ 3 cost)]
-    (-> game
-        (move-card player-no {:card-name card-name
-                              :from      :hand
-                              :to        :trash})
-        (give-choice player-no {:text       (str "Gain a Treasure to your hand costing up to $" max-cost ".")
-                                :choice-fn  gain-to-hand
-                                :options-fn (ut/supply-piles {:max-cost max-cost :type :treasure})
-                                :min        1
-                                :max        1}))))
-
 (defn discard [game player-no card-names]
   (move-cards game player-no {:card-names card-names
                               :from       :hand
@@ -227,6 +231,20 @@
                            (-> game
                                (update-in [:players player-no :coins] + 2)
                                (do-for-other-players player-no militia-attack)))})
+
+(defn mine-trash [game player-no card-name]
+  (let [player (get-in game [:players player-no])
+        {{:keys [cost]} :card} (ut/get-card-idx player :hand card-name)
+        max-cost (+ 3 cost)]
+    (-> game
+        (move-card player-no {:card-name card-name
+                              :from      :hand
+                              :to        :trash})
+        (give-choice player-no {:text       (str "Gain a Treasure to your hand costing up to $" max-cost ".")
+                                :choice-fn  gain-to-hand
+                                :options-fn (ut/supply-piles {:max-cost max-cost :type :treasure})
+                                :min        1
+                                :max        1}))))
 
 (def mine {:name      :mine :set :dominion :type #{:action} :cost 5
            :action-fn (fn mine-action [game player-no]
@@ -406,9 +424,6 @@
                                                         :min        1
                                                         :max        1})))})
 
-;; ATTACK WITH CHOICE
-(def bureaucrat {:name :bureaucrat :set :dominion :type #{:action :attack} :cost 4})
-
 ;; REACTION
 (def moat {:name      :moat :set :dominion :type #{:action :reaction} :cost 2
            :action-fn (fn moat-action [game player-no]
@@ -417,6 +432,7 @@
 
 (def kingdom-cards [artisan
                     bandit
+                    bureaucrat
                     cellar
                     chapel
                     council-room

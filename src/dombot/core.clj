@@ -8,6 +8,7 @@
 ; undo
 ; phases
 ; swift mode
+; game log
 
 (defonce game-state (atom {}))
 

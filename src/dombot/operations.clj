@@ -10,17 +10,25 @@
    (-> game
        (update-in [:players player-no] start-round))))
 
-(defn gain [game player-no card-name & [{:keys [to]
+(defn gain [game player-no card-name & [{:keys [to to-position]
                                          :or   {to :discard}}]]
   (let [{:keys [idx card]} (ut/get-pile-idx game card-name)
-        pile-size (get-in game [:supply idx :pile-size])]
+        pile-size (get-in game [:supply idx :pile-size])
+        add-card-to-coll (fn [coll card]
+                           (case to-position
+                             :top (concat [card] coll)
+                             (concat coll [card])))]
     (assert pile-size (str "Gain error: The supply doesn't have a " (ut/format-name card-name) " pile."))
     (cond-> game
             (< 0 pile-size) (-> (update-in [:supply idx :pile-size] dec)
-                                (update-in [:players player-no to] concat [card])))))
+                                (update-in [:players player-no to] add-card-to-coll card)))))
 
 (defn gain-to-hand [game player-no card-name]
   (gain game player-no card-name {:to :hand}))
+
+(defn gain-to-topdeck [game player-no card-name]
+  (gain game player-no card-name {:to          :deck
+                                  :to-position :top}))
 
 (defn buy-card [game player-no card-name]
   (let [{:keys [buys coins]} (get-in game [:players player-no])
