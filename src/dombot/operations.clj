@@ -120,15 +120,28 @@
     (dissoc game :effect-stack)
     (update game :effect-stack (partial drop 1))))
 
-(defn do-for-other-players [{:keys [players] :as game} player-no f & args]
+(defn attack-other-players [{:keys [players] :as game} player-no unaffected f & args]
   (let [other-player-nos (->> (range 1 (count players))
                               (map (fn [n] (-> n (+ player-no) (mod (count players)))))
+                              (remove (set unaffected))
                               reverse)]
     (reduce (fn [game other-player-no]
               (push-effect-stack game other-player-no (merge {:action-fn f}
                                                              (when args {:args args}))))
             game
             other-player-nos)))
+
+(defn do-for-other-players [game player-no f & args]
+  (apply attack-other-players game player-no nil f args))
+
+(defn check-stack [game]
+  (let [[{:keys [player-no action-fn args type unaffected]}] (get game :effect-stack)]
+    (cond-> game
+            action-fn (-> pop-effect-stack
+                          (as-> game (if (:attack type)
+                                       (apply action-fn game player-no unaffected args)
+                                       (apply action-fn game player-no args)))
+                          check-stack))))
 
 (defn- chose-single [game selection]
   (if (coll? selection)
@@ -166,13 +179,6 @@
         pop-effect-stack
         (choice-fn player-no multi-selection))))
 
-(defn check-stack [game]
-  (let [[{:keys [player-no action-fn args]}] (get game :effect-stack)]
-    (cond-> game
-            action-fn (-> pop-effect-stack
-                          (as-> game (apply action-fn game player-no args))
-                          check-stack))))
-
 (defn chose [game selection]
   (let [[{:keys [choice-fn options min max]}] (get game :effect-stack)
         chose-fn (if (= max 1) chose-single chose-multi)]
@@ -202,6 +208,25 @@
     (-> (reduce apply-trigger game matching-triggers)
         (update-in [:players player-no :triggers] (partial remove (comp #{trigger-id} :trigger-id))))))
 
+(defn check-for-reactions [game player-no {:keys [text reaction-to]}]
+  ; TODO: Handle multiple reaction cards
+  (let [[reaction] (->> (get-in game [:players player-no :hand])
+                        (keep (fn [{:keys [name type reaction]}]
+                                (when (:reaction type)
+                                  (merge {:reaction-card-name name}
+                                         (get reaction reaction-to))))))]
+    (cond-> game
+            reaction (give-choice player-no {:text      (str (:text reaction) " " text)
+                                             :choice-fn (:reaction-fn reaction)
+                                             :options   [(:reaction-card-name reaction)]
+                                             :max       1}))))
+
+(defn card-effect [game player-no {:keys [name type] :as card}]
+  (cond-> game
+          (:action type) (push-effect-stack player-no card)
+          (:attack type) (do-for-other-players player-no check-for-reactions {:text        (str "a " (ut/format-name name) " attack.")
+                                                                              :reaction-to :attack})))
+
 (defn play [game player-no card-name]
   (let [{:keys [actions triggers] :as player} (get-in game [:players player-no])
         {{:keys [type action-fn coin-value] :as card} :card} (ut/get-card-idx player :hand card-name)]
@@ -216,10 +241,10 @@
         (move-card player-no {:card-name card-name
                               :from      :hand
                               :to        :play-area})
+        (card-effect player-no card)
         (cond->
           (:action type) (update-in [:players player-no :actions] - 1)
-          action-fn (action-fn player-no)
-          coin-value (update-in [:players player-no :coins] + coin-value)
+          coin-value (update-in [:players player-no :coins] + coin-value) ; todo: put treasures on the stack
           (not-empty triggers) (apply-triggers player-no [:play card-name]))
         check-stack)))
 

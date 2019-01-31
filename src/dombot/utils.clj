@@ -49,6 +49,12 @@
                        (when (= card-name name) {:idx idx :card card})))
        first))
 
+(defn get-effect-idx [effect-stack effect-type]
+  (->> effect-stack
+       (keep-indexed (fn [idx {:keys [type] :as effect}]
+                       (when (effect-type type) {:idx idx :effect effect})))
+       first))
+
 (defn player-area
   ([area filter-fn]
    (fn [game player-no]

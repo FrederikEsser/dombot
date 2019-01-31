@@ -1,6 +1,6 @@
 (ns dombot.cards
-  (:require [dombot.operations :refer [draw gain gain-to-hand gain-to-topdeck do-for-other-players
-                                       move-card move-cards give-choice push-effect-stack]]
+  (:require [dombot.operations :refer [draw gain gain-to-hand gain-to-topdeck do-for-other-players card-effect
+                                       attack-other-players move-card move-cards give-choice push-effect-stack]]
             [dombot.utils :as ut]))
 
 (def curse {:name :curse :type #{:curse} :cost 0 :victory-points -1})
@@ -67,11 +67,11 @@
                               :min        1
                               :max        1})))
 
-(def bandit {:name      :bandit :set :dominion :type #{:action} :cost 5
-             :action-fn (fn bandit-action [game player-no]
+(def bandit {:name      :bandit :set :dominion :type #{:action :attack} :cost 5
+             :action-fn (fn bandit-action [game player-no unaffected]
                           (-> game
                               (gain player-no :gold)
-                              (do-for-other-players player-no bandit-attack)))})
+                              (attack-other-players player-no unaffected bandit-attack)))})
 
 (defn bureaucrat-attack [game player-no]
   (let [hand (get-in game [:players player-no :hand])]
@@ -85,10 +85,10 @@
           (assoc-in [:reveal player-no] hand)))))
 
 (def bureaucrat {:name      :bureaucrat :set :dominion :type #{:action :attack} :cost 4
-                 :action-fn (fn bureaucrat-action [game player-no]
+                 :action-fn (fn bureaucrat-action [game player-no unaffected]
                               (-> game
                                   (gain-to-topdeck player-no :silver)
-                                  (do-for-other-players player-no bureaucrat-attack)))})
+                                  (attack-other-players player-no unaffected bureaucrat-attack)))})
 
 (defn cellar-sift [game player-no card-names]
   (-> game
@@ -226,11 +226,11 @@
                                                        :min        (- (count hand) 3)
                                                        :max        (- (count hand) 3)}))))
 
-(def militia {:name      :militia :set :dominion :type #{:action} :cost 4
-              :action-fn (fn militia-action [game player-no]
+(def militia {:name      :militia :set :dominion :type #{:action :attack} :cost 4
+              :action-fn (fn militia-action [game player-no unaffected]
                            (-> game
                                (update-in [:players player-no :coins] + 2)
-                               (do-for-other-players player-no militia-attack)))})
+                               (attack-other-players player-no unaffected militia-attack)))})
 
 (defn mine-trash [game player-no card-name]
   (let [player (get-in game [:players player-no])
@@ -253,6 +253,22 @@
                                                     :choice-fn  mine-trash
                                                     :options-fn (ut/player-area :hand (comp :treasure :type))
                                                     :max        1})))})
+
+(defn moat-reaction [{:keys [effect-stack] :as game} player-no card-name]
+  ; todo: make sure it's the correct attack effect
+  (let [{:keys [idx]} (ut/get-effect-idx effect-stack :attack)]
+    (assert idx)
+    (cond-> game
+            (= :moat card-name) (assoc :effect-stack (-> effect-stack
+                                                         vec
+                                                         (update-in [idx :unaffected] conj player-no))))))
+
+(def moat {:name      :moat :set :dominion :type #{:action :reaction} :cost 2
+           :action-fn (fn moat-action [game player-no]
+                        (-> game
+                            (draw player-no 2)))
+           :reaction  {:attack {:text        "You may reveal a Moat from your hand, to be unaffected by"
+                                :reaction-fn moat-reaction}}})
 
 (defn moneylender-trash [game player-no do-trash?]
   (cond-> game
@@ -354,13 +370,13 @@
 (defn play-action-twice [game player-no card-name]
   (if card-name
     (let [player (get-in game [:players player-no])
-          {{:keys [action-fn] :as card} :card} (ut/get-card-idx player :hand card-name)]
+          {:keys [card]} (ut/get-card-idx player :hand card-name)]
       (-> game
-          (push-effect-stack player-no card)
           (move-card player-no {:card-name card-name
                                 :from      :hand
                                 :to        :play-area})
-          (action-fn player-no)))
+          (card-effect player-no card)
+          (card-effect player-no card)))
     game))
 
 (def throne-room {:name      :throne-room :set :dominion :type #{:action} :cost 4
@@ -373,13 +389,13 @@
 
 (defn play-discard-action [game player-no card-name]
   (let [{:keys [discard]} (get-in game [:players player-no])
-        {:keys [name action-fn]} (last discard)]
+        {:keys [name] :as card} (last discard)]
     (cond-> game
             (= name card-name) (-> (move-card player-no {:card-name     card-name
                                                          :from          :discard
                                                          :from-position :bottom
                                                          :to            :play-area})
-                                   (action-fn player-no)))))
+                                   (card-effect player-no card)))))
 
 (def vassal {:name      :vassal :set :dominion :type #{:action} :cost 3
              :action-fn (fn vassal-action [game player-no]
@@ -390,12 +406,12 @@
                                                     :to            :discard})
                               (as-> game
                                     (let [{:keys [discard]} (get-in game [:players player-no])
-                                          {:keys [name action-fn]} (last discard)]
+                                          {:keys [name type]} (last discard)]
                                       (cond-> game
-                                              action-fn (give-choice player-no {:text      (str "You may play the discarded " (ut/format-name name) ".")
-                                                                                :choice-fn play-discard-action
-                                                                                :options   [name]
-                                                                                :max       1}))))))})
+                                              (:action type) (give-choice player-no {:text      (str "You may play the discarded " (ut/format-name name) ".")
+                                                                                     :choice-fn play-discard-action
+                                                                                     :options   [name]
+                                                                                     :max       1}))))))})
 
 (def village {:name      :village :set :dominion :type #{:action} :cost 3
               :action-fn (fn village-action [game player-no]
@@ -403,11 +419,11 @@
                                (draw player-no 1)
                                (update-in [:players player-no :actions] + 2)))})
 
-(def witch {:name      :witch :set :dominion :type #{:action} :cost 5
-            :action-fn (fn witch-action [game player-no]
+(def witch {:name      :witch :set :dominion :type #{:action :attack} :cost 5
+            :action-fn (fn witch-action [game player-no unaffected]
                          (-> game
                              (draw player-no 2)
-                             (do-for-other-players player-no gain :curse)))})
+                             (attack-other-players player-no unaffected gain :curse)))})
 
 (def woodcutter {:name      :woodcutter :set :dominion :type #{:action} :cost 3
                  :action-fn (fn woodcutter-action [game player-no]
@@ -423,12 +439,6 @@
                                                         :options-fn (ut/supply-piles {:max-cost 4})
                                                         :min        1
                                                         :max        1})))})
-
-;; REACTION
-(def moat {:name      :moat :set :dominion :type #{:action :reaction} :cost 2
-           :action-fn (fn moat-action [game player-no]
-                        (-> game
-                            (draw player-no 2)))})
 
 (def kingdom-cards [artisan
                     bandit
