@@ -115,8 +115,10 @@
 (defn push-effect-stack [game player-no item]
   (update game :effect-stack (partial concat [(assoc item :player-no player-no)])))
 
-(defn pop-effect-stack [game]
-  (update game :effect-stack (partial drop 1)))
+(defn pop-effect-stack [{:keys [effect-stack] :as game}]
+  (if (= 1 (count effect-stack))
+    (dissoc game :effect-stack)
+    (update game :effect-stack (partial drop 1))))
 
 (defn do-for-other-players [{:keys [players] :as game} player-no f & args]
   (let [other-player-nos (->> (range 1 (count players))
