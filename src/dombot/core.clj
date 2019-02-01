@@ -4,11 +4,10 @@
   (:gen-class))
 
 ; todo:
-; view & reset revealed hands
-; handle multiple reaction cards
-; unit tests for do-for-other-players, give-choice, chose, gardens, calc-victory-points
-; undo
 ; phases
+; undo
+; unit tests for do-for-other-players, give-choice, chose, gardens, calc-victory-points
+; handle multiple reaction cards
 ; game log
 
 (defonce game-state (atom {}))

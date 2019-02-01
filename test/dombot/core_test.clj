@@ -285,13 +285,13 @@
                        :reveal  []
                        :discard [estate]}]
             :trash   [silver]}))
-    (is (= (-> {:mode :swift
+    (is (= (-> {:mode    :swift
                 :supply  [{:card gold :pile-size 30}]
                 :players [{:hand    [bandit]
                            :actions 1}
                           {:deck [estate silver gold]}]}
                (play 0 :bandit))
-           {:mode :swift
+           {:mode    :swift
             :supply  [{:card gold :pile-size 29}]
             :players [{:hand      []
                        :play-area [bandit]
@@ -414,7 +414,7 @@
                        :actions   0}
                       {:hand [copper copper copper estate]
                        :deck [estate gold]}]}))
-    (is (= (-> {:mode :swift
+    (is (= (-> {:mode    :swift
                 :supply  [{:card silver :pile-size 40}]
                 :players [{:hand    [bureaucrat]
                            :deck    [copper]
@@ -422,7 +422,7 @@
                           {:hand [copper copper copper estate estate]
                            :deck [gold]}]}
                (play 0 :bureaucrat))
-           {:mode :swift
+           {:mode    :swift
             :supply  [{:card silver :pile-size 39}]
             :players [{:hand      []
                        :play-area [bureaucrat]
@@ -791,13 +791,13 @@
                        :coins     2}
                       {:hand    (repeat 3 copper)
                        :discard [copper copper]}]}))
-    (is (= (-> {:mode :swift
+    (is (= (-> {:mode    :swift
                 :players [{:hand    [militia]
                            :actions 1
                            :coins   0}
                           {:hand (repeat 5 copper)}]}
                (play 0 :militia))
-           {:mode :swift
+           {:mode    :swift
             :players [{:hand      []
                        :play-area [militia]
                        :actions   0
@@ -1237,14 +1237,14 @@
                        :deck      [silver gold]
                        :actions   1}]
             :trash   [estate]}))
-    (is (= (-> {:mode :swift
+    (is (= (-> {:mode    :swift
                 :players [{:deck    [copper silver estate gold]
                            :hand    [sentry]
                            :actions 1}]}
                (play 0 :sentry)
                (chose :estate)
                (chose nil))
-           {:mode :swift
+           {:mode    :swift
             :players [{:hand      [copper]
                        :play-area [sentry]
                        :look-at   []
@@ -1802,6 +1802,7 @@
                                          :play-area []
                                          :deck      [copper copper copper copper estate]
                                          :discard   []}]
+                       :reveal         {0 [copper copper copper estate estate]}
                        :trash          [estate estate copper]
                        :current-player 0})
            {:supply         [{:card :curse :price 0 :count 10}
@@ -1817,6 +1818,8 @@
                              :deck           5
                              :discard        :empty
                              :victory-points 3}
+            :revealed       [{:player :dombot
+                              :hand   [:copper :copper :copper :estate :estate]}]
             :trash          {:copper 1 :estate 2}
             :current-player :dombot})))
   (testing "View game end"

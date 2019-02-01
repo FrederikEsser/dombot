@@ -69,18 +69,6 @@
    (-> game
        (update-in [:players player-no] draw n))))
 
-(defn clean-up
-  ([{:keys [play-area hand] :as player}]
-   (-> player
-       (update :discard concat play-area hand)
-       (assoc :play-area []
-              :hand [])
-       (dissoc :triggers)
-       (draw 5)))
-  ([game player-no]
-   (-> game
-       (update-in [:players player-no] clean-up))))
-
 (defn move-card [game player-no {:keys [card-name from from-position to to-position] :as args}]
   (let [{:keys [deck discard] :as player} (get-in game [:players player-no])]
     (if (and (= :deck from) (empty? deck) (not-empty discard))
@@ -260,6 +248,19 @@
                        (map :name))]
     (reduce (fn [game card-name] (play game player-no card-name)) game treasures)))
 
+(defn clean-up
+  ([{:keys [play-area hand] :as player}]
+   (-> player
+       (update :discard concat play-area hand)
+       (assoc :play-area []
+              :hand [])
+       (dissoc :triggers)
+       (draw 5)))
+  ([game player-no]
+   (-> game
+       (update-in [:players player-no] clean-up)
+       (dissoc :reveal))))
+
 (defn- get-victory-points [cards {:keys [victory-points]}]
   (if (fn? victory-points)
     (victory-points cards)
@@ -312,14 +313,19 @@
                   :keys               [pile-size]}]
               {:card name :price cost :count pile-size}))))
 
-(defn view-game [{:keys [supply players trash effect-stack current-player] :as game}]
+(defn view-game [{:keys [supply players trash effect-stack current-player reveal] :as game}]
   (if (game-ended? game)
     {:players (map view-end-player players)}
-    (let [[{:keys [player-no text options]}] effect-stack]
+    (let [[{:keys [player-no text options]}] effect-stack
+          revealed (->> reveal
+                        (map (fn [[player-no hand]]
+                               {:player (get-in players [player-no :name])
+                                :hand   (map :name hand)})))]
       (cond-> {:supply         (view-supply supply)
                :player         (view-player (get players current-player))
                :trash          (ut/frequencies-of trash :name)
                :current-player (get-in players [current-player :name])}
+              (not-empty revealed) (assoc :revealed revealed)
               (or text (not-empty options)) (assoc :choice {:text    text
                                                             :player  (get-in players [player-no :name])
                                                             :options options})))))
