@@ -190,15 +190,20 @@
         (chose-fn selection)
         check-stack)))
 
-(defn give-choice [game player-no {:keys [options-fn options min max] :as args}]
+(defn give-choice [{:keys [mode] :as game} player-no {:keys [options-fn options min max] :as args}]
   (let [options (if options-fn (options-fn game player-no) options)
-        args (cond-> args
-                     min (update :min clojure.core/min (count options))
-                     max (update :max clojure.core/min (count options)))]
+        {:keys [min max] :as args} (cond-> args
+                                           min (update :min clojure.core/min (count options))
+                                           max (update :max clojure.core/min (count options)))
+        swiftable (and (= :swift mode)
+                       (not-empty options)
+                       (apply = options)
+                       (= min (or max (count options))))]
     (-> game
         (cond-> (not-empty options) (push-effect-stack player-no (-> args
                                                                      (dissoc :options-fn)
-                                                                     (assoc :options options))))
+                                                                     (assoc :options options)))
+                swiftable (chose (take min options)))
         check-stack)))
 
 (defn- apply-triggers [game player-no trigger-id]

@@ -9,13 +9,12 @@
 ; unit tests for do-for-other-players, give-choice, chose, gardens, calc-victory-points
 ; undo
 ; phases
-; swift mode
 ; game log
 
 (defonce game-state (atom {}))
 
-(defn start-game [player-names]
-  (let [{:keys [current-player] :as game} (cards/game player-names)]
+(defn start-game [player-names & [mode]]
+  (let [{:keys [current-player] :as game} (cards/game player-names mode)]
     (swap! game-state assoc :game (-> game
                                       (op/start-round current-player)))
     (op/view-game (:game @game-state))))

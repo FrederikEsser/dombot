@@ -492,13 +492,14 @@
      :hand (take 5 deck)
      :deck (drop 5 deck)}))
 
-(defn game [player-names]
+(defn game [player-names mode]
   (let [number-of-players (count player-names)
         victory-pile-size (case number-of-players
                             2 8
                             3 12
                             4 12)]
-    {:supply         (vec (concat (base-supply number-of-players victory-pile-size)
+    {:mode           mode
+     :supply         (vec (concat (base-supply number-of-players victory-pile-size)
                                   (kingdom #{:dominion} victory-pile-size)))
      :players        (vec (map player player-names))
      :current-player (rand-int number-of-players)}))

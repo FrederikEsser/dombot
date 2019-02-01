@@ -285,6 +285,22 @@
                        :reveal  []
                        :discard [estate]}]
             :trash   [silver]}))
+    (is (= (-> {:mode :swift
+                :supply  [{:card gold :pile-size 30}]
+                :players [{:hand    [bandit]
+                           :actions 1}
+                          {:deck [estate silver gold]}]}
+               (play 0 :bandit))
+           {:mode :swift
+            :supply  [{:card gold :pile-size 29}]
+            :players [{:hand      []
+                       :play-area [bandit]
+                       :discard   [gold]
+                       :actions   0}
+                      {:deck    [gold]
+                       :reveal  []
+                       :discard [estate]}]
+            :trash   [silver]}))
     (is (= (play {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [bandit]
                              :actions 1}
@@ -392,6 +408,22 @@
                (play 0 :bureaucrat)
                (chose :estate))
            {:supply  [{:card silver :pile-size 39}]
+            :players [{:hand      []
+                       :play-area [bureaucrat]
+                       :deck      [silver copper]
+                       :actions   0}
+                      {:hand [copper copper copper estate]
+                       :deck [estate gold]}]}))
+    (is (= (-> {:mode :swift
+                :supply  [{:card silver :pile-size 40}]
+                :players [{:hand    [bureaucrat]
+                           :deck    [copper]
+                           :actions 1}
+                          {:hand [copper copper copper estate estate]
+                           :deck [gold]}]}
+               (play 0 :bureaucrat))
+           {:mode :swift
+            :supply  [{:card silver :pile-size 39}]
             :players [{:hand      []
                        :play-area [bureaucrat]
                        :deck      [silver copper]
@@ -759,6 +791,19 @@
                        :coins     2}
                       {:hand    (repeat 3 copper)
                        :discard [copper copper]}]}))
+    (is (= (-> {:mode :swift
+                :players [{:hand    [militia]
+                           :actions 1
+                           :coins   0}
+                          {:hand (repeat 5 copper)}]}
+               (play 0 :militia))
+           {:mode :swift
+            :players [{:hand      []
+                       :play-area [militia]
+                       :actions   0
+                       :coins     2}
+                      {:hand    (repeat 3 copper)
+                       :discard [copper copper]}]}))
     (is (= (-> {:players [{:hand    [militia]
                            :actions 1
                            :coins   0}
@@ -1056,7 +1101,22 @@
                             :choice-fn discard
                             :options   [:copper]
                             :min       1
-                            :max       1}]}))))
+                            :max       1}]}))
+    (is (= (play {:mode    :swift
+                  :supply  [{:pile-size 0} {:pile-size 0}]
+                  :players [{:deck    [copper copper]
+                             :hand    [poacher]
+                             :actions 1
+                             :coins   0}]}
+                 0 :poacher)
+           {:mode    :swift
+            :supply  [{:pile-size 0} {:pile-size 0}]
+            :players [{:hand      []
+                       :deck      [copper]
+                       :play-area [poacher]
+                       :discard   [copper]
+                       :actions   1
+                       :coins     1}]}))))
 
 (deftest remodel-test
   (testing "Remodel"
@@ -1172,6 +1232,20 @@
                (chose nil)
                (chose :silver))
            {:players [{:hand      [copper]
+                       :play-area [sentry]
+                       :look-at   []
+                       :deck      [silver gold]
+                       :actions   1}]
+            :trash   [estate]}))
+    (is (= (-> {:mode :swift
+                :players [{:deck    [copper silver estate gold]
+                           :hand    [sentry]
+                           :actions 1}]}
+               (play 0 :sentry)
+               (chose :estate)
+               (chose nil))
+           {:mode :swift
+            :players [{:hand      [copper]
                        :play-area [sentry]
                        :look-at   []
                        :deck      [silver gold]
