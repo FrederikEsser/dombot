@@ -50,25 +50,6 @@
       (assoc :deck (shuffle discard))
       (assoc :discard [])))
 
-(defn- draw-one [{:keys [:deck :discard] :as player}]
-  (if (empty? deck)
-    (if (empty? discard)
-      player
-      (-> player
-          shuffle-discard
-          draw-one))
-    (let [card (first deck)]
-      (-> player
-          (update :deck (partial drop 1))
-          (update :hand conj card)))))
-
-(defn draw
-  ([player n]
-   (ut/redupeat player draw-one n))
-  ([game player-no n]
-   (-> game
-       (update-in [:players player-no] draw n))))
-
 (defn move-card [game player-no {:keys [card-name from from-position to to-position] :as args}]
   (let [{:keys [deck discard] :as player} (get-in game [:players player-no])]
     (if (and (= :deck from) (empty? deck) (not-empty discard))
@@ -93,12 +74,18 @@
           (assert card (str "Move error: There is no " (ut/format-name card-name) " in your " (ut/format-name from) ".")))
         (cond-> game
                 card (-> (update-in from-path ut/vec-remove idx)
-                         (update-in to-path add-card-to-coll card)))))))
+                         (update-in to-path add-card-to-coll card)
+                         (cond-> (and (= :deck from) (:can-undo? game)) (assoc :can-undo? false))))))))
 
 (defn move-cards [game player-no {:keys [card-names] :as args}]
   (reduce (fn [game card-name] (move-card game player-no (assoc args :card-name card-name)))
           game
           (ut/ensure-coll card-names)))
+
+(defn draw [game player-no n]
+  (ut/redupeat game n move-card player-no {:from          :deck
+                                           :from-position :top
+                                           :to            :hand}))
 
 (defn push-effect-stack [game player-no item]
   (update game :effect-stack (partial concat [(assoc item :player-no player-no)])))
@@ -254,11 +241,11 @@
        (update :discard concat play-area hand)
        (assoc :play-area []
               :hand [])
-       (dissoc :triggers)
-       (draw 5)))
+       (dissoc :triggers)))
   ([game player-no]
    (-> game
        (update-in [:players player-no] clean-up)
+       (draw player-no 5)
        (dissoc :reveal))))
 
 (defn- get-victory-points [cards {:keys [victory-points]}]

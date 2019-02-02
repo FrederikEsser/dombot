@@ -95,7 +95,7 @@
       (move-cards player-no {:card-names card-names
                              :from       :hand
                              :to         :discard})
-      (update-in [:players player-no] draw (count card-names))))
+      (draw player-no (count card-names))))
 
 (def cellar {:name      :cellar :set :dominion :type #{:action} :cost 2
              :action-fn (fn cellar-action [game player-no]

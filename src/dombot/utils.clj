@@ -13,10 +13,11 @@
        (map format-name)
        (s/join "/")))
 
-(defn redupeat [val f n]
-  (if (> n 0)
-    (redupeat (f val) f (dec n))
-    val))
+(defn redupeat [val n f & args]
+  (loop [acc val n n]
+    (if (> n 0)
+      (recur (apply f acc args) (dec n))
+      acc)))
 
 (defn vec-remove
   "remove elem in coll"

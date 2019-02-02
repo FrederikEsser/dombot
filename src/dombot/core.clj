@@ -5,54 +5,66 @@
 
 ; todo:
 ; phases
-; undo
 ; unit tests for do-for-other-players, give-choice, chose, gardens, calc-victory-points
 ; handle multiple reaction cards
 ; game log
 
 (defonce game-state (atom {}))
 
-(defn start-game [player-names & [mode]]
-  (let [{:keys [current-player] :as game} (cards/game player-names mode)]
-    (swap! game-state assoc :game (-> game
-                                      (op/start-round current-player)))
-    (op/view-game (:game @game-state))))
-
-(defn play-treasures []
-  (let [{:keys [current-player] :as game} (:game @game-state)]
-    (swap! game-state assoc :game (-> game
-                                      (op/play-treasures current-player)))
-    (op/view-game (:game @game-state))))
-
-(defn play [card-name]
-  (let [{:keys [current-player] :as game} (:game @game-state)]
-    (swap! game-state assoc :game (-> game
-                                      (op/play current-player card-name)))
-    (op/view-game (:game @game-state))))
-
-(defn chose [choice]
-  (let [{:keys [current-player] :as game} (:game @game-state)]
-    (swap! game-state assoc :game (-> game
-                                      (op/chose choice)))
-    (op/view-game (:game @game-state))))
-
-(defn buy [card-name]
-  (let [{:keys [current-player] :as game} (:game @game-state)]
-    (swap! game-state assoc :game (-> game
-                                      (op/buy-card current-player card-name)))
-    (op/view-game (:game @game-state))))
-
-(defn end-turn []
-  (let [{:keys [players current-player] :as game} (:game @game-state)
-        next-player (mod (inc current-player) (count players))]
-    (swap! game-state assoc :game (-> game
-                                      (op/clean-up current-player)
-                                      (assoc :current-player next-player)
-                                      (op/start-round next-player)))
-    (op/view-game (:game @game-state))))
+(defn get-game []
+  (-> @game-state
+      :game
+      first
+      (assoc :can-undo? true)))
 
 (defn view []
-  (op/view-game (:game @game-state)))
+  (op/view-game (get-game)))
+
+(defn undo []
+  (let [{:keys [can-undo?]} (-> @game-state :game first)]
+    (assert can-undo? "Unable to undo last move.")
+    (swap! game-state update :game (partial drop 1))
+    (view)))
+
+(defn start-game [player-names & [mode]]
+  (let [{:keys [current-player] :as game} (cards/game player-names (or mode :swift))]
+    (swap! game-state assoc :game (-> game
+                                      (op/start-round current-player)
+                                      list))
+    (view)))
+
+(defn play-treasures []
+  (let [{:keys [current-player] :as game} (get-game)]
+    (swap! game-state update :game conj (-> game
+                                            (op/play-treasures current-player)))
+    (view)))
+
+(defn play [card-name]
+  (let [{:keys [current-player] :as game} (get-game)]
+    (swap! game-state update :game conj (-> game
+                                            (op/play current-player card-name)))
+    (view)))
+
+(defn chose [choice]
+  (let [game (get-game)]
+    (swap! game-state update :game conj (-> game
+                                            (op/chose choice)))
+    (view)))
+
+(defn buy [card-name]
+  (let [{:keys [current-player] :as game} (get-game)]
+    (swap! game-state update :game conj (-> game
+                                            (op/buy-card current-player card-name)))
+    (view)))
+
+(defn end-turn []
+  (let [{:keys [players current-player] :as game} (get-game)
+        next-player (mod (inc current-player) (count players))]
+    (swap! game-state update :game conj (-> game
+                                            (op/clean-up current-player)
+                                            (assoc :current-player next-player)
+                                            (op/start-round next-player)))
+    (view)))
 
 (defn -main
   "I don't do a whole lot ... yet."

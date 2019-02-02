@@ -19,20 +19,20 @@
 
 (deftest draw-test
   (testing "Draw"
-    (let [player {:hand [1 2 3] :deck [4 5] :discard [6 7]}]
-      (is (= (draw player 1)
-             {:hand [1 2 3 4] :deck [5] :discard [6 7]}))
-      (is (= (draw player 2)
-             {:hand [1 2 3 4 5] :deck [] :discard [6 7]}))
-      (let [result (draw player 3)]
-        (is (or (= result {:hand [1 2 3 4 5 6] :deck [7] :discard []})
-                (= result {:hand [1 2 3 4 5 7] :deck [6] :discard []}))))
-      (let [result (draw player 4)]
-        (is (or (= result {:hand [1 2 3 4 5 6 7] :deck [] :discard []})
-                (= result {:hand [1 2 3 4 5 7 6] :deck [] :discard []}))))
-      (let [result (draw player 5)]
-        (is (or (= result {:hand [1 2 3 4 5 6 7] :deck [] :discard []})
-                (= result {:hand [1 2 3 4 5 7 6] :deck [] :discard []})))))))
+    (let [game {:players [{:hand [1 2 3] :deck [4 5] :discard [6 7]}]}]
+      (is (= (draw game 0 1)
+             {:players [{:hand [1 2 3 4] :deck [5] :discard [6 7]}]}))
+      (is (= (draw game 0 2)
+             {:players [{:hand [1 2 3 4 5] :deck [] :discard [6 7]}]}))
+      (let [result (draw game 0 3)]
+        (is (or (= result {:players [{:hand [1 2 3 4 5 6] :deck [7] :discard []}]})
+                (= result {:players [{:hand [1 2 3 4 5 7] :deck [6] :discard []}]}))))
+      (let [result (draw game 0 4)]
+        (is (or (= result {:players [{:hand [1 2 3 4 5 6 7] :deck [] :discard []}]})
+                (= result {:players [{:hand [1 2 3 4 5 7 6] :deck [] :discard []}]}))))
+      (let [result (draw game 0 5)]
+        (is (or (= result {:players [{:hand [1 2 3 4 5 6 7] :deck [] :discard []}]})
+                (= result {:players [{:hand [1 2 3 4 5 7 6] :deck [] :discard []}]})))))))
 
 (deftest gain-test
   (testing "Gain"
@@ -112,7 +112,7 @@
                        :discard [copper]}]}))))
 
 (deftest play-test
-  (testing "Playing card is impossible because"
+  (testing "Playing a card is impossible because"
     (testing "it has no/wrong type"
       (is (thrown-with-msg? AssertionError #"Play error: No Card has no type"
                             (play {:players [{:hand [{:name :no-card}]}]}
@@ -630,6 +630,14 @@
            {:players [{:hand      (repeat 7 copper)
                        :play-area [library]
                        :deck      [copper]
+                       :actions   0}]}))
+    (is (= (play {:players [{:hand    (concat [library] (repeat 7 copper))
+                             :deck    [estate]
+                             :actions 1}]}
+                 0 :library)
+           {:players [{:hand      (repeat 7 copper)
+                       :play-area [library]
+                       :deck      [estate]
                        :actions   0}]}))
     (is (= (play {:players [{:hand    [library]
                              :deck    (repeat 6 copper)
@@ -1751,39 +1759,39 @@
 
 (deftest clean-up-test
   (testing "Clean up"
-    (is (= (clean-up {:hand      [estate]
-                      :play-area [silver]
-                      :deck      (repeat 5 copper)
-                      :discard   [cellar]})
-           {:hand      (repeat 5 copper)
-            :play-area []
-            :deck      []
-            :discard   [cellar silver estate]}))
-    (is (= (clean-up {:hand      [copper]
-                      :play-area [copper]
-                      :deck      [copper]
-                      :discard   [copper]})
-           {:hand      (repeat 4 copper)
-            :play-area []
-            :deck      []
-            :discard   []}))
-    (is (= (clean-up {:hand      [copper]
-                      :play-area [copper]
-                      :deck      (repeat 3 silver)
-                      :discard   [copper]})
-           {:hand      (concat (repeat 3 silver) (repeat 2 copper))
-            :play-area []
-            :deck      [copper]
-            :discard   []}))
-    (is (= (clean-up {:hand      []
-                      :play-area []
-                      :deck      []
-                      :discard   []
-                      :triggers  [merchant-trigger]})
-           {:hand      []
-            :play-area []
-            :deck      []
-            :discard   []}))))
+    (is (= (clean-up {:players [{:hand      [estate]
+                                 :play-area [silver]
+                                 :deck      (repeat 5 copper)
+                                 :discard   [cellar]}]} 0)
+           {:players [{:hand      (repeat 5 copper)
+                       :play-area []
+                       :deck      []
+                       :discard   [cellar silver estate]}]}))
+    (is (= (clean-up {:players [{:hand      [copper]
+                                 :play-area [copper]
+                                 :deck      [copper]
+                                 :discard   [copper]}]} 0)
+           {:players [{:hand      (repeat 4 copper)
+                       :play-area []
+                       :deck      []
+                       :discard   []}]}))
+    (is (= (clean-up {:players [{:hand      [copper]
+                                 :play-area [copper]
+                                 :deck      (repeat 3 silver)
+                                 :discard   [copper]}]} 0)
+           {:players [{:hand      (concat (repeat 3 silver) (repeat 2 copper))
+                       :play-area []
+                       :deck      [copper]
+                       :discard   []}]}))
+    (is (= (clean-up {:players [{:hand      []
+                                 :play-area []
+                                 :deck      []
+                                 :discard   []
+                                 :triggers  [merchant-trigger]}]} 0)
+           {:players [{:hand      []
+                       :play-area []
+                       :deck      []
+                       :discard   []}]}))))
 
 (deftest game-end-test
   (testing "Game ending conditions"
