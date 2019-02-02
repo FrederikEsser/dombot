@@ -1,14 +1,15 @@
 (ns dombot.operations
   (:require [dombot.utils :as ut]))
 
-(defn start-round
+(defn start-turn
   ([player]
    (assoc player :actions 1
                  :coins 0
-                 :buys 1))
+                 :buys 1
+                 :phase :action))
   ([game player-no]
    (-> game
-       (update-in [:players player-no] start-round))))
+       (update-in [:players player-no] start-turn))))
 
 (defn gain [game player-no card-name & [{:keys [to to-position]
                                          :or   {to :discard}}]]
@@ -30,16 +31,20 @@
   (gain game player-no card-name {:to          :deck
                                   :to-position :top}))
 
-(defn buy-card [game player-no card-name]
-  (let [{:keys [buys coins]} (get-in game [:players player-no])
+(defn buy-card [{:keys [effect-stack] :as game} player-no card-name]
+  (let [{:keys [buys coins phase]} (get-in game [:players player-no])
         {{:keys [cost]} :card
          pile-size      :pile-size
          :as            supply-pile} (ut/get-pile-idx game card-name)]
+    (assert (empty? effect-stack) "You can't buy cards when you have a choice to make.")
     (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
     (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))
     (assert (and coins cost (>= coins cost)) (str "Buy error: " (ut/format-name card-name) " costs " cost " and you only have " coins " coins."))
     (assert (and pile-size (< 0 pile-size)) (str "Buy error: " (ut/format-name card-name) " supply is empty."))
+    (when phase
+      (assert (#{:action :pay :buy} phase) (str "You can't buy cards when you're in the " (ut/format-name phase) " phase.")))
     (-> game
+        (cond-> phase (assoc-in [:players player-no :phase] :buy))
         (gain player-no card-name)
         (update-in [:players player-no :coins] - cost)
         (update-in [:players player-no :buys] - 1))))
@@ -207,9 +212,10 @@
           (:attack type) (do-for-other-players player-no check-for-reactions {:text        (str "a " (ut/format-name name) " attack.")
                                                                               :reaction-to :attack})))
 
-(defn play [game player-no card-name]
-  (let [{:keys [actions triggers] :as player} (get-in game [:players player-no])
+(defn play [{:keys [effect-stack] :as game} player-no card-name]
+  (let [{:keys [phase actions triggers] :as player} (get-in game [:players player-no])
         {{:keys [type action-fn coin-value] :as card} :card} (ut/get-card-idx player :hand card-name)]
+    (assert (empty? effect-stack) "You can't play cards when you have a choice to make.")
     (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
     (assert type (str "Play error: " (ut/format-name card-name) " has no type."))
     (cond
@@ -217,12 +223,20 @@
                          (assert (and actions (< 0 actions)) "Play error: You have no more actions."))
       (:treasure type) (assert coin-value (str "Play error: " (ut/format-name card-name) " has no coin value"))
       :else (assert false (str "Play error: " (ut/format-type type) " cards cannot be played.")))
+    (when phase
+      (assert (or (and (:action type)
+                       (#{:action} phase))
+                  (and (:treasure type)
+                       (#{:action :pay} phase)))
+              (str "You can't play " (ut/format-type type) " cards when you're in the " (ut/format-name phase) " phase.")))
     (-> game
         (move-card player-no {:card-name card-name
                               :from      :hand
                               :to        :play-area})
         (card-effect player-no card)
         (cond->
+          phase (assoc-in [:players player-no :phase] (cond (:action type) :action
+                                                            (:treasure type) :pay))
           (:action type) (update-in [:players player-no :actions] - 1)
           coin-value (update-in [:players player-no :coins] + coin-value) ; todo: put treasures on the stack
           (not-empty triggers) (apply-triggers player-no [:play card-name]))
@@ -242,7 +256,8 @@
        (assoc :play-area []
               :hand [])
        (dissoc :triggers)))
-  ([game player-no]
+  ([{:keys [effect-stack] :as game} player-no]
+   (assert (empty? effect-stack) "You can't end your turn when you have a choice to make.")
    (-> game
        (update-in [:players player-no] clean-up)
        (draw player-no 5)

@@ -4,8 +4,7 @@
   (:gen-class))
 
 ; todo:
-; phases
-; unit tests for do-for-other-players, give-choice, chose, gardens, calc-victory-points
+; unit tests for do-for-other-players, give-choice, chose, gardens, calc-victory-points, ...
 ; handle multiple reaction cards
 ; game log
 
@@ -29,7 +28,7 @@
 (defn start-game [player-names & [mode]]
   (let [{:keys [current-player] :as game} (cards/game player-names (or mode :swift))]
     (swap! game-state assoc :game (-> game
-                                      (op/start-round current-player)
+                                      (op/start-turn current-player)
                                       list))
     (view)))
 
@@ -63,7 +62,7 @@
     (swap! game-state update :game conj (-> game
                                             (op/clean-up current-player)
                                             (assoc :current-player next-player)
-                                            (op/start-round next-player)))
+                                            (op/start-turn next-player)))
     (view)))
 
 (defn -main

@@ -3,12 +3,13 @@
             [dombot.operations :refer :all]
             [dombot.cards :refer :all]))
 
-(deftest start-round-test
-  (testing "Start round"
-    (is (= (start-round {})
+(deftest start-turn-test
+  (testing "Start turn"
+    (is (= (start-turn {})
            {:actions 1
             :coins   0
-            :buys    1}))))
+            :buys    1
+            :phase   :action}))))
 
 (deftest shuffle-test
   (testing "Shuffle discard"
