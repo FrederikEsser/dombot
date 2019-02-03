@@ -1,5 +1,5 @@
 (ns dombot.core
-  (:require [dombot.cards :as cards]
+  (:require [dombot.cards.kingdom :as kingdom]
             [dombot.operations :as op])
   (:gen-class))
 
@@ -26,7 +26,7 @@
     (view)))
 
 (defn start-game [player-names & [mode]]
-  (let [{:keys [current-player] :as game} (cards/game player-names (or mode :swift))]
+  (let [{:keys [current-player] :as game} (kingdom/create-game player-names (or mode :swift))]
     (swap! game-state assoc :game (-> game
                                       (op/start-turn current-player)
                                       list))

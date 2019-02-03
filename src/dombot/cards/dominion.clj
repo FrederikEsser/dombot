@@ -1,66 +1,30 @@
-(ns dombot.cards
-  (:require [dombot.operations :refer [draw gain gain-to-hand gain-to-topdeck do-for-other-players card-effect
-                                       attack-other-players move-card move-cards give-choice push-effect-stack]]
+(ns dombot.cards.dominion
+  (:require [dombot.operations :refer [move-card move-cards draw gain
+                                       do-for-other-players attack-other-players
+                                       card-effect push-effect-stack give-choice]]
+            [dombot.cards.common :refer :all]
             [dombot.utils :as ut]))
-
-(def curse {:name :curse :type #{:curse} :cost 0 :victory-points -1})
-(def estate {:name :estate :type #{:victory} :cost 2 :victory-points 1})
-(def duchy {:name :duchy :type #{:victory} :cost 5 :victory-points 3})
-(def province {:name :province :type #{:victory} :cost 8 :victory-points 6})
-(def copper {:name :copper :type #{:treasure} :cost 0 :coin-value 1})
-(def silver {:name :silver :type #{:treasure} :cost 3 :coin-value 2})
-(def gold {:name :gold :type #{:treasure} :cost 6 :coin-value 3})
-
-(defn topdeck-from-hand [game player-no card-name]
-  (cond-> game
-          card-name (move-card player-no {:card-name   card-name
-                                          :from        :hand
-                                          :to          :deck
-                                          :to-position :top})))
-
-(defn artisan-topdeck-choice [game player-no]
-  (-> game
-      (give-choice player-no {:text       "Put a card from your hand onto your deck."
-                              :choice-fn  topdeck-from-hand
-                              :options-fn (ut/player-area :hand)
-                              :min        1
-                              :max        1})))
 
 (def artisan {:name      :artisan :set :dominion :type #{:action} :cost 6
               :action-fn (fn artisan-action [game player-no]
                            (-> game
-                               (push-effect-stack player-no {:action-fn artisan-topdeck-choice})
+                               (push-effect-stack player-no {:action-fn give-topdeck-choice})
                                (give-choice player-no {:text       "Gain a card to your hand costing up to $5."
                                                        :choice-fn  gain-to-hand
                                                        :options-fn (ut/supply-piles {:max-cost 5})
                                                        :min        1
                                                        :max        1})))})
 
-(defn trash-revealed [game player-no card-name]
-  (-> game
-      (move-card player-no {:card-name card-name
-                            :from      :reveal
-                            :to        :trash})))
-
-(defn discard-revealed [game player-no]
-  (let [{:keys [reveal]} (get-in game [:players player-no])]
-    (-> game
-        (move-cards player-no {:card-names (map :name reveal)
-                               :from       :reveal
-                               :to         :discard}))))
-
 (defn bandit-attack [game player-no]
   (-> game
-      (move-card player-no {:from          :deck
-                            :from-position :top
-                            :to            :reveal})
-      (move-card player-no {:from          :deck
-                            :from-position :top
-                            :to            :reveal})
-      (push-effect-stack player-no {:action-fn discard-revealed})
+      (move-cards player-no {:number-of-cards 2
+                             :from            :deck
+                             :from-position   :top
+                             :to              :reveal})
+      (push-effect-stack player-no {:action-fn discard-all-revealed})
       (give-choice player-no {:text       "Trash a revealed Treasure other than Copper, and discards the rest."
                               :player-no  player-no
-                              :choice-fn  trash-revealed
+                              :choice-fn  trash-from-revealed
                               :options-fn (ut/player-area :reveal (fn [{:keys [name type]}]
                                                                     (and (:treasure type)
                                                                          (not= :copper name))))
@@ -105,16 +69,11 @@
                                                       :choice-fn  cellar-sift
                                                       :options-fn (ut/player-area :hand)})))})
 
-(defn trash [game player-no card-names]
-  (move-cards game player-no {:card-names card-names
-                              :from       :hand
-                              :to         :trash}))
-
 (def chapel {:name      :chapel :set :dominion :type #{:action} :cost 2
              :action-fn (fn chapel-action [game player-no]
                           (-> game
                               (give-choice player-no {:text       "Trash up to 4 cards from your hand."
-                                                      :choice-fn  trash
+                                                      :choice-fn  trash-from-hand
                                                       :options-fn (ut/player-area :hand)
                                                       :max        4})))})
 
@@ -136,13 +95,6 @@
               :victory-points (fn [cards]
                                 (Math/floorDiv (int (count cards)) (int 10)))})
 
-(defn topdeck-from-discard [game player-no card-name]
-  (cond-> game
-          card-name (move-card player-no {:card-name   card-name
-                                          :from        :discard
-                                          :to          :deck
-                                          :to-position :top})))
-
 (def harbinger {:name      :harbinger :set :dominion :type #{:action} :cost 3
                 :action-fn (fn harbinger-action [game player-no]
                              (-> game
@@ -160,13 +112,11 @@
                                   (update-in [:players player-no :actions] + 1)))})
 
 (defn library-set-aside [game player-no card-name]
-  (let [{:keys [hand]} (get-in game [:players player-no])
-        {:keys [name]} (last hand)]
-    (cond-> game
-            (= name card-name) (move-card player-no {:card-name     card-name
-                                                     :from          :hand
-                                                     :from-position :bottom
-                                                     :to            :set-aside}))))
+  (cond-> game
+          card-name (move-card player-no {:card-name     card-name
+                                          :from          :hand
+                                          :from-position :bottom
+                                          :to            :set-aside})))
 
 (defn library-check-for-action [game player-no]
   (let [{:keys [hand]} (get-in game [:players player-no])
@@ -212,16 +162,11 @@
                                 (update-in [:players player-no :actions] + 1)
                                 (update-in [:players player-no :triggers] concat [merchant-trigger])))})
 
-(defn discard [game player-no card-names]
-  (move-cards game player-no {:card-names card-names
-                              :from       :hand
-                              :to         :discard}))
-
 (defn militia-attack [game player-no]
   (let [hand (get-in game [:players player-no :hand])]
     (cond-> game
             (> (count hand) 3) (give-choice player-no {:text       "Discard down to 3 cards in hand."
-                                                       :choice-fn  discard
+                                                       :choice-fn  discard-from-hand
                                                        :options-fn (ut/player-area :hand)
                                                        :min        (- (count hand) 3)
                                                        :max        (- (count hand) 3)}))))
@@ -270,12 +215,12 @@
            :reaction  {:attack {:text        "You may reveal a Moat from your hand, to be unaffected by"
                                 :reaction-fn moat-reaction}}})
 
-(defn moneylender-trash [game player-no do-trash?]
+(defn moneylender-trash [game player-no card-name]
   (cond-> game
-          do-trash? (-> (move-card player-no {:card-name :copper
-                                              :from      :hand
-                                              :to        :trash})
-                        (update-in [:players player-no :coins] + 3))))
+          (= :copper card-name) (-> (move-card player-no {:card-name :copper
+                                                          :from      :hand
+                                                          :to        :trash})
+                                    (update-in [:players player-no :coins] + 3))))
 
 (def moneylender {:name      :moneylender :set :dominion :type #{:action} :cost 4
                   :action-fn (fn moneylender-action [game player-no]
@@ -293,7 +238,7 @@
                                  (update-in [:players player-no :actions] + 1)
                                  (update-in [:players player-no :coins] + 1)
                                  (cond-> (< 0 empty-piles) (give-choice player-no {:text       (str "Discard a card per empty supply pile [" empty-piles "].")
-                                                                                   :choice-fn  discard
+                                                                                   :choice-fn  discard-from-hand
                                                                                    :options-fn (ut/player-area :hand)
                                                                                    :min        empty-piles
                                                                                    :max        empty-piles})))))})
@@ -352,12 +297,10 @@
                           (-> game
                               (draw player-no 1)
                               (update-in [:players player-no :actions] + 1)
-                              (move-card player-no {:from          :deck
-                                                    :from-position :top
-                                                    :to            :look-at})
-                              (move-card player-no {:from          :deck
-                                                    :from-position :top
-                                                    :to            :look-at})
+                              (move-cards player-no {:number-of-cards 2
+                                                     :from            :deck
+                                                     :from-position   :top
+                                                     :to              :look-at})
                               (give-choice player-no {:text       "Trash any number of the top 2 cards of your deck."
                                                       :choice-fn  sentry-trash
                                                       :options-fn (ut/player-area :look-at)})))})
@@ -367,18 +310,6 @@
                           (-> game
                               (draw player-no 3)))})
 
-(defn play-action-twice [game player-no card-name]
-  (if card-name
-    (let [player (get-in game [:players player-no])
-          {:keys [card]} (ut/get-card-idx player :hand card-name)]
-      (-> game
-          (move-card player-no {:card-name card-name
-                                :from      :hand
-                                :to        :play-area})
-          (card-effect player-no card)
-          (card-effect player-no card)))
-    game))
-
 (def throne-room {:name      :throne-room :set :dominion :type #{:action} :cost 4
                   :action-fn (fn throne-room-action [game player-no]
                                (-> game
@@ -387,7 +318,7 @@
                                                            :options-fn (ut/player-area :hand (comp :action :type))
                                                            :max        1})))})
 
-(defn play-discard-action [game player-no card-name]
+(defn vassal-play-action [game player-no card-name]
   (let [{:keys [discard]} (get-in game [:players player-no])
         {:keys [name] :as card} (last discard)]
     (cond-> game
@@ -409,7 +340,7 @@
                                           {:keys [name type]} (last discard)]
                                       (cond-> game
                                               (:action type) (give-choice player-no {:text      (str "You may play the discarded " (ut/format-name name) ".")
-                                                                                     :choice-fn play-discard-action
+                                                                                     :choice-fn vassal-play-action
                                                                                      :options   [name]
                                                                                      :max       1}))))))})
 
@@ -466,41 +397,3 @@
                     village
                     witch
                     workshop])
-
-(defn base-supply [number-of-players victory-pile-size]
-  [{:card curse :pile-size (* 10 (dec number-of-players))}
-   {:card estate :pile-size victory-pile-size}
-   {:card duchy :pile-size victory-pile-size}
-   {:card province :pile-size victory-pile-size}
-   {:card copper :pile-size (- 60 (* 7 number-of-players))}
-   {:card silver :pile-size 40}
-   {:card gold :pile-size 30}])
-
-(defn kingdom [sets victory-pile-size]
-  (->> kingdom-cards
-       (filter (comp sets :set))
-       shuffle
-       (take 10)
-       (sort-by (juxt :cost :name))
-       (map (fn [{:keys [:type] :as card}]
-              {:card card :pile-size (if (:victory type) victory-pile-size 10)}))))
-
-(defn player [name]
-  (let [deck (->> (concat (repeat 7 copper) (repeat 3 estate))
-                  shuffle)]
-    {:name name
-     :hand (take 5 deck)
-     :deck (drop 5 deck)}))
-
-(defn game [player-names mode]
-  (let [number-of-players (count player-names)
-        victory-pile-size (case number-of-players
-                            2 8
-                            3 12
-                            4 12)]
-    {:mode           mode
-     :supply         (vec (concat (base-supply number-of-players victory-pile-size)
-                                  (kingdom #{:dominion} victory-pile-size)))
-     :players        (vec (map player player-names))
-     :current-player (rand-int number-of-players)}))
-

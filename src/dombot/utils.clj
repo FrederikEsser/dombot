@@ -79,4 +79,3 @@
   (->> supply
        (filter (comp zero? :pile-size))
        count))
-

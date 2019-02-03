@@ -1,188 +1,17 @@
-(ns dombot.core-test
+(ns dombot.cards.dominion-test
   (:require [clojure.test :refer :all]
             [dombot.operations :refer :all]
-            [dombot.cards :refer :all]))
-
-(deftest start-turn-test
-  (testing "Start turn"
-    (is (= (start-turn {})
-           {:actions 1
-            :coins   0
-            :buys    1
-            :phase   :action}))))
-
-(deftest shuffle-test
-  (testing "Shuffle discard"
-    (is (= (shuffle-discard {:deck [] :discard [1]})
-           {:deck [1] :discard []}))
-    (is (thrown-with-msg? AssertionError #"Shuffle error: Your deck is not empty."
-                          (shuffle-discard {:deck [1] :discard [2]})))))
-
-(deftest draw-test
-  (testing "Draw"
-    (let [game {:players [{:hand [1 2 3] :deck [4 5] :discard [6 7]}]}]
-      (is (= (draw game 0 1)
-             {:players [{:hand [1 2 3 4] :deck [5] :discard [6 7]}]}))
-      (is (= (draw game 0 2)
-             {:players [{:hand [1 2 3 4 5] :deck [] :discard [6 7]}]}))
-      (let [result (draw game 0 3)]
-        (is (or (= result {:players [{:hand [1 2 3 4 5 6] :deck [7] :discard []}]})
-                (= result {:players [{:hand [1 2 3 4 5 7] :deck [6] :discard []}]}))))
-      (let [result (draw game 0 4)]
-        (is (or (= result {:players [{:hand [1 2 3 4 5 6 7] :deck [] :discard []}]})
-                (= result {:players [{:hand [1 2 3 4 5 7 6] :deck [] :discard []}]}))))
-      (let [result (draw game 0 5)]
-        (is (or (= result {:players [{:hand [1 2 3 4 5 6 7] :deck [] :discard []}]})
-                (= result {:players [{:hand [1 2 3 4 5 7 6] :deck [] :discard []}]})))))))
-
-(deftest gain-test
-  (testing "Gain"
-    (is (= (-> {:supply  [{:card province :pile-size 8}]
-                :players [{:discard []}]}
-               (gain 0 :province))
-           {:supply  [{:card province :pile-size 7}]
-            :players [{:discard [province]}]}))
-    (is (= (-> {:supply  [{:card province :pile-size 1}]
-                :players [{:discard []}]}
-               (gain 0 :province))
-           {:supply  [{:card province :pile-size 0}]
-            :players [{:discard [province]}]}))
-    (is (= (-> {:supply  [{:card province :pile-size 0}]
-                :players [{:discard []}]}
-               (gain 0 :province))
-           {:supply  [{:card province :pile-size 0}]
-            :players [{:discard []}]}))
-    (is (thrown-with-msg? AssertionError #"Gain error: The supply doesn't have a Province pile"
-                          (-> {:supply  []
-                               :players [{:discard []}]}
-                              (gain 0 :province))))))
-
-(deftest move-card-test
-  (testing "Playing a card from hand to play-area"
-    (is (= (move-card {:players [{:hand [smithy] :play-area []}]} 0
-                      {:card-name :smithy
-                       :from      :hand
-                       :to        :play-area})
-           {:players [{:hand [] :play-area [smithy]}]}))
-    (is (thrown-with-msg? AssertionError #"Move error: There is no Copper in your Hand"
-                          (move-card {:players [{:hand [smithy] :play-area []}]} 0
-                                     {:card-name :copper
-                                      :from      :hand
-                                      :to        :play-area})))
-    (is (= (move-card {:players [{:hand [copper smithy] :play-area []}]} 0
-                      {:card-name :smithy
-                       :from      :hand
-                       :to        :play-area})
-           {:players [{:hand [copper] :play-area [smithy]}]}))
-    (is (= (move-card {:players [{:hand [smithy smithy] :play-area []}]} 0
-                      {:card-name :smithy
-                       :from      :hand
-                       :to        :play-area})
-           {:players [{:hand [smithy] :play-area [smithy]}]}))
-    (is (= (move-card {:players [{:hand [smithy]
-                                  :deck [copper]}]} 0
-                      {:card-name   :smithy
-                       :from        :hand
-                       :to          :deck
-                       :to-position :top})
-           {:players [{:hand []
-                       :deck [smithy copper]}]}))
-    (is (= (move-card {:players [{:hand [smithy]}]} 0
-                      {:card-name :smithy
-                       :from      :hand
-                       :to        :trash})
-           {:players [{:hand []}]
-            :trash   [smithy]}))
-    (is (= (move-card {:players [{:deck [copper smithy]}]} 0
-                      {:from          :deck
-                       :from-position :top
-                       :to            :discard})
-           {:players [{:deck    [smithy]
-                       :discard [copper]}]}))
-    (is (= (move-card {:players [{:deck []}]} 0
-                      {:from          :deck
-                       :from-position :top
-                       :to            :discard})
-           {:players [{:deck []}]}))
-    (is (= (move-card {:players [{:deck    []
-                                  :discard [copper copper]}]} 0
-                      {:from          :deck
-                       :from-position :top
-                       :to            :discard})
-           {:players [{:deck    [copper]
-                       :discard [copper]}]}))))
-
-(deftest play-test
-  (testing "Playing a card is impossible because"
-    (testing "it has no/wrong type"
-      (is (thrown-with-msg? AssertionError #"Play error: No Card has no type"
-                            (play {:players [{:hand [{:name :no-card}]}]}
-                                  0 :no-card)))
-      (is (thrown-with-msg? AssertionError #"Play error: Victory cards cannot be played."
-                            (play {:players [{:hand [estate]}]}
-                                  0 :estate))))
-    (testing "player has no cards in hand"
-      (is (thrown-with-msg? AssertionError #"Play error: There is no Copper in your Hand."
-                            (play {:players [{:hand []}]}
-                                  0 :copper)))))
-  (testing "Playing treasure"
-    (testing "is impossible because"
-      (testing "card has no coin-value"
-        (is (thrown-with-msg? AssertionError #"Play error: Kopper has no coin value"
-                              (play {:players [{:hand [{:name :kopper :type #{:treasure}}]}]}
-                                    0 :kopper))))))
-  (testing "Playing action"
-    (testing "is impossible because"
-      (testing "player has no more actions"
-        (is (thrown-with-msg? AssertionError #"Play error: You have no more actions."
-                              (play {:players [{:hand    [village]
-                                                :actions 0}]}
-                                    0 :village))))
-      (testing "card has no action-fn"
-        (is (thrown-with-msg? AssertionError #"Play error: Willage has no action function."
-                              (play {:players [{:hand    [{:name :willage :type #{:action}}]
-                                                :actions 1}]}
-                                    0 :willage)))))))
-
-(deftest treasure-test
-  (testing "Copper"
-    (is (= (play {:players [{:hand  [copper]
-                             :coins 0}]}
-                 0 :copper)
-           {:players [{:hand      []
-                       :play-area [copper]
-                       :coins     1}]})))
-  (testing "Silver"
-    (is (= (play {:players [{:hand  [silver]
-                             :coins 0}]}
-                 0 :silver)
-           {:players [{:hand      []
-                       :play-area [silver]
-                       :coins     2}]})))
-  (testing "Gold"
-    (is (= (play {:players [{:hand  [gold]
-                             :coins 0}]}
-                 0 :gold)
-           {:players [{:hand      []
-                       :play-area [gold]
-                       :coins     3}]}))))
-
-(deftest play-treasures-test
-  (testing "All treasures"
-    (is (= (play-treasures {:players [{:hand  [gold silver copper smithy copper]
-                                       :coins 0}]}
-                           0)
-           {:players [{:hand      [smithy]
-                       :play-area [gold silver copper copper]
-                       :coins     7}]}))))
+            [dombot.cards.base-cards :as base :refer :all]
+            [dombot.cards.common :refer :all]
+            [dombot.cards.dominion :refer :all]))
 
 (deftest artisan-test
   (testing "Artisan"
-    (is (= (play {:supply  (base-supply 2 8)
+    (is (= (play {:supply  (base/supply 2 8)
                   :players [{:hand    [artisan silver]
                              :actions 1}]}
                  0 :artisan)
-           {:supply       (base-supply 2 8)
+           {:supply       (base/supply 2 8)
             :players      [{:hand      [silver]
                             :play-area [artisan]
                             :actions   0}]
@@ -193,7 +22,7 @@
                             :min       1
                             :max       1}
                            {:player-no 0
-                            :action-fn artisan-topdeck-choice}]}))
+                            :action-fn give-topdeck-choice}]}))
     (is (= (-> {:supply  [{:card duchy :pile-size 8}]
                 :players [{:hand    [artisan silver]
                            :actions 1}]}
@@ -265,12 +94,12 @@
                             :reveal [estate silver]}]
             :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
                             :player-no 1
-                            :choice-fn trash-revealed
+                            :choice-fn trash-from-revealed
                             :options   [:silver]
                             :min       1
                             :max       1}
                            {:player-no 1
-                            :action-fn discard-revealed}]}))
+                            :action-fn discard-all-revealed}]}))
     (is (= (-> {:supply  [{:card gold :pile-size 30}]
                 :players [{:hand    [bandit]
                            :actions 1}
@@ -318,12 +147,12 @@
                            {:deck [copper gold estate]}]
             :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
                             :player-no 1
-                            :choice-fn trash-revealed
+                            :choice-fn trash-from-revealed
                             :options   [:silver :gold]
                             :min       1
                             :max       1}
                            {:player-no 1
-                            :action-fn discard-revealed}
+                            :action-fn discard-all-revealed}
                            {:player-no 2
                             :action-fn bandit-attack}]}))
     (is (= (-> {:supply  [{:card gold :pile-size 30}]
@@ -345,12 +174,12 @@
                             :reveal [copper gold]}]
             :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
                             :player-no 2
-                            :choice-fn trash-revealed
+                            :choice-fn trash-from-revealed
                             :options   [:gold]
                             :min       1
                             :max       1}
                            {:player-no 2
-                            :action-fn discard-revealed}]
+                            :action-fn discard-all-revealed}]
             :trash        [silver]}))
     (is (= (-> {:supply  [{:card gold :pile-size 30}]
                 :players [{:hand    [bandit]
@@ -499,7 +328,7 @@
                             :actions   0}]
             :effect-stack [{:text      "Trash up to 4 cards from your hand."
                             :player-no 0
-                            :choice-fn trash
+                            :choice-fn trash-from-hand
                             :options   [:copper :estate :estate :estate]
                             :max       4}]}))
     (is (= (-> {:players [{:hand    [chapel copper estate estate estate]
@@ -784,7 +613,7 @@
                            {:hand (repeat 5 copper)}]
             :effect-stack [{:text      "Discard down to 3 cards in hand."
                             :player-no 1
-                            :choice-fn discard
+                            :choice-fn discard-from-hand
                             :options   (repeat 5 :copper)
                             :min       2
                             :max       2}]}))
@@ -845,12 +674,12 @@
            {:players [{:hand      [estate]
                        :play-area [mine]
                        :actions   0}]}))
-    (is (= (-> {:supply  (base-supply 2 8)
+    (is (= (-> {:supply  (base/supply 2 8)
                 :players [{:hand    [mine copper estate]
                            :actions 1}]}
                (play 0 :mine)
                (chose :copper))
-           {:supply       (base-supply 2 8)
+           {:supply       (base/supply 2 8)
             :players      [{:hand      [estate]
                             :play-area [mine]
                             :actions   0}]
@@ -943,7 +772,7 @@
                            {:hand [moat copper copper copper copper]}]
             :effect-stack [{:text      "Discard down to 3 cards in hand."
                             :player-no 1
-                            :choice-fn discard
+                            :choice-fn discard-from-hand
                             :options   [:moat :copper :copper :copper :copper]
                             :min       2
                             :max       2}]}))
@@ -1031,7 +860,7 @@
                             :coins     1}]
             :effect-stack [{:text      "Discard a card per empty supply pile [1]."
                             :player-no 0
-                            :choice-fn discard
+                            :choice-fn discard-from-hand
                             :options   [:estate :copper]
                             :min       1
                             :max       1}]}))
@@ -1063,7 +892,7 @@
                             :coins     1}]
             :effect-stack [{:text      "Discard a card per empty supply pile [2]."
                             :player-no 0
-                            :choice-fn discard
+                            :choice-fn discard-from-hand
                             :options   [:estate :silver :copper]
                             :min       2
                             :max       2}]}))
@@ -1107,7 +936,7 @@
                             :coins     1}]
             :effect-stack [{:text      "Discard a card per empty supply pile [2]."
                             :player-no 0
-                            :choice-fn discard
+                            :choice-fn discard-from-hand
                             :options   [:copper]
                             :min       1
                             :max       1}]}))
@@ -1147,12 +976,12 @@
            {:players [{:hand      []
                        :play-area [remodel]
                        :actions   0}]}))
-    (is (= (-> {:supply  (base-supply 2 8)
+    (is (= (-> {:supply  (base/supply 2 8)
                 :players [{:hand    [remodel copper estate]
                            :actions 1}]}
                (play 0 :remodel)
                (chose :estate))
-           {:supply       (base-supply 2 8)
+           {:supply       (base/supply 2 8)
             :players      [{:hand      [copper]
                             :play-area [remodel]
                             :actions   0}]
@@ -1445,7 +1274,7 @@
                             :coins     2}]
             :effect-stack [{:text      "You may play the discarded Market."
                             :player-no 0
-                            :choice-fn play-discard-action
+                            :choice-fn vassal-play-action
                             :options   [:market]
                             :max       1}]}))
     (is (= (-> {:players [{:hand    [vassal]
@@ -1563,11 +1392,11 @@
                        :buys      2}]}))))
 (deftest workshop-test
   (testing "Workshop"
-    (is (= (play {:supply  (base-supply 2 8)
+    (is (= (play {:supply  (base/supply 2 8)
                   :players [{:hand    [workshop copper]
                              :actions 1}]}
                  0 :workshop)
-           {:supply       (base-supply 2 8)
+           {:supply       (base/supply 2 8)
             :players      [{:hand      [copper]
                             :play-area [workshop]
                             :actions   0}]
@@ -1595,250 +1424,3 @@
             :players [{:hand      [copper]
                        :play-area [workshop]
                        :actions   0}]}))))
-
-(deftest chose-test
-  (testing "No/invalid choice"
-    (is (thrown-with-msg? AssertionError #"Chose error: You don't have a choice to make."
-                          (chose {:effect-stack []} :copper)))
-    (is (thrown-with-msg? AssertionError #"Chose error: Choice has no options"
-                          (chose {:effect-stack [{:player-no 0 :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)}]} :copper))))
-  (testing "Optional single choice"
-    (is (= (chose {:players      []
-                   :effect-stack [{:player-no 0
-                                   :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
-                                   :options   [:copper]
-                                   :max       1}]}
-                  nil)
-           {:players [{:chosen nil}]}))
-    (is (= (chose {:players      []
-                   :effect-stack [{:player-no 0
-                                   :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
-                                   :options   [:copper]
-                                   :max       1}]}
-                  :copper)
-           {:players [{:chosen :copper}]}))
-    (is (= (chose {:players      []
-                   :effect-stack [{:player-no 0
-                                   :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
-                                   :options   [:copper]
-                                   :max       1}]}
-                  [])
-           {:players [{:chosen nil}]}))
-    (is (= (chose {:players      []
-                   :effect-stack [{:player-no 0
-                                   :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
-                                   :options   [:copper]
-                                   :max       1}]}
-                  [:copper])
-           {:players [{:chosen :copper}]}))
-    (is (thrown-with-msg? AssertionError #"Chose error: You can only pick 1 option."
-                          (chose {:effect-stack [{:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
-                                                  :options   [:copper :copper]
-                                                  :max       1}]}
-                                 [:copper :copper])))
-    (is (thrown-with-msg? AssertionError #"Chose error: Estate is not a valid choice."
-                          (chose {:effect-stack [{:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
-                                                  :options   [:copper]
-                                                  :max       1}]}
-                                 :estate))))
-  (testing "Mandatory single choice"
-    (is (thrown-with-msg? AssertionError #"Chose error: You must pick an option"
-                          (chose {:effect-stack [{:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
-                                                  :options   [:copper]
-                                                  :min       1
-                                                  :max       1}]}
-                                 nil)))
-    (is (= (chose {:players      []
-                   :effect-stack [{:player-no 0
-                                   :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
-                                   :options   [:copper]
-                                   :min       1
-                                   :max       1}]}
-                  :copper)
-           {:players [{:chosen :copper}]}))
-    (is (thrown-with-msg? AssertionError #"Chose error: You must pick an option"
-                          (chose {:effect-stack [{:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
-                                                  :options   [:copper]
-                                                  :min       1
-                                                  :max       1}]}
-                                 [])))
-    (is (= (chose {:players      []
-                   :effect-stack [{:player-no 0
-                                   :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
-                                   :options   [:copper]
-                                   :min       1
-                                   :max       1}]}
-                  [:copper])
-           {:players [{:chosen :copper}]}))
-    (is (thrown-with-msg? AssertionError #"Chose error: You can only pick 1 option."
-                          (chose {:effect-stack [{:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
-                                                  :options   [:copper :copper]
-                                                  :min       1
-                                                  :max       1}]}
-                                 [:copper :copper]))))
-  (testing "Multi choice"
-    (is (= (chose {:players      []
-                   :effect-stack [{:player-no 0
-                                   :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
-                                   :options   [:copper]}]}
-                  nil)
-           {:players [{:chosen []}]}))
-    (is (= (chose {:players      []
-                   :effect-stack [{:player-no 0
-                                   :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
-                                   :options   [:copper]}]}
-                  :copper)
-           {:players [{:chosen [:copper]}]}))
-    (is (= (chose {:players      []
-                   :effect-stack [{:player-no 0
-                                   :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
-                                   :options   [:copper]}]}
-                  [])
-           {:players [{:chosen []}]}))
-    (is (= (chose {:players      []
-                   :effect-stack [{:player-no 0
-                                   :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
-                                   :options   [:copper]}]}
-                  [:copper])
-           {:players [{:chosen [:copper]}]}))
-    (is (= (chose {:players      []
-                   :effect-stack [{:player-no 0
-                                   :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
-                                   :options   [:copper :copper]}]}
-                  [:copper :copper])
-           {:players [{:chosen [:copper :copper]}]}))
-    (is (thrown-with-msg? AssertionError #"Chose error: Estate is not a valid choice."
-                          (chose {:effect-stack [{:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
-                                                  :options   [:copper]}]}
-                                 [:copper :estate :silver])))))
-
-(deftest buy-test
-  (testing "Buying a card"
-    (testing "is impossible because"
-      (testing "player has no buys left"
-        (is (thrown-with-msg? AssertionError #"Buy error: You have no more buys."
-                              (buy-card {:supply  [{:card copper :pile-size 40}]
-                                         :players [{:coins 0
-                                                    :buys  0}]}
-                                        0 :copper))))
-      (testing "player has not enough coins"
-        (is (thrown-with-msg? AssertionError #"Buy error: Silver costs 3 and you only have 2 coins."
-                              (buy-card {:supply  [{:card silver :pile-size 40}]
-                                         :players [{:coins 2
-                                                    :buys  1}]}
-                                        0 :silver))))
-      (testing "supply is empty"
-        (is (thrown-with-msg? AssertionError #"Buy error: Copper supply is empty."
-                              (buy-card {:supply  [{:card copper :pile-size 0}]
-                                         :players [{:coins 0
-                                                    :buys  1}]}
-                                        0 :copper))))
-      (testing "supply does not contain card-name"
-        (is (thrown-with-msg? AssertionError #"Buy error: The supply doesn't have a Copper pile."
-                              (buy-card {:supply  []
-                                         :players [{:coins 0
-                                                    :buys  1}]}
-                                        0 :copper)))))
-    (is (= (buy-card {:supply  [{:card copper :pile-size 40}]
-                      :players [{:discard []
-                                 :coins   0
-                                 :buys    1}]}
-                     0 :copper)
-           {:supply  [{:card copper :pile-size 39}]
-            :players [{:discard [copper]
-                       :coins   0
-                       :buys    0}]}))
-    (is (= (buy-card {:supply  [{:card silver :pile-size 40}]
-                      :players [{:discard []
-                                 :coins   6
-                                 :buys    2}]}
-                     0 :silver)
-           {:supply  [{:card silver :pile-size 39}]
-            :players [{:discard [silver]
-                       :coins   3
-                       :buys    1}]}))))
-
-(deftest clean-up-test
-  (testing "Clean up"
-    (is (= (clean-up {:players [{:hand      [estate]
-                                 :play-area [silver]
-                                 :deck      (repeat 5 copper)
-                                 :discard   [cellar]}]} 0)
-           {:players [{:hand      (repeat 5 copper)
-                       :play-area []
-                       :deck      []
-                       :discard   [cellar silver estate]}]}))
-    (is (= (clean-up {:players [{:hand      [copper]
-                                 :play-area [copper]
-                                 :deck      [copper]
-                                 :discard   [copper]}]} 0)
-           {:players [{:hand      (repeat 4 copper)
-                       :play-area []
-                       :deck      []
-                       :discard   []}]}))
-    (is (= (clean-up {:players [{:hand      [copper]
-                                 :play-area [copper]
-                                 :deck      (repeat 3 silver)
-                                 :discard   [copper]}]} 0)
-           {:players [{:hand      (concat (repeat 3 silver) (repeat 2 copper))
-                       :play-area []
-                       :deck      [copper]
-                       :discard   []}]}))
-    (is (= (clean-up {:players [{:hand      []
-                                 :play-area []
-                                 :deck      []
-                                 :discard   []
-                                 :triggers  [merchant-trigger]}]} 0)
-           {:players [{:hand      []
-                       :play-area []
-                       :deck      []
-                       :discard   []}]}))))
-
-(deftest game-end-test
-  (testing "Game ending conditions"
-    (is (not (game-ended? {:supply [{:card province :pile-size 1}]})))
-    (is (game-ended? {:supply [{:card province :pile-size 0}]}))
-    (is (not (game-ended? {:supply (concat [{:card province :pile-size 1}] (repeat 1 {:pile-size 0}))})))
-    (is (not (game-ended? {:supply (concat [{:card province :pile-size 1}] (repeat 2 {:pile-size 0}))})))
-    (is (game-ended? {:supply (concat [{:card province :pile-size 1}] (repeat 3 {:pile-size 0}))}))
-    (is (game-ended? {:supply (concat [{:card province :pile-size 1}] (repeat 4 {:pile-size 0}))}))))
-
-(deftest view-test
-  (testing "View game"
-    (is (= (view-game {:supply         (base-supply 2 8)
-                       :players        [{:name      :dombot
-                                         :hand      [copper copper copper estate estate]
-                                         :play-area []
-                                         :deck      [copper copper copper copper estate]
-                                         :discard   []}]
-                       :reveal         {0 [copper copper copper estate estate]}
-                       :trash          [estate estate copper]
-                       :current-player 0})
-           {:supply         [{:card :curse :price 0 :count 10}
-                             {:card :copper :price 0 :count 46}
-                             {:card :silver :price 3 :count 40}
-                             {:card :gold :price 6 :count 30}
-                             {:card :estate :price 2 :count 8}
-                             {:card :duchy :price 5 :count 8}
-                             {:card :province :price 8 :count 8}]
-            :player         {:name           :dombot
-                             :hand           {:copper 3 :estate 2}
-                             :play-area      {}
-                             :deck           5
-                             :discard        :empty
-                             :victory-points 3}
-            :revealed       [{:player :dombot
-                              :hand   [:copper :copper :copper :estate :estate]}]
-            :trash          {:copper 1 :estate 2}
-            :current-player :dombot})))
-  (testing "View game end"
-    (is (= (view-game {:supply         [{:card province :pile-size 0}]
-                       :players        [{:name      :dombot
-                                         :hand      [copper copper copper estate estate]
-                                         :play-area []
-                                         :deck      [copper copper copper copper estate]
-                                         :discard   []}]
-                       :current-player 0})
-           {:players [{:name           :dombot
-                       :cards          {:copper 7 :estate 3}
-                       :victory-points 3}]}))))

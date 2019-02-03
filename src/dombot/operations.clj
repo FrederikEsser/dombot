@@ -24,13 +24,6 @@
             (< 0 pile-size) (-> (update-in [:supply idx :pile-size] dec)
                                 (update-in [:players player-no to] add-card-to-coll card)))))
 
-(defn gain-to-hand [game player-no card-name]
-  (gain game player-no card-name {:to :hand}))
-
-(defn gain-to-topdeck [game player-no card-name]
-  (gain game player-no card-name {:to          :deck
-                                  :to-position :top}))
-
 (defn buy-card [{:keys [effect-stack] :as game} player-no card-name]
   (let [{:keys [buys coins phase]} (get-in game [:players player-no])
         {{:keys [cost]} :card
@@ -62,9 +55,11 @@
           (update-in [:players player-no] shuffle-discard)
           (move-card player-no args))
       (let [{:keys [idx card]} (case from-position
-                                 :top {:idx 0 :card (first (get player from))}
                                  :bottom {:idx (dec (count (get player from))) :card (last (get player from))}
-                                 (ut/get-card-idx player from card-name))
+                                 :top {:idx 0 :card (first (get player from))}
+                                 (if card-name
+                                   (ut/get-card-idx player from card-name)
+                                   {:idx 0 :card (first (get player from))}))
             from-path (if (= from :trash)
                         [:trash]
                         [:players player-no from])
@@ -82,15 +77,20 @@
                          (update-in to-path add-card-to-coll card)
                          (cond-> (and (= :deck from) (:can-undo? game)) (assoc :can-undo? false))))))))
 
-(defn move-cards [game player-no {:keys [card-names] :as args}]
-  (reduce (fn [game card-name] (move-card game player-no (assoc args :card-name card-name)))
-          game
-          (ut/ensure-coll card-names)))
+(defn move-cards [game player-no {:keys [card-names number-of-cards from-position] :as args}]
+  (assert (or card-names
+              (and number-of-cards from-position)) "Can't move unspecified cards.")
+  (if number-of-cards
+    (ut/redupeat game number-of-cards move-card player-no args)
+    (reduce (fn [game card-name] (move-card game player-no (assoc args :card-name card-name)))
+            game
+            (ut/ensure-coll card-names))))
 
-(defn draw [game player-no n]
-  (ut/redupeat game n move-card player-no {:from          :deck
-                                           :from-position :top
-                                           :to            :hand}))
+(defn draw [game player-no number-of-cards]
+  (move-cards game player-no {:number-of-cards number-of-cards
+                              :from            :deck
+                              :from-position   :top
+                              :to              :hand}))
 
 (defn push-effect-stack [game player-no item]
   (update game :effect-stack (partial concat [(assoc item :player-no player-no)])))
@@ -331,4 +331,3 @@
               (or text (not-empty options)) (assoc :choice {:text    text
                                                             :player  (get-in players [player-no :name])
                                                             :options options})))))
-
