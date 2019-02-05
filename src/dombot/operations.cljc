@@ -1,5 +1,6 @@
 (ns dombot.operations
-  (:require [dombot.utils :as ut]))
+  (:require [dombot.utils :as ut]
+            [dombot.effects :as effects]))
 
 (defn start-turn
   ([player]
@@ -92,56 +93,63 @@
                               :from-position   :top
                               :to              :hand}))
 
-(defn push-effect-stack [game player-no item]
-  (update game :effect-stack (partial concat [(assoc item :player-no player-no)])))
+(defn push-effect-stack [game player-no data]
+  (update game :effect-stack (partial concat (if (sequential? data)
+                                               (->> data
+                                                    (map (fn [effect] {:player-no player-no
+                                                                       :effect    effect})))
+                                               [(assoc data :player-no player-no)]))))
 
 (defn pop-effect-stack [{:keys [effect-stack] :as game}]
   (if (= 1 (count effect-stack))
     (dissoc game :effect-stack)
     (update game :effect-stack (partial drop 1))))
 
-(defn attack-other-players [{:keys [players] :as game} player-no unaffected f & args]
+(defn affect-other-players [{:keys [players] :as game} player-no {:keys [effects unaffected]}]
   (let [other-player-nos (->> (range 1 (count players))
                               (map (fn [n] (-> n (+ player-no) (mod (count players)))))
                               (remove (set unaffected))
                               reverse)]
     (reduce (fn [game other-player-no]
-              (push-effect-stack game other-player-no (merge {:action-fn f}
-                                                             (when args {:args args}))))
+              (push-effect-stack game other-player-no effects))
             game
             other-player-nos)))
 
-(defn do-for-other-players [game player-no f & args]
-  (apply attack-other-players game player-no nil f args))
+(defn do-effect [game player-no [name args]]
+  (let [effect-fn (effects/get-effect name)]
+    (if args
+      (effect-fn game player-no args)
+      (effect-fn game player-no))))
 
 (defn check-stack [game]
-  (let [[{:keys [player-no action-fn args type unaffected]}] (get game :effect-stack)]
+  (let [[{:keys [player-no effect]}] (get game :effect-stack)]
     (cond-> game
-            action-fn (-> pop-effect-stack
-                          (as-> game (if (:attack type)
-                                       (apply action-fn game player-no unaffected args)
-                                       (apply action-fn game player-no args)))
-                          check-stack))))
+            effect (-> pop-effect-stack
+                       (do-effect player-no effect)
+                       check-stack))))
 
 (defn- chose-single [game selection]
   (if (coll? selection)
     (assert (<= (count selection) 1) "Chose error: You can only pick 1 option."))
-  (let [[{:keys [player-no choice-fn options min]}] (get game :effect-stack)
+  (let [[{:keys [player-no choice options min]}] (get game :effect-stack)
+        choice-fn (effects/get-effect choice)
+        valid-choices (set options)
         single-selection (if (coll? selection)
                            (first selection)
                            selection)]
     (if (= min 1)
       (assert single-selection "Chose error: You must pick an option"))
     (when single-selection
-      (assert ((set options) single-selection) (str "Chose error: " (ut/format-name single-selection) " is not a valid choice.")))
+      (assert (valid-choices single-selection) (str "Chose error: " (ut/format-name single-selection) " is not a valid option.")))
 
     (-> game
         pop-effect-stack
         (choice-fn player-no single-selection))))
 
 (defn- chose-multi [game selection]
-  (let [[{:keys [player-no choice-fn options min max]}] (get game :effect-stack)
-        valid-choices (-> options set)
+  (let [[{:keys [player-no choice options min max]}] (get game :effect-stack)
+        choice-fn (effects/get-effect choice)
+        valid-choices (set options)
         multi-selection (if (coll? selection)
                           selection
                           (if selection
@@ -160,9 +168,9 @@
         (choice-fn player-no multi-selection))))
 
 (defn chose [game selection]
-  (let [[{:keys [choice-fn options min max]}] (get game :effect-stack)
+  (let [[{:keys [choice options min max]}] (get game :effect-stack)
         chose-fn (if (= max 1) chose-single chose-multi)]
-    (assert choice-fn "Chose error: You don't have a choice to make.")
+    (assert choice "Chose error: You don't have a choice to make.")
     (assert (not-empty options) "Chose error: Choice has no options")
     (assert (or (nil? min) (nil? max) (<= min max)))
 
@@ -170,56 +178,61 @@
         (chose-fn selection)
         check-stack)))
 
-(defn give-choice [{:keys [mode] :as game} player-no {:keys [options-fn options min max] :as args}]
-  (let [options (if options-fn (options-fn game player-no) options)
-        {:keys [min max] :as args} (cond-> args
-                                           min (update :min clojure.core/min (count options))
-                                           max (update :max clojure.core/min (count options)))
+(defn give-choice [{:keys [mode] :as game} player-no {[opt-name & opt-args] :options
+                                                      :keys                 [min max]
+                                                      :as                   choice}]
+  (let [options (apply (effects/get-effect opt-name) game player-no opt-args)
+        {:keys [min max] :as choice'} (-> choice
+                                          (assoc :options options)
+                                          (cond-> min (update :min clojure.core/min (count options))
+                                                  max (update :max clojure.core/min (count options))))
         swiftable (and (= :swift mode)
                        (not-empty options)
                        (apply = options)
                        (= min (or max (count options))))]
     (-> game
-        (cond-> (not-empty options) (push-effect-stack player-no (-> args
-                                                                     (dissoc :options-fn)
-                                                                     (assoc :options options)))
+        (cond-> (not-empty options) (push-effect-stack player-no choice')
                 swiftable (chose (take min options)))
         check-stack)))
 
-(defn- apply-triggers [game player-no trigger-id]
-  (let [{:keys [triggers]} (get-in game [:players player-no])
-        apply-trigger (fn [game {:keys [trigger-fn]}] (trigger-fn game player-no))
-        matching-triggers (filter (comp #{trigger-id} :trigger-id) triggers)]
+(defn- apply-triggers [game player-no trigger]
+  (let [triggers (get-in game [:players player-no :triggers])
+        apply-trigger (fn [game {:keys [effects]}] (push-effect-stack game player-no effects))
+        matching-triggers (filter (comp #{trigger} :trigger) triggers)]
     (-> (reduce apply-trigger game matching-triggers)
-        (update-in [:players player-no :triggers] (partial remove (comp #{trigger-id} :trigger-id))))))
+        (update-in [:players player-no :triggers] (partial remove (comp #{trigger} :trigger))))))
 
-(defn check-for-reactions [game player-no {:keys [text reaction-to]}]
-  ; TODO: Handle multiple reaction cards
-  (let [[reaction] (->> (get-in game [:players player-no :hand])
-                        (keep (fn [{:keys [name type reaction]}]
-                                (when (:reaction type)
-                                  (merge {:reaction-card-name name}
-                                         (get reaction reaction-to))))))]
+(defn reveal-reaction [game player-no card-name]
+  (let [player (get-in game [:players player-no])
+        {{:keys [reaction]} :card} (ut/get-card-idx player :hand card-name)] ; TODO: Handle reactions that are not in hand
     (cond-> game
-            reaction (give-choice player-no {:text      (str (:text reaction) " " text)
-                                             :choice-fn (:reaction-fn reaction)
-                                             :options   [(:reaction-card-name reaction)]
-                                             :max       1}))))
+            reaction (push-effect-stack player-no reaction))))
 
-(defn card-effect [game player-no {:keys [name type] :as card}]
+(defn card-effect [game player-no {:keys [name type effects] :as card}]
   (cond-> game
-          (:action type) (push-effect-stack player-no card)
-          (:attack type) (do-for-other-players player-no check-for-reactions {:text        (str "a " (ut/format-name name) " attack.")
-                                                                              :reaction-to :attack})))
+          (:action type) (push-effect-stack player-no effects)
+          (:attack type) (affect-other-players player-no {:effects [[:give-choice {:text    (str "You may reveal a Reaction to react to the " (ut/format-name name) " Attack.")
+                                                                                   :choice  :reveal-reaction
+                                                                                   :options [:player :hand {:type      :reaction
+                                                                                                            :reacts-to :attack}]
+                                                                                   :max     1}]]})))
+
+(effects/register {:gain            gain
+                   :draw            draw
+                   :other-players   affect-other-players
+                   :attack          affect-other-players
+                   :give-choice     give-choice
+                   :reveal-reaction reveal-reaction
+                   :card-effect     card-effect})
 
 (defn play [{:keys [effect-stack] :as game} player-no card-name]
   (let [{:keys [phase actions triggers] :as player} (get-in game [:players player-no])
-        {{:keys [type action-fn coin-value] :as card} :card} (ut/get-card-idx player :hand card-name)]
+        {{:keys [type effects coin-value] :as card} :card} (ut/get-card-idx player :hand card-name)]
     (assert (empty? effect-stack) "You can't play cards when you have a choice to make.")
     (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
     (assert type (str "Play error: " (ut/format-name card-name) " has no type."))
     (cond
-      (:action type) (do (assert action-fn (str "Play error: " (ut/format-name card-name) " has no action function."))
+      (:action type) (do (assert effects (str "Play error: " (ut/format-name card-name) " has no effect."))
                          (assert (and actions (< 0 actions)) "Play error: You have no more actions."))
       (:treasure type) (assert coin-value (str "Play error: " (ut/format-name card-name) " has no coin value"))
       :else (assert false (str "Play error: " (ut/format-type type) " cards cannot be played.")))
@@ -247,7 +260,7 @@
         treasures (->> hand
                        (filter (comp :treasure :type))
                        (map :name))]
-    (reduce (fn [game card-name] (play game player-no card-name)) game treasures)))
+    (reduce (fn [game card-name] (play game player-no card-name)) game treasures))) ; TODO: Stack treasures separately
 
 (defn clean-up
   ([{:keys [play-area hand] :as player}]

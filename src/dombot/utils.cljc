@@ -1,5 +1,6 @@
 (ns dombot.utils
-  (:require [clojure.string :as s]))
+  (:require [clojure.string :as s]
+            [dombot.effects :as effects]))
 
 (defn format-name [kw]
   (-> kw
@@ -52,30 +53,33 @@
 
 (defn get-effect-idx [effect-stack effect-type]
   (->> effect-stack
-       (keep-indexed (fn [idx {:keys [type] :as effect}]
-                       (when (effect-type type) {:idx idx :effect effect})))
+       (keep-indexed (fn [idx {[effect-name :as effect] :effect}]
+                       (when (= effect-type effect-name) {:idx idx :effect effect})))
        first))
 
 (defn player-area
-  ([area filter-fn]
-   (fn [game player-no]
-     (cond->> (get-in game [:players player-no area])
-              filter-fn (filter filter-fn)
-              :always (map :name))))
-  ([area]
-   (player-area area nil)))
+  ([game player-no area & [{:keys [type reacts-to last name not-name]}]]
+   (cond->> (get-in game [:players player-no area])
+            last (take-last 1)                              ; it's important that this is evaluated first
+            type (filter (comp type :type))
+            name (filter (comp #{name} :name))
+            not-name (remove (comp #{not-name} :name))
+            reacts-to (filter (comp #{reacts-to} :reacts-to))
+            :always (map :name))))
 
-(defn supply-piles [{:keys [max-cost type]}]
-  (fn [{:keys [supply]} player-no]
-    (cond->> supply
-             max-cost (filter (fn [{{:keys [cost]} :card
-                                    pile-size      :pile-size}]
-                                (and (<= cost max-cost)
-                                     (< 0 pile-size))))
-             type (filter (comp type :type :card))
-             :always (map (comp :name :card)))))
+(defn supply-piles [{:keys [supply]} player-no {:keys [max-cost type]}]
+  (cond->> supply
+           max-cost (filter (fn [{{:keys [cost]} :card
+                                  pile-size      :pile-size}]
+                              (and (<= cost max-cost)
+                                   (< 0 pile-size))))
+           type (filter (comp type :type :card))
+           :always (map (comp :name :card))))
 
 (defn empty-supply-piles [{:keys [supply] :as game}]
   (->> supply
        (filter (comp zero? :pile-size))
        count))
+
+(effects/register {:player player-area
+                   :supply supply-piles})

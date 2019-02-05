@@ -44,10 +44,10 @@
                                             (op/play current-player card-name)))
     (view)))
 
-(defn chose [choice]
+(defn chose [option]
   (let [game (get-game)]
     (swap! game-state update :game conj (-> game
-                                            (op/chose choice)))
+                                            (op/chose option)))
     (view)))
 
 (defn buy [card-name]
