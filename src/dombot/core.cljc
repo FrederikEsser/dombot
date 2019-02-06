@@ -4,7 +4,7 @@
   (:gen-class))
 
 ; todo:
-; unit tests for do-for-other-players, give-choice, chose, gardens, calc-victory-points, ...
+; unit tests for do-for-other-players, give-choice, choose, gardens, calc-victory-points, ...
 ; handle multiple reaction cards
 ; game log
 
@@ -44,10 +44,10 @@
                                             (op/play current-player card-name)))
     (view)))
 
-(defn chose [option]
+(defn choose [option]
   (let [game (get-game)]
     (swap! game-state update :game conj (-> game
-                                            (op/chose option)))
+                                            (op/choose option)))
     (view)))
 
 (defn buy [card-name]

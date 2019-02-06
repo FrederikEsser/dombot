@@ -128,9 +128,9 @@
                        (do-effect player-no effect)
                        check-stack))))
 
-(defn- chose-single [game selection]
+(defn- choose-single [game selection]
   (if (coll? selection)
-    (assert (<= (count selection) 1) "Chose error: You can only pick 1 option."))
+    (assert (<= (count selection) 1) "Choose error: You can only pick 1 option."))
   (let [[{:keys [player-no choice options min]}] (get game :effect-stack)
         choice-fn (effects/get-effect choice)
         valid-choices (set options)
@@ -138,15 +138,15 @@
                            (first selection)
                            selection)]
     (if (= min 1)
-      (assert single-selection "Chose error: You must pick an option"))
+      (assert single-selection "Choose error: You must pick an option"))
     (when single-selection
-      (assert (valid-choices single-selection) (str "Chose error: " (ut/format-name single-selection) " is not a valid option.")))
+      (assert (valid-choices single-selection) (str "Choose error: " (ut/format-name single-selection) " is not a valid option.")))
 
     (-> game
         pop-effect-stack
         (choice-fn player-no single-selection))))
 
-(defn- chose-multi [game selection]
+(defn- choose-multi [game selection]
   (let [[{:keys [player-no choice options min max]}] (get game :effect-stack)
         choice-fn (effects/get-effect choice)
         valid-choices (set options)
@@ -157,25 +157,25 @@
                             []))]
 
     (when min
-      (assert (<= min (count multi-selection)) (str "Chose error: You must pick at least " min " options.")))
+      (assert (<= min (count multi-selection)) (str "Choose error: You must pick at least " min " options.")))
     (when max
-      (assert (<= (count multi-selection) max) (str "Chose error: You can only pick " max " options.")))
+      (assert (<= (count multi-selection) max) (str "Choose error: You can only pick " max " options.")))
     (doseq [sel multi-selection]
-      (assert (valid-choices sel) (str "Chose error: " (ut/format-name sel) " is not a valid choice.")))
+      (assert (valid-choices sel) (str "Choose error: " (ut/format-name sel) " is not a valid choice.")))
 
     (-> game
         pop-effect-stack
         (choice-fn player-no multi-selection))))
 
-(defn chose [game selection]
+(defn choose [game selection]
   (let [[{:keys [choice options min max]}] (get game :effect-stack)
-        chose-fn (if (= max 1) chose-single chose-multi)]
-    (assert choice "Chose error: You don't have a choice to make.")
-    (assert (not-empty options) "Chose error: Choice has no options")
+        choose-fn (if (= max 1) choose-single choose-multi)]
+    (assert choice "Choose error: You don't have a choice to make.")
+    (assert (not-empty options) "Choose error: Choice has no options")
     (assert (or (nil? min) (nil? max) (<= min max)))
 
     (-> game
-        (chose-fn selection)
+        (choose-fn selection)
         check-stack)))
 
 (defn give-choice [{:keys [mode] :as game} player-no {[opt-name & opt-args] :options
@@ -192,7 +192,7 @@
                        (= min (or max (count options))))]
     (-> game
         (cond-> (not-empty options) (push-effect-stack player-no choice')
-                swiftable (chose (take min options)))
+                swiftable (choose (take min options)))
         check-stack)))
 
 (defn- apply-triggers [game player-no trigger]

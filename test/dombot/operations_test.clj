@@ -157,59 +157,59 @@
         (is (or (= result {:players [{:hand [1 2 3 4 5 6 7] :deck [] :discard []}]})
                 (= result {:players [{:hand [1 2 3 4 5 7 6] :deck [] :discard []}]})))))))
 
-#_(deftest chose-test
+#_(deftest choose-test
   (testing "No/invalid choice"
-    (is (thrown-with-msg? AssertionError #"Chose error: You don't have a choice to make."
-                          (chose {:effect-stack []} :copper)))
-    (is (thrown-with-msg? AssertionError #"Chose error: Choice has no options"
-                          (chose {:effect-stack [{:player-no 0 :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)}]} :copper))))
+    (is (thrown-with-msg? AssertionError #"Choose error: You don't have a choice to make."
+                          (choose {:effect-stack []} :copper)))
+    (is (thrown-with-msg? AssertionError #"Choose error: Choice has no options"
+                          (choose {:effect-stack [{:player-no 0 :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)}]} :copper))))
   (testing "Optional single choice"
-    (is (= (chose {:players      []
+    (is (= (choose {:players      []
                    :effect-stack [{:player-no 0
                                    :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
                                    :options   [:copper]
                                    :max       1}]}
                   nil)
            {:players [{:chosen nil}]}))
-    (is (= (chose {:players      []
+    (is (= (choose {:players      []
                    :effect-stack [{:player-no 0
                                    :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
                                    :options   [:copper]
                                    :max       1}]}
                   :copper)
            {:players [{:chosen :copper}]}))
-    (is (= (chose {:players      []
+    (is (= (choose {:players      []
                    :effect-stack [{:player-no 0
                                    :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
                                    :options   [:copper]
                                    :max       1}]}
                   [])
            {:players [{:chosen nil}]}))
-    (is (= (chose {:players      []
+    (is (= (choose {:players      []
                    :effect-stack [{:player-no 0
                                    :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
                                    :options   [:copper]
                                    :max       1}]}
                   [:copper])
            {:players [{:chosen :copper}]}))
-    (is (thrown-with-msg? AssertionError #"Chose error: You can only pick 1 option."
-                          (chose {:effect-stack [{:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+    (is (thrown-with-msg? AssertionError #"Choose error: You can only pick 1 option."
+                          (choose {:effect-stack [{:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
                                                   :options   [:copper :copper]
                                                   :max       1}]}
                                  [:copper :copper])))
-    (is (thrown-with-msg? AssertionError #"Chose error: Estate is not a valid choice."
-                          (chose {:effect-stack [{:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+    (is (thrown-with-msg? AssertionError #"Choose error: Estate is not a valid choice."
+                          (choose {:effect-stack [{:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
                                                   :options   [:copper]
                                                   :max       1}]}
                                  :estate))))
   (testing "Mandatory single choice"
-    (is (thrown-with-msg? AssertionError #"Chose error: You must pick an option"
-                          (chose {:effect-stack [{:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+    (is (thrown-with-msg? AssertionError #"Choose error: You must pick an option"
+                          (choose {:effect-stack [{:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
                                                   :options   [:copper]
                                                   :min       1
                                                   :max       1}]}
                                  nil)))
-    (is (= (chose {:players      []
+    (is (= (choose {:players      []
                    :effect-stack [{:player-no 0
                                    :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
                                    :options   [:copper]
@@ -217,13 +217,13 @@
                                    :max       1}]}
                   :copper)
            {:players [{:chosen :copper}]}))
-    (is (thrown-with-msg? AssertionError #"Chose error: You must pick an option"
-                          (chose {:effect-stack [{:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+    (is (thrown-with-msg? AssertionError #"Choose error: You must pick an option"
+                          (choose {:effect-stack [{:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
                                                   :options   [:copper]
                                                   :min       1
                                                   :max       1}]}
                                  [])))
-    (is (= (chose {:players      []
+    (is (= (choose {:players      []
                    :effect-stack [{:player-no 0
                                    :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
                                    :options   [:copper]
@@ -231,45 +231,45 @@
                                    :max       1}]}
                   [:copper])
            {:players [{:chosen :copper}]}))
-    (is (thrown-with-msg? AssertionError #"Chose error: You can only pick 1 option."
-                          (chose {:effect-stack [{:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+    (is (thrown-with-msg? AssertionError #"Choose error: You can only pick 1 option."
+                          (choose {:effect-stack [{:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
                                                   :options   [:copper :copper]
                                                   :min       1
                                                   :max       1}]}
                                  [:copper :copper]))))
   (testing "Multi choice"
-    (is (= (chose {:players      []
+    (is (= (choose {:players      []
                    :effect-stack [{:player-no 0
                                    :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
                                    :options   [:copper]}]}
                   nil)
            {:players [{:chosen []}]}))
-    (is (= (chose {:players      []
+    (is (= (choose {:players      []
                    :effect-stack [{:player-no 0
                                    :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
                                    :options   [:copper]}]}
                   :copper)
            {:players [{:chosen [:copper]}]}))
-    (is (= (chose {:players      []
+    (is (= (choose {:players      []
                    :effect-stack [{:player-no 0
                                    :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
                                    :options   [:copper]}]}
                   [])
            {:players [{:chosen []}]}))
-    (is (= (chose {:players      []
+    (is (= (choose {:players      []
                    :effect-stack [{:player-no 0
                                    :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
                                    :options   [:copper]}]}
                   [:copper])
            {:players [{:chosen [:copper]}]}))
-    (is (= (chose {:players      []
+    (is (= (choose {:players      []
                    :effect-stack [{:player-no 0
                                    :choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
                                    :options   [:copper :copper]}]}
                   [:copper :copper])
            {:players [{:chosen [:copper :copper]}]}))
-    (is (thrown-with-msg? AssertionError #"Chose error: Estate is not a valid choice."
-                          (chose {:effect-stack [{:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
+    (is (thrown-with-msg? AssertionError #"Choose error: Estate is not a valid choice."
+                          (choose {:effect-stack [{:choice-fn #(assoc-in %1 [:players %2 :chosen] %3)
                                                   :options   [:copper]}]}
                                  [:copper :estate :silver])))))
 

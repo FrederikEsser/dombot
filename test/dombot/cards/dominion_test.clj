@@ -32,7 +32,7 @@
                 :players [{:hand    [artisan silver]
                            :actions 1}]}
                (play 0 :artisan)
-               (chose :duchy))
+               (choose :duchy))
            {:supply       [{:card duchy :pile-size 7}]
             :players      [{:hand      [silver duchy]
                             :play-area [artisan]
@@ -48,8 +48,8 @@
                            :deck    [gold]
                            :actions 1}]}
                (play 0 :artisan)
-               (chose :duchy)
-               (chose :silver))
+               (choose :duchy)
+               (choose :silver))
            {:supply  [{:card duchy :pile-size 7}]
             :players [{:hand      [duchy]
                        :play-area [artisan]
@@ -110,7 +110,7 @@
                            :actions 1}
                           {:deck [estate silver gold]}]}
                (play 0 :bandit)
-               (chose :silver))
+               (choose :silver))
            {:supply  [{:card gold :pile-size 29}]
             :players [{:hand      []
                        :play-area [bandit]
@@ -175,7 +175,7 @@
                           {:deck [silver gold estate]}
                           {:deck [copper gold estate]}]}
                (play 0 :bandit)
-               (chose :silver))
+               (choose :silver))
            {:supply       [{:card gold :pile-size 29}]
             :players      [{:hand      []
                             :play-area [bandit]
@@ -200,7 +200,7 @@
                            :actions 1}
                           {:deck [silver]}]}
                (play 0 :bandit)
-               (chose :silver))
+               (choose :silver))
            {:supply  [{:card gold :pile-size 29}]
             :players [{:hand      []
                        :play-area [bandit]
@@ -250,7 +250,7 @@
                           {:hand [copper copper copper estate estate]
                            :deck [gold]}]}
                (play 0 :bureaucrat)
-               (chose :estate))
+               (choose :estate))
            {:supply  [{:card silver :pile-size 39}]
             :players [{:hand      []
                        :play-area [bureaucrat]
@@ -293,7 +293,7 @@
                            :deck    (repeat 5 copper)
                            :actions 1}]}
                (play 0 :cellar)
-               (chose [:estate :estate :estate]))
+               (choose [:estate :estate :estate]))
            {:players [{:hand      [copper copper copper copper]
                        :play-area [cellar]
                        :deck      [copper copper]
@@ -302,7 +302,7 @@
     (is (= (-> {:players [{:hand    [cellar copper]
                            :actions 1}]}
                (play 0 :cellar)
-               (chose :copper))
+               (choose :copper))
            {:players [{:hand      [copper]
                        :play-area [cellar]
                        :deck      []
@@ -312,7 +312,7 @@
                            :deck    (repeat 5 copper)
                            :actions 1}]}
                (play 0 :cellar)
-               (chose []))
+               (choose []))
            {:players [{:hand      [copper estate estate estate]
                        :play-area [cellar]
                        :deck      (repeat 5 copper)
@@ -330,7 +330,7 @@
                                           :deck    (repeat 5 copper)
                                           :actions 1}]}
                               (play 0 :cellar)
-                              (chose [:estate :estate]))))))
+                              (choose [:estate :estate]))))))
 
 (deftest chapel-test
   (testing "Chapel"
@@ -348,7 +348,7 @@
     (is (= (-> {:players [{:hand    [chapel copper estate estate estate]
                            :actions 1}]}
                (play 0 :chapel)
-               (chose [:estate :estate :estate]))
+               (choose [:estate :estate :estate]))
            {:players [{:hand      [copper]
                        :play-area [chapel]
                        :actions   0}]
@@ -356,7 +356,7 @@
     (is (= (-> {:players [{:hand    [chapel copper]
                            :actions 1}]}
                (play 0 :chapel)
-               (chose :copper))
+               (choose :copper))
            {:players [{:hand      []
                        :play-area [chapel]
                        :actions   0}]
@@ -364,15 +364,15 @@
     (is (= (-> {:players [{:hand    [chapel copper estate estate estate]
                            :actions 1}]}
                (play 0 :chapel)
-               (chose []))
+               (choose []))
            {:players [{:hand      [copper estate estate estate]
                        :play-area [chapel]
                        :actions   0}]}))
-    (is (thrown-with-msg? AssertionError #"Chose error: You can only pick 4 options."
+    (is (thrown-with-msg? AssertionError #"Choose error: You can only pick 4 options."
                           (-> {:players [{:hand    (concat [chapel] (repeat 5 copper))
                                           :actions 1}]}
                               (play 0 :chapel)
-                              (chose (repeat 5 :copper)))))))
+                              (choose (repeat 5 :copper)))))))
 
 (deftest council-room-test
   (testing "Council Room"
@@ -428,7 +428,7 @@
                            :discard [gold]
                            :actions 1}]}
                (play 0 :harbinger)
-               (chose :gold))
+               (choose :gold))
            {:players [{:hand      [copper]
                        :deck      [gold copper copper]
                        :discard   []
@@ -439,7 +439,7 @@
                            :discard [estate]
                            :actions 1}]}
                (play 0 :harbinger)
-               (chose nil))
+               (choose nil))
            {:players [{:hand      [copper]
                        :deck      [copper copper]
                        :discard   [estate]
@@ -512,7 +512,7 @@
                            :deck    [silver gold village estate duchy smithy province]
                            :actions 1}]}
                (play 0 :library)
-               (chose nil))
+               (choose nil))
            {:players [{:hand      [smithy copper silver gold village estate duchy]
                        :play-area [library]
                        :deck      [smithy province]
@@ -521,7 +521,7 @@
                            :deck    [silver gold village estate duchy smithy province]
                            :actions 1}]}
                (play 0 :library)
-               (chose :village))
+               (choose :village))
            {:players      [{:hand      [smithy copper silver gold estate duchy smithy]
                             :play-area [library]
                             :set-aside [village]
@@ -540,8 +540,8 @@
                            :deck    [silver gold village estate duchy smithy province]
                            :actions 1}]}
                (play 0 :library)
-               (chose :village)
-               (chose :smithy))
+               (choose :village)
+               (choose :smithy))
            {:players [{:hand      [smithy copper silver gold estate duchy province]
                        :play-area [library]
                        :deck      []
@@ -640,7 +640,7 @@
                            :coins   0}
                           {:hand (repeat 5 copper)}]}
                (play 0 :militia)
-               (chose [:copper :copper]))
+               (choose [:copper :copper]))
            {:players [{:hand      []
                        :play-area [militia]
                        :actions   0
@@ -665,7 +665,7 @@
                            :coins   0}
                           {:hand (repeat 6 copper)}]}
                (play 0 :militia)
-               (chose [:copper :copper :copper]))
+               (choose [:copper :copper :copper]))
            {:players [{:hand      []
                        :play-area [militia]
                        :actions   0
@@ -696,7 +696,7 @@
                 :players [{:hand    [mine copper estate]
                            :actions 1}]}
                (play 0 :mine)
-               (chose :copper))
+               (choose :copper))
            {:supply       (base/supply 2 8)
             :players      [{:hand      [estate]
                             :play-area [mine]
@@ -712,7 +712,7 @@
                 :players [{:hand    [mine copper estate]
                            :actions 1}]}
                (play 0 :mine)
-               (chose :copper))
+               (choose :copper))
            {:supply  [{:card copper :pile-size 0} {:card gold :pile-size 30}]
             :players [{:hand      [estate]
                        :play-area [mine]
@@ -722,8 +722,8 @@
                 :players [{:hand    [mine silver estate]
                            :actions 1}]}
                (play 0 :mine)
-               (chose :silver)
-               (chose :gold))
+               (choose :silver)
+               (choose :gold))
            {:supply  [{:card gold :pile-size 29}]
             :players [{:hand      [estate gold]
                        :play-area [mine]
@@ -774,7 +774,7 @@
                            :coins   0}
                           {:hand [moat copper copper copper copper]}]}
                (play 0 :militia)
-               (chose :moat))
+               (choose :moat))
            {:players [{:hand      []
                        :play-area [militia]
                        :actions   0
@@ -785,7 +785,7 @@
                            :coins   0}
                           {:hand [moat copper copper copper copper]}]}
                (play 0 :militia)
-               (chose nil))
+               (choose nil))
            {:players      [{:hand      []
                             :play-area [militia]
                             :actions   0
@@ -803,7 +803,7 @@
                            :coins   0}
                           {:hand [moat]}]}
                (play 0 :vassal)
-               (chose :militia))
+               (choose :militia))
            {:players      [{:hand      []
                             :play-area [vassal militia]
                             :deck      []
@@ -824,7 +824,7 @@
                            :actions 1}
                           {:hand [moat]}]}
                (play 0 :throne-room)
-               (chose :militia))
+               (choose :militia))
            {:players      [{:hand      []
                             :play-area [throne-room militia]
                             :actions   0}
@@ -845,8 +845,8 @@
                            :coins   0}
                           {:hand [moat]}]}
                (play 0 :throne-room)
-               (chose :militia)
-               (chose :moat))
+               (choose :militia)
+               (choose :moat))
            {:players      [{:hand      []
                             :play-area [throne-room militia]
                             :actions   0
@@ -879,7 +879,7 @@
                            :actions 1
                            :coins   0}]}
                (play 0 :moneylender)
-               (chose :copper))
+               (choose :copper))
            {:players [{:hand      [copper estate]
                        :play-area [moneylender]
                        :actions   0
@@ -888,7 +888,7 @@
     (is (= (-> {:players [{:hand    [moneylender copper copper estate]
                            :actions 1}]}
                (play 0 :moneylender)
-               (chose nil))
+               (choose nil))
            {:players [{:hand      [copper copper estate]
                        :play-area [moneylender]
                        :actions   0}]}))
@@ -935,7 +935,7 @@
                            :actions 1
                            :coins   0}]}
                (play 0 :poacher)
-               (chose [:estate]))
+               (choose [:estate]))
            {:supply  [{:pile-size 0} {:pile-size 1}]
             :players [{:deck      [copper]
                        :discard   [estate]
@@ -967,7 +967,7 @@
                            :actions 1
                            :coins   0}]}
                (play 0 :poacher)
-               (chose [:copper :estate]))
+               (choose [:copper :estate]))
            {:supply  [{:pile-size 0} {:pile-size 0}]
             :players [{:hand      [silver]
                        :deck      [copper]
@@ -1045,7 +1045,7 @@
                 :players [{:hand    [remodel copper estate]
                            :actions 1}]}
                (play 0 :remodel)
-               (chose :estate))
+               (choose :estate))
            {:supply       (base/supply 2 8)
             :players      [{:hand      [copper]
                             :play-area [remodel]
@@ -1061,7 +1061,7 @@
                 :players [{:hand    [remodel copper estate]
                            :actions 1}]}
                (play 0 :remodel)
-               (chose :copper))
+               (choose :copper))
            {:supply  [{:card estate :pile-size 0} {:card silver :pile-size 40}]
             :players [{:hand      [estate]
                        :play-area [remodel]
@@ -1071,8 +1071,8 @@
                 :players [{:hand    [remodel silver estate]
                            :actions 1}]}
                (play 0 :remodel)
-               (chose :silver)
-               (chose :duchy))
+               (choose :silver)
+               (choose :duchy))
            {:supply  [{:card duchy :pile-size 7}]
             :players [{:hand      [estate]
                        :play-area [remodel]
@@ -1108,7 +1108,7 @@
                            :hand    [sentry]
                            :actions 1}]}
                (play 0 :sentry)
-               (chose :estate))
+               (choose :estate))
            {:players      [{:hand      [copper]
                             :play-area [sentry]
                             :look-at   [silver]
@@ -1128,8 +1128,8 @@
                            :hand    [sentry]
                            :actions 1}]}
                (play 0 :sentry)
-               (chose :estate)
-               (chose nil))
+               (choose :estate)
+               (choose nil))
            {:players      [{:hand      [copper]
                             :play-area [sentry]
                             :look-at   [silver]
@@ -1145,9 +1145,9 @@
                            :hand    [sentry]
                            :actions 1}]}
                (play 0 :sentry)
-               (chose :estate)
-               (chose nil)
-               (chose :silver))
+               (choose :estate)
+               (choose nil)
+               (choose :silver))
            {:players [{:hand      [copper]
                        :play-area [sentry]
                        :look-at   []
@@ -1159,8 +1159,8 @@
                            :hand    [sentry]
                            :actions 1}]}
                (play 0 :sentry)
-               (chose :estate)
-               (chose nil))
+               (choose :estate)
+               (choose nil))
            {:mode    :swift
             :players [{:hand      [copper]
                        :play-area [sentry]
@@ -1172,7 +1172,7 @@
                            :hand    [sentry]
                            :actions 1}]}
                (play 0 :sentry)
-               (chose [:estate :copper]))
+               (choose [:estate :copper]))
            {:players [{:hand      [silver]
                        :play-area [sentry]
                        :look-at   []
@@ -1183,8 +1183,8 @@
                            :hand    [sentry]
                            :actions 1}]}
                (play 0 :sentry)
-               (chose [])
-               (chose [:province :province]))
+               (choose [])
+               (choose [:province :province]))
            {:players [{:hand      [silver]
                        :play-area [sentry]
                        :look-at   []
@@ -1195,9 +1195,9 @@
                            :hand    [sentry]
                            :actions 1}]}
                (play 0 :sentry)
-               (chose [])
-               (chose [])
-               (chose [:silver :market]))
+               (choose [])
+               (choose [])
+               (choose [:silver :market]))
            {:players [{:hand      [market]
                        :play-area [sentry]
                        :look-at   []
@@ -1258,7 +1258,7 @@
                            :coins   0
                            :buys    1}]}
                (play 0 :throne-room)
-               (chose :market))
+               (choose :market))
            {:players [{:deck      [copper]
                        :hand      [copper copper copper]
                        :play-area [throne-room market]
@@ -1269,7 +1269,7 @@
                            :hand    [throne-room market copper]
                            :actions 1}]}
                (play 0 :throne-room)
-               (chose nil))
+               (choose nil))
            {:players [{:deck      [copper copper copper]
                        :hand      [market copper]
                        :play-area [throne-room]
@@ -1278,7 +1278,7 @@
                            :hand    [throne-room throne-room merchant]
                            :actions 1}]}
                (play 0 :throne-room)
-               (chose :throne-room))
+               (choose :throne-room))
            {:players      [{:deck      [witch copper copper silver]
                             :hand      [merchant]
                             :play-area [throne-room throne-room]
@@ -1294,8 +1294,8 @@
                            :hand    [throne-room throne-room merchant]
                            :actions 1}]}
                (play 0 :throne-room)
-               (chose :throne-room)
-               (chose :merchant))
+               (choose :throne-room)
+               (choose :merchant))
            {:players      [{:deck      [copper silver]
                             :hand      [witch copper]
                             :play-area [throne-room throne-room merchant]
@@ -1313,9 +1313,9 @@
                            :coins   0}
                           {}]}
                (play 0 :throne-room)
-               (chose :throne-room)
-               (chose :merchant)
-               (chose :witch)
+               (choose :throne-room)
+               (choose :merchant)
+               (choose :witch)
                (play-treasures 0))
            {:supply  [{:card curse :pile-size 8}]
             :players [{:deck      []
@@ -1373,7 +1373,7 @@
                            :coins   0
                            :buys    1}]}
                (play 0 :vassal)
-               (chose :market))
+               (choose :market))
            {:players [{:hand      [copper]
                        :play-area [vassal market]
                        :deck      []
@@ -1386,7 +1386,7 @@
                            :actions 1
                            :coins   0}]}
                (play 0 :vassal)
-               (chose nil))
+               (choose nil))
            {:players [{:hand      []
                        :play-area [vassal]
                        :deck      [copper]
@@ -1400,7 +1400,7 @@
                            :coins   0}
                           {}]}
                (play 0 :vassal)
-               (chose :witch))
+               (choose :witch))
            {:supply  [{:card curse :pile-size 9}]
             :players [{:hand      [copper copper]
                        :deck      [copper]
@@ -1499,7 +1499,7 @@
                 :players [{:hand    [workshop copper]
                            :actions 1}]}
                (play 0 :workshop)
-               (chose :silver))
+               (choose :silver))
            {:supply  [{:card silver :pile-size 39}]
             :players [{:hand      [copper]
                        :discard   [silver]
