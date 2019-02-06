@@ -5,7 +5,7 @@
 (defn format-name [kw]
   (-> kw
       name
-      (s/split #"-")
+      (s/split #"[- ]")
       (->> (map s/capitalize)
            (s/join " "))))
 

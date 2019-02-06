@@ -1,6 +1,7 @@
 (ns dombot.operations
   (:require [dombot.utils :as ut]
-            [dombot.effects :as effects]))
+            [dombot.effects :as effects]
+            [dombot.front-end-model :as model]))
 
 (defn start-turn
   ([player]
@@ -178,12 +179,21 @@
         (choose-fn selection)
         check-stack)))
 
+(defn get-source [{[name arg & [{:keys [last]}]] :options}]
+  (if (= :supply name)
+    {:source :supply}
+    (merge {:source arg}
+           (when (and (= :discard arg)
+                      (not last))
+             {:reveal-source true}))))
+
 (defn give-choice [{:keys [mode] :as game} player-no {[opt-name & opt-args] :options
                                                       :keys                 [min max]
                                                       :as                   choice}]
   (let [options (apply (effects/get-effect opt-name) game player-no opt-args)
         {:keys [min max] :as choice'} (-> choice
                                           (assoc :options options)
+                                          (merge (get-source choice))
                                           (cond-> min (update :min clojure.core/min (count options))
                                                   max (update :max clojure.core/min (count options))))
         swiftable (and (= :swift mode)
@@ -331,6 +341,7 @@
 (defn view-game [{:keys [supply players trash effect-stack current-player reveal] :as game}]
   (if (game-ended? game)
     {:players (map view-end-player players)}
+    #_(model/model-game game)
     (let [[{:keys [player-no text options]}] effect-stack
           revealed (->> reveal
                         (map (fn [[player-no hand]]

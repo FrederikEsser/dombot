@@ -19,6 +19,7 @@
             :effect-stack [{:text      "Gain a card to your hand costing up to $5."
                             :player-no 0
                             :choice    :gain-to-hand
+                            :source    :supply
                             :options   [:curse :estate :duchy :copper :silver]
                             :min       1
                             :max       1}
@@ -40,6 +41,7 @@
             :effect-stack [{:text      "Put a card from your hand onto your deck."
                             :player-no 0
                             :choice    :topdeck-from-hand
+                            :source    :hand
                             :options   [:silver :duchy]
                             :min       1
                             :max       1}]}))
@@ -66,6 +68,7 @@
             :effect-stack [{:text      "Put a card from your hand onto your deck."
                             :player-no 0
                             :choice    :topdeck-from-hand
+                            :source    :hand
                             :options   [:silver]
                             :min       1
                             :max       1}]}))))
@@ -100,6 +103,7 @@
             :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
                             :player-no 1
                             :choice    :trash-from-revealed
+                            :source    :reveal
                             :options   [:silver]
                             :min       1
                             :max       1}
@@ -153,6 +157,7 @@
             :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
                             :player-no 1
                             :choice    :trash-from-revealed
+                            :source    :reveal
                             :options   [:silver :gold]
                             :min       1
                             :max       1}
@@ -189,6 +194,7 @@
             :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
                             :player-no 2
                             :choice    :trash-from-revealed
+                            :source    :reveal
                             :options   [:gold]
                             :min       1
                             :max       1}
@@ -240,6 +246,7 @@
             :effect-stack [{:text      "Reveal a Victory card from your hand and put it onto your deck."
                             :player-no 1
                             :choice    :topdeck-from-hand
+                            :source    :hand
                             :options   [:estate :estate]
                             :min       1
                             :max       1}]}))
@@ -288,6 +295,7 @@
             :effect-stack [{:text      "Discard any number of cards, then draw that many."
                             :player-no 0
                             :choice    ::dominion/cellar-sift
+                            :source    :hand
                             :options   [:copper :estate :estate :estate]}]}))
     (is (= (-> {:players [{:hand    [cellar copper estate estate estate]
                            :deck    (repeat 5 copper)
@@ -343,6 +351,7 @@
             :effect-stack [{:text      "Trash up to 4 cards from your hand."
                             :player-no 0
                             :choice    :trash-from-hand
+                            :source    :hand
                             :options   [:copper :estate :estate :estate]
                             :max       4}]}))
     (is (= (-> {:players [{:hand    [chapel copper estate estate estate]
@@ -418,11 +427,13 @@
                             :discard   [gold]
                             :play-area [harbinger]
                             :actions   1}]
-            :effect-stack [{:text      "You may put a card from your discard pile onto your deck."
-                            :player-no 0
-                            :choice    :topdeck-from-discard
-                            :options   [:gold]
-                            :max       1}]}))
+            :effect-stack [{:text          "You may put a card from your discard pile onto your deck."
+                            :player-no     0
+                            :choice        :topdeck-from-discard
+                            :source        :discard
+                            :reveal-source true
+                            :options       [:gold]
+                            :max           1}]}))
     (is (= (-> {:players [{:hand    [harbinger]
                            :deck    [copper copper copper]
                            :discard [gold]
@@ -502,6 +513,7 @@
             :effect-stack [{:text      "You may skip the Village; set it aside, discarding it afterwards."
                             :player-no 0
                             :choice    ::dominion/library-set-aside
+                            :source    :hand
                             :options   [:village]
                             :max       1}
                            {:player-no 0
@@ -530,6 +542,7 @@
             :effect-stack [{:text      "You may skip the Smithy; set it aside, discarding it afterwards."
                             :player-no 0
                             :choice    ::dominion/library-set-aside
+                            :source    :hand
                             :options   [:smithy]
                             :max       1}
                            {:player-no 0
@@ -632,6 +645,7 @@
             :effect-stack [{:text      "Discard down to 3 cards in hand."
                             :player-no 1
                             :choice    :discard-from-hand
+                            :source    :hand
                             :options   (repeat 5 :copper)
                             :min       2
                             :max       2}]}))
@@ -684,6 +698,7 @@
             :effect-stack [{:text      "You may trash a Treasure from your hand."
                             :player-no 0
                             :choice    ::dominion/mine-trash
+                            :source    :hand
                             :options   [:copper]
                             :max       1}]}))
     (is (= (play {:players [{:hand    [mine estate]
@@ -704,6 +719,7 @@
             :effect-stack [{:text      "Gain a Treasure to your hand costing up to $3."
                             :player-no 0
                             :choice    :gain-to-hand
+                            :source    :supply
                             :options   [:copper :silver]
                             :min       1
                             :max       1}]
@@ -763,6 +779,7 @@
             :effect-stack [{:text      "You may reveal a Reaction to react to the Militia Attack."
                             :player-no 1
                             :choice    :reveal-reaction
+                            :source    :hand
                             :options   [:moat]
                             :max       1}
                            {:player-no 0
@@ -794,6 +811,7 @@
             :effect-stack [{:text      "Discard down to 3 cards in hand."
                             :player-no 1
                             :choice    :discard-from-hand
+                            :source    :hand
                             :options   [:moat :copper :copper :copper :copper]
                             :min       2
                             :max       2}]}))
@@ -814,6 +832,7 @@
             :effect-stack [{:text      "You may reveal a Reaction to react to the Militia Attack."
                             :player-no 1
                             :choice    :reveal-reaction
+                            :source    :hand
                             :options   [:moat]
                             :max       1}
                            {:player-no 0
@@ -832,6 +851,7 @@
             :effect-stack [{:text      "You may reveal a Reaction to react to the Militia Attack."
                             :player-no 1
                             :choice    :reveal-reaction
+                            :source    :hand
                             :options   [:moat]
                             :max       1}
                            {:player-no 0
@@ -855,6 +875,7 @@
             :effect-stack [{:text      "You may reveal a Reaction to react to the Militia Attack."
                             :player-no 1
                             :choice    :reveal-reaction
+                            :source    :hand
                             :options   [:moat]
                             :max       1}
                            {:player-no 0
@@ -873,6 +894,7 @@
             :effect-stack [{:text      "You may trash a Copper from your hand for +$3"
                             :player-no 0
                             :choice    ::dominion/moneylender-trash
+                            :source    :hand
                             :options   [:copper :copper]
                             :max       1}]}))
     (is (= (-> {:players [{:hand    [moneylender copper copper estate]
@@ -926,6 +948,7 @@
             :effect-stack [{:text      "Discard a card per empty supply pile [1]."
                             :player-no 0
                             :choice    :discard-from-hand
+                            :source    :hand
                             :options   [:estate :copper]
                             :min       1
                             :max       1}]}))
@@ -958,6 +981,7 @@
             :effect-stack [{:text      "Discard a card per empty supply pile [2]."
                             :player-no 0
                             :choice    :discard-from-hand
+                            :source    :hand
                             :options   [:estate :silver :copper]
                             :min       2
                             :max       2}]}))
@@ -1002,6 +1026,7 @@
             :effect-stack [{:text      "Discard a card per empty supply pile [2]."
                             :player-no 0
                             :choice    :discard-from-hand
+                            :source    :hand
                             :options   [:copper]
                             :min       1
                             :max       1}]}))
@@ -1032,6 +1057,7 @@
             :effect-stack [{:text      "Trash a card from your hand."
                             :player-no 0
                             :choice    ::dominion/remodel-trash
+                            :source    :hand
                             :options   [:copper :estate]
                             :min       1
                             :max       1}]}))
@@ -1053,6 +1079,7 @@
             :effect-stack [{:text      "Gain a card costing up to $4."
                             :player-no 0
                             :choice    :gain
+                            :source    :supply
                             :options   [:curse :estate :copper :silver]
                             :min       1
                             :max       1}]
@@ -1094,6 +1121,7 @@
             :effect-stack [{:text      "Trash any number of the top 2 cards of your deck."
                             :player-no 0
                             :choice    :trash-from-look-at
+                            :source    :look-at
                             :options   [:silver :estate]}
                            {:player-no 0
                             :effect    [:give-choice {:text    "Discard any number of the top 2 cards of your deck."
@@ -1117,6 +1145,7 @@
             :effect-stack [{:text      "Discard any number of the top 2 cards of your deck."
                             :player-no 0
                             :choice    :discard-from-look-at
+                            :source    :look-at
                             :options   [:silver]}
                            {:player-no 0
                             :effect    [:give-choice {:text    "Put the rest back on top in any order."
@@ -1138,6 +1167,7 @@
             :effect-stack [{:text      "Put the rest back on top in any order."
                             :player-no 0
                             :choice    :topdeck-from-look-at
+                            :source    :look-at
                             :options   [:silver]
                             :min       1}]
             :trash        [estate]}))
@@ -1215,6 +1245,7 @@
             :effect-stack [{:text      "Trash any number of the top 2 cards of your deck."
                             :player-no 0
                             :choice    :trash-from-look-at
+                            :source    :look-at
                             :options   [:copper]}
                            {:player-no 0
                             :effect    [:give-choice {:text    "Discard any number of the top 2 cards of your deck."
@@ -1250,6 +1281,7 @@
             :effect-stack [{:text      "You may play an Action card from your hand twice."
                             :player-no 0
                             :choice    :play-action-twice
+                            :source    :hand
                             :options   [:market]
                             :max       1}]}))
     (is (= (-> {:players [{:deck    [copper copper copper]
@@ -1286,6 +1318,7 @@
             :effect-stack [{:text      "You may play an Action card from your hand twice."
                             :player-no 0
                             :choice    :play-action-twice
+                            :source    :hand
                             :options   [:merchant]
                             :max       1}
                            {:player-no 0
@@ -1304,6 +1337,7 @@
             :effect-stack [{:text      "You may play an Action card from your hand twice."
                             :player-no 0
                             :choice    :play-action-twice
+                            :source    :hand
                             :options   [:witch]
                             :max       1}]}))
     (is (= (-> {:supply  [{:card curse :pile-size 10}]
@@ -1364,6 +1398,7 @@
             :effect-stack [{:text      "You may play the discarded Action."
                             :player-no 0
                             :choice    ::dominion/vassal-play-action
+                            :source    :discard
                             :options   [:market]
                             :max       1}]}))
     (is (= (-> {:players [{:hand    [vassal]
@@ -1492,6 +1527,7 @@
             :effect-stack [{:text      "Gain a card costing up to $4."
                             :player-no 0
                             :choice    :gain
+                            :source    :supply
                             :options   [:curse :estate :copper :silver]
                             :min       1
                             :max       1}]}))

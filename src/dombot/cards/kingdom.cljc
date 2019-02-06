@@ -19,7 +19,10 @@
                   shuffle)]
     {:name name
      :hand (take 5 deck)
-     :deck (drop 5 deck)}))
+     :deck (drop 5 deck)
+     :action 0
+     :coins 0
+     :buys 0}))
 
 (defn create-game [player-names mode]
   (let [number-of-players (count player-names)

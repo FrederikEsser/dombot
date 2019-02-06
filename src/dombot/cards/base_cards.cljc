@@ -1,6 +1,10 @@
 (ns dombot.cards.base-cards)
 
-(def curse {:name :curse :type #{:curse} :cost 0 :victory-points -1})
+(def curse {:name :curse
+            :type #{:curse}
+            :cost 0
+            :victory-points -1})
+
 (def estate {:name :estate :type #{:victory} :cost 2 :victory-points 1})
 (def duchy {:name :duchy :type #{:victory} :cost 5 :victory-points 3})
 (def province {:name :province :type #{:victory} :cost 8 :victory-points 6})
@@ -9,7 +13,7 @@
 (def gold {:name :gold :type #{:treasure} :cost 6 :coin-value 3})
 
 (defn supply [number-of-players victory-pile-size]
-  [{:card curse :pile-size (* 10 (dec number-of-players))}
+  [{:card curse :pile-size (* 10 (dec number-of-players)) #_#_:category :base-cards}
    {:card estate :pile-size victory-pile-size}
    {:card duchy :pile-size victory-pile-size}
    {:card province :pile-size victory-pile-size}

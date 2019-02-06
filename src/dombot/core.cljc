@@ -4,9 +4,13 @@
   (:gen-class))
 
 ; todo:
+; model for all players, trash, choices and special areas (look-at, revealed, set-aside)
+; rename :reveal to :revealed
+; calc approximated discard size only when "touching" the pile - make it accurate when revealed (harbinger)
+; end game
 ; unit tests for do-for-other-players, give-choice, choose, gardens, calc-victory-points, ...
 ; handle multiple reaction cards
-; game log
+; game log / turn counter
 
 (defonce game-state (atom {}))
 

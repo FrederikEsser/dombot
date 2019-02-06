@@ -1,6 +1,12 @@
 (ns dombot.operations-test
   (:require [clojure.test :refer :all]
+            [dombot.test-utils :refer :all]
             [dombot.operations :refer :all]))
+
+(defn fixture [f]
+  (with-rand-seed 123 (f)))
+
+(use-fixtures :each fixture)
 
 (deftest start-turn-test
   (testing "Start turn"
@@ -148,14 +154,11 @@
       (is (= (draw game 0 2)
              {:players [{:hand [1 2 3 4 5] :deck [] :discard [6 7]}]}))
       (let [result (draw game 0 3)]
-        (is (or (= result {:players [{:hand [1 2 3 4 5 6] :deck [7] :discard []}]})
-                (= result {:players [{:hand [1 2 3 4 5 7] :deck [6] :discard []}]}))))
+        (is (= result {:players [{:hand [1 2 3 4 5 6] :deck [7] :discard []}]})))
       (let [result (draw game 0 4)]
-        (is (or (= result {:players [{:hand [1 2 3 4 5 6 7] :deck [] :discard []}]})
-                (= result {:players [{:hand [1 2 3 4 5 7 6] :deck [] :discard []}]}))))
+        (is (= result {:players [{:hand [1 2 3 4 5 7 6] :deck [] :discard []}]})))
       (let [result (draw game 0 5)]
-        (is (or (= result {:players [{:hand [1 2 3 4 5 6 7] :deck [] :discard []}]})
-                (= result {:players [{:hand [1 2 3 4 5 7 6] :deck [] :discard []}]})))))))
+        (is (= result {:players [{:hand [1 2 3 4 5 6 7] :deck [] :discard []}]}))))))
 
 #_(deftest choose-test
   (testing "No/invalid choice"
