@@ -13,8 +13,9 @@
   (->> supply
        (map (fn [{{:keys [name type cost]} :card
                   number-of-cards          :pile-size}]
-              (merge {:name            (ut/format-name name)
-                      :type            (ut/format-type type)
+              (merge {:name            name
+                      :name.ui         (ut/format-name name)
+                      :type            type
                       :cost            cost
                       :number-of-cards number-of-cards}
                      (when (and (not choice)                ; todo: check phase
@@ -29,8 +30,9 @@
   (let [cards (get player area)]
     (->> cards
          (map (fn [{:keys [name type]}]
-                (merge {:name (ut/format-name name)
-                        :type (ut/format-type type)}
+                (merge {:name    name
+                        :name.ui (ut/format-name name)
+                        :type    type}
                        (when (and (= :hand area)
                                   (not choice)
                                   (or (and (:action type)
@@ -59,8 +61,9 @@
                                       (rand-int (inc variance)))
                                    (rand-int (inc variance)))}
               (when (not-empty discard)
-                {:name (ut/format-name name)
-                 :type (ut/format-type type)})
+                {:name    name
+                 :name.ui (ut/format-name name)
+                 :type    type})
               (choice-interaction name :discard choice))])))
 
 (defn model-active-player [{{:keys [name deck actions coins buys]} :player
@@ -77,11 +80,11 @@
 (defn model-game [{:keys [supply players trash effect-stack current-player] :as game}]
   (let [[{:keys [player-no text options] :as choice}] effect-stack
         current-player-choice (when (= player-no current-player) choice)]
-    (cond-> {:supply         (model-supply {:supply supply
-                                            :player (get players current-player)
-                                            :choice choice})
-             :player         (model-active-player {:player (get players current-player)
-                                                   :choice current-player-choice})
-             :trash          (ut/frequencies-of trash :name)}
-            (or text (not-empty options)) (assoc :choice {:text    text
-                                                          :player  (ut/format-name (get-in players [player-no :name]))}))))
+    (cond-> {:supply (model-supply {:supply supply
+                                    :player (get players current-player)
+                                    :choice choice})
+             :player (model-active-player {:player (get players current-player)
+                                           :choice current-player-choice})
+             :trash  (ut/frequencies-of trash :name)}
+            (or text (not-empty options)) (assoc :choice {:text   text
+                                                          :player (ut/format-name (get-in players [player-no :name]))}))))
