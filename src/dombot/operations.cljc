@@ -306,6 +306,7 @@
    (assert (empty? effect-stack) "You can't end your turn when you have a choice to make.")
    (-> game
        (update-in [:players player-no] clean-up)
+       (set-approx-discard-size player-no)
        (draw player-no 5)
        (dissoc :revealed))))
 
@@ -364,8 +365,8 @@
 (defn view-game [{:keys [supply players trash effect-stack current-player revealed] :as game}]
   (if (game-ended? game)
     {:players (map view-end-player players)}
-    #_(model/model-game game)
-    (let [[{:keys [player-no text options]}] effect-stack
+    (model/model-game game)
+    #_(let [[{:keys [player-no text options]}] effect-stack
           revealed (->> revealed
                         (map (fn [[player-no hand]]
                                {:player (get-in players [player-no :name])

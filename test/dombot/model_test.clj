@@ -536,3 +536,24 @@
             :actions   0
             :money     0
             :buys      0}))))
+
+(deftest trash-model-test
+  (testing "Trash model"
+    (is (= (model-trash [] :full)
+           []))
+    (is (= (model-trash [] :short)
+           []))
+    (is (= (model-trash [copper copper estate] :full)
+           [{:name            :copper
+             :name.ui         "Copper"
+             :type            #{:treasure}
+             :number-of-cards 2}
+            {:name            :estate
+             :name.ui         "Estate"
+             :type            #{:victory}
+             :number-of-cards 1}]))
+    (is (= (model-trash [copper copper estate] :short)
+           [{:name            :estate
+             :name.ui         "Estate"
+             :type            #{:victory}
+             :number-of-cards 3}]))))

@@ -17,12 +17,15 @@
 (defn create-player [name]
   (let [deck (->> (concat (repeat 7 copper) (repeat 3 estate))
                   shuffle)]
-    {:name name
-     :hand (take 5 deck)
-     :deck (drop 5 deck)
-     :action 0
-     :coins 0
-     :buys 0}))
+    {:name                name
+     :hand                (take 5 deck)
+     :deck                (drop 5 deck)
+     :discard             []
+     :play-area           []
+     :approx-discard-size 0
+     :actions             0
+     :coins               0
+     :buys                0}))
 
 (defn create-game [player-names mode]
   (let [number-of-players (count player-names)

@@ -88,17 +88,36 @@
    :money     coins
    :buys      buys})
 
+(defn model-trash [trash mode]
+  (if (empty? trash)
+    []
+    (case mode
+      :short (let [{:keys [name type]} (last trash)]
+               [(merge {:name            name
+                        :name.ui         (ut/format-name name)
+                        :type            type
+                        :number-of-cards (count trash)})])
+      :full (->> trash
+                 (map (fn [{:keys [name type]}]
+                        (merge {:name    name
+                                :name.ui (ut/format-name name)
+                                :type    type})))
+                 frequencies
+                 (map (fn [[card number-of-cards]]
+                        (assoc card :number-of-cards number-of-cards)))))))
+
 (defn model-game [{:keys [supply players trash effect-stack current-player]}]
   (let [[{:keys [player-no text] :as choice}] effect-stack]
-    (cond-> {:supply  (model-supply {:supply supply
-                                     :player (get players current-player)
-                                     :choice choice})
-             :players (->> players
-                           (map-indexed (fn [idx player]
-                                          (model-player (= idx current-player)
-                                                        (merge {:player player}
-                                                               (when (= idx player-no)
-                                                                 {:choice choice}))))))
-             :trash   (ut/frequencies-of trash :name)}
+    (cond-> {:supply      (model-supply {:supply supply
+                                         :player (get players current-player)
+                                         :choice choice})
+             :players     (->> players
+                               (map-indexed (fn [idx player]
+                                              (model-player (= idx current-player)
+                                                            (merge {:player player}
+                                                                   (when (= idx player-no)
+                                                                     {:choice choice}))))))
+             :trash-short (model-trash trash :short)
+             :trash-full  (model-trash trash :full)}
             choice (assoc :choice {:text   text
                                    :player (ut/format-name (get-in players [player-no :name]))}))))

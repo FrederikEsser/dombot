@@ -4,7 +4,7 @@
   (:gen-class))
 
 ; todo:
-; model for all players, trash, choices and special areas (look-at, revealed, set-aside)
+; model for trash, choices and special areas (look-at, revealed, set-aside)
 ; clear hand-revealed?
 ; make frequencies optional
 ; end game
