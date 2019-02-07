@@ -62,22 +62,19 @@
       [{:name.ui         "Deck"
         :number-of-cards (count deck)}])))
 
-(defn model-discard [{{:keys [discard]}                  :player
-                      {:keys [reveal-source] :as choice} :choice
-                      :as                                data}]
+(defn model-discard [{{:keys [discard approx-discard-size]} :player
+                      {:keys [reveal-source] :as choice}    :choice
+                      :as                                   data}]
   (if (empty? discard)
     []
     (if reveal-source
       (model-area :discard data)
-      (let [{:keys [name type]} (last discard)
-            size (count discard)
-            variance (Math/round (/ size 4.0))]
-        [(merge {:name            name
-                 :name.ui         (ut/format-name name)
-                 :type            type
-                 :number-of-cards (- (+ size
-                                        (rand-int (inc variance)))
-                                     (rand-int (inc variance)))}
+      (let [{:keys [name type]} (last discard)]
+        [(merge {:name    name
+                 :name.ui (ut/format-name name)
+                 :type    type}
+                (when approx-discard-size
+                  {:number-of-cards approx-discard-size})
                 (choice-interaction name :discard choice))]))))
 
 (defn model-player [active-player? {{:keys [name actions coins buys]} :player

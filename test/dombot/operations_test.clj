@@ -36,7 +36,14 @@
     (is (thrown-with-msg? AssertionError #"Gain error: The supply doesn't have a Province pile"
                           (-> {:supply  []
                                :players [{:discard []}]}
-                              (gain 0 :province))))))
+                              (gain 0 :province))))
+    (is (= (-> {:supply  [{:card {:name :province} :pile-size 8}]
+                :players [{:discard             [{:name :copper} {:name :copper}]
+                           :approx-discard-size 1}]}
+               (gain 0 :province))
+           {:supply  [{:card {:name :province} :pile-size 7}]
+            :players [{:discard             [{:name :copper} {:name :copper} {:name :province}]
+                       :approx-discard-size 2}]}))))
 
 (deftest buy-test
   (testing "Buying a card"
@@ -144,7 +151,24 @@
                        :from-position :top
                        :to            :discard})
            {:players [{:deck    [{:name :copper}]
-                       :discard [{:name :copper}]}]}))))
+                       :discard [{:name :copper}]}]}))
+    (is (= (move-card {:players [{:deck                [{:name :copper} {:name :smithy}]
+                                  :approx-discard-size 0}]} 0
+                      {:from          :deck
+                       :from-position :top
+                       :to            :discard})
+           {:players [{:deck                [{:name :smithy}]
+                       :discard             [{:name :copper}]
+                       :approx-discard-size 1}]}))
+    (is (= (move-card {:players [{:hand                [{:name :copper} {:name :smithy}]
+                                  :discard             [{:name :copper} {:name :estate}]
+                                  :approx-discard-size 2}]} 0
+                      {:from          :discard
+                       :from-position :bottom
+                       :to            :hand})
+           {:players [{:hand                [{:name :copper} {:name :smithy} {:name :estate}]
+                       :discard             [{:name :copper}]
+                       :approx-discard-size 1}]}))))
 
 (deftest draw-test
   (testing "Draw"

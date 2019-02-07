@@ -463,7 +463,26 @@
            {:players [{:hand      [copper]
                        :deck      [copper copper]
                        :play-area [harbinger]
-                       :actions   1}]}))))
+                       :actions   1}]}))
+    (is (= (-> {:players [{:hand                [harbinger]
+                           :deck                [copper copper copper]
+                           :discard             (repeat 10 estate)
+                           :approx-discard-size 11
+                           :actions             1}]}
+               (play 0 :harbinger))
+           {:players      [{:hand                [copper]
+                            :deck                [copper copper]
+                            :discard             (repeat 10 estate)
+                            :approx-discard-size 10
+                            :play-area           [harbinger]
+                            :actions             1}]
+            :effect-stack [{:text          "You may put a card from your discard pile onto your deck."
+                            :player-no     0
+                            :choice        :topdeck-from-discard
+                            :source        :discard
+                            :reveal-source true
+                            :options       (repeat 10 :estate)
+                            :max           1}]}))))
 
 (deftest laboratory-test
   (testing "Laboratory"

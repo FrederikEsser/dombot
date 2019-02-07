@@ -152,23 +152,27 @@
   (testing "Discard model"
     (is (= (model-discard {:player {:discard []}})
            []))
-    (is (= (model-discard {:player {:discard [estate]}})
+    (is (= (model-discard {:player {:discard             [estate]
+                                    :approx-discard-size 1}})
            [{:name            :estate
              :name.ui         "Estate"
              :type            #{:victory}
              :number-of-cards 1}]))
     (testing "randomized number of cards"
-      (is (= (model-discard {:player {:discard [copper estate]}})
-             [{:name            :estate
-               :name.ui         "Estate"
-               :type            #{:victory}
-               :number-of-cards 3}]))
-      (is (= (model-discard {:player {:discard [copper estate]}})
+      (is (= (model-discard {:player {:discard             [copper estate]
+                                      :approx-discard-size 1}})
              [{:name            :estate
                :name.ui         "Estate"
                :type            #{:victory}
                :number-of-cards 1}]))
-      (is (= (model-discard {:player {:discard [copper estate]}})
+      (is (= (model-discard {:player {:discard             [copper estate]
+                                      :approx-discard-size 2}})
+             [{:name            :estate
+               :name.ui         "Estate"
+               :type            #{:victory}
+               :number-of-cards 2}]))
+      (is (= (model-discard {:player {:discard             [copper estate]
+                                      :approx-discard-size 3}})
              [{:name            :estate
                :name.ui         "Estate"
                :type            #{:victory}
@@ -176,17 +180,15 @@
     (testing "with choice"
       (is (= (model-discard {:player {:discard [copper estate]}
                              :choice {:source :hand}})
-             [{:name            :estate
-               :name.ui         "Estate"
-               :type            #{:victory}
-               :number-of-cards 2}]))
+             [{:name    :estate
+               :name.ui "Estate"
+               :type    #{:victory}}]))
       (is (= (model-discard {:player {:discard [copper estate]}
                              :choice {:source :discard :options [:estate]}})
-             [{:name            :estate
-               :name.ui         "Estate"
-               :type            #{:victory}
-               :interaction     :choosable
-               :number-of-cards 2}]))
+             [{:name        :estate
+               :name.ui     "Estate"
+               :type        #{:victory}
+               :interaction :choosable}]))
       (is (= (model-discard {:player {:discard [copper estate]}
                              :choice {:source :discard :reveal-source true :options [:estate]}})
              [{:name            :copper
@@ -378,10 +380,9 @@
                          :number-of-cards 1}]
             :deck      [{:name.ui         "Deck"
                          :number-of-cards 2}]
-            :discard   [{:name            :silver
-                         :name.ui         "Silver"
-                         :type            #{:treasure}
-                         :number-of-cards 4}]
+            :discard   [{:name    :silver
+                         :name.ui "Silver"
+                         :type    #{:treasure}}]
             :actions   2
             :money     0
             :buys      1}))
@@ -421,10 +422,9 @@
                          :number-of-cards 1}]
             :deck      [{:name.ui         "Deck"
                          :number-of-cards 2}]
-            :discard   [{:name            :silver
-                         :name.ui         "Silver"
-                         :type            #{:treasure}
-                         :number-of-cards 4}]
+            :discard   [{:name    :silver
+                         :name.ui "Silver"
+                         :type    #{:treasure}}]
             :actions   2
             :money     0
             :buys      1}))
@@ -494,10 +494,9 @@
             :play-area []
             :deck      [{:name.ui         "Deck"
                          :number-of-cards 2}]
-            :discard   [{:name            :silver
-                         :name.ui         "Silver"
-                         :type            #{:treasure}
-                         :number-of-cards 2}]
+            :discard   [{:name    :silver
+                         :name.ui "Silver"
+                         :type    #{:treasure}}]
             :actions   0
             :money     0
             :buys      0}))
@@ -531,10 +530,9 @@
             :play-area []
             :deck      [{:name.ui         "Deck"
                          :number-of-cards 2}]
-            :discard   [{:name            :silver
-                         :name.ui         "Silver"
-                         :type            #{:treasure}
-                         :number-of-cards 4}]
+            :discard   [{:name    :silver
+                         :name.ui "Silver"
+                         :type    #{:treasure}}]
             :actions   0
             :money     0
             :buys      0}))))

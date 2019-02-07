@@ -13,6 +13,17 @@
    (-> game
        (update-in [:players player-no] start-turn))))
 
+(defn set-approx-discard-size [game player-no & [n]]
+  (let [{:keys [discard approx-discard-size]} (get-in game [:players player-no])
+        size (count discard)
+        variance (Math/round (/ size 4.0))
+        approx-size (or n
+                        (- (+ size
+                              (rand-int (inc variance)))
+                           (rand-int (inc variance))))]
+    (cond-> game
+            approx-discard-size (assoc-in [:players player-no :approx-discard-size] approx-size))))
+
 (defn gain [game player-no card-name & [{:keys [to to-position]
                                          :or   {to :discard}}]]
   (let [{:keys [idx card]} (ut/get-pile-idx game card-name)
@@ -24,7 +35,8 @@
     (assert pile-size (str "Gain error: The supply doesn't have a " (ut/format-name card-name) " pile."))
     (cond-> game
             (< 0 pile-size) (-> (update-in [:supply idx :pile-size] dec)
-                                (update-in [:players player-no to] add-card-to-coll card)))))
+                                (update-in [:players player-no to] add-card-to-coll card)
+                                (cond-> (= to :discard) (set-approx-discard-size player-no))))))
 
 (defn buy-card [{:keys [effect-stack] :as game} player-no card-name]
   (let [{:keys [buys coins phase]} (get-in game [:players player-no])
@@ -77,7 +89,8 @@
         (cond-> game
                 card (-> (update-in from-path ut/vec-remove idx)
                          (update-in to-path add-card-to-coll card)
-                         (cond-> (and (= :deck from) (:can-undo? game)) (assoc :can-undo? false))))))))
+                         (cond-> (and (= :deck from) (:can-undo? game)) (assoc :can-undo? false)
+                                 (or (= from :discard) (= to :discard)) (set-approx-discard-size player-no))))))))
 
 (defn move-cards [game player-no {:keys [card-names number-of-cards from-position] :as args}]
   (assert (or card-names
@@ -187,6 +200,11 @@
                       (not last))
              {:reveal-source true}))))
 
+(defn- ?reveal-discard-size [game player-no {:keys [source reveal-source]}]
+  (let [discard (get-in game [:players player-no :discard])]
+    (cond-> game
+            (and (= :discard source) reveal-source) (set-approx-discard-size player-no (count discard)))))
+
 (defn give-choice [{:keys [mode] :as game} player-no {[opt-name & opt-args] :options
                                                       :keys                 [min max]
                                                       :as                   choice}]
@@ -203,6 +221,7 @@
     (-> game
         (cond-> (not-empty options) (push-effect-stack player-no choice')
                 swiftable (choose (take min options)))
+        (?reveal-discard-size player-no choice')
         check-stack)))
 
 (defn- apply-triggers [game player-no trigger]
