@@ -1,7 +1,7 @@
 (ns dombot.operations
   (:require [dombot.utils :as ut]
             [dombot.effects :as effects]
-            [dombot.front-end-model :as model]))
+            [dombot.front-end-view :as view]))
 
 (defn start-turn
   ([player]
@@ -327,55 +327,13 @@
     (or (zero? province-pile-size)
         (>= (ut/empty-supply-piles game) 3))))
 
-(defn view-discard [discard]
-  (if (empty? discard)
-    :empty
-    (let [size (count discard)
-          variance (Math/round (/ size 4.0))]
-      {:top         (-> discard last :name)
-       :approx-size (- (+ size
-                          (rand-int (inc variance)))
-                       (rand-int (inc variance)))})))
-
-(defn view-player [{:keys [look-at]
-                    :as   player}]
-  (-> player
-      (update :hand ut/frequencies-of :name)
-      (update :play-area ut/frequencies-of :name)
-      (update :look-at ut/frequencies-of :name)
-      (cond-> (empty? look-at) (dissoc :look-at))
-      (update :deck count)
-      (update :discard view-discard)
-      (dissoc :triggers)
-      (assoc :victory-points (calc-victory-points player))))
-
 (defn- view-end-player [{:keys [name deck discard hand play-area] :as player}]
   (let [cards (concat deck discard hand play-area)]
     {:name           name
      :cards          (ut/frequencies-of cards :name)
      :victory-points (calc-victory-points player)}))
 
-(defn view-supply [supply]
-  (->> supply
-       (sort-by (comp (juxt (comp first :type) :cost :name) :card))
-       (map (fn [{{:keys [name cost]} :card
-                  :keys               [pile-size]}]
-              {:card name :price cost :count pile-size}))))
-
-(defn view-game [{:keys [supply players trash effect-stack current-player revealed] :as game}]
+(defn view-game [{:keys [players] :as game}]
   (if (game-ended? game)
     {:players (map view-end-player players)}
-    #_(model/model-game game)
-    (let [[{:keys [player-no text options]}] effect-stack
-          revealed (->> revealed
-                        (map (fn [[player-no hand]]
-                               {:player (get-in players [player-no :name])
-                                :hand   (map :name hand)})))]
-      (cond-> {:supply         (view-supply supply)
-               :player         (view-player (get players current-player))
-               :trash          (ut/frequencies-of trash :name)
-               :current-player (get-in players [current-player :name])}
-              (not-empty revealed) (assoc :revealed revealed)
-              (or text (not-empty options)) (assoc :choice {:text    text
-                                                            :player  (get-in players [player-no :name])
-                                                            :options options})))))
+    (view/view-game game)))

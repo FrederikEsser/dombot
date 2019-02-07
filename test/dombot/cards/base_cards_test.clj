@@ -36,33 +36,6 @@
                        :coins     7}]}))))
 
 (deftest view-test
-  (testing "View game"
-    (is (= (view-game {:supply         (base/supply 2 8)
-                       :players        [{:name      :dombot
-                                         :hand      [copper copper copper estate estate]
-                                         :play-area []
-                                         :deck      [copper copper copper copper estate]
-                                         :discard   []}]
-                       :revealed       {0 [copper copper copper estate estate]}
-                       :trash          [estate estate copper]
-                       :current-player 0})
-           {:supply         [{:card :curse :price 0 :count 10}
-                             {:card :copper :price 0 :count 46}
-                             {:card :silver :price 3 :count 40}
-                             {:card :gold :price 6 :count 30}
-                             {:card :estate :price 2 :count 8}
-                             {:card :duchy :price 5 :count 8}
-                             {:card :province :price 8 :count 8}]
-            :player         {:name           :dombot
-                             :hand           {:copper 3 :estate 2}
-                             :play-area      {}
-                             :deck           5
-                             :discard        :empty
-                             :victory-points 3}
-            :revealed       [{:player :dombot
-                              :hand   [:copper :copper :copper :estate :estate]}]
-            :trash          {:copper 1 :estate 2}
-            :current-player :dombot})))
   (testing "View game end"
     (is (= (view-game {:supply         [{:card {:name :province} :pile-size 0}]
                        :players        [{:name      :dombot

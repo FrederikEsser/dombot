@@ -1,4 +1,4 @@
-(ns dombot.front-end-model
+(ns dombot.front-end-view
   (:require [dombot.utils :as ut]))
 
 (defn- choice-interaction [name area {:keys [source options min max]}]
@@ -7,9 +7,9 @@
       {:interaction :quick-choosable}
       {:interaction :choosable})))
 
-(defn model-supply [{supply               :supply
-                     {:keys [coins buys]} :player
-                     choice               :choice}]
+(defn view-supply [{supply               :supply
+                    {:keys [coins buys]} :player
+                    choice               :choice}]
   (->> supply
        (map (fn [{{:keys [name type cost]} :card
                   number-of-cards          :pile-size}]
@@ -25,8 +25,8 @@
                        {:interaction :buyable})
                      (choice-interaction name :supply choice))))))
 
-(defn model-area [area {{:keys [phase actions] :as player} :player
-                        choice                             :choice}]
+(defn view-area [area {{:keys [phase actions] :as player} :player
+                       choice                             :choice}]
   (let [cards (get player area)]
     (->> cards
          (map (fn [{:keys [name type]}]
@@ -46,30 +46,30 @@
          (map (fn [[card number-of-cards]]
                 (assoc card :number-of-cards number-of-cards))))))
 
-(defn model-hand [active-player? {{:keys [hand hand-revealed?]} :player
-                                  {:keys [source]}              :choice
-                                  :as                           data}]
+(defn view-hand [active-player? {{:keys [hand hand-revealed?]} :player
+                                 {:keys [source]}              :choice
+                                 :as                           data}]
   (if (or active-player? hand-revealed? (= :hand source))
-    (model-area :hand data)
+    (view-area :hand data)
     [{:name.ui         "Hand"
       :number-of-cards (count hand)}]))
 
-(defn model-deck [{{:keys [deck]} :player
-                   :as            data}]
+(defn view-deck [{{:keys [deck]} :player
+                  :as            data}]
   (concat
-    (model-area :look-at data)
-    (model-area :revealed data)
+    (view-area :look-at data)
+    (view-area :revealed data)
     (when (< 0 (count deck))
       [{:name.ui         "Deck"
         :number-of-cards (count deck)}])))
 
-(defn model-discard [{{:keys [discard approx-discard-size]} :player
-                      {:keys [reveal-source] :as choice}    :choice
-                      :as                                   data}]
+(defn view-discard [{{:keys [discard approx-discard-size]} :player
+                     {:keys [reveal-source] :as choice}    :choice
+                     :as                                   data}]
   (if (empty? discard)
     []
     (if reveal-source
-      (model-area :discard data)
+      (view-area :discard data)
       (let [{:keys [name type]} (last discard)]
         [(merge {:name    name
                  :name.ui (ut/format-name name)
@@ -78,26 +78,26 @@
                   {:number-of-cards approx-discard-size})
                 (choice-interaction name :discard choice))]))))
 
-(defn model-choice [{:keys [options min max] :as choice}]
+(defn view-choice [{:keys [options min max] :as choice}]
   (merge (select-keys choice [:text :min :max])
          (when (= 1 min (or max (count options)))
            {:quick-choice true})))
 
-(defn model-player [active-player? {{:keys [name actions coins buys]} :player
-                                    choice                            :choice
-                                    :as                               data}]
+(defn view-player [active-player? {{:keys [name actions coins buys]} :player
+                                   choice                            :choice
+                                   :as                               data}]
   (merge {:name      (ut/format-name name)
-          :hand      (model-hand active-player? data)
-          :play-area (model-area :play-area data)
-          :deck      (model-deck data)
-          :discard   (model-discard data)
+          :hand      (view-hand active-player? data)
+          :play-area (view-area :play-area data)
+          :deck      (view-deck data)
+          :discard   (view-discard data)
           :actions   actions
           :money     coins
           :buys      buys}
          (when choice
-           {:choice (model-choice choice)})))
+           {:choice (view-choice choice)})))
 
-(defn model-trash [trash mode]
+(defn view-trash [trash mode]
   (if (empty? trash)
     []
     (case mode
@@ -115,19 +115,29 @@
                  (map (fn [[card number-of-cards]]
                         (assoc card :number-of-cards number-of-cards)))))))
 
-(defn model-game [{:keys [supply players trash effect-stack current-player]}]
+(defn view-commands [{:keys [players effect-stack current-player can-undo?]}]
+  (let [{:keys [hand phase]} (get players current-player)
+        [choice] effect-stack]
+    {:can-undo?           can-undo?
+     :can-play-treasures? (and (some (comp :treasure :type) hand)
+                               (#{:action :pay} phase)
+                               (not choice))
+     :can-end-turn?       (not choice)}))
+
+(defn view-game [{:keys [supply players trash effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack]
-    (cond-> {:supply      (model-supply {:supply supply
-                                         :player (get players current-player)
-                                         :choice choice})
+    (cond-> {:supply      (view-supply {:supply supply
+                                        :player (get players current-player)
+                                        :choice choice})
              :players     (->> players
                                (map-indexed (fn [idx player]
                                               (let [active-player? (and (= idx current-player)
                                                                         (or (nil? choice)
                                                                             (= idx player-no)))]
-                                                (model-player active-player?
-                                                              (merge {:player player}
-                                                                     (when (= idx player-no)
-                                                                       {:choice choice})))))))
-             :trash-short (model-trash trash :short)
-             :trash-full  (model-trash trash :full)})))
+                                                (view-player active-player?
+                                                             (merge {:player player}
+                                                                    (when (= idx player-no)
+                                                                      {:choice choice})))))))
+             :trash-short (view-trash trash :short)
+             :trash-full  (view-trash trash :full)
+             :commands    (view-commands game)})))

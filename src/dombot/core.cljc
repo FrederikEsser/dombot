@@ -4,7 +4,7 @@
   (:gen-class))
 
 ; todo:
-; model for trash, choices and special areas (look-at, revealed, set-aside)
+; model for look-at
 ; clear hand-revealed?
 ; make frequencies optional
 ; end game
@@ -21,7 +21,7 @@
       (assoc :can-undo? true)))
 
 (defn view []
-  (op/view-game (get-game)))
+  (-> @game-state :game first op/view-game))
 
 (defn undo []
   (let [{:keys [can-undo?]} (-> @game-state :game first)]
