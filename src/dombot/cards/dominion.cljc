@@ -42,7 +42,7 @@
                                    :min     1
                                    :max     1})
       (-> game
-          (assoc-in [:revealed player-no] hand)))))
+          (reveal-hand player-no)))))
 
 (effects/register {::bureaucrat-attack bureaucrat-attack})
 

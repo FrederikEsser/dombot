@@ -122,10 +122,36 @@
                :number-of-cards 8
                :interaction     :choosable}])))))
 
+(deftest deck-test
+  (testing "Deck model"
+    (is (= (model-deck {:player {:deck [copper copper copper]}})
+           [{:name.ui         "Deck"
+             :number-of-cards 3}]))
+    (is (= (model-deck {:player {:deck    [copper copper copper]
+                                 :look-at [estate estate]}})
+           [{:name            :estate
+             :name.ui         "Estate"
+             :type            #{:victory}
+             :number-of-cards 2}
+            {:name.ui         "Deck"
+             :number-of-cards 3}]))
+    (is (= (model-deck {:player {:deck     [copper copper copper]
+                                 :revealed [estate gold]}})
+           [{:name            :estate
+             :name.ui         "Estate"
+             :type            #{:victory}
+             :number-of-cards 1}
+            {:name            :gold
+             :name.ui         "Gold"
+             :type            #{:treasure}
+             :number-of-cards 1}
+            {:name.ui         "Deck"
+             :number-of-cards 3}]))))
+
 (deftest discard-test
   (testing "Discard model"
     (is (= (model-discard {:player {:discard []}})
-           [{:number-of-cards 0}]))
+           []))
     (is (= (model-discard {:player {:discard [estate]}})
            [{:name            :estate
              :name.ui         "Estate"
@@ -136,17 +162,17 @@
              [{:name            :estate
                :name.ui         "Estate"
                :type            #{:victory}
-               :number-of-cards 1}]))
-      (is (= (model-discard {:player {:discard [copper estate]}})
-             [{:name            :estate
-               :name.ui         "Estate"
-               :type            #{:victory}
                :number-of-cards 3}]))
       (is (= (model-discard {:player {:discard [copper estate]}})
              [{:name            :estate
                :name.ui         "Estate"
                :type            #{:victory}
-               :number-of-cards 2}])))
+               :number-of-cards 1}]))
+      (is (= (model-discard {:player {:discard [copper estate]}})
+             [{:name            :estate
+               :name.ui         "Estate"
+               :type            #{:victory}
+               :number-of-cards 3}])))
     (testing "with choice"
       (is (= (model-discard {:player {:discard [copper estate]}
                              :choice {:source :hand}})
@@ -160,7 +186,7 @@
                :name.ui         "Estate"
                :type            #{:victory}
                :interaction     :choosable
-               :number-of-cards 3}]))
+               :number-of-cards 2}]))
       (is (= (model-discard {:player {:discard [copper estate]}
                              :choice {:source :discard :reveal-source true :options [:estate]}})
              [{:name            :copper
@@ -175,9 +201,9 @@
 
 (deftest hand-test
   (testing "Hand model"
-    (is (= (model-hand {:player {:hand    [copper copper copper moat estate]
-                                 :actions 1
-                                 :phase   :action}})
+    (is (= (model-hand true {:player {:hand    [copper copper copper moat estate]
+                                      :actions 1
+                                      :phase   :action}})
            [{:name            :copper
              :name.ui         "Copper"
              :type            #{:treasure}
@@ -192,9 +218,9 @@
              :name.ui         "Estate"
              :type            #{:victory}
              :number-of-cards 1}]))
-    (is (= (model-hand {:player {:hand    [copper copper copper moat estate]
-                                 :actions 0
-                                 :phase   :action}})
+    (is (= (model-hand true {:player {:hand    [copper copper copper moat estate]
+                                      :actions 0
+                                      :phase   :action}})
            [{:name            :copper
              :name.ui         "Copper"
              :type            #{:treasure}
@@ -208,9 +234,9 @@
              :name.ui         "Estate"
              :type            #{:victory}
              :number-of-cards 1}]))
-    (is (= (model-hand {:player {:hand    [copper copper copper moat estate]
-                                 :actions 1
-                                 :phase   :pay}})
+    (is (= (model-hand true {:player {:hand    [copper copper copper moat estate]
+                                      :actions 1
+                                      :phase   :pay}})
            [{:name            :copper
              :name.ui         "Copper"
              :type            #{:treasure}
@@ -224,9 +250,9 @@
              :name.ui         "Estate"
              :type            #{:victory}
              :number-of-cards 1}]))
-    (is (= (model-hand {:player {:hand    [copper copper copper moat estate]
-                                 :actions 1
-                                 :phase   :buy}})
+    (is (= (model-hand true {:player {:hand    [copper copper copper moat estate]
+                                      :actions 1
+                                      :phase   :buy}})
            [{:name            :copper
              :name.ui         "Copper"
              :type            #{:treasure}
@@ -240,11 +266,11 @@
              :type            #{:victory}
              :number-of-cards 1}]))
     (testing "with choice"
-      (is (= (model-hand {:player {:hand  [copper copper copper moat estate]
-                                   :phase :buy}
-                          :choice {:source  :hand
-                                   :options [:moat]
-                                   :max     1}})
+      (is (= (model-hand true {:player {:hand  [copper copper copper moat estate]
+                                        :phase :buy}
+                               :choice {:source  :hand
+                                        :options [:moat]
+                                        :max     1}})
              [{:name            :copper
                :name.ui         "Copper"
                :type            #{:treasure}
@@ -258,11 +284,11 @@
                :name.ui         "Estate"
                :type            #{:victory}
                :number-of-cards 1}]))
-      (is (= (model-hand {:player {:hand  [copper copper copper moat estate]
-                                   :phase :buy}
-                          :choice {:source  :hand
-                                   :options [:estate]
-                                   :min     1}})
+      (is (= (model-hand true {:player {:hand  [copper copper copper moat estate]
+                                        :phase :buy}
+                               :choice {:source  :hand
+                                        :options [:estate]
+                                        :min     1}})
              [{:name            :copper
                :name.ui         "Copper"
                :type            #{:treasure}
@@ -276,12 +302,12 @@
                :type            #{:victory}
                :number-of-cards 1
                :interaction     :quick-choosable}]))
-      (is (= (model-hand {:player {:hand  [copper copper copper moat estate]
-                                   :phase :buy}
-                          :choice {:source  :hand
-                                   :options [:copper :copper :copper :moat :estate]
-                                   :min     1
-                                   :max     1}})
+      (is (= (model-hand true {:player {:hand  [copper copper copper moat estate]
+                                        :phase :buy}
+                               :choice {:source  :hand
+                                        :options [:copper :copper :copper :moat :estate]
+                                        :min     1
+                                        :max     1}})
              [{:name            :copper
                :name.ui         "Copper"
                :type            #{:treasure}
@@ -297,11 +323,11 @@
                :type            #{:victory}
                :number-of-cards 1
                :interaction     :quick-choosable}]))
-      (is (= (model-hand {:player {:hand  [copper copper copper moat estate]
-                                   :phase :buy}
-                          :choice {:source  :supply
-                                   :options [:estate :copper :silver :moat]
-                                   :max     1}})
+      (is (= (model-hand true {:player {:hand  [copper copper copper moat estate]
+                                        :phase :buy}
+                               :choice {:source  :supply
+                                        :options [:estate :copper :silver :moat]
+                                        :max     1}})
              [{:name            :copper
                :name.ui         "Copper"
                :type            #{:treasure}
@@ -317,15 +343,15 @@
 
 (deftest player-model-test
   (testing "Player model"
-    (is (= (model-active-player {:player {:name      "John Doe"
-                                          :hand      [copper copper remodel estate moat]
-                                          :play-area [village]
-                                          :deck      [copper estate]
-                                          :discard   [copper estate silver]
-                                          :actions   2
-                                          :coins     0
-                                          :buys      1
-                                          :phase     :action}})
+    (is (= (model-player true {:player {:name      "John Doe"
+                                        :hand      [copper copper remodel estate moat]
+                                        :play-area [village]
+                                        :deck      [copper estate]
+                                        :discard   [copper estate silver]
+                                        :actions   2
+                                        :coins     0
+                                        :buys      1
+                                        :phase     :action}})
            {:name      "John Doe"
             :hand      [{:name            :copper
                          :name.ui         "Copper"
@@ -350,7 +376,8 @@
                          :name.ui         "Village"
                          :type            #{:action}
                          :number-of-cards 1}]
-            :deck      {:number-of-cards 2}
+            :deck      [{:name.ui         "Deck"
+                         :number-of-cards 2}]
             :discard   [{:name            :silver
                          :name.ui         "Silver"
                          :type            #{:treasure}
@@ -358,17 +385,17 @@
             :actions   2
             :money     0
             :buys      1}))
-    (is (= (model-active-player {:player {:name      "John Doe"
-                                          :hand      [copper copper remodel estate moat]
-                                          :play-area [village]
-                                          :deck      [copper estate]
-                                          :discard   [copper estate silver]
-                                          :actions   2
-                                          :coins     0
-                                          :buys      1
-                                          :phase     :action}
-                                 :choice {:source  :hand
-                                          :options [:estate :moat]}})
+    (is (= (model-player true {:player {:name      "John Doe"
+                                        :hand      [copper copper remodel estate moat]
+                                        :play-area [village]
+                                        :deck      [copper estate]
+                                        :discard   [copper estate silver]
+                                        :actions   2
+                                        :coins     0
+                                        :buys      1
+                                        :phase     :action}
+                               :choice {:source  :hand
+                                        :options [:estate :moat]}})
            {:name      "John Doe"
             :hand      [{:name            :copper
                          :name.ui         "Copper"
@@ -392,7 +419,8 @@
                          :name.ui         "Village"
                          :type            #{:action}
                          :number-of-cards 1}]
-            :deck      {:number-of-cards 2}
+            :deck      [{:name.ui         "Deck"
+                         :number-of-cards 2}]
             :discard   [{:name            :silver
                          :name.ui         "Silver"
                          :type            #{:treasure}
@@ -400,18 +428,18 @@
             :actions   2
             :money     0
             :buys      1}))
-    (is (= (model-active-player {:player {:name      "John Doe"
-                                          :hand      [copper copper remodel estate moat]
-                                          :play-area [village]
-                                          :deck      [copper estate]
-                                          :discard   [copper estate silver]
-                                          :actions   2
-                                          :coins     0
-                                          :buys      1
-                                          :phase     :action}
-                                 :choice {:source        :discard
-                                          :reveal-source true
-                                          :options       [:estate]}})
+    (is (= (model-player true {:player {:name      "John Doe"
+                                        :hand      [copper copper remodel estate moat]
+                                        :play-area [village]
+                                        :deck      [copper estate]
+                                        :discard   [copper estate silver]
+                                        :actions   2
+                                        :coins     0
+                                        :buys      1
+                                        :phase     :action}
+                               :choice {:source        :discard
+                                        :reveal-source true
+                                        :options       [:estate]}})
            {:name      "John Doe"
             :hand      [{:name            :copper
                          :name.ui         "Copper"
@@ -433,7 +461,8 @@
                          :name.ui         "Village"
                          :type            #{:action}
                          :number-of-cards 1}]
-            :deck      {:number-of-cards 2}
+            :deck      [{:name.ui         "Deck"
+                         :number-of-cards 2}]
             :discard   [{:name            :copper
                          :name.ui         "Copper"
                          :type            #{:treasure}
@@ -449,4 +478,63 @@
                          :number-of-cards 1}]
             :actions   2
             :money     0
-            :buys      1}))))
+            :buys      1}))
+    (is (= (model-player false {:player {:name      "John Doe"
+                                         :hand      [copper copper remodel estate moat]
+                                         :play-area []
+                                         :deck      [copper estate]
+                                         :discard   [copper estate silver]
+                                         :actions   0
+                                         :coins     0
+                                         :buys      0
+                                         :phase     :out-of-turn}})
+           {:name      "John Doe"
+            :hand      [{:name.ui         "Hand"
+                         :number-of-cards 5}]
+            :play-area []
+            :deck      [{:name.ui         "Deck"
+                         :number-of-cards 2}]
+            :discard   [{:name            :silver
+                         :name.ui         "Silver"
+                         :type            #{:treasure}
+                         :number-of-cards 2}]
+            :actions   0
+            :money     0
+            :buys      0}))
+    (is (= (model-player false {:player {:name           "John Doe"
+                                         :hand           [copper copper remodel estate moat]
+                                         :hand-revealed? true
+                                         :play-area      []
+                                         :deck           [copper estate]
+                                         :discard        [copper estate silver]
+                                         :actions        0
+                                         :coins          0
+                                         :buys           0
+                                         :phase          :out-of-turn}})
+           {:name      "John Doe"
+            :hand      [{:name            :copper
+                         :name.ui         "Copper"
+                         :type            #{:treasure}
+                         :number-of-cards 2}
+                        {:name            :remodel
+                         :name.ui         "Remodel"
+                         :type            #{:action}
+                         :number-of-cards 1}
+                        {:name            :estate
+                         :name.ui         "Estate"
+                         :type            #{:victory}
+                         :number-of-cards 1}
+                        {:name            :moat
+                         :name.ui         "Moat"
+                         :type            #{:action :reaction}
+                         :number-of-cards 1}]
+            :play-area []
+            :deck      [{:name.ui         "Deck"
+                         :number-of-cards 2}]
+            :discard   [{:name            :silver
+                         :name.ui         "Silver"
+                         :type            #{:treasure}
+                         :number-of-cards 4}]
+            :actions   0
+            :money     0
+            :buys      0}))))

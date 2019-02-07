@@ -224,13 +224,13 @@
                              :actions 1}
                             {:hand (repeat 5 copper)}]}
                  0 :bureaucrat)
-           {:supply   [{:card silver :pile-size 39}]
-            :players  [{:hand      []
-                        :play-area [bureaucrat]
-                        :deck      [silver copper]
-                        :actions   0}
-                       {:hand (repeat 5 copper)}]
-            :revealed {1 (repeat 5 copper)}}))
+           {:supply  [{:card silver :pile-size 39}]
+            :players [{:hand      []
+                       :play-area [bureaucrat]
+                       :deck      [silver copper]
+                       :actions   0}
+                      {:hand           (repeat 5 copper)
+                       :hand-revealed? true}]}))
     (is (= (play {:supply  [{:card silver :pile-size 40}]
                   :players [{:hand    [bureaucrat]
                              :deck    [copper]

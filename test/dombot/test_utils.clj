@@ -1,15 +1,11 @@
 (ns dombot.test-utils
   (:require [clojure.test :refer :all]))
 
-(def ^:dynamic *rand* clojure.core/rand)
-(def ^:dynamic *rand-int* clojure.core/rand-int)
-(def ^:dynamic *shuffle* clojure.core/shuffle)
-
-(defn rand'
-  ([]
-   (*rand* 1))
-  ([n]
-   (*rand* n)))
+(defn rand-with-seed
+  ([seed]
+   (.nextFloat seed))
+  ([seed n]
+   (* n (.nextFloat seed))))
 
 (defn shuffle-with-seed
   "Return a random permutation of coll"
@@ -24,13 +20,10 @@
   "Sets seed for calls to random in body. Beware of lazy seqs!"
   [seed & body]
   `(let [g# (java.util.Random. ~seed)]
-     (binding [*rand-int* #(.nextInt g# %)
-               *rand* #(* % (.nextFloat g#))
-               *shuffle* #(shuffle-with-seed % g#)]
-       (with-redefs [rand rand'
-                     rand-int *rand-int*
-                     shuffle *shuffle*]
-         ~@body))))
+     (with-redefs [rand (partial rand-with-seed g#)
+                   rand-int #(.nextInt g# %)
+                   shuffle #(shuffle-with-seed % g#)]
+       ~@body)))
 
 (deftest rand-test
   (with-rand-seed 123

@@ -277,7 +277,11 @@
    (-> player
        (update :discard concat play-area hand)
        (assoc :play-area []
-              :hand [])
+              :hand []
+              :actions 0
+              :coins 0
+              :buys 0
+              :phase :out-of-turn)
        (dissoc :triggers)))
   ([{:keys [effect-stack] :as game} player-no]
    (assert (empty? effect-stack) "You can't end your turn when you have a choice to make.")

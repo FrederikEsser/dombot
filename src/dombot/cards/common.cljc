@@ -44,6 +44,9 @@
                               :from       :hand
                               :to         :discard}))
 
+(defn reveal-hand [game player-no]
+  (assoc-in game [:players player-no :hand-revealed?] true))
+
 (defn discard-down-to [game player-no n]
   (let [hand (get-in game [:players player-no :hand])]
     (cond-> game
@@ -143,6 +146,7 @@
                    :discard-from-hand     discard-from-hand
                    :discard-down-to       discard-down-to
                    :trash-from-hand       trash-from-hand
+                   :reveal-hand           reveal-hand
                    :reveal-from-deck      reveal-from-deck
                    :look-at               look-at
                    :discard-all-revealed  discard-all-revealed
