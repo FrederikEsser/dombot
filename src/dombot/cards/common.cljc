@@ -62,7 +62,7 @@
   (move-cards game player-no {:number-of-cards number-of-cards
                               :from            :deck
                               :from-position   :top
-                              :to              :reveal}))
+                              :to              :revealed}))
 
 (defn look-at [game player-no number-of-cards]
   (move-cards game player-no {:number-of-cards number-of-cards
@@ -71,9 +71,9 @@
                               :to              :look-at}))
 
 (defn discard-all-revealed [game player-no]
-  (let [revealed (get-in game [:players player-no :reveal])]
+  (let [revealed (get-in game [:players player-no :revealed])]
     (move-cards game player-no {:card-names (map :name revealed)
-                                :from       :reveal
+                                :from       :revealed
                                 :to         :discard})))
 
 (defn discard-all-set-aside [game player-no]
@@ -84,7 +84,7 @@
 
 (defn trash-from-revealed [game player-no card-name]
   (move-card game player-no {:card-name card-name
-                             :from      :reveal
+                             :from      :revealed
                              :to        :trash}))
 
 (defn topdeck-from-discard [game player-no card-name]

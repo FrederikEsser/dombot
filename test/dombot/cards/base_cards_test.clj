@@ -43,7 +43,7 @@
                                          :play-area []
                                          :deck      [copper copper copper copper estate]
                                          :discard   []}]
-                       :reveal         {0 [copper copper copper estate estate]}
+                       :revealed       {0 [copper copper copper estate estate]}
                        :trash          [estate estate copper]
                        :current-player 0})
            {:supply         [{:card :curse :price 0 :count 10}

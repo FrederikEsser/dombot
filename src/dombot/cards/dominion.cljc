@@ -27,8 +27,8 @@
                        [:attack {:effects [[:reveal-from-deck 2]
                                            [:give-choice {:text    "Trash a revealed Treasure other than Copper, and discards the rest."
                                                           :choice  :trash-from-revealed
-                                                          :options [:player :reveal {:type     :treasure
-                                                                                     :not-name :copper}]
+                                                          :options [:player :revealed {:type     :treasure
+                                                                                       :not-name :copper}]
                                                           :min     1
                                                           :max     1}]
                                            [:discard-all-revealed]]}]]})
@@ -42,7 +42,7 @@
                                    :min     1
                                    :max     1})
       (-> game
-          (assoc-in [:reveal player-no] hand)))))
+          (assoc-in [:revealed player-no] hand)))))
 
 (effects/register {::bureaucrat-attack bureaucrat-attack})
 

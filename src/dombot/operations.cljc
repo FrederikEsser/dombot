@@ -284,7 +284,7 @@
    (-> game
        (update-in [:players player-no] clean-up)
        (draw player-no 5)
-       (dissoc :reveal))))
+       (dissoc :revealed))))
 
 (defn- get-victory-points [cards {:keys [victory-points]}]
   (if (fn? victory-points)
@@ -338,12 +338,12 @@
                   :keys               [pile-size]}]
               {:card name :price cost :count pile-size}))))
 
-(defn view-game [{:keys [supply players trash effect-stack current-player reveal] :as game}]
+(defn view-game [{:keys [supply players trash effect-stack current-player revealed] :as game}]
   (if (game-ended? game)
     {:players (map view-end-player players)}
     #_(model/model-game game)
     (let [[{:keys [player-no text options]}] effect-stack
-          revealed (->> reveal
+          revealed (->> revealed
                         (map (fn [[player-no hand]]
                                {:player (get-in players [player-no :name])
                                 :hand   (map :name hand)})))]

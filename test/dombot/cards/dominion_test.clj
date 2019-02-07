@@ -85,9 +85,9 @@
                        :play-area [bandit]
                        :discard   [gold]
                        :actions   0}
-                      {:deck    [estate]
-                       :discard [estate estate]
-                       :reveal  []}]}))
+                      {:deck     [estate]
+                       :discard  [estate estate]
+                       :revealed []}]}))
     (is (= (play {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [bandit]
                              :actions 1}
@@ -98,12 +98,12 @@
                             :play-area [bandit]
                             :discard   [gold]
                             :actions   0}
-                           {:deck   [gold]
-                            :reveal [estate silver]}]
+                           {:deck     [gold]
+                            :revealed [estate silver]}]
             :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
                             :player-no 1
                             :choice    :trash-from-revealed
-                            :source    :reveal
+                            :source    :revealed
                             :options   [:silver]
                             :min       1
                             :max       1}
@@ -120,9 +120,9 @@
                        :play-area [bandit]
                        :discard   [gold]
                        :actions   0}
-                      {:deck    [gold]
-                       :reveal  []
-                       :discard [estate]}]
+                      {:deck     [gold]
+                       :revealed []
+                       :discard  [estate]}]
             :trash   [silver]}))
     (is (= (-> {:mode    :swift
                 :supply  [{:card gold :pile-size 30}]
@@ -136,9 +136,9 @@
                        :play-area [bandit]
                        :discard   [gold]
                        :actions   0}
-                      {:deck    [gold]
-                       :reveal  []
-                       :discard [estate]}]
+                      {:deck     [gold]
+                       :revealed []
+                       :discard  [estate]}]
             :trash   [silver]}))
     (is (= (play {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [bandit]
@@ -151,13 +151,13 @@
                             :play-area [bandit]
                             :discard   [gold]
                             :actions   0}
-                           {:deck   [estate]
-                            :reveal [silver gold]}
+                           {:deck     [estate]
+                            :revealed [silver gold]}
                            {:deck [copper gold estate]}]
             :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
                             :player-no 1
                             :choice    :trash-from-revealed
-                            :source    :reveal
+                            :source    :revealed
                             :options   [:silver :gold]
                             :min       1
                             :max       1}
@@ -169,7 +169,7 @@
                             :effect    [:give-choice
                                         {:text    "Trash a revealed Treasure other than Copper, and discards the rest."
                                          :choice  :trash-from-revealed
-                                         :options [:player :reveal {:not-name :copper :type :treasure}]
+                                         :options [:player :revealed {:not-name :copper :type :treasure}]
                                          :max     1
                                          :min     1}]}
                            {:player-no 2
@@ -186,15 +186,15 @@
                             :play-area [bandit]
                             :discard   [gold]
                             :actions   0}
-                           {:deck    [estate]
-                            :discard [gold]
-                            :reveal  []}
-                           {:deck   [estate]
-                            :reveal [copper gold]}]
+                           {:deck     [estate]
+                            :discard  [gold]
+                            :revealed []}
+                           {:deck     [estate]
+                            :revealed [copper gold]}]
             :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
                             :player-no 2
                             :choice    :trash-from-revealed
-                            :source    :reveal
+                            :source    :revealed
                             :options   [:gold]
                             :min       1
                             :max       1}
@@ -212,8 +212,8 @@
                        :play-area [bandit]
                        :discard   [gold]
                        :actions   0}
-                      {:deck   []
-                       :reveal []}]
+                      {:deck     []
+                       :revealed []}]
             :trash   [silver]}))))
 
 (deftest bureaucrat-test
@@ -224,13 +224,13 @@
                              :actions 1}
                             {:hand (repeat 5 copper)}]}
                  0 :bureaucrat)
-           {:supply  [{:card silver :pile-size 39}]
-            :players [{:hand      []
-                       :play-area [bureaucrat]
-                       :deck      [silver copper]
-                       :actions   0}
-                      {:hand (repeat 5 copper)}]
-            :reveal  {1 (repeat 5 copper)}}))
+           {:supply   [{:card silver :pile-size 39}]
+            :players  [{:hand      []
+                        :play-area [bureaucrat]
+                        :deck      [silver copper]
+                        :actions   0}
+                       {:hand (repeat 5 copper)}]
+            :revealed {1 (repeat 5 copper)}}))
     (is (= (play {:supply  [{:card silver :pile-size 40}]
                   :players [{:hand    [bureaucrat]
                              :deck    [copper]
