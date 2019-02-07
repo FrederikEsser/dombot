@@ -47,8 +47,9 @@
                 (assoc card :number-of-cards number-of-cards))))))
 
 (defn model-hand [active-player? {{:keys [hand hand-revealed?]} :player
+                                  {:keys [source]}              :choice
                                   :as                           data}]
-  (if (or active-player? hand-revealed?)
+  (if (or active-player? hand-revealed? (= :hand source))
     (model-area :hand data)
     [{:name.ui         "Hand"
       :number-of-cards (count hand)}]))
@@ -77,16 +78,24 @@
                   {:number-of-cards approx-discard-size})
                 (choice-interaction name :discard choice))]))))
 
+(defn model-choice [{:keys [options min max] :as choice}]
+  (merge (select-keys choice [:text :min :max])
+         (when (= 1 min (or max (count options)))
+           {:quick-choice true})))
+
 (defn model-player [active-player? {{:keys [name actions coins buys]} :player
+                                    choice                            :choice
                                     :as                               data}]
-  {:name      (ut/format-name name)
-   :hand      (model-hand active-player? data)
-   :play-area (model-area :play-area data)
-   :deck      (model-deck data)
-   :discard   (model-discard data)
-   :actions   actions
-   :money     coins
-   :buys      buys})
+  (merge {:name      (ut/format-name name)
+          :hand      (model-hand active-player? data)
+          :play-area (model-area :play-area data)
+          :deck      (model-deck data)
+          :discard   (model-discard data)
+          :actions   actions
+          :money     coins
+          :buys      buys}
+         (when choice
+           {:choice (model-choice choice)})))
 
 (defn model-trash [trash mode]
   (if (empty? trash)
@@ -107,17 +116,18 @@
                         (assoc card :number-of-cards number-of-cards)))))))
 
 (defn model-game [{:keys [supply players trash effect-stack current-player]}]
-  (let [[{:keys [player-no text] :as choice}] effect-stack]
+  (let [[{:keys [player-no] :as choice}] effect-stack]
     (cond-> {:supply      (model-supply {:supply supply
                                          :player (get players current-player)
                                          :choice choice})
              :players     (->> players
                                (map-indexed (fn [idx player]
-                                              (model-player (= idx current-player)
-                                                            (merge {:player player}
-                                                                   (when (= idx player-no)
-                                                                     {:choice choice}))))))
+                                              (let [active-player? (and (= idx current-player)
+                                                                        (or (nil? choice)
+                                                                            (= idx player-no)))]
+                                                (model-player active-player?
+                                                              (merge {:player player}
+                                                                     (when (= idx player-no)
+                                                                       {:choice choice})))))))
              :trash-short (model-trash trash :short)
-             :trash-full  (model-trash trash :full)}
-            choice (assoc :choice {:text   text
-                                   :player (ut/format-name (get-in players [player-no :name]))}))))
+             :trash-full  (model-trash trash :full)})))

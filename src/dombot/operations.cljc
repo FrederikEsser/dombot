@@ -365,8 +365,8 @@
 (defn view-game [{:keys [supply players trash effect-stack current-player revealed] :as game}]
   (if (game-ended? game)
     {:players (map view-end-player players)}
-    (model/model-game game)
-    #_(let [[{:keys [player-no text options]}] effect-stack
+    #_(model/model-game game)
+    (let [[{:keys [player-no text options]}] effect-stack
           revealed (->> revealed
                         (map (fn [[player-no hand]]
                                {:player (get-in players [player-no :name])

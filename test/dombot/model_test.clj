@@ -395,7 +395,8 @@
                                         :coins     0
                                         :buys      1
                                         :phase     :action}
-                               :choice {:source  :hand
+                               :choice {:text    "Choice text"
+                                        :source  :hand
                                         :options [:estate :moat]}})
            {:name      "John Doe"
             :hand      [{:name            :copper
@@ -427,7 +428,8 @@
                          :type    #{:treasure}}]
             :actions   2
             :money     0
-            :buys      1}))
+            :buys      1
+            :choice    {:text "Choice text"}}))
     (is (= (model-player true {:player {:name      "John Doe"
                                         :hand      [copper copper remodel estate moat]
                                         :play-area [village]
@@ -437,9 +439,12 @@
                                         :coins     0
                                         :buys      1
                                         :phase     :action}
-                               :choice {:source        :discard
+                               :choice {:text          "Choice text"
+                                        :source        :discard
                                         :reveal-source true
-                                        :options       [:estate]}})
+                                        :options       [:estate]
+                                        :min           1
+                                        :quick-choice  true}})
            {:name      "John Doe"
             :hand      [{:name            :copper
                          :name.ui         "Copper"
@@ -471,14 +476,17 @@
                          :name.ui         "Estate"
                          :type            #{:victory}
                          :number-of-cards 1
-                         :interaction     :choosable}
+                         :interaction     :quick-choosable}
                         {:name            :silver
                          :name.ui         "Silver"
                          :type            #{:treasure}
                          :number-of-cards 1}]
             :actions   2
             :money     0
-            :buys      1}))
+            :buys      1
+            :choice    {:text         "Choice text"
+                        :min          1
+                        :quick-choice true}}))
     (is (= (model-player false {:player {:name      "John Doe"
                                          :hand      [copper copper remodel estate moat]
                                          :play-area []
@@ -535,7 +543,54 @@
                          :type    #{:treasure}}]
             :actions   0
             :money     0
-            :buys      0}))))
+            :buys      0}))
+    (is (= (model-player false {:player {:name      "John Doe"
+                                         :hand      [copper copper remodel estate moat]
+                                         :play-area []
+                                         :deck      [copper estate]
+                                         :discard   [copper estate silver]
+                                         :actions   0
+                                         :coins     0
+                                         :buys      0
+                                         :phase     :action}
+                                :choice {:text    "Discard down to 3 cards in hand."
+                                         :source  :hand
+                                         :min     2
+                                         :max     2
+                                         :options [:copper :copper :remodel :estate :moat]}})
+           {:name      "John Doe"
+            :hand      [{:name            :copper
+                         :name.ui         "Copper"
+                         :type            #{:treasure}
+                         :number-of-cards 2
+                         :interaction     :choosable}
+                        {:name            :remodel
+                         :name.ui         "Remodel"
+                         :type            #{:action}
+                         :number-of-cards 1
+                         :interaction     :choosable}
+                        {:name            :estate
+                         :name.ui         "Estate"
+                         :type            #{:victory}
+                         :number-of-cards 1
+                         :interaction     :choosable}
+                        {:name            :moat
+                         :name.ui         "Moat"
+                         :type            #{:action :reaction}
+                         :number-of-cards 1
+                         :interaction     :choosable}]
+            :play-area []
+            :deck      [{:name.ui         "Deck"
+                         :number-of-cards 2}]
+            :discard   [{:name    :silver
+                         :name.ui "Silver"
+                         :type    #{:treasure}}]
+            :actions   0
+            :money     0
+            :buys      0
+            :choice    {:text "Discard down to 3 cards in hand."
+                        :min  2
+                        :max  2}}))))
 
 (deftest trash-model-test
   (testing "Trash model"
