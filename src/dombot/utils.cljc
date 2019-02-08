@@ -67,14 +67,14 @@
             reacts-to (filter (comp #{reacts-to} :reacts-to))
             :always (map :name))))
 
-(defn supply-piles [{:keys [supply]} player-no {:keys [max-cost type]}]
-  (cond->> supply
-           max-cost (filter (fn [{{:keys [cost]} :card
-                                  pile-size      :pile-size}]
-                              (and (<= cost max-cost)
-                                   (< 0 pile-size))))
-           type (filter (comp type :type :card))
-           :always (map (comp :name :card))))
+(defn supply-piles [{:keys [supply]} player-no {:keys [max-cost cost type]}]
+  (-> supply
+      (cond->>
+        max-cost (filter (comp (partial >= max-cost) :cost :card))
+        cost (filter (comp #{cost} :cost :card))
+        type (filter (comp type :type :card)))
+      (->> (filter (comp pos? :pile-size))
+           (map (comp :name :card)))))
 
 (defn empty-supply-piles [{:keys [supply] :as game}]
   (->> supply
