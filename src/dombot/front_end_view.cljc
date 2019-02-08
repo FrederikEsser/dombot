@@ -83,9 +83,13 @@
          (when (= 1 min (or max (count options)))
            {:quick-choice true})))
 
-(defn view-player [active-player? {{:keys [name actions coins buys]} :player
-                                   choice                            :choice
-                                   :as                               data}]
+(defn view-player [active-player? {{:keys [name
+                                           actions
+                                           coins
+                                           buys
+                                           set-aside]} :player
+                                   choice              :choice
+                                   :as                 data}]
   (merge {:name      (ut/format-name name)
           :hand      (view-hand active-player? data)
           :play-area (view-area :play-area data)
@@ -94,6 +98,8 @@
           :actions   actions
           :money     coins
           :buys      buys}
+         (when (not-empty set-aside)
+           {:set-aside (view-area :set-aside data)})
          (when choice
            {:choice (view-choice choice)})))
 

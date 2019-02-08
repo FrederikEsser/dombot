@@ -4,7 +4,6 @@
   (:gen-class))
 
 ; todo:
-; model for look-at
 ; clear hand-revealed?
 ; make frequencies optional
 ; end game

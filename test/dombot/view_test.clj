@@ -590,7 +590,36 @@
             :buys      0
             :choice    {:text "Discard down to 3 cards in hand."
                         :min  2
-                        :max  2}}))))
+                        :max  2}}))
+    (is (= (view-player true {:player {:name      "John Doe"
+                                       :hand      []
+                                       :play-area [library]
+                                       :deck      []
+                                       :discard   []
+                                       :set-aside [festival village]
+                                       :actions   0
+                                       :coins     0
+                                       :buys      0
+                                       :phase     :action}})
+           {:name      "John Doe"
+            :hand      []
+            :play-area [{:name            :library
+                         :name.ui         "Library"
+                         :type            #{:action}
+                         :number-of-cards 1}]
+            :set-aside [{:name            :festival
+                         :name.ui         "Festival"
+                         :type            #{:action}
+                         :number-of-cards 1}
+                        {:name            :village
+                         :name.ui         "Village"
+                         :type            #{:action}
+                         :number-of-cards 1}]
+            :deck      []
+            :discard   []
+            :actions   0
+            :money     0
+            :buys      0}))))
 
 (deftest trash-view-test
   (testing "Trash view"
