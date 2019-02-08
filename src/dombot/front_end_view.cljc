@@ -26,8 +26,10 @@
                      (choice-interaction name :supply choice))))))
 
 (defn view-area [area {{:keys [phase actions] :as player} :player
-                       choice                             :choice}]
-  (let [cards (get player area)]
+                       choice                             :choice}
+                 & [number-of-cards]]
+  (let [cards (cond->> (get player area)
+                       number-of-cards (take-last number-of-cards))]
     (->> cards
          (map (fn [{:keys [name type]}]
                 (merge {:name    name
@@ -46,37 +48,38 @@
          (map (fn [[card number-of-cards]]
                 (assoc card :number-of-cards number-of-cards))))))
 
-(defn view-hand [active-player? {{:keys [hand hand-revealed?]} :player
+(defn view-hand [active-player? {{:keys [hand revealed-cards]} :player
                                  {:keys [source]}              :choice
                                  :as                           data}]
-  (if (or active-player? hand-revealed? (= :hand source))
+  (if (or active-player?
+          (= (:hand revealed-cards) (count hand))
+          (= :hand source))
     (view-area :hand data)
     [{:name.ui         "Hand"
       :number-of-cards (count hand)}]))
 
-(defn view-deck [{{:keys [deck]} :player
-                  :as            data}]
-  (concat
-    (view-area :look-at data)
-    (view-area :revealed data)
-    (when (< 0 (count deck))
-      [{:name.ui         "Deck"
-        :number-of-cards (count deck)}])))
+(defn view-deck [{{:keys [deck look-at revealed]} :player
+                  :as                             data}]
+  (let [full-deck (concat look-at revealed deck)]
+    (if (empty? full-deck)
+      {}
+      (merge {:number-of-cards (count full-deck)}
+             (when (not-empty (concat look-at revealed))
+               {:visible-cards (concat (view-area :look-at data)
+                                       (view-area :revealed data))})))))
 
-(defn view-discard [{{:keys [discard approx-discard-size]} :player
-                     {:keys [reveal-source] :as choice}    :choice
-                     :as                                   data}]
+(defn view-discard [{{:keys [discard
+                             approx-discard-size
+                             revealed-cards]} :player
+                     {:keys [reveal-source]}  :choice
+                     :as                      data}]
   (if (empty? discard)
-    []
-    (if reveal-source
-      (view-area :discard data)
-      (let [{:keys [name type]} (last discard)]
-        [(merge {:name    name
-                 :name.ui (ut/format-name name)
-                 :type    type}
-                (when approx-discard-size
-                  {:number-of-cards approx-discard-size})
-                (choice-interaction name :discard choice))]))))
+    {}
+    (let [number-of-cards (or (:discard revealed-cards)
+                              (and reveal-source (count discard))
+                              1)]
+      {:visible-cards   (view-area :discard data number-of-cards)
+       :number-of-cards approx-discard-size})))
 
 (defn view-choice [{:keys [options min max] :as choice}]
   (merge (select-keys choice [:text :min :max])
@@ -98,6 +101,8 @@
           :actions   actions
           :money     coins
           :buys      buys}
+         (when active-player?
+           {:active? true})
          (when (not-empty set-aside)
            {:set-aside (view-area :set-aside data)})
          (when choice
@@ -107,11 +112,11 @@
   (if (empty? trash)
     []
     (case mode
-      :short (let [{:keys [name type]} (last trash)]
-               [(merge {:name            name
-                        :name.ui         (ut/format-name name)
-                        :type            type
-                        :number-of-cards (count trash)})])
+      :compressed (let [{:keys [name type]} (last trash)]
+                    [(merge {:name            name
+                             :name.ui         (ut/format-name name)
+                             :type            type
+                             :number-of-cards (count trash)})])
       :full (->> trash
                  (map (fn [{:keys [name type]}]
                         (merge {:name    name
@@ -132,18 +137,18 @@
 
 (defn view-game [{:keys [supply players trash effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack]
-    (cond-> {:supply      (view-supply {:supply supply
-                                        :player (get players current-player)
-                                        :choice choice})
-             :players     (->> players
-                               (map-indexed (fn [idx player]
-                                              (let [active-player? (and (= idx current-player)
-                                                                        (or (nil? choice)
-                                                                            (= idx player-no)))]
-                                                (view-player active-player?
-                                                             (merge {:player player}
-                                                                    (when (= idx player-no)
-                                                                      {:choice choice})))))))
-             :trash-short (view-trash trash :short)
-             :trash-full  (view-trash trash :full)
-             :commands    (view-commands game)})))
+    (cond-> {:supply   (view-supply {:supply supply
+                                     :player (get players current-player)
+                                     :choice choice})
+             :players  (->> players
+                            (map-indexed (fn [idx player]
+                                           (let [active-player? (and (= idx current-player)
+                                                                     (or (nil? choice)
+                                                                         (= idx player-no)))]
+                                             (view-player active-player?
+                                                          (merge {:player player}
+                                                                 (when (= idx player-no)
+                                                                   {:choice choice})))))))
+             :trash    {:compressed (view-trash trash :compressed)
+                        :full       (view-trash trash :full)}
+             :commands (view-commands game)})))

@@ -24,6 +24,23 @@
     (cond-> game
             approx-discard-size (assoc-in [:players player-no :approx-discard-size] approx-size))))
 
+(defn increase-revealed-number-of-cards [game player-no area]
+  (cond-> game
+          (not= :trash area) (update-in [:players player-no :revealed-cards area] #(if % (inc %) 1))))
+
+(defn reset-revealed-number-of-cards [game player-no area]
+  (let [revealed-cards (get-in game [:players player-no :revealed-cards])]
+    (cond-> game
+            revealed-cards (update-in [:players player-no :revealed-cards] dissoc area))))
+
+(defn update-status-fields [game player-no from to]
+  (cond-> game
+          (and (= :deck from) (:can-undo? game)) (assoc :can-undo? false)
+          (or (= from :discard) (= to :discard)) (set-approx-discard-size player-no)
+          (= from :revealed) (increase-revealed-number-of-cards player-no to)
+          (not= from :revealed) (-> (reset-revealed-number-of-cards player-no from)
+                                    (reset-revealed-number-of-cards player-no to))))
+
 (defn gain [game player-no card-name & [{:keys [to to-position]
                                          :or   {to :discard}}]]
   (let [{:keys [idx card]} (ut/get-pile-idx game card-name)
@@ -36,7 +53,7 @@
     (cond-> game
             (< 0 pile-size) (-> (update-in [:supply idx :pile-size] dec)
                                 (update-in [:players player-no to] add-card-to-coll card)
-                                (cond-> (= to :discard) (set-approx-discard-size player-no))))))
+                                (update-status-fields player-no :supply to)))))
 
 (defn buy-card [{:keys [effect-stack] :as game} player-no card-name]
   (let [{:keys [buys coins phase]} (get-in game [:players player-no])
@@ -56,17 +73,22 @@
         (update-in [:players player-no :coins] - cost)
         (update-in [:players player-no :buys] - 1))))
 
-(defn shuffle-discard [{:keys [deck discard] :as player}]
-  (assert (empty? deck) "Shuffle error: Your deck is not empty.")
-  (-> player
-      (assoc :deck (shuffle discard))
-      (assoc :discard [])))
+(defn shuffle-discard
+  ([{:keys [deck discard] :as player}]
+   (assert (empty? deck) "Shuffle error: Your deck is not empty.")
+   (-> player
+       (assoc :deck (shuffle discard))
+       (assoc :discard [])))
+  ([game player-no]
+   (-> game
+       (update-in [:players player-no] shuffle-discard)
+       (update-status-fields player-no :discard :deck))))
 
 (defn move-card [game player-no {:keys [card-name from from-position to to-position] :as args}]
   (let [{:keys [deck discard] :as player} (get-in game [:players player-no])]
     (if (and (= :deck from) (empty? deck) (not-empty discard))
       (-> game
-          (update-in [:players player-no] shuffle-discard)
+          (shuffle-discard player-no)
           (move-card player-no args))
       (let [{:keys [idx card]} (case from-position
                                  :bottom {:idx (dec (count (get player from))) :card (last (get player from))}
@@ -89,8 +111,7 @@
         (cond-> game
                 card (-> (update-in from-path ut/vec-remove idx)
                          (update-in to-path add-card-to-coll card)
-                         (cond-> (and (= :deck from) (:can-undo? game)) (assoc :can-undo? false)
-                                 (or (= from :discard) (= to :discard)) (set-approx-discard-size player-no))))))))
+                         (update-status-fields player-no from to)))))))
 
 (defn move-cards [game player-no {:keys [card-names number-of-cards from-position] :as args}]
   (assert (or card-names
@@ -308,7 +329,8 @@
        (update-in [:players player-no] clean-up)
        (set-approx-discard-size player-no)
        (draw player-no 5)
-       (dissoc :revealed))))
+       (dissoc :revealed
+               :revealed-cards))))
 
 (defn- get-victory-points [cards {:keys [victory-points]}]
   (if (fn? victory-points)

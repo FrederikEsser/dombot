@@ -4,9 +4,10 @@
   (:gen-class))
 
 ; todo:
-; clear hand-revealed?
-; make frequencies optional
+; generalize checks for possible operations
+; slow mode
 ; end game
+; make frequencies optional
 ; unit tests for do-for-other-players, give-choice, choose, gardens, calc-victory-points, ...
 ; handle multiple reaction cards
 ; game log / turn counter

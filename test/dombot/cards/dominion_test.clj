@@ -85,9 +85,10 @@
                        :play-area [bandit]
                        :discard   [gold]
                        :actions   0}
-                      {:deck     [estate]
-                       :discard  [estate estate]
-                       :revealed []}]}))
+                      {:deck           [estate]
+                       :discard        [estate estate]
+                       :revealed       []
+                       :revealed-cards {:discard 2}}]}))
     (is (= (play {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [bandit]
                              :actions 1}
@@ -120,9 +121,10 @@
                        :play-area [bandit]
                        :discard   [gold]
                        :actions   0}
-                      {:deck     [gold]
-                       :revealed []
-                       :discard  [estate]}]
+                      {:deck           [gold]
+                       :revealed       []
+                       :revealed-cards {:discard 1}
+                       :discard        [estate]}]
             :trash   [silver]}))
     (is (= (-> {:mode    :swift
                 :supply  [{:card gold :pile-size 30}]
@@ -136,9 +138,10 @@
                        :play-area [bandit]
                        :discard   [gold]
                        :actions   0}
-                      {:deck     [gold]
-                       :revealed []
-                       :discard  [estate]}]
+                      {:deck           [gold]
+                       :revealed       []
+                       :revealed-cards {:discard 1}
+                       :discard        [estate]}]
             :trash   [silver]}))
     (is (= (play {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [bandit]
@@ -186,9 +189,10 @@
                             :play-area [bandit]
                             :discard   [gold]
                             :actions   0}
-                           {:deck     [estate]
-                            :discard  [gold]
-                            :revealed []}
+                           {:deck           [estate]
+                            :discard        [gold]
+                            :revealed       []
+                            :revealed-cards {:discard 1}}
                            {:deck     [estate]
                             :revealed [copper gold]}]
             :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
@@ -230,7 +234,7 @@
                        :deck      [silver copper]
                        :actions   0}
                       {:hand           (repeat 5 copper)
-                       :hand-revealed? true}]}))
+                       :revealed-cards {:hand 5}}]}))
     (is (= (play {:supply  [{:card silver :pile-size 40}]
                   :players [{:hand    [bureaucrat]
                              :deck    [copper]
@@ -280,7 +284,25 @@
                        :deck      [silver copper]
                        :actions   0}
                       {:hand [copper copper copper estate]
-                       :deck [estate gold]}]}))))
+                       :deck [estate gold]}]}))
+    (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                :players [{:hand    [bureaucrat militia]
+                           :deck    [copper]
+                           :actions 2
+                           :coins   0}
+                          {:hand (repeat 5 copper)}]}
+               (play 0 :bureaucrat)
+               (play 0 :militia)
+               (choose [:copper :copper]))
+           {:supply  [{:card silver :pile-size 39}]
+            :players [{:hand      []
+                       :play-area [bureaucrat militia]
+                       :deck      [silver copper]
+                       :actions   0
+                       :coins     2}
+                      {:hand           [copper copper copper]
+                       :discard        [copper copper]
+                       :revealed-cards {}}]}))))
 
 (deftest cellar-test
   (testing "Cellar"

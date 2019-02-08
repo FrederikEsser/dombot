@@ -45,7 +45,8 @@
                               :to         :discard}))
 
 (defn reveal-hand [game player-no]
-  (assoc-in game [:players player-no :hand-revealed?] true))
+  (let [hand (get-in game [:players player-no :hand])]
+    (assoc-in game [:players player-no :revealed-cards :hand] (count hand))))
 
 (defn discard-down-to [game player-no n]
   (let [hand (get-in game [:players player-no :hand])]

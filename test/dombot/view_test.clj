@@ -124,82 +124,150 @@
 
 (deftest deck-test
   (testing "Deck view"
+    (is (= (view-deck {:player {:deck []}})
+           {}))
     (is (= (view-deck {:player {:deck [copper copper copper]}})
-           [{:name.ui         "Deck"
-             :number-of-cards 3}]))
+           {:number-of-cards 3}))
     (is (= (view-deck {:player {:deck    [copper copper copper]
                                 :look-at [estate estate]}})
-           [{:name            :estate
-             :name.ui         "Estate"
-             :type            #{:victory}
-             :number-of-cards 2}
-            {:name.ui         "Deck"
-             :number-of-cards 3}]))
+           {:visible-cards   [{:name            :estate
+                               :name.ui         "Estate"
+                               :type            #{:victory}
+                               :number-of-cards 2}]
+            :number-of-cards 5}))
     (is (= (view-deck {:player {:deck     [copper copper copper]
                                 :revealed [estate gold]}})
-           [{:name            :estate
-             :name.ui         "Estate"
-             :type            #{:victory}
-             :number-of-cards 1}
-            {:name            :gold
-             :name.ui         "Gold"
-             :type            #{:treasure}
-             :number-of-cards 1}
-            {:name.ui         "Deck"
-             :number-of-cards 3}]))))
+           {:visible-cards   [{:name            :estate
+                               :name.ui         "Estate"
+                               :type            #{:victory}
+                               :number-of-cards 1}
+                              {:name            :gold
+                               :name.ui         "Gold"
+                               :type            #{:treasure}
+                               :number-of-cards 1}]
+            :number-of-cards 5}))))
 
 (deftest discard-test
   (testing "Discard view"
     (is (= (view-discard {:player {:discard []}})
-           []))
+           {}))
     (is (= (view-discard {:player {:discard             [estate]
                                    :approx-discard-size 1}})
-           [{:name            :estate
-             :name.ui         "Estate"
-             :type            #{:victory}
-             :number-of-cards 1}]))
+           {:visible-cards   [{:name            :estate
+                               :name.ui         "Estate"
+                               :type            #{:victory}
+                               :number-of-cards 1}]
+            :number-of-cards 1}))
     (testing "randomized number of cards"
       (is (= (view-discard {:player {:discard             [copper estate]
                                      :approx-discard-size 1}})
-             [{:name            :estate
-               :name.ui         "Estate"
-               :type            #{:victory}
-               :number-of-cards 1}]))
+             {:visible-cards   [{:name            :estate
+                                 :name.ui         "Estate"
+                                 :type            #{:victory}
+                                 :number-of-cards 1}]
+              :number-of-cards 1}))
       (is (= (view-discard {:player {:discard             [copper estate]
                                      :approx-discard-size 2}})
-             [{:name            :estate
-               :name.ui         "Estate"
-               :type            #{:victory}
-               :number-of-cards 2}]))
+             {:visible-cards   [{:name            :estate
+                                 :name.ui         "Estate"
+                                 :type            #{:victory}
+                                 :number-of-cards 1}]
+              :number-of-cards 2}))
       (is (= (view-discard {:player {:discard             [copper estate]
                                      :approx-discard-size 3}})
-             [{:name            :estate
-               :name.ui         "Estate"
-               :type            #{:victory}
-               :number-of-cards 3}])))
+             {:visible-cards   [{:name            :estate
+                                 :name.ui         "Estate"
+                                 :type            #{:victory}
+                                 :number-of-cards 1}]
+              :number-of-cards 3})))
     (testing "with choice"
-      (is (= (view-discard {:player {:discard [copper estate]}
+      (is (= (view-discard {:player {:discard             [copper estate]
+                                     :approx-discard-size 2}
                             :choice {:source :hand}})
-             [{:name    :estate
-               :name.ui "Estate"
-               :type    #{:victory}}]))
-      (is (= (view-discard {:player {:discard [copper estate]}
+             {:visible-cards   [{:name            :estate
+                                 :name.ui         "Estate"
+                                 :type            #{:victory}
+                                 :number-of-cards 1}]
+              :number-of-cards 2}))
+      (is (= (view-discard {:player {:discard             [copper estate]
+                                     :approx-discard-size 2}
                             :choice {:source :discard :options [:estate]}})
-             [{:name        :estate
-               :name.ui     "Estate"
-               :type        #{:victory}
-               :interaction :choosable}]))
-      (is (= (view-discard {:player {:discard [copper estate]}
+             {:visible-cards   [{:name            :estate
+                                 :name.ui         "Estate"
+                                 :type            #{:victory}
+                                 :interaction     :choosable
+                                 :number-of-cards 1}]
+              :number-of-cards 2}))
+      (is (= (view-discard {:player {:discard             [copper estate]
+                                     :approx-discard-size 2}
                             :choice {:source :discard :reveal-source true :options [:estate]}})
-             [{:name            :copper
-               :name.ui         "Copper"
-               :type            #{:treasure}
-               :number-of-cards 1}
-              {:name            :estate
-               :name.ui         "Estate"
-               :type            #{:victory}
-               :interaction     :choosable
-               :number-of-cards 1}])))))
+             {:visible-cards   [{:name            :copper
+                                 :name.ui         "Copper"
+                                 :type            #{:treasure}
+                                 :number-of-cards 1}
+                                {:name            :estate
+                                 :name.ui         "Estate"
+                                 :type            #{:victory}
+                                 :interaction     :choosable
+                                 :number-of-cards 1}]
+              :number-of-cards 2})))
+    (testing "revealed cards"
+      (is (= (view-discard {:player {:discard             [copper silver estate estate]
+                                     :approx-discard-size 4
+                                     :revealed-cards      {:discard 2}}})
+             {:visible-cards   [{:name            :estate
+                                 :name.ui         "Estate"
+                                 :type            #{:victory}
+                                 :number-of-cards 2}]
+              :number-of-cards 4}))
+      (is (= (view-discard {:player {:discard             [copper silver gold estate]
+                                     :approx-discard-size 4
+                                     :revealed-cards      {:discard 2}}})
+             {:visible-cards   [{:name            :gold
+                                 :name.ui         "Gold"
+                                 :type            #{:treasure}
+                                 :number-of-cards 1}
+                                {:name            :estate
+                                 :name.ui         "Estate"
+                                 :type            #{:victory}
+                                 :number-of-cards 1}]
+              :number-of-cards 4}))
+      (is (= (view-discard {:player {:discard             [gold estate]
+                                     :approx-discard-size 2
+                                     :revealed-cards      {:discard 2}}})
+             {:visible-cards   [{:name            :gold
+                                 :name.ui         "Gold"
+                                 :type            #{:treasure}
+                                 :number-of-cards 1}
+                                {:name            :estate
+                                 :name.ui         "Estate"
+                                 :type            #{:victory}
+                                 :number-of-cards 1}]
+              :number-of-cards 2}))
+      (is (= (view-discard {:player {:discard             [gold estate]
+                                     :approx-discard-size 3
+                                     :revealed-cards      {:discard 2}}})
+             {:visible-cards   [{:name            :gold
+                                 :name.ui         "Gold"
+                                 :type            #{:treasure}
+                                 :number-of-cards 1}
+                                {:name            :estate
+                                 :name.ui         "Estate"
+                                 :type            #{:victory}
+                                 :number-of-cards 1}]
+              :number-of-cards 3}))
+      (is (= (view-discard {:player {:discard             [gold estate]
+                                     :approx-discard-size 1
+                                     :revealed-cards      {:discard 2}}})
+             {:visible-cards   [{:name            :gold
+                                 :name.ui         "Gold"
+                                 :type            #{:treasure}
+                                 :number-of-cards 1}
+                                {:name            :estate
+                                 :name.ui         "Estate"
+                                 :type            #{:victory}
+                                 :number-of-cards 1}]
+              :number-of-cards 1})))))
 
 (deftest hand-test
   (testing "Hand view"
@@ -345,16 +413,18 @@
 
 (deftest player-view-test
   (testing "Player view"
-    (is (= (view-player true {:player {:name      "John Doe"
-                                       :hand      [copper copper remodel estate moat]
-                                       :play-area [village]
-                                       :deck      [copper estate]
-                                       :discard   [copper estate silver]
-                                       :actions   2
-                                       :coins     0
-                                       :buys      1
-                                       :phase     :action}})
+    (is (= (view-player true {:player {:name                "John Doe"
+                                       :hand                [copper copper remodel estate moat]
+                                       :play-area           [village]
+                                       :deck                [copper estate]
+                                       :discard             [copper estate silver]
+                                       :approx-discard-size 3
+                                       :actions             2
+                                       :coins               0
+                                       :buys                1
+                                       :phase               :action}})
            {:name      "John Doe"
+            :active?   true
             :hand      [{:name            :copper
                          :name.ui         "Copper"
                          :type            #{:treasure}
@@ -378,27 +448,30 @@
                          :name.ui         "Village"
                          :type            #{:action}
                          :number-of-cards 1}]
-            :deck      [{:name.ui         "Deck"
-                         :number-of-cards 2}]
-            :discard   [{:name    :silver
-                         :name.ui "Silver"
-                         :type    #{:treasure}}]
+            :deck      {:number-of-cards 2}
+            :discard   {:visible-cards   [{:name            :silver
+                                           :name.ui         "Silver"
+                                           :type            #{:treasure}
+                                           :number-of-cards 1}]
+                        :number-of-cards 3}
             :actions   2
             :money     0
             :buys      1}))
-    (is (= (view-player true {:player {:name      "John Doe"
-                                       :hand      [copper copper remodel estate moat]
-                                       :play-area [village]
-                                       :deck      [copper estate]
-                                       :discard   [copper estate silver]
-                                       :actions   2
-                                       :coins     0
-                                       :buys      1
-                                       :phase     :action}
+    (is (= (view-player true {:player {:name                "John Doe"
+                                       :hand                [copper copper remodel estate moat]
+                                       :play-area           [village]
+                                       :deck                [copper estate]
+                                       :discard             [copper estate silver]
+                                       :approx-discard-size 3
+                                       :actions             2
+                                       :coins               0
+                                       :buys                1
+                                       :phase               :action}
                               :choice {:text    "Choice text"
                                        :source  :hand
                                        :options [:estate :moat]}})
            {:name      "John Doe"
+            :active?   true
             :hand      [{:name            :copper
                          :name.ui         "Copper"
                          :type            #{:treasure}
@@ -421,24 +494,26 @@
                          :name.ui         "Village"
                          :type            #{:action}
                          :number-of-cards 1}]
-            :deck      [{:name.ui         "Deck"
-                         :number-of-cards 2}]
-            :discard   [{:name    :silver
-                         :name.ui "Silver"
-                         :type    #{:treasure}}]
+            :deck      {:number-of-cards 2}
+            :discard   {:visible-cards   [{:name            :silver
+                                           :name.ui         "Silver"
+                                           :type            #{:treasure}
+                                           :number-of-cards 1}]
+                        :number-of-cards 3}
             :actions   2
             :money     0
             :buys      1
             :choice    {:text "Choice text"}}))
-    (is (= (view-player true {:player {:name      "John Doe"
-                                       :hand      [copper copper remodel estate moat]
-                                       :play-area [village]
-                                       :deck      [copper estate]
-                                       :discard   [copper estate silver]
-                                       :actions   2
-                                       :coins     0
-                                       :buys      1
-                                       :phase     :action}
+    (is (= (view-player true {:player {:name                "John Doe"
+                                       :hand                [copper copper remodel estate moat]
+                                       :play-area           [village]
+                                       :deck                [copper estate]
+                                       :discard             [copper estate silver]
+                                       :approx-discard-size 3
+                                       :actions             2
+                                       :coins               0
+                                       :buys                1
+                                       :phase               :action}
                               :choice {:text          "Choice text"
                                        :source        :discard
                                        :reveal-source true
@@ -446,6 +521,7 @@
                                        :min           1
                                        :quick-choice  true}})
            {:name      "John Doe"
+            :active?   true
             :hand      [{:name            :copper
                          :name.ui         "Copper"
                          :type            #{:treasure}
@@ -466,58 +542,61 @@
                          :name.ui         "Village"
                          :type            #{:action}
                          :number-of-cards 1}]
-            :deck      [{:name.ui         "Deck"
-                         :number-of-cards 2}]
-            :discard   [{:name            :copper
-                         :name.ui         "Copper"
-                         :type            #{:treasure}
-                         :number-of-cards 1}
-                        {:name            :estate
-                         :name.ui         "Estate"
-                         :type            #{:victory}
-                         :number-of-cards 1
-                         :interaction     :quick-choosable}
-                        {:name            :silver
-                         :name.ui         "Silver"
-                         :type            #{:treasure}
-                         :number-of-cards 1}]
+            :deck      {:number-of-cards 2}
+            :discard   {:visible-cards   [{:name            :copper
+                                           :name.ui         "Copper"
+                                           :type            #{:treasure}
+                                           :number-of-cards 1}
+                                          {:name            :estate
+                                           :name.ui         "Estate"
+                                           :type            #{:victory}
+                                           :number-of-cards 1
+                                           :interaction     :quick-choosable}
+                                          {:name            :silver
+                                           :name.ui         "Silver"
+                                           :type            #{:treasure}
+                                           :number-of-cards 1}]
+                        :number-of-cards 3}
             :actions   2
             :money     0
             :buys      1
             :choice    {:text         "Choice text"
                         :min          1
-                        :quick-choice true}}))
-    (is (= (view-player false {:player {:name      "John Doe"
-                                        :hand      [copper copper remodel estate moat]
-                                        :play-area []
-                                        :deck      [copper estate]
-                                        :discard   [copper estate silver]
-                                        :actions   0
-                                        :coins     0
-                                        :buys      0
-                                        :phase     :out-of-turn}})
-           {:name      "John Doe"
-            :hand      [{:name.ui         "Hand"
-                         :number-of-cards 5}]
-            :play-area []
-            :deck      [{:name.ui         "Deck"
-                         :number-of-cards 2}]
-            :discard   [{:name    :silver
-                         :name.ui "Silver"
-                         :type    #{:treasure}}]
-            :actions   0
-            :money     0
-            :buys      0}))
-    (is (= (view-player false {:player {:name           "John Doe"
-                                        :hand           [copper copper remodel estate moat]
-                                        :hand-revealed? true
-                                        :play-area      []
-                                        :deck           [copper estate]
-                                        :discard        [copper estate silver]
-                                        :actions        0
-                                        :coins          0
-                                        :buys           0
-                                        :phase          :out-of-turn}})
+                        :quick-choice true}})
+        (is (= (view-player false {:player {:name                "John Doe"
+                                            :hand                [copper copper remodel estate moat]
+                                            :play-area           []
+                                            :deck                [copper estate]
+                                            :discard             [copper estate silver]
+                                            :approx-discard-size 3
+                                            :actions             0
+                                            :coins               0
+                                            :buys                0
+                                            :phase               :out-of-turn}})
+               {:name      "John Doe"
+                :hand      [{:name.ui         "Hand"
+                             :number-of-cards 5}]
+                :play-area []
+                :deck      {:number-of-cards 2}
+                :discard   {:visible-cards   [{:name            :silver
+                                               :name.ui         "Silver"
+                                               :type            #{:treasure}
+                                               :number-of-cards 1}]
+                            :number-of-cards 3}
+                :actions   0
+                :money     0
+                :buys      0})))
+    (is (= (view-player false {:player {:name                "John Doe"
+                                        :hand                [copper copper remodel estate moat]
+                                        :revealed-cards      {:hand 5}
+                                        :play-area           []
+                                        :deck                [copper estate]
+                                        :discard             [copper estate silver]
+                                        :approx-discard-size 3
+                                        :actions             0
+                                        :coins               0
+                                        :buys                0
+                                        :phase               :out-of-turn}})
            {:name      "John Doe"
             :hand      [{:name            :copper
                          :name.ui         "Copper"
@@ -536,23 +615,25 @@
                          :type            #{:action :reaction}
                          :number-of-cards 1}]
             :play-area []
-            :deck      [{:name.ui         "Deck"
-                         :number-of-cards 2}]
-            :discard   [{:name    :silver
-                         :name.ui "Silver"
-                         :type    #{:treasure}}]
+            :deck      {:number-of-cards 2}
+            :discard   {:visible-cards   [{:name            :silver
+                                           :name.ui         "Silver"
+                                           :type            #{:treasure}
+                                           :number-of-cards 1}]
+                        :number-of-cards 3}
             :actions   0
             :money     0
             :buys      0}))
-    (is (= (view-player false {:player {:name      "John Doe"
-                                        :hand      [copper copper remodel estate moat]
-                                        :play-area []
-                                        :deck      [copper estate]
-                                        :discard   [copper estate silver]
-                                        :actions   0
-                                        :coins     0
-                                        :buys      0
-                                        :phase     :action}
+    (is (= (view-player false {:player {:name                "John Doe"
+                                        :hand                [copper copper remodel estate moat]
+                                        :play-area           []
+                                        :deck                [copper estate]
+                                        :discard             [copper estate silver]
+                                        :approx-discard-size 3
+                                        :actions             0
+                                        :coins               0
+                                        :buys                0
+                                        :phase               :action}
                                :choice {:text    "Discard down to 3 cards in hand."
                                         :source  :hand
                                         :min     2
@@ -580,28 +661,31 @@
                          :number-of-cards 1
                          :interaction     :choosable}]
             :play-area []
-            :deck      [{:name.ui         "Deck"
-                         :number-of-cards 2}]
-            :discard   [{:name    :silver
-                         :name.ui "Silver"
-                         :type    #{:treasure}}]
+            :deck      {:number-of-cards 2}
+            :discard   {:visible-cards   [{:name            :silver
+                                           :name.ui         "Silver"
+                                           :type            #{:treasure}
+                                           :number-of-cards 1}]
+                        :number-of-cards 3}
             :actions   0
             :money     0
             :buys      0
             :choice    {:text "Discard down to 3 cards in hand."
                         :min  2
                         :max  2}}))
-    (is (= (view-player true {:player {:name      "John Doe"
-                                       :hand      []
-                                       :play-area [library]
-                                       :deck      []
-                                       :discard   []
-                                       :set-aside [festival village]
-                                       :actions   0
-                                       :coins     0
-                                       :buys      0
-                                       :phase     :action}})
+    (is (= (view-player true {:player {:name                "John Doe"
+                                       :hand                []
+                                       :play-area           [library]
+                                       :deck                []
+                                       :discard             []
+                                       :approx-discard-size 0
+                                       :set-aside           [festival village]
+                                       :actions             0
+                                       :coins               0
+                                       :buys                0
+                                       :phase               :action}})
            {:name      "John Doe"
+            :active?   true
             :hand      []
             :play-area [{:name            :library
                          :name.ui         "Library"
@@ -615,8 +699,8 @@
                          :name.ui         "Village"
                          :type            #{:action}
                          :number-of-cards 1}]
-            :deck      []
-            :discard   []
+            :deck      {}
+            :discard   {}
             :actions   0
             :money     0
             :buys      0}))))
@@ -625,7 +709,7 @@
   (testing "Trash view"
     (is (= (view-trash [] :full)
            []))
-    (is (= (view-trash [] :short)
+    (is (= (view-trash [] :compressed)
            []))
     (is (= (view-trash [copper copper estate] :full)
            [{:name            :copper
@@ -636,7 +720,7 @@
              :name.ui         "Estate"
              :type            #{:victory}
              :number-of-cards 1}]))
-    (is (= (view-trash [copper copper estate] :short)
+    (is (= (view-trash [copper copper estate] :compressed)
            [{:name            :estate
              :name.ui         "Estate"
              :type            #{:victory}
