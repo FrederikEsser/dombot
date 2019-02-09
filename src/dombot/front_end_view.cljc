@@ -46,7 +46,8 @@
                        (choice-interaction name area choice))))
          frequencies
          (map (fn [[card number-of-cards]]
-                (assoc card :number-of-cards number-of-cards))))))
+                (cond-> card
+                        (< 1 number-of-cards) (assoc :number-of-cards number-of-cards)))))))
 
 (defn view-hand [active-player? {{:keys [hand revealed-cards]} :player
                                  {:keys [source]}              :choice
@@ -124,15 +125,16 @@
                                 :type    type})))
                  frequencies
                  (map (fn [[card number-of-cards]]
-                        (assoc card :number-of-cards number-of-cards)))))))
+                        (cond-> card
+                                (< 1 number-of-cards) (assoc :number-of-cards number-of-cards))))))))
 
 (defn view-commands [{:keys [players effect-stack current-player can-undo?]}]
   (let [{:keys [hand phase]} (get players current-player)
         [choice] effect-stack]
     {:can-undo?           can-undo?
-     :can-play-treasures? (and (some (comp :treasure :type) hand)
-                               (#{:action :pay} phase)
-                               (not choice))
+     :can-play-treasures? (boolean (and (not choice)
+                                        (#{:action :pay} phase)
+                                        (some (comp :treasure :type) hand)))
      :can-end-turn?       (not choice)}))
 
 (defn view-game [{:keys [supply players trash effect-stack current-player] :as game}]

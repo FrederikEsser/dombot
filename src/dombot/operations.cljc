@@ -329,8 +329,7 @@
        (update-in [:players player-no] clean-up)
        (set-approx-discard-size player-no)
        (draw player-no 5)
-       (dissoc :revealed
-               :revealed-cards))))
+       (update :players (partial mapv (fn [player] (dissoc player :revealed-cards)))))))
 
 (defn- get-victory-points [cards {:keys [victory-points]}]
   (if (fn? victory-points)
