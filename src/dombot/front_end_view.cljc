@@ -49,12 +49,13 @@
                 (cond-> card
                         (< 1 number-of-cards) (assoc :number-of-cards number-of-cards)))))))
 
-(defn view-hand [active-player? {{:keys [hand revealed-cards]} :player
-                                 {:keys [source]}              :choice
-                                 :as                           data}]
+(defn view-hand [active-player? {{:keys [hand revealed-cards phase]} :player
+                                 {:keys [source]}                    :choice
+                                 :as                                 data}]
   (if (or active-player?
           (= (:hand revealed-cards) (count hand))
-          (= :hand source))
+          (= :hand source)
+          (= :end-of-game phase))
     (view-area :hand data)
     [{:name.ui         "Hand"
       :number-of-cards (count hand)}]))
@@ -91,9 +92,11 @@
                                            actions
                                            coins
                                            buys
-                                           set-aside]} :player
-                                   choice              :choice
-                                   :as                 data}]
+                                           set-aside
+                                           victory-points
+                                           winner]} :player
+                                   choice           :choice
+                                   :as              data}]
   (merge {:name      (ut/format-name name)
           :hand      (view-hand active-player? data)
           :play-area (view-area :play-area data)
@@ -107,7 +110,11 @@
          (when (not-empty set-aside)
            {:set-aside (view-area :set-aside data)})
          (when choice
-           {:choice (view-choice choice)})))
+           {:choice (view-choice choice)})
+         (when victory-points
+           {:victory-points victory-points})
+         (when (not (nil? winner))
+           {:winner winner})))
 
 (defn view-trash [trash mode]
   (if (empty? trash)
@@ -135,18 +142,21 @@
      :can-play-treasures? (boolean (and (not choice)
                                         (#{:action :pay} phase)
                                         (some (comp :treasure :type) hand)))
-     :can-end-turn?       (not choice)}))
+     :can-end-turn?       (and (not choice)
+                               (not= phase :end-of-game))}))
 
 (defn view-game [{:keys [supply players trash effect-stack current-player] :as game}]
-  (let [[{:keys [player-no] :as choice}] effect-stack]
+  (let [[{:keys [player-no] :as choice}] effect-stack
+        {:keys [phase] :as player} (get players current-player)]
     (cond-> {:supply   (view-supply {:supply supply
-                                     :player (get players current-player)
+                                     :player player
                                      :choice choice})
              :players  (->> players
                             (map-indexed (fn [idx player]
                                            (let [active-player? (and (= idx current-player)
                                                                      (or (nil? choice)
-                                                                         (= idx player-no)))]
+                                                                         (= idx player-no))
+                                                                     (not= phase :end-of-game))]
                                              (view-player active-player?
                                                           (merge {:player player}
                                                                  (when (= idx player-no)

@@ -1,6 +1,6 @@
 (ns dombot.cards.base-cards-test
   (:require [clojure.test :refer :all]
-            [dombot.operations :refer [play play-treasures view-game]]
+            [dombot.operations :refer [play play-treasures]]
             [dombot.cards.base-cards :as base :refer :all]))
 
 (deftest treasure-test
@@ -35,15 +35,3 @@
                        :play-area [gold silver copper copper]
                        :coins     7}]}))))
 
-(deftest view-test
-  (testing "View game end"
-    (is (= (view-game {:supply         [{:card {:name :province} :pile-size 0}]
-                       :players        [{:name      :dombot
-                                         :hand      [copper copper copper estate estate]
-                                         :play-area []
-                                         :deck      [copper copper copper copper estate]
-                                         :discard   []}]
-                       :current-player 0})
-           {:players [{:name           :dombot
-                       :cards          {:copper 7 :estate 3}
-                       :victory-points 3}]}))))

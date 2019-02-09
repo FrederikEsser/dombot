@@ -1,10 +1,10 @@
 (ns dombot.core
   (:require [dombot.cards.kingdom :as kingdom]
-            [dombot.operations :as op])
+            [dombot.operations :as op]
+            [dombot.front-end-view])
   (:gen-class))
 
 ; todo:
-; end game
 ; generalize checks for possible operations
 ; slow mode
 ; make frequencies optional
@@ -21,7 +21,7 @@
       (assoc :can-undo? true)))
 
 (defn view []
-  (-> @game-state :game first op/view-game))
+  (-> @game-state :game first dombot.front-end-view/view-game))
 
 (defn undo []
   (let [{:keys [can-undo?]} (-> @game-state :game first)]

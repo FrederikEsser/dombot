@@ -25,16 +25,19 @@
      :approx-discard-size 0
      :actions             0
      :coins               0
-     :buys                0}))
+     :buys                0
+     :number-of-turns     0}))
 
 (defn create-game [player-names mode]
   (let [number-of-players (count player-names)
         victory-pile-size (case number-of-players
                             2 8
                             3 12
-                            4 12)]
-    {:mode           mode
-     :supply         (vec (concat (base/supply number-of-players victory-pile-size)
-                                  (create-kingdom #{:dominion} victory-pile-size)))
-     :players        (vec (map create-player player-names))
-     :current-player (rand-int number-of-players)}))
+                            4 12)
+        starting-player (rand-int number-of-players)]
+    {:mode            mode
+     :supply          (vec (concat (base/supply number-of-players victory-pile-size)
+                                   (create-kingdom #{:dominion} victory-pile-size)))
+     :players         (vec (map create-player player-names))
+     :current-player  starting-player
+     :starting-player starting-player}))

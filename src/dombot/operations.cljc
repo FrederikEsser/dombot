@@ -3,6 +3,8 @@
             [dombot.effects :as effects]
             [dombot.front-end-view :as view]))
 
+(declare game-ended?)
+
 (defn start-turn
   ([player]
    (assoc player :actions 1
@@ -10,8 +12,8 @@
                  :buys 1
                  :phase :action))
   ([game player-no]
-   (-> game
-       (update-in [:players player-no] start-turn))))
+   (cond-> game
+           (not (game-ended? game)) (update-in [:players player-no] start-turn))))
 
 (defn set-approx-discard-size [game player-no & [n]]
   (let [{:keys [discard approx-discard-size]} (get-in game [:players player-no])
@@ -312,25 +314,6 @@
                        (map :name))]
     (reduce (fn [game card-name] (play game player-no card-name)) game treasures))) ; TODO: Stack treasures separately
 
-(defn clean-up
-  ([{:keys [play-area hand] :as player}]
-   (-> player
-       (update :discard concat play-area hand)
-       (assoc :play-area []
-              :hand []
-              :actions 0
-              :coins 0
-              :buys 0
-              :phase :out-of-turn)
-       (dissoc :triggers)))
-  ([{:keys [effect-stack] :as game} player-no]
-   (assert (empty? effect-stack) "You can't end your turn when you have a choice to make.")
-   (-> game
-       (update-in [:players player-no] clean-up)
-       (set-approx-discard-size player-no)
-       (draw player-no 5)
-       (update :players (partial mapv (fn [player] (dissoc player :revealed-cards)))))))
-
 (defn- get-victory-points [cards {:keys [victory-points]}]
   (if (fn? victory-points)
     (victory-points cards)
@@ -343,10 +326,51 @@
          (map (partial get-victory-points cards))
          (apply + 0))))
 
+(def calc-score (juxt calc-victory-points (comp - :number-of-turns)))
+
 (defn game-ended? [game]
   (let [{province-pile-size :pile-size} (ut/get-pile-idx game :province)]
-    (or (zero? province-pile-size)
+    (or (and province-pile-size (zero? province-pile-size))
         (>= (ut/empty-supply-piles game) 3))))
+
+(defn end-game-for-player [best-score {:keys [deck discard] :as player}]
+  (let [victory-points (calc-victory-points player)]
+    (-> player
+        (update :hand concat deck discard)
+        (assoc :deck []
+               :discard []
+               :phase :end-of-game
+               :victory-points victory-points
+               :winner (= best-score (calc-score player))))))
+
+(defn check-game-ended [{:keys [players] :as game}]
+  (let [best-score (->> players
+                        (map calc-score)
+                        sort
+                        last)]
+    (cond-> game
+            (game-ended? game) (-> (update :players (partial mapv (partial end-game-for-player best-score)))))))
+
+(defn clean-up
+  ([{:keys [play-area hand] :as player}]
+   (-> player
+       (update :discard concat hand play-area)
+       (assoc :play-area []
+              :hand []
+              :actions 0
+              :coins 0
+              :buys 0
+              :phase :out-of-turn)
+       (update :number-of-turns inc)
+       (dissoc :triggers)))
+  ([{:keys [effect-stack] :as game} player-no]
+   (assert (empty? effect-stack) "You can't end your turn when you have a choice to make.")
+   (-> game
+       (update-in [:players player-no] clean-up)
+       (set-approx-discard-size player-no)
+       (draw player-no 5)
+       (update :players (partial mapv (fn [player] (dissoc player :revealed-cards))))
+       check-game-ended)))
 
 (defn- view-end-player [{:keys [name deck discard hand play-area] :as player}]
   (let [cards (concat deck discard hand play-area)]
