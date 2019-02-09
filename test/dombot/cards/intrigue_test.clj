@@ -6,6 +6,33 @@
             [dombot.cards.intrigue :as intrigue :refer :all]
             [dombot.utils :as ut]))
 
+(deftest courtyard-test
+  (testing "Courtyard"
+    (is (= (play {:players [{:hand    [courtyard]
+                             :deck    [copper copper copper]
+                             :actions 1}]}
+                 0 :courtyard)
+           {:players      [{:hand      [copper copper copper]
+                            :play-area [courtyard]
+                            :deck      []
+                            :actions   0}]
+            :effect-stack [{:text      "Put a card from your hand onto your deck."
+                            :player-no 0
+                            :choice    :topdeck-from-hand
+                            :source    :hand
+                            :options   [:copper :copper :copper]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand    [courtyard]
+                           :deck    [copper copper copper]
+                           :actions 1}]}
+               (play 0 :courtyard)
+               (choose :copper))
+           {:players      [{:hand      [copper copper]
+                            :play-area [courtyard]
+                            :deck      [copper]
+                            :actions   0}]}))))
+
 (deftest upgrade-test
   (testing "Upgrade"
     (is (= (-> {:players [{:hand    [upgrade copper copper estate estate]
