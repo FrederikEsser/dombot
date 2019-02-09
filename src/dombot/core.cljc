@@ -5,6 +5,9 @@
   (:gen-class))
 
 ; todo:
+;;; Intrigue
+; refer to :this for choices (mining village)
+
 ; generalize checks for possible operations
 ; slow mode
 ; make frequencies optional

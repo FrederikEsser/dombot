@@ -62,6 +62,14 @@
                               :from       :hand
                               :to         :trash}))
 
+(defn trash-last-from-play-area [game player-no card-name]
+  (move-card game player-no {:card-name     card-name
+                             :from          :play-area
+                             :from-position :bottom
+                             :to            :trash}))
+
+(effects/register {:trash-last-from-play-area trash-last-from-play-area})
+
 (defn reveal-from-deck [game player-no number-of-cards]
   (move-cards game player-no {:number-of-cards number-of-cards
                               :from            :deck

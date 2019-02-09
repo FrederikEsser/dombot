@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [dombot.operations :refer :all]
             [dombot.cards.base-cards :as base :refer :all]
+            [dombot.cards.dominion :as dominion :refer [throne-room]]
             [dombot.cards.common :refer :all]
             [dombot.cards.intrigue :as intrigue :refer :all]
             [dombot.utils :as ut]))
@@ -32,6 +33,72 @@
                             :play-area [courtyard]
                             :deck      [copper]
                             :actions   0}]}))))
+
+(deftest mining-village-test
+  (testing "Mining Village"
+    (is (= (-> {:players [{:hand    [mining-village]
+                           :deck    [silver copper]
+                           :actions 1}]}
+               (play 0 :mining-village))
+           {:players      [{:hand      [silver]
+                            :play-area [mining-village]
+                            :deck      [copper]
+                            :actions   2}]
+            :effect-stack [{:text      "You may trash this for +$2."
+                            :player-no 0
+                            :choice    ::intrigue/mining-village-trash
+                            :source    :play-area
+                            :options   [:mining-village]
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand    [mining-village]
+                           :deck    [silver copper]
+                           :actions 1}]}
+               (play 0 :mining-village)
+               (choose nil))
+           {:players [{:hand      [silver]
+                       :play-area [mining-village]
+                       :deck      [copper]
+                       :actions   2}]}))
+    (is (= (-> {:players [{:hand    [mining-village]
+                           :deck    [silver copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :mining-village)
+               (choose :mining-village))
+           {:players [{:hand      [silver]
+                       :play-area []
+                       :deck      [copper]
+                       :actions   2
+                       :coins     2}]
+            :trash   [mining-village]}))
+    (is (= (-> {:players [{:hand    [throne-room mining-village]
+                           :deck    [silver copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :throne-room)
+               (choose :mining-village)
+               (choose :mining-village))
+           {:players [{:hand      [silver copper]
+                       :play-area [throne-room]
+                       :deck      []
+                       :actions   4
+                       :coins     2}]
+            :trash   [mining-village]}))
+    (is (= (-> {:players [{:hand    [mining-village throne-room mining-village]
+                           :deck    [silver copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :mining-village)
+               (choose nil)
+               (play 0 :throne-room)
+               (choose :mining-village)
+               (choose :mining-village))
+           {:players [{:hand      [silver copper]
+                       :play-area [mining-village throne-room]
+                       :deck      []
+                       :actions   5
+                       :coins     2}]
+            :trash   [mining-village]}))))
 
 (deftest upgrade-test
   (testing "Upgrade"

@@ -15,6 +15,24 @@
                                          :min       1
                                          :max       1}]]})
 
+(defn mining-village-trash [game player-no card-name]
+  (cond-> game
+          (= :mining-village card-name) (push-effect-stack player-no [[:trash-last-from-play-area card-name]
+                                                                      [:give-money 2]])))
+
+(effects/register {::mining-village-trash mining-village-trash})
+
+(def mining-village {:name    :mining-village
+                     :set     :intrigue
+                     :type    #{:action}
+                     :cost    4
+                     :effects [[:draw 1]
+                               [:give-actions 2]
+                               [:give-choice {:text    "You may trash this for +$2."
+                                              :choice  ::mining-village-trash
+                                              :options [:player :play-area {:name :mining-village :last true}]
+                                              :max     1}]]})
+
 (defn upgrade-trash [game player-no card-name]
   (let [player (get-in game [:players player-no])
         {{:keys [cost]} :card} (ut/get-card-idx player :hand card-name)
