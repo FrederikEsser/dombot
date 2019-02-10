@@ -1,9 +1,11 @@
 (ns dombot.cards.kingdom
   (:require [dombot.cards.base-cards :as base :refer [copper estate]]
-            [dombot.cards.dominion :as dominion]))
+            [dombot.cards.dominion :as dominion]
+            [dombot.cards.intrigue :as intrigue]))
 
 (def kingdom-cards (concat
-                     dominion/kingdom-cards))
+                     dominion/kingdom-cards
+                     intrigue/kingdom-cards))
 
 (defn create-kingdom [sets victory-pile-size]
   (->> kingdom-cards
@@ -28,7 +30,7 @@
      :buys                0
      :number-of-turns     0}))
 
-(defn create-game [player-names mode]
+(defn create-game [player-names mode sets]
   (let [number-of-players (count player-names)
         victory-pile-size (case number-of-players
                             2 8
@@ -37,7 +39,7 @@
         starting-player (rand-int number-of-players)]
     {:mode            mode
      :supply          (vec (concat (base/supply number-of-players victory-pile-size)
-                                   (create-kingdom #{:dominion} victory-pile-size)))
+                                   (create-kingdom sets victory-pile-size)))
      :players         (vec (map create-player player-names))
      :current-player  starting-player
      :starting-player starting-player}))

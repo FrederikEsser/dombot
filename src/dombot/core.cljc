@@ -32,8 +32,8 @@
     (swap! game-state update :game (partial drop 1))
     (view)))
 
-(defn start-game [player-names & [mode]]
-  (let [{:keys [current-player] :as game} (kingdom/create-game player-names (or mode :swift))]
+(defn start-game [player-names & {:keys [mode sets]}]
+  (let [{:keys [current-player] :as game} (kingdom/create-game player-names (or mode :swift) (or sets #{:intrigue}))]
     (swap! game-state assoc :game (-> game
                                       (op/start-turn current-player)
                                       list))

@@ -58,3 +58,7 @@
                                        :options [:player :hand]
                                        :min     1
                                        :max     1}]]})
+
+(def kingdom-cards [courtyard
+                    mining-village
+                    upgrade])
