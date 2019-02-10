@@ -58,16 +58,19 @@
        first))
 
 (defn player-area
-  ([game player-no area & [{:keys [type reacts-to last name not-name]}]]
+  ([game player-no card-id area & [{:keys [last this name not-name type reacts-to]}]]
+   (when this
+     (assert card-id (str "Card has no id, but is referring to :this in " area ".")))
    (cond->> (get-in game [:players player-no area])
-            last (take-last 1)                              ; it's important that this is evaluated first
-            type (filter (comp type :type))
+            last (take-last 1)                              ; it's important that 'last' is evaluated first
+            this (filter (comp #{card-id} :id))
             name (filter (comp #{name} :name))
             not-name (remove (comp #{not-name} :name))
+            type (filter (comp type :type))
             reacts-to (filter (comp #{reacts-to} :reacts-to))
             :always (map :name))))
 
-(defn supply-piles [{:keys [supply]} player-no {:keys [max-cost cost type]}]
+(defn supply-piles [{:keys [supply]} player-no card-id {:keys [max-cost cost type]}]
   (-> supply
       (cond->>
         max-cost (filter (comp (partial >= max-cost) :cost :card))

@@ -4,16 +4,16 @@
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
-(def courtyard {:name :courtyard
-                :set :intrigue
-                :type #{:action}
-                :cost 2
+(def courtyard {:name    :courtyard
+                :set     :intrigue
+                :type    #{:action}
+                :cost    2
                 :effects [[:draw 3]
-                          [:give-choice {:text      "Put a card from your hand onto your deck."
-                                         :choice    :topdeck-from-hand
-                                         :options   [:player :hand]
-                                         :min       1
-                                         :max       1}]]})
+                          [:give-choice {:text    "Put a card from your hand onto your deck."
+                                         :choice  :topdeck-from-hand
+                                         :options [:player :hand]
+                                         :min     1
+                                         :max     1}]]})
 
 (defn mining-village-trash [game player-no card-name]
   (cond-> game
@@ -30,7 +30,7 @@
                                [:give-actions 2]
                                [:give-choice {:text    "You may trash this for +$2."
                                               :choice  ::mining-village-trash
-                                              :options [:player :play-area {:name :mining-village :last true}]
+                                              :options [:player :play-area {:this true}]
                                               :max     1}]]})
 
 (defn upgrade-trash [game player-no card-name]
