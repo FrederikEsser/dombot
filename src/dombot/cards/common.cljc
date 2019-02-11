@@ -29,6 +29,13 @@
 
 (effects/register {:gain-to-topdeck gain-to-topdeck})
 
+(defn gain-from-trash [game player-no card-name]
+  (move-card game player-no {:card-name card-name
+                             :from      :trash
+                             :to        :discard}))
+
+(effects/register {:gain-from-trash gain-from-trash})
+
 (defn play-from-hand [game player-no card-name]
   (cond-> game
           card-name (move-card player-no {:card-name card-name
@@ -38,8 +45,7 @@
 (effects/register {:play play-from-hand})
 
 (defn play-action-twice [game player-no card-name]
-  (let [player (get-in game [:players player-no])
-        {card :card} (ut/get-card-idx player :hand card-name)]
+  (let [{card :card} (ut/get-card-idx game [:players player-no :hand] card-name)]
     (cond-> game
             card-name (push-effect-stack player-no [[:play card-name]
                                                     [:card-effect card]
@@ -161,6 +167,11 @@
                              :to         :trash})))
 
 (effects/register {:trash-from-look-at trash-from-look-at})
+
+(defn trash-from-supply [game player-no card-name]
+  (gain game player-no card-name {:to :trash}))
+
+(effects/register {:trash-from-supply trash-from-supply})
 
 (defn reveal-hand [game player-no]
   (let [hand (get-in game [:players player-no :hand])]

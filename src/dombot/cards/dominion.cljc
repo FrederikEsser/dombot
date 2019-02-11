@@ -181,8 +181,7 @@
                         [:attack {:effects [[:discard-down-to 3]]}]]})
 
 (defn mine-trash [game player-no card-name]
-  (let [player (get-in game [:players player-no])
-        {{:keys [cost]} :card} (ut/get-card-idx player :hand card-name)
+  (let [{{:keys [cost]} :card} (ut/get-card-idx game [:players player-no :hand] card-name)
         max-cost (+ 3 cost)]
     (-> game
         (push-effect-stack player-no [[:trash-from-hand card-name]
@@ -259,8 +258,7 @@
                         [::poacher-discard]]})
 
 (defn remodel-trash [game player-no card-name]
-  (let [player (get-in game [:players player-no])
-        {{:keys [cost]} :card} (ut/get-card-idx player :hand card-name)
+  (let [{{:keys [cost]} :card} (ut/get-card-idx game [:players player-no :hand] card-name)
         max-cost (+ 2 cost)]
     (-> game
         (push-effect-stack player-no [[:trash-from-hand card-name]

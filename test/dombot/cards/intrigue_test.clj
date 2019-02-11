@@ -34,6 +34,86 @@
                        :deck      [copper]
                        :actions   0}]}))))
 
+(deftest lurker-test
+  (let [upgrade (assoc upgrade :id 1)]
+    (testing "Lurker"
+      (is (= (-> {:players [{:hand    [lurker]
+                             :actions 1}]}
+                 (play 0 :lurker))
+             {:players      [{:hand      []
+                              :play-area [lurker]
+                              :actions   1}]
+              :effect-stack [{:text      "Choose one:"
+                              :player-no 0
+                              :choice    ::intrigue/lurker-choice
+                              :source    :special
+                              :options   [{:option :trash :text "Trash an Action card from the Supply."}
+                                          {:option :gain :text "Gain an Action card from the trash."}]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:supply  [{:card lurker :pile-size 9}
+                            {:card mining-village :pile-size 0}
+                            {:card upgrade :pile-size 10}]
+                  :players [{:hand    [lurker]
+                             :actions 1}]}
+                 (play 0 :lurker)
+                 (choose :trash))
+             {:supply       [{:card lurker :pile-size 9}
+                             {:card mining-village :pile-size 0}
+                             {:card upgrade :pile-size 10}]
+              :players      [{:hand      []
+                              :play-area [lurker]
+                              :actions   1}]
+              :effect-stack [{:text      "Trash an Action card from the Supply."
+                              :player-no 0
+                              :choice    :trash-from-supply
+                              :source    :supply
+                              :options   [:lurker :upgrade]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:supply  [{:card lurker :pile-size 9}
+                            {:card mining-village :pile-size 0}
+                            {:card upgrade :pile-size 10}]
+                  :players [{:hand    [lurker]
+                             :actions 1}]}
+                 (play 0 :lurker)
+                 (choose :trash)
+                 (choose :upgrade))
+             {:supply  [{:card lurker :pile-size 9}
+                        {:card mining-village :pile-size 0}
+                        {:card upgrade :pile-size 9}]
+              :players [{:hand      []
+                         :play-area [lurker]
+                         :actions   1}]
+              :trash   [upgrade]}))
+      (is (= (-> {:players [{:hand    [lurker]
+                             :actions 1}]
+                  :trash   [upgrade copper estate]}
+                 (play 0 :lurker)
+                 (choose :gain))
+             {:players      [{:hand      []
+                              :play-area [lurker]
+                              :actions   1}]
+              :trash        [upgrade copper estate]
+              :effect-stack [{:text      "Gain an Action card from the trash."
+                              :player-no 0
+                              :choice    :gain-from-trash
+                              :source    :trash
+                              :options   [:upgrade]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:players [{:hand    [lurker]
+                             :actions 1}]
+                  :trash   [upgrade copper estate]}
+                 (play 0 :lurker)
+                 (choose :gain)
+                 (choose :upgrade))
+             {:players [{:hand      []
+                         :play-area [lurker]
+                         :discard   [upgrade]
+                         :actions   1}]
+              :trash   [copper estate]})))))
+
 (deftest mining-village-test
   (testing "Mining Village"
     (let [mining-village-1 (assoc mining-village :id 1)

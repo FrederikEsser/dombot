@@ -56,9 +56,8 @@
                        (when ((comp #{card-name} :name :card) pile) (merge pile {:idx idx}))))
        first))
 
-(defn get-card-idx [player area card-name]
-  (->> player
-       area
+(defn get-card-idx [game path card-name]
+  (->> (get-in game path)
        (keep-indexed (fn [idx {:keys [name] :as card}]
                        (when (= card-name name) {:idx idx :card card})))
        first))
@@ -69,7 +68,7 @@
                        (when (= effect-type effect-name) {:idx idx :effect effect})))
        first))
 
-(defn player-area
+(defn options-from-player
   ([game player-no card-id area & [{:keys [last this name not-name type reacts-to]}]]
    (when this
      (assert card-id (str "Card has no id, but is referring to :this in " area ".")))
@@ -82,9 +81,9 @@
             reacts-to (filter (comp #{reacts-to} :reacts-to))
             :always (map :name))))
 
-(effects/register {:player player-area})
+(effects/register-options {:player options-from-player})
 
-(defn supply-piles [{:keys [supply]} player-no card-id {:keys [max-cost cost type]}]
+(defn options-from-supply [{:keys [supply]} player-no card-id {:keys [max-cost cost type]}]
   (-> supply
       (cond->>
         max-cost (filter (comp (partial >= max-cost) :cost :card))
@@ -93,12 +92,19 @@
       (->> (filter (comp pos? :pile-size))
            (map (comp :name :card)))))
 
-(effects/register {:supply supply-piles})
+(effects/register-options {:supply options-from-supply})
 
-(defn special-choice [game player-no card-id & options]
+(defn options-from-trash [{:keys [trash]} player-no card-id {:keys [type]}]
+  (cond->> trash
+           type (filter (comp type :type))
+           :always (map :name)))
+
+(effects/register-options {:trash options-from-trash})
+
+(defn special-options [game player-no card-id & options]
   options)
 
-(effects/register {:special special-choice})
+(effects/register-options {:special special-options})
 
 (defn empty-supply-piles [{:keys [supply] :as game}]
   (->> supply

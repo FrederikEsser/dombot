@@ -38,7 +38,7 @@
 
 (defn update-status-fields [game player-no from to]
   (cond-> game
-          (and (= :deck from) (:can-undo? game)) (assoc :can-undo? false)
+          (and (= from :deck) (:can-undo? game)) (assoc :can-undo? false)
           (or (= from :discard) (= to :discard)) (set-approx-discard-size player-no)
           (= from :revealed) (increase-revealed-number-of-cards player-no to)
           (not= from :revealed) (-> (reset-revealed-number-of-cards player-no from)
@@ -47,6 +47,9 @@
 (defn gain [game player-no card-name & [{:keys [to to-position]
                                          :or   {to :discard}}]]
   (let [{:keys [idx card pile-size]} (ut/get-pile-idx game card-name)
+        to-path (if (= to :trash)
+                  [:trash]
+                  [:players player-no to])
         add-card-to-coll (fn [coll card]
                            (case to-position
                              :top (concat [card] coll)
@@ -54,7 +57,7 @@
     (assert pile-size (str "Gain error: The supply doesn't have a " (ut/format-name card-name) " pile."))
     (cond-> game
             (< 0 pile-size) (-> (update-in [:supply idx :pile-size] dec)
-                                (update-in [:players player-no to] add-card-to-coll (ut/give-id! card))
+                                (update-in to-path add-card-to-coll (ut/give-id! card))
                                 (update-status-fields player-no :supply to)))))
 
 (defn buy-card [{:keys [effect-stack] :as game} player-no card-name]
@@ -92,15 +95,15 @@
       (-> game
           (shuffle-discard player-no)
           (move-card player-no args))
-      (let [{:keys [idx card]} (case from-position
+      (let [from-path (if (= from :trash)
+                        [:trash]
+                        [:players player-no from])
+            {:keys [idx card]} (case from-position
                                  :bottom {:idx (dec (count (get player from))) :card (last (get player from))}
                                  :top {:idx 0 :card (first (get player from))}
                                  (if card-name
-                                   (ut/get-card-idx player from card-name)
+                                   (ut/get-card-idx game from-path card-name)
                                    {:idx 0 :card (first (get player from))}))
-            from-path (if (= from :trash)
-                        [:trash]
-                        [:players player-no from])
             to-path (if (= to :trash)
                       [:trash]
                       [:players player-no to])
@@ -240,7 +243,7 @@
 (defn give-choice [{:keys [mode] :as game} player-no {[opt-name & opt-args] :options
                                                       :keys                 [min max card-id]
                                                       :as                   choice}]
-  (let [opt-fn (effects/get-effect opt-name)
+  (let [opt-fn (effects/get-option opt-name)
         options (apply opt-fn game player-no card-id opt-args)
         {:keys [min max] :as choice'} (-> choice
                                           (assoc :options options)
@@ -265,8 +268,7 @@
         (update-in [:players player-no :triggers] (partial remove (comp #{trigger} :trigger))))))
 
 (defn reveal-reaction [game player-no card-name]
-  (let [player (get-in game [:players player-no])
-        {{:keys [reaction]} :card} (ut/get-card-idx player :hand card-name)] ; TODO: Handle reactions that are not in hand
+  (let [{{:keys [reaction]} :card} (ut/get-card-idx game [:players player-no :hand] card-name)] ; TODO: Handle reactions that are not in hand
     (cond-> game
             reaction (push-effect-stack player-no reaction))))
 
@@ -288,8 +290,8 @@
                    :card-effect     card-effect})
 
 (defn play [{:keys [effect-stack] :as game} player-no card-name]
-  (let [{:keys [phase actions triggers] :as player} (get-in game [:players player-no])
-        {{:keys [type effects coin-value] :as card} :card} (ut/get-card-idx player :hand card-name)]
+  (let [{:keys [phase actions triggers]} (get-in game [:players player-no])
+        {{:keys [type effects coin-value] :as card} :card} (ut/get-card-idx game [:players player-no :hand] card-name)]
     (assert (empty? effect-stack) "You can't play cards when you have a choice to make.")
     (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
     (assert type (str "Play error: " (ut/format-name card-name) " has no type."))

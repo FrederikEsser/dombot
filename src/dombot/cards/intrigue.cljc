@@ -15,6 +15,33 @@
                                          :min     1
                                          :max     1}]]})
 
+(defn lurker-choice [game player-no choice]
+  (case choice
+    :trash (give-choice game player-no {:text    "Trash an Action card from the Supply."
+                                        :choice  :trash-from-supply
+                                        :options [:supply {:type :action}]
+                                        :min     1
+                                        :max     1})
+    :gain (give-choice game player-no {:text    "Gain an Action card from the trash."
+                                       :choice  :gain-from-trash
+                                       :options [:trash {:type :action}]
+                                       :min     1
+                                       :max     1})))
+
+(effects/register {::lurker-choice lurker-choice})
+
+(def lurker {:name    :lurker
+             :set     :intrigue
+             :type    #{:action}
+             :cost    2
+             :effects [[:give-actions 1]
+                       [:give-choice {:text    "Choose one:"
+                                      :choice  ::lurker-choice
+                                      :options [:special {:option :trash :text "Trash an Action card from the Supply."}
+                                                {:option :gain :text "Gain an Action card from the trash."}]
+                                      :min     1
+                                      :max     1}]]})
+
 (defn mining-village-trash [game player-no card-name]
   (cond-> game
           (= :mining-village card-name) (push-effect-stack player-no [[:trash-last-from-play-area card-name]
@@ -58,8 +85,7 @@
                                     :max     2}]]})
 
 (defn upgrade-trash [game player-no card-name]
-  (let [player (get-in game [:players player-no])
-        {{:keys [cost]} :card} (ut/get-card-idx player :hand card-name)
+  (let [{{:keys [cost]} :card} (ut/get-card-idx game [:players player-no :hand] card-name)
         cost (inc cost)]
     (-> game
         (push-effect-stack player-no [[:trash-from-hand card-name]
@@ -84,6 +110,7 @@
                                        :max     1}]]})
 
 (def kingdom-cards [courtyard
+                    lurker
                     mining-village
                     pawn
                     upgrade])
