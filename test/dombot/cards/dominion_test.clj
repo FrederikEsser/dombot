@@ -1,10 +1,16 @@
 (ns dombot.cards.dominion-test
   (:require [clojure.test :refer :all]
+            [dombot.test-utils :refer :all]
             [dombot.operations :refer :all]
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
             [dombot.cards.dominion :as dominion :refer :all]
             [dombot.utils :as ut]))
+
+(defn fixture [f]
+  (with-rand-seed 123 (f)))
+
+(use-fixtures :each fixture)
 
 (deftest artisan-test
   (testing "Artisan"
@@ -360,7 +366,17 @@
                                           :deck    (repeat 5 copper)
                                           :actions 1}]}
                               (play 0 :cellar)
-                              (choose [:estate :estate]))))))
+                              (choose [:estate :estate]))))
+    (is (= (-> {:players [{:hand    [cellar estate estate estate]
+                           :discard [copper copper copper]
+                           :actions 1}]}
+               (play 0 :cellar)
+               (choose [:estate :estate :estate]))
+           {:players [{:hand      [estate copper estate]
+                       :play-area [cellar]
+                       :deck      [estate copper copper]
+                       :discard   []
+                       :actions   1}]}))))
 
 (deftest chapel-test
   (testing "Chapel"
