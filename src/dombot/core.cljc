@@ -8,6 +8,9 @@
 ;;; Intrigue
 ; refer to :this for choices (mining village)
 
+; refac supply to a map of lists of cards by name
+; use uuids for card-ids
+; change options into lists of maps with :name and :id (cards?)
 ; generalize checks for possible operations
 ; slow mode
 ; make frequencies optional

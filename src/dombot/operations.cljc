@@ -1,7 +1,8 @@
 (ns dombot.operations
   (:require [dombot.utils :as ut]
             [dombot.effects :as effects]
-            [dombot.front-end-view :as view]))
+            [dombot.front-end-view :as view]
+            [clojure.set]))
 
 (declare game-ended?)
 
@@ -45,8 +46,10 @@
 
 (defn gain [game player-no card-name & [{:keys [to to-position]
                                          :or   {to :discard}}]]
-  (let [{:keys [idx card]} (ut/get-pile-idx game card-name)
-        pile-size (get-in game [:supply idx :pile-size])
+  (let [{:keys [idx card pile-size ids]} (ut/get-pile-idx game card-name)
+        next-id (when (not-empty ids) (apply min ids))
+        card (cond-> card
+                     next-id (assoc :id next-id))
         add-card-to-coll (fn [coll card]
                            (case to-position
                              :top (concat [card] coll)
@@ -54,6 +57,7 @@
     (assert pile-size (str "Gain error: The supply doesn't have a " (ut/format-name card-name) " pile."))
     (cond-> game
             (< 0 pile-size) (-> (update-in [:supply idx :pile-size] dec)
+                                (cond-> ids (update-in [:supply idx :ids] clojure.set/difference #{next-id}))
                                 (update-in [:players player-no to] add-card-to-coll card)
                                 (update-status-fields player-no :supply to)))))
 
