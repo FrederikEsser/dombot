@@ -16,9 +16,8 @@
        (take 10)
        (sort-by (juxt :cost :name))
        (map (fn [{:keys [:type] :as card}]
-              (let [pile-size (if (:victory type) victory-pile-size 10)
-                    ids (set (range 1 (inc pile-size)))]
-                {:card card :pile-size pile-size :ids ids})))))
+              (let [pile-size (if (:victory type) victory-pile-size 10)]
+                {:card card :pile-size pile-size})))))
 
 (defn create-player [name]
   {:name                name
@@ -45,6 +44,7 @@
                             3 12
                             4 12)
         starting-player (rand-int number-of-players)]
+    (ut/reset-ids!)
     (as-> {:mode            mode
            :supply          (vec (concat (base/supply number-of-players victory-pile-size)
                                          (create-kingdom sets victory-pile-size)))

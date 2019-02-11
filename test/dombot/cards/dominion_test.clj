@@ -13,302 +13,305 @@
 (use-fixtures :each fixture)
 
 (deftest artisan-test
-  (testing "Artisan"
-    (is (= (play {:supply  (base/supply 2 8)
+  (let [duchy (assoc duchy :id 1)]
+    (testing "Artisan"
+      (is (= (play {:supply  (base/supply 2 8)
+                    :players [{:hand    [artisan silver]
+                               :actions 1}]}
+                   0 :artisan)
+             {:supply       (base/supply 2 8)
+              :players      [{:hand      [silver]
+                              :play-area [artisan]
+                              :actions   0}]
+              :effect-stack [{:text      "Gain a card to your hand costing up to $5."
+                              :player-no 0
+                              :choice    :gain-to-hand
+                              :source    :supply
+                              :options   [:curse :estate :duchy :copper :silver]
+                              :min       1
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:give-choice {:text    "Put a card from your hand onto your deck."
+                                                        :choice  :topdeck-from-hand
+                                                        :options [:player :hand]
+                                                        :min     1
+                                                        :max     1}]}]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
                   :players [{:hand    [artisan silver]
                              :actions 1}]}
-                 0 :artisan)
-           {:supply       (base/supply 2 8)
-            :players      [{:hand      [silver]
-                            :play-area [artisan]
-                            :actions   0}]
-            :effect-stack [{:text      "Gain a card to your hand costing up to $5."
-                            :player-no 0
-                            :choice    :gain-to-hand
-                            :source    :supply
-                            :options   [:curse :estate :duchy :copper :silver]
-                            :min       1
-                            :max       1}
-                           {:player-no 0
-                            :effect    [:give-choice {:text    "Put a card from your hand onto your deck."
-                                                      :choice  :topdeck-from-hand
-                                                      :options [:player :hand]
-                                                      :min     1
-                                                      :max     1}]}]}))
-    (is (= (-> {:supply  [{:card duchy :pile-size 8}]
-                :players [{:hand    [artisan silver]
-                           :actions 1}]}
-               (play 0 :artisan)
-               (choose :duchy))
-           {:supply       [{:card duchy :pile-size 7}]
-            :players      [{:hand      [silver duchy]
-                            :play-area [artisan]
-                            :actions   0}]
-            :effect-stack [{:text      "Put a card from your hand onto your deck."
-                            :player-no 0
-                            :choice    :topdeck-from-hand
-                            :source    :hand
-                            :options   [:silver :duchy]
-                            :min       1
-                            :max       1}]}))
-    (is (= (-> {:supply  [{:card duchy :pile-size 8}]
-                :players [{:hand    [artisan silver]
-                           :deck    [gold]
-                           :actions 1}]}
-               (play 0 :artisan)
-               (choose :duchy)
-               (choose :silver))
-           {:supply  [{:card duchy :pile-size 7}]
-            :players [{:hand      [duchy]
-                       :play-area [artisan]
-                       :deck      [silver gold]
-                       :actions   0}]}))
-    (is (= (play {:supply  []                               ; totally hypothetical supply with no cards costing 5 or less
+                 (play 0 :artisan)
+                 (choose :duchy))
+             {:supply       [{:card duchy :pile-size 7}]
+              :players      [{:hand      [silver duchy]
+                              :play-area [artisan]
+                              :actions   0}]
+              :effect-stack [{:text      "Put a card from your hand onto your deck."
+                              :player-no 0
+                              :choice    :topdeck-from-hand
+                              :source    :hand
+                              :options   [:silver :duchy]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
                   :players [{:hand    [artisan silver]
+                             :deck    [gold]
                              :actions 1}]}
-                 0 :artisan)
-           {:supply       []
-            :players      [{:hand      [silver]
-                            :play-area [artisan]
-                            :actions   0}]
-            :effect-stack [{:text      "Put a card from your hand onto your deck."
-                            :player-no 0
-                            :choice    :topdeck-from-hand
-                            :source    :hand
-                            :options   [:silver]
-                            :min       1
-                            :max       1}]}))))
+                 (play 0 :artisan)
+                 (choose :duchy)
+                 (choose :silver))
+             {:supply  [{:card duchy :pile-size 7}]
+              :players [{:hand      [duchy]
+                         :play-area [artisan]
+                         :deck      [silver gold]
+                         :actions   0}]}))
+      (is (= (play {:supply  []                             ; totally hypothetical supply with no cards costing 5 or less
+                    :players [{:hand    [artisan silver]
+                               :actions 1}]}
+                   0 :artisan)
+             {:supply       []
+              :players      [{:hand      [silver]
+                              :play-area [artisan]
+                              :actions   0}]
+              :effect-stack [{:text      "Put a card from your hand onto your deck."
+                              :player-no 0
+                              :choice    :topdeck-from-hand
+                              :source    :hand
+                              :options   [:silver]
+                              :min       1
+                              :max       1}]})))))
 
 (deftest bandit-test
-  (testing "Bandit"
-    (is (= (play {:supply  [{:card gold :pile-size 30}]
-                  :players [{:hand    [bandit]
-                             :actions 1}
-                            {:deck [estate estate estate]}]}
-                 0 :bandit)
-           {:supply  [{:card gold :pile-size 29}]
-            :players [{:hand      []
-                       :play-area [bandit]
-                       :discard   [gold]
-                       :actions   0}
-                      {:deck           [estate]
-                       :discard        [estate estate]
-                       :revealed       []
-                       :revealed-cards {:discard 2}}]}))
-    (is (= (play {:supply  [{:card gold :pile-size 30}]
+  (let [gold (assoc gold :id 1)]
+    (testing "Bandit"
+      (is (= (play {:supply  [{:card gold :pile-size 30}]
+                    :players [{:hand    [bandit]
+                               :actions 1}
+                              {:deck [estate estate estate]}]}
+                   0 :bandit)
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:hand      []
+                         :play-area [bandit]
+                         :discard   [gold]
+                         :actions   0}
+                        {:deck           [estate]
+                         :discard        [estate estate]
+                         :revealed       []
+                         :revealed-cards {:discard 2}}]}))
+      (is (= (play {:supply  [{:card gold :pile-size 30}]
+                    :players [{:hand    [bandit]
+                               :actions 1}
+                              {:deck [estate silver gold]}]}
+                   0 :bandit)
+             {:supply       [{:card gold :pile-size 29}]
+              :players      [{:hand      []
+                              :play-area [bandit]
+                              :discard   [gold]
+                              :actions   0}
+                             {:deck     [gold]
+                              :revealed [estate silver]}]
+              :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
+                              :player-no 1
+                              :choice    :trash-from-revealed
+                              :source    :revealed
+                              :options   [:silver]
+                              :min       1
+                              :max       1}
+                             {:player-no 1
+                              :effect    [:discard-all-revealed]}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [bandit]
                              :actions 1}
                             {:deck [estate silver gold]}]}
-                 0 :bandit)
-           {:supply       [{:card gold :pile-size 29}]
-            :players      [{:hand      []
-                            :play-area [bandit]
-                            :discard   [gold]
-                            :actions   0}
-                           {:deck     [gold]
-                            :revealed [estate silver]}]
-            :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
-                            :player-no 1
-                            :choice    :trash-from-revealed
-                            :source    :revealed
-                            :options   [:silver]
-                            :min       1
-                            :max       1}
-                           {:player-no 1
-                            :effect    [:discard-all-revealed]}]}))
-    (is (= (-> {:supply  [{:card gold :pile-size 30}]
-                :players [{:hand    [bandit]
-                           :actions 1}
-                          {:deck [estate silver gold]}]}
-               (play 0 :bandit)
-               (choose :silver))
-           {:supply  [{:card gold :pile-size 29}]
-            :players [{:hand      []
-                       :play-area [bandit]
-                       :discard   [gold]
-                       :actions   0}
-                      {:deck           [gold]
-                       :revealed       []
-                       :revealed-cards {:discard 1}
-                       :discard        [estate]}]
-            :trash   [silver]}))
-    (is (= (-> {:mode    :swift
-                :supply  [{:card gold :pile-size 30}]
-                :players [{:hand    [bandit]
-                           :actions 1}
-                          {:deck [estate silver gold]}]}
-               (play 0 :bandit))
-           {:mode    :swift
-            :supply  [{:card gold :pile-size 29}]
-            :players [{:hand      []
-                       :play-area [bandit]
-                       :discard   [gold]
-                       :actions   0}
-                      {:deck           [gold]
-                       :revealed       []
-                       :revealed-cards {:discard 1}
-                       :discard        [estate]}]
-            :trash   [silver]}))
-    (is (= (play {:supply  [{:card gold :pile-size 30}]
+                 (play 0 :bandit)
+                 (choose :silver))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:hand      []
+                         :play-area [bandit]
+                         :discard   [gold]
+                         :actions   0}
+                        {:deck           [gold]
+                         :revealed       []
+                         :revealed-cards {:discard 1}
+                         :discard        [estate]}]
+              :trash   [silver]}))
+      (is (= (-> {:mode    :swift
+                  :supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [bandit]
+                             :actions 1}
+                            {:deck [estate silver gold]}]}
+                 (play 0 :bandit))
+             {:mode    :swift
+              :supply  [{:card gold :pile-size 29}]
+              :players [{:hand      []
+                         :play-area [bandit]
+                         :discard   [gold]
+                         :actions   0}
+                        {:deck           [gold]
+                         :revealed       []
+                         :revealed-cards {:discard 1}
+                         :discard        [estate]}]
+              :trash   [silver]}))
+      (is (= (play {:supply  [{:card gold :pile-size 30}]
+                    :players [{:hand    [bandit]
+                               :actions 1}
+                              {:deck [silver gold estate]}
+                              {:deck [copper gold estate]}]}
+                   0 :bandit)
+             {:supply       [{:card gold :pile-size 29}]
+              :players      [{:hand      []
+                              :play-area [bandit]
+                              :discard   [gold]
+                              :actions   0}
+                             {:deck     [estate]
+                              :revealed [silver gold]}
+                             {:deck [copper gold estate]}]
+              :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
+                              :player-no 1
+                              :choice    :trash-from-revealed
+                              :source    :revealed
+                              :options   [:silver :gold]
+                              :min       1
+                              :max       1}
+                             {:player-no 1
+                              :effect    [:discard-all-revealed]}
+                             {:player-no 2
+                              :effect    [:reveal-from-deck 2]}
+                             {:player-no 2
+                              :effect    [:give-choice
+                                          {:text    "Trash a revealed Treasure other than Copper, and discards the rest."
+                                           :choice  :trash-from-revealed
+                                           :options [:player :revealed {:not-name :copper :type :treasure}]
+                                           :max     1
+                                           :min     1}]}
+                             {:player-no 2
+                              :effect    [:discard-all-revealed]}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [bandit]
                              :actions 1}
                             {:deck [silver gold estate]}
                             {:deck [copper gold estate]}]}
-                 0 :bandit)
-           {:supply       [{:card gold :pile-size 29}]
-            :players      [{:hand      []
-                            :play-area [bandit]
-                            :discard   [gold]
-                            :actions   0}
-                           {:deck     [estate]
-                            :revealed [silver gold]}
-                           {:deck [copper gold estate]}]
-            :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
-                            :player-no 1
-                            :choice    :trash-from-revealed
-                            :source    :revealed
-                            :options   [:silver :gold]
-                            :min       1
-                            :max       1}
-                           {:player-no 1
-                            :effect    [:discard-all-revealed]}
-                           {:player-no 2
-                            :effect    [:reveal-from-deck 2]}
-                           {:player-no 2
-                            :effect    [:give-choice
-                                        {:text    "Trash a revealed Treasure other than Copper, and discards the rest."
-                                         :choice  :trash-from-revealed
-                                         :options [:player :revealed {:not-name :copper :type :treasure}]
-                                         :max     1
-                                         :min     1}]}
-                           {:player-no 2
-                            :effect    [:discard-all-revealed]}]}))
-    (is (= (-> {:supply  [{:card gold :pile-size 30}]
-                :players [{:hand    [bandit]
-                           :actions 1}
-                          {:deck [silver gold estate]}
-                          {:deck [copper gold estate]}]}
-               (play 0 :bandit)
-               (choose :silver))
-           {:supply       [{:card gold :pile-size 29}]
-            :players      [{:hand      []
-                            :play-area [bandit]
-                            :discard   [gold]
-                            :actions   0}
-                           {:deck           [estate]
-                            :discard        [gold]
-                            :revealed       []
-                            :revealed-cards {:discard 1}}
-                           {:deck     [estate]
-                            :revealed [copper gold]}]
-            :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
-                            :player-no 2
-                            :choice    :trash-from-revealed
-                            :source    :revealed
-                            :options   [:gold]
-                            :min       1
-                            :max       1}
-                           {:player-no 2
-                            :effect    [:discard-all-revealed]}]
-            :trash        [silver]}))
-    (is (= (-> {:supply  [{:card gold :pile-size 30}]
-                :players [{:hand    [bandit]
-                           :actions 1}
-                          {:deck [silver]}]}
-               (play 0 :bandit)
-               (choose :silver))
-           {:supply  [{:card gold :pile-size 29}]
-            :players [{:hand      []
-                       :play-area [bandit]
-                       :discard   [gold]
-                       :actions   0}
-                      {:deck     []
-                       :revealed []}]
-            :trash   [silver]}))))
+                 (play 0 :bandit)
+                 (choose :silver))
+             {:supply       [{:card gold :pile-size 29}]
+              :players      [{:hand      []
+                              :play-area [bandit]
+                              :discard   [gold]
+                              :actions   0}
+                             {:deck           [estate]
+                              :discard        [gold]
+                              :revealed       []
+                              :revealed-cards {:discard 1}}
+                             {:deck     [estate]
+                              :revealed [copper gold]}]
+              :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
+                              :player-no 2
+                              :choice    :trash-from-revealed
+                              :source    :revealed
+                              :options   [:gold]
+                              :min       1
+                              :max       1}
+                             {:player-no 2
+                              :effect    [:discard-all-revealed]}]
+              :trash        [silver]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [bandit]
+                             :actions 1}
+                            {:deck [silver]}]}
+                 (play 0 :bandit)
+                 (choose :silver))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:hand      []
+                         :play-area [bandit]
+                         :discard   [gold]
+                         :actions   0}
+                        {:deck     []
+                         :revealed []}]
+              :trash   [silver]})))))
 
 (deftest bureaucrat-test
-  (testing "Bureaucrat"
-    (is (= (play {:supply  [{:card silver :pile-size 40}]
+  (let [silver (assoc silver :id 1)]
+    (testing "Bureaucrat"
+      (is (= (play {:supply  [{:card silver :pile-size 40}]
+                    :players [{:hand    [bureaucrat]
+                               :deck    [copper]
+                               :actions 1}
+                              {:hand (repeat 5 copper)}]}
+                   0 :bureaucrat)
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:hand      []
+                         :play-area [bureaucrat]
+                         :deck      [silver copper]
+                         :actions   0}
+                        {:hand           (repeat 5 copper)
+                         :revealed-cards {:hand 5}}]}))
+      (is (= (play {:supply  [{:card silver :pile-size 40}]
+                    :players [{:hand    [bureaucrat]
+                               :deck    [copper]
+                               :actions 1}
+                              {:hand [copper copper copper estate estate]}]}
+                   0 :bureaucrat)
+             {:supply       [{:card silver :pile-size 39}]
+              :players      [{:hand      []
+                              :play-area [bureaucrat]
+                              :deck      [silver copper]
+                              :actions   0}
+                             {:hand [copper copper copper estate estate]}]
+              :effect-stack [{:text      "Reveal a Victory card from your hand and put it onto your deck."
+                              :player-no 1
+                              :choice    :topdeck-from-hand
+                              :source    :hand
+                              :options   [:estate :estate]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
                   :players [{:hand    [bureaucrat]
                              :deck    [copper]
                              :actions 1}
+                            {:hand [copper copper copper estate estate]
+                             :deck [gold]}]}
+                 (play 0 :bureaucrat)
+                 (choose :estate))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:hand      []
+                         :play-area [bureaucrat]
+                         :deck      [silver copper]
+                         :actions   0}
+                        {:hand [copper copper copper estate]
+                         :deck [estate gold]}]}))
+      (is (= (-> {:mode    :swift
+                  :supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [bureaucrat]
+                             :deck    [copper]
+                             :actions 1}
+                            {:hand [copper copper copper estate estate]
+                             :deck [gold]}]}
+                 (play 0 :bureaucrat))
+             {:mode    :swift
+              :supply  [{:card silver :pile-size 39}]
+              :players [{:hand      []
+                         :play-area [bureaucrat]
+                         :deck      [silver copper]
+                         :actions   0}
+                        {:hand [copper copper copper estate]
+                         :deck [estate gold]}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [bureaucrat militia]
+                             :deck    [copper]
+                             :actions 2
+                             :coins   0}
                             {:hand (repeat 5 copper)}]}
-                 0 :bureaucrat)
-           {:supply  [{:card silver :pile-size 39}]
-            :players [{:hand      []
-                       :play-area [bureaucrat]
-                       :deck      [silver copper]
-                       :actions   0}
-                      {:hand           (repeat 5 copper)
-                       :revealed-cards {:hand 5}}]}))
-    (is (= (play {:supply  [{:card silver :pile-size 40}]
-                  :players [{:hand    [bureaucrat]
-                             :deck    [copper]
-                             :actions 1}
-                            {:hand [copper copper copper estate estate]}]}
-                 0 :bureaucrat)
-           {:supply       [{:card silver :pile-size 39}]
-            :players      [{:hand      []
-                            :play-area [bureaucrat]
-                            :deck      [silver copper]
-                            :actions   0}
-                           {:hand [copper copper copper estate estate]}]
-            :effect-stack [{:text      "Reveal a Victory card from your hand and put it onto your deck."
-                            :player-no 1
-                            :choice    :topdeck-from-hand
-                            :source    :hand
-                            :options   [:estate :estate]
-                            :min       1
-                            :max       1}]}))
-    (is (= (-> {:supply  [{:card silver :pile-size 40}]
-                :players [{:hand    [bureaucrat]
-                           :deck    [copper]
-                           :actions 1}
-                          {:hand [copper copper copper estate estate]
-                           :deck [gold]}]}
-               (play 0 :bureaucrat)
-               (choose :estate))
-           {:supply  [{:card silver :pile-size 39}]
-            :players [{:hand      []
-                       :play-area [bureaucrat]
-                       :deck      [silver copper]
-                       :actions   0}
-                      {:hand [copper copper copper estate]
-                       :deck [estate gold]}]}))
-    (is (= (-> {:mode    :swift
-                :supply  [{:card silver :pile-size 40}]
-                :players [{:hand    [bureaucrat]
-                           :deck    [copper]
-                           :actions 1}
-                          {:hand [copper copper copper estate estate]
-                           :deck [gold]}]}
-               (play 0 :bureaucrat))
-           {:mode    :swift
-            :supply  [{:card silver :pile-size 39}]
-            :players [{:hand      []
-                       :play-area [bureaucrat]
-                       :deck      [silver copper]
-                       :actions   0}
-                      {:hand [copper copper copper estate]
-                       :deck [estate gold]}]}))
-    (is (= (-> {:supply  [{:card silver :pile-size 40}]
-                :players [{:hand    [bureaucrat militia]
-                           :deck    [copper]
-                           :actions 2
-                           :coins   0}
-                          {:hand (repeat 5 copper)}]}
-               (play 0 :bureaucrat)
-               (play 0 :militia)
-               (choose [:copper :copper]))
-           {:supply  [{:card silver :pile-size 39}]
-            :players [{:hand      []
-                       :play-area [bureaucrat militia]
-                       :deck      [silver copper]
-                       :actions   0
-                       :coins     2}
-                      {:hand           [copper copper copper]
-                       :discard        [copper copper]
-                       :revealed-cards {}}]}))))
+                 (play 0 :bureaucrat)
+                 (play 0 :militia)
+                 (choose [:copper :copper]))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:hand      []
+                         :play-area [bureaucrat militia]
+                         :deck      [silver copper]
+                         :actions   0
+                         :coins     2}
+                        {:hand           [copper copper copper]
+                         :discard        [copper copper]
+                         :revealed-cards {}}]})))))
 
 (deftest cellar-test
   (testing "Cellar"
@@ -745,63 +748,64 @@
                        :discard (repeat 3 copper)}]}))))
 
 (deftest mine-test
-  (testing "Mine"
-    (is (= (play {:players [{:hand    [mine copper estate]
+  (let [gold (assoc gold :id 1)]
+    (testing "Mine"
+      (is (= (play {:players [{:hand    [mine copper estate]
+                               :actions 1}]}
+                   0 :mine)
+             {:players      [{:hand      [copper estate]
+                              :play-area [mine]
+                              :actions   0}]
+              :effect-stack [{:text      "You may trash a Treasure from your hand."
+                              :player-no 0
+                              :choice    ::dominion/mine-trash
+                              :source    :hand
+                              :options   [:copper]
+                              :max       1}]}))
+      (is (= (play {:players [{:hand    [mine estate]
+                               :actions 1}]}
+                   0 :mine)
+             {:players [{:hand      [estate]
+                         :play-area [mine]
+                         :actions   0}]}))
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand    [mine copper estate]
                              :actions 1}]}
-                 0 :mine)
-           {:players      [{:hand      [copper estate]
-                            :play-area [mine]
-                            :actions   0}]
-            :effect-stack [{:text      "You may trash a Treasure from your hand."
-                            :player-no 0
-                            :choice    ::dominion/mine-trash
-                            :source    :hand
-                            :options   [:copper]
-                            :max       1}]}))
-    (is (= (play {:players [{:hand    [mine estate]
+                 (play 0 :mine)
+                 (choose :copper))
+             {:supply       (base/supply 2 8)
+              :players      [{:hand      [estate]
+                              :play-area [mine]
+                              :actions   0}]
+              :effect-stack [{:text      "Gain a Treasure to your hand costing up to $3."
+                              :player-no 0
+                              :choice    :gain-to-hand
+                              :source    :supply
+                              :options   [:copper :silver]
+                              :min       1
+                              :max       1}]
+              :trash        [copper]}))
+      (is (= (-> {:supply  [{:card copper :pile-size 0} {:card gold :pile-size 30}]
+                  :players [{:hand    [mine copper estate]
                              :actions 1}]}
-                 0 :mine)
-           {:players [{:hand      [estate]
-                       :play-area [mine]
-                       :actions   0}]}))
-    (is (= (-> {:supply  (base/supply 2 8)
-                :players [{:hand    [mine copper estate]
-                           :actions 1}]}
-               (play 0 :mine)
-               (choose :copper))
-           {:supply       (base/supply 2 8)
-            :players      [{:hand      [estate]
-                            :play-area [mine]
-                            :actions   0}]
-            :effect-stack [{:text      "Gain a Treasure to your hand costing up to $3."
-                            :player-no 0
-                            :choice    :gain-to-hand
-                            :source    :supply
-                            :options   [:copper :silver]
-                            :min       1
-                            :max       1}]
-            :trash        [copper]}))
-    (is (= (-> {:supply  [{:card copper :pile-size 0} {:card gold :pile-size 30}]
-                :players [{:hand    [mine copper estate]
-                           :actions 1}]}
-               (play 0 :mine)
-               (choose :copper))
-           {:supply  [{:card copper :pile-size 0} {:card gold :pile-size 30}]
-            :players [{:hand      [estate]
-                       :play-area [mine]
-                       :actions   0}]
-            :trash   [copper]}))
-    (is (= (-> {:supply  [{:card gold :pile-size 30}]
-                :players [{:hand    [mine silver estate]
-                           :actions 1}]}
-               (play 0 :mine)
-               (choose :silver)
-               (choose :gold))
-           {:supply  [{:card gold :pile-size 29}]
-            :players [{:hand      [estate gold]
-                       :play-area [mine]
-                       :actions   0}]
-            :trash   [silver]}))))
+                 (play 0 :mine)
+                 (choose :copper))
+             {:supply  [{:card copper :pile-size 0} {:card gold :pile-size 30}]
+              :players [{:hand      [estate]
+                         :play-area [mine]
+                         :actions   0}]
+              :trash   [copper]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [mine silver estate]
+                             :actions 1}]}
+                 (play 0 :mine)
+                 (choose :silver)
+                 (choose :gold))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:hand      [estate gold]
+                         :play-area [mine]
+                         :actions   0}]
+              :trash   [silver]})))))
 
 (deftest moat-test
   (testing "Moat"
@@ -1104,65 +1108,66 @@
                        :coins     1}]}))))
 
 (deftest remodel-test
-  (testing "Remodel"
-    (is (= (play {:players [{:hand    [remodel copper estate]
+  (let [duchy (assoc duchy :id 1)]
+    (testing "Remodel"
+      (is (= (play {:players [{:hand    [remodel copper estate]
+                               :actions 1}]}
+                   0 :remodel)
+             {:players      [{:hand      [copper estate]
+                              :play-area [remodel]
+                              :actions   0}]
+              :effect-stack [{:text      "Trash a card from your hand."
+                              :player-no 0
+                              :choice    ::dominion/remodel-trash
+                              :source    :hand
+                              :options   [:copper :estate]
+                              :min       1
+                              :max       1}]}))
+      (is (= (play {:players [{:hand    [remodel]
+                               :actions 1}]}
+                   0 :remodel)
+             {:players [{:hand      []
+                         :play-area [remodel]
+                         :actions   0}]}))
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand    [remodel copper estate]
                              :actions 1}]}
-                 0 :remodel)
-           {:players      [{:hand      [copper estate]
-                            :play-area [remodel]
-                            :actions   0}]
-            :effect-stack [{:text      "Trash a card from your hand."
-                            :player-no 0
-                            :choice    ::dominion/remodel-trash
-                            :source    :hand
-                            :options   [:copper :estate]
-                            :min       1
-                            :max       1}]}))
-    (is (= (play {:players [{:hand    [remodel]
+                 (play 0 :remodel)
+                 (choose :estate))
+             {:supply       (base/supply 2 8)
+              :players      [{:hand      [copper]
+                              :play-area [remodel]
+                              :actions   0}]
+              :effect-stack [{:text      "Gain a card costing up to $4."
+                              :player-no 0
+                              :choice    :gain
+                              :source    :supply
+                              :options   [:curse :estate :copper :silver]
+                              :min       1
+                              :max       1}]
+              :trash        [estate]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 0} {:card silver :pile-size 40}]
+                  :players [{:hand    [remodel copper estate]
                              :actions 1}]}
-                 0 :remodel)
-           {:players [{:hand      []
-                       :play-area [remodel]
-                       :actions   0}]}))
-    (is (= (-> {:supply  (base/supply 2 8)
-                :players [{:hand    [remodel copper estate]
-                           :actions 1}]}
-               (play 0 :remodel)
-               (choose :estate))
-           {:supply       (base/supply 2 8)
-            :players      [{:hand      [copper]
-                            :play-area [remodel]
-                            :actions   0}]
-            :effect-stack [{:text      "Gain a card costing up to $4."
-                            :player-no 0
-                            :choice    :gain
-                            :source    :supply
-                            :options   [:curse :estate :copper :silver]
-                            :min       1
-                            :max       1}]
-            :trash        [estate]}))
-    (is (= (-> {:supply  [{:card estate :pile-size 0} {:card silver :pile-size 40}]
-                :players [{:hand    [remodel copper estate]
-                           :actions 1}]}
-               (play 0 :remodel)
-               (choose :copper))
-           {:supply  [{:card estate :pile-size 0} {:card silver :pile-size 40}]
-            :players [{:hand      [estate]
-                       :play-area [remodel]
-                       :actions   0}]
-            :trash   [copper]}))
-    (is (= (-> {:supply  [{:card duchy :pile-size 8}]
-                :players [{:hand    [remodel silver estate]
-                           :actions 1}]}
-               (play 0 :remodel)
-               (choose :silver)
-               (choose :duchy))
-           {:supply  [{:card duchy :pile-size 7}]
-            :players [{:hand      [estate]
-                       :play-area [remodel]
-                       :discard   [duchy]
-                       :actions   0}]
-            :trash   [silver]}))))
+                 (play 0 :remodel)
+                 (choose :copper))
+             {:supply  [{:card estate :pile-size 0} {:card silver :pile-size 40}]
+              :players [{:hand      [estate]
+                         :play-area [remodel]
+                         :actions   0}]
+              :trash   [copper]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:hand    [remodel silver estate]
+                             :actions 1}]}
+                 (play 0 :remodel)
+                 (choose :silver)
+                 (choose :duchy))
+             {:supply  [{:card duchy :pile-size 7}]
+              :players [{:hand      [estate]
+                         :play-area [remodel]
+                         :discard   [duchy]
+                         :actions   0}]
+              :trash   [silver]})))))
 
 (deftest sentry-test
   (testing "Sentry"
@@ -1397,25 +1402,26 @@
                             :source    :hand
                             :options   [:witch]
                             :max       1}]}))
-    (is (= (-> {:supply  [{:card curse :pile-size 10}]
-                :players [{:deck    [witch copper copper silver]
-                           :hand    [throne-room throne-room merchant]
-                           :actions 1
-                           :coins   0}
-                          {}]}
-               (play 0 :throne-room)
-               (choose :throne-room)
-               (choose :merchant)
-               (choose :witch)
-               (play-treasures 0))
-           {:supply  [{:card curse :pile-size 8}]
-            :players [{:deck      []
-                       :hand      []
-                       :play-area [throne-room throne-room merchant witch copper copper silver]
-                       :triggers  []
-                       :actions   2
-                       :coins     6}
-                      {:discard [curse curse]}]}))))
+    (let [curse (assoc curse :id 1)]
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:deck    [witch copper copper silver]
+                             :hand    [throne-room throne-room merchant]
+                             :actions 1
+                             :coins   0}
+                            {}]}
+                 (play 0 :throne-room)
+                 (choose :throne-room)
+                 (choose :merchant)
+                 (choose :witch)
+                 (play-treasures 0))
+             {:supply  [{:card curse :pile-size 8}]
+              :players [{:deck      []
+                         :hand      []
+                         :play-area [throne-room throne-room merchant witch copper copper silver]
+                         :triggers  []
+                         :actions   2
+                         :coins     6}
+                        {:discard [curse curse]}]})))))
 
 (deftest vassal-test
   (testing "Vassal"
@@ -1485,22 +1491,23 @@
                        :discard   [market]
                        :actions   0
                        :coins     2}]}))
-    (is (= (-> {:supply  [{:card curse :pile-size 10}]
-                :players [{:hand    [vassal]
-                           :deck    [witch copper copper copper]
-                           :actions 1
-                           :coins   0}
-                          {}]}
-               (play 0 :vassal)
-               (choose :witch))
-           {:supply  [{:card curse :pile-size 9}]
-            :players [{:hand      [copper copper]
-                       :deck      [copper]
-                       :discard   []
-                       :play-area [vassal witch]
-                       :actions   0
-                       :coins     2}
-                      {:discard [curse]}]}))))
+    (let [curse (assoc curse :id 1)]
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:hand    [vassal]
+                             :deck    [witch copper copper copper]
+                             :actions 1
+                             :coins   0}
+                            {}]}
+                 (play 0 :vassal)
+                 (choose :witch))
+             {:supply  [{:card curse :pile-size 9}]
+              :players [{:hand      [copper copper]
+                         :deck      [copper]
+                         :discard   []
+                         :play-area [vassal witch]
+                         :actions   0
+                         :coins     2}
+                        {:discard [curse]}]})))))
 
 (deftest village-test
   (testing "Village"
@@ -1513,49 +1520,50 @@
                        :play-area [village]
                        :actions   2}]}))))
 (deftest witch-test
-  (testing "Witch"
-    (is (= (play {:supply  [{:card curse :pile-size 20}]
-                  :players [{:deck    (repeat 3 copper)
-                             :hand    [witch]
-                             :actions 1}
-                            {:discard [copper copper]}
-                            {:discard []}]}
-                 0 :witch)
-           {:supply  [{:card curse :pile-size 18}]
-            :players [{:deck      [copper]
-                       :hand      [copper copper]
-                       :play-area [witch]
-                       :actions   0}
-                      {:discard [copper copper curse]}
-                      {:discard [curse]}]}))
-    (is (= (play {:supply  [{:card curse :pile-size 1}]
-                  :players [{:deck    (repeat 3 copper)
-                             :hand    [witch]
-                             :actions 1}
-                            {:discard [copper copper]}
-                            {:discard []}]}
-                 0 :witch)
-           {:supply  [{:card curse :pile-size 0}]
-            :players [{:deck      [copper]
-                       :hand      [copper copper]
-                       :play-area [witch]
-                       :actions   0}
-                      {:discard [copper copper curse]}
-                      {:discard []}]}))
-    (is (= (play {:supply  [{:card curse :pile-size 1}]
-                  :players [{:discard [copper copper]}
-                            {:deck    (repeat 3 copper)
-                             :hand    [witch]
-                             :actions 1}
-                            {:discard []}]}
-                 1 :witch)
-           {:supply  [{:card curse :pile-size 0}]
-            :players [{:discard [copper copper]}
-                      {:deck      [copper]
-                       :hand      [copper copper]
-                       :play-area [witch]
-                       :actions   0}
-                      {:discard [curse]}]}))))
+  (let [curse (assoc curse :id 1)]
+    (testing "Witch"
+      (is (= (play {:supply  [{:card curse :pile-size 20}]
+                    :players [{:deck    (repeat 3 copper)
+                               :hand    [witch]
+                               :actions 1}
+                              {:discard [copper copper]}
+                              {:discard []}]}
+                   0 :witch)
+             {:supply  [{:card curse :pile-size 18}]
+              :players [{:deck      [copper]
+                         :hand      [copper copper]
+                         :play-area [witch]
+                         :actions   0}
+                        {:discard [copper copper curse]}
+                        {:discard [curse]}]}))
+      (is (= (play {:supply  [{:card curse :pile-size 1}]
+                    :players [{:deck    (repeat 3 copper)
+                               :hand    [witch]
+                               :actions 1}
+                              {:discard [copper copper]}
+                              {:discard []}]}
+                   0 :witch)
+             {:supply  [{:card curse :pile-size 0}]
+              :players [{:deck      [copper]
+                         :hand      [copper copper]
+                         :play-area [witch]
+                         :actions   0}
+                        {:discard [copper copper curse]}
+                        {:discard []}]}))
+      (is (= (play {:supply  [{:card curse :pile-size 1}]
+                    :players [{:discard [copper copper]}
+                              {:deck    (repeat 3 copper)
+                               :hand    [witch]
+                               :actions 1}
+                              {:discard []}]}
+                   1 :witch)
+             {:supply  [{:card curse :pile-size 0}]
+              :players [{:discard [copper copper]}
+                        {:deck      [copper]
+                         :hand      [copper copper]
+                         :play-area [witch]
+                         :actions   0}
+                        {:discard [curse]}]})))))
 
 (deftest woodcutter-test
   (testing "Woodcutter"
@@ -1572,37 +1580,38 @@
                        :coins     2
                        :buys      2}]}))))
 (deftest workshop-test
-  (testing "Workshop"
-    (is (= (play {:supply  (base/supply 2 8)
+  (let [silver (assoc silver :id 1)]
+    (testing "Workshop"
+      (is (= (play {:supply  (base/supply 2 8)
+                    :players [{:hand    [workshop copper]
+                               :actions 1}]}
+                   0 :workshop)
+             {:supply       (base/supply 2 8)
+              :players      [{:hand      [copper]
+                              :play-area [workshop]
+                              :actions   0}]
+              :effect-stack [{:text      "Gain a card costing up to $4."
+                              :player-no 0
+                              :choice    :gain
+                              :source    :supply
+                              :options   [:curse :estate :copper :silver]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
                   :players [{:hand    [workshop copper]
                              :actions 1}]}
-                 0 :workshop)
-           {:supply       (base/supply 2 8)
-            :players      [{:hand      [copper]
-                            :play-area [workshop]
-                            :actions   0}]
-            :effect-stack [{:text      "Gain a card costing up to $4."
-                            :player-no 0
-                            :choice    :gain
-                            :source    :supply
-                            :options   [:curse :estate :copper :silver]
-                            :min       1
-                            :max       1}]}))
-    (is (= (-> {:supply  [{:card silver :pile-size 40}]
-                :players [{:hand    [workshop copper]
-                           :actions 1}]}
-               (play 0 :workshop)
-               (choose :silver))
-           {:supply  [{:card silver :pile-size 39}]
-            :players [{:hand      [copper]
-                       :discard   [silver]
-                       :play-area [workshop]
-                       :actions   0}]}))
-    (is (= (-> {:supply  [{:card province :pile-size 8}]
-                :players [{:hand    [workshop copper]
-                           :actions 1}]}
-               (play 0 :workshop))
-           {:supply  [{:card province :pile-size 8}]
-            :players [{:hand      [copper]
-                       :play-area [workshop]
-                       :actions   0}]}))))
+                 (play 0 :workshop)
+                 (choose :silver))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:hand      [copper]
+                         :discard   [silver]
+                         :play-area [workshop]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card province :pile-size 8}]
+                  :players [{:hand    [workshop copper]
+                             :actions 1}]}
+                 (play 0 :workshop))
+             {:supply  [{:card province :pile-size 8}]
+              :players [{:hand      [copper]
+                         :play-area [workshop]
+                         :actions   0}]})))))

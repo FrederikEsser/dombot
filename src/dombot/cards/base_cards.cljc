@@ -13,7 +13,7 @@
 (def gold {:name :gold :type #{:treasure} :cost 6 :coin-value 3})
 
 (defn make-pile [card pile-size]
-  {:card card :pile-size pile-size :ids (set (range 1 (inc pile-size)))})
+  {:card card :pile-size pile-size})
 
 (defn supply [number-of-players victory-pile-size]
   [(make-pile curse (* 10 (dec number-of-players)) #_#_:category :base-cards)

@@ -2,6 +2,18 @@
   (:require [clojure.string :as s]
             [dombot.effects :as effects]))
 
+(defonce id-state (atom 0))
+
+(defn reset-ids! []
+  (reset! id-state 0))
+
+(defn next-id! []
+  (swap! id-state inc))
+
+(defn give-id! [{:keys [id] :as card}]
+  (cond-> card
+          (nil? id) (assoc :id (next-id!))))
+
 (defn format-name [kw]
   (-> kw
       name

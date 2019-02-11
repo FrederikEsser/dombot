@@ -1,9 +1,11 @@
 (ns dombot.operations-test
   (:require [clojure.test :refer :all]
             [dombot.test-utils :refer :all]
+            [dombot.utils :as ut]
             [dombot.operations :refer :all]))
 
 (defn fixture [f]
+  (ut/reset-ids!)
   (with-rand-seed 123 (f)))
 
 (use-fixtures :each fixture)
@@ -18,31 +20,31 @@
 
 (deftest gain-test
   (testing "Gain"
-    (is (= (-> {:supply  [{:card {:name :province} :pile-size 8 :ids #{1 2 3 4 5 6 7 8}}]
+    (is (= (-> {:supply  [{:card {:name :province} :pile-size 8}]
                 :players [{}]}
                (gain 0 :province))
-           {:supply  [{:card {:name :province} :pile-size 7 :ids #{2 3 4 5 6 7 8}}]
+           {:supply  [{:card {:name :province} :pile-size 7}]
             :players [{:discard [{:name :province :id 1}]}]}))
-    (is (= (-> {:supply  [{:card {:name :province} :pile-size 1 :ids #{8}}]
+    (is (= (-> {:supply  [{:card {:name :province} :pile-size 1}]
                 :players [{}]}
                (gain 0 :province))
-           {:supply  [{:card {:name :province} :pile-size 0 :ids #{}}]
-            :players [{:discard [{:name :province :id 8}]}]}))
-    (is (= (-> {:supply  [{:card {:name :province} :pile-size 0 :ids #{}}]
+           {:supply  [{:card {:name :province} :pile-size 0}]
+            :players [{:discard [{:name :province :id 2}]}]}))
+    (is (= (-> {:supply  [{:card {:name :province} :pile-size 0}]
                 :players [{}]}
                (gain 0 :province))
-           {:supply  [{:card {:name :province} :pile-size 0 :ids #{}}]
+           {:supply  [{:card {:name :province} :pile-size 0}]
             :players [{}]}))
     (is (thrown-with-msg? AssertionError #"Gain error: The supply doesn't have a Province pile"
                           (-> {:supply  []
                                :players [{}]}
                               (gain 0 :province))))
-    (is (= (-> {:supply  [{:card {:name :province} :pile-size 8 :ids #{1 2 3 4 5 6 7 8}}]
+    (is (= (-> {:supply  [{:card {:name :province} :pile-size 8}]
                 :players [{:discard             [{:name :copper} {:name :copper}]
                            :approx-discard-size 1}]}
                (gain 0 :province))
-           {:supply  [{:card {:name :province} :pile-size 7 :ids #{2 3 4 5 6 7 8}}]
-            :players [{:discard             [{:name :copper} {:name :copper} {:name :province :id 1}]
+           {:supply  [{:card {:name :province} :pile-size 7}]
+            :players [{:discard             [{:name :copper} {:name :copper} {:name :province :id 3}]
                        :approx-discard-size 2}]}))))
 
 (deftest buy-test
@@ -72,29 +74,29 @@
                                          :players [{:coins 0
                                                     :buys  1}]}
                                         0 :copper)))))
-    (is (= (buy-card {:supply  [{:card {:name :copper :cost 0} :pile-size 3 :ids #{1 2 3}}]
+    (is (= (buy-card {:supply  [{:card {:name :copper :cost 0} :pile-size 3}]
                       :players [{:coins 0
                                  :buys  1}]}
                      0 :copper)
-           {:supply  [{:card {:name :copper :cost 0} :pile-size 2 :ids #{2 3}}]
+           {:supply  [{:card {:name :copper :cost 0} :pile-size 2}]
             :players [{:discard [{:name :copper :cost 0 :id 1}]
                        :coins   0
                        :buys    0}]}))
-    (is (= (-> {:supply  [{:card {:name :copper :cost 0} :pile-size 3 :ids #{1 2 3}}]
+    (is (= (-> {:supply  [{:card {:name :copper :cost 0} :pile-size 3}]
                 :players [{:coins 0
                            :buys  2}]}
                (buy-card 0 :copper)
                (buy-card 0 :copper))
-           {:supply  [{:card {:name :copper :cost 0} :pile-size 1 :ids #{3}}]
-            :players [{:discard [{:name :copper :cost 0 :id 1} {:name :copper :cost 0 :id 2}]
+           {:supply  [{:card {:name :copper :cost 0} :pile-size 1}]
+            :players [{:discard [{:name :copper :cost 0 :id 2} {:name :copper :cost 0 :id 3}]
                        :coins   0
                        :buys    0}]}))
-    (is (= (buy-card {:supply  [{:card {:name :silver :cost 3} :pile-size 3 :ids #{1 2 3}}]
+    (is (= (buy-card {:supply  [{:card {:name :silver :cost 3} :pile-size 3}]
                       :players [{:coins 6
                                  :buys  2}]}
                      0 :silver)
-           {:supply  [{:card {:name :silver :cost 3} :pile-size 2 :ids #{2 3}}]
-            :players [{:discard [{:name :silver :cost 3 :id 1}]
+           {:supply  [{:card {:name :silver :cost 3} :pile-size 2}]
+            :players [{:discard [{:name :silver :cost 3 :id 4}]
                        :coins   3
                        :buys    1}]}))))
 
