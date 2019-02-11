@@ -175,12 +175,11 @@
                        (do-effect player-no card-id effect)
                        check-stack))))
 
-(defn- choose-single [game selection]
+(defn- choose-single [game valid-choices selection]
   (if (coll? selection)
     (assert (<= (count selection) 1) "Choose error: You can only pick 1 option."))
   (let [[{:keys [player-no choice options min]}] (get game :effect-stack)
         choice-fn (effects/get-effect choice)
-        valid-choices (set options)
         single-selection (if (coll? selection)
                            (first selection)
                            selection)]
@@ -193,10 +192,9 @@
         pop-effect-stack
         (choice-fn player-no single-selection))))
 
-(defn- choose-multi [game selection]
+(defn- choose-multi [game valid-choices selection]
   (let [[{:keys [player-no choice options min max]}] (get game :effect-stack)
         choice-fn (effects/get-effect choice)
-        valid-choices (set options)
         multi-selection (if (coll? selection)
                           selection
                           (if selection
@@ -216,22 +214,23 @@
 
 (defn choose [game selection]
   (let [[{:keys [choice options min max]}] (get game :effect-stack)
-        choose-fn (if (= max 1) choose-single choose-multi)]
+        choose-fn (if (= max 1) choose-single choose-multi)
+        valid-choices (->> options (map (fn [{:keys [option] :as option-data}] (or option option-data))) set)]
     (assert choice "Choose error: You don't have a choice to make.")
     (assert (not-empty options) "Choose error: Choice has no options")
     (assert (or (nil? min) (nil? max) (<= min max)))
 
     (-> game
-        (choose-fn selection)
+        (choose-fn valid-choices selection)
         check-stack)))
 
 (defn get-source [{[name arg & [{:keys [last]}]] :options}]
-  (if (= :supply name)
-    {:source :supply}
+  (if (= :player name)
     (merge {:source arg}
            (when (and (= :discard arg)
                       (not last))
-             {:reveal-source true}))))
+             {:reveal-source true}))
+    {:source name}))
 
 (defn- ?reveal-discard-size [game player-no {:keys [source reveal-source]}]
   (let [discard (get-in game [:players player-no :discard])]

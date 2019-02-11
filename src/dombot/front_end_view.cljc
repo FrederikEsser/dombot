@@ -83,8 +83,10 @@
       {:visible-cards   (view-area :discard data number-of-cards)
        :number-of-cards approx-discard-size})))
 
-(defn view-choice [{:keys [options min max] :as choice}]
+(defn view-choice [{:keys [source options min max] :as choice}]
   (merge (select-keys choice [:text :min :max])
+         (when (= :special source)
+           {:options options})
          (when (= 1 min (or max (count options)))
            {:quick-choice true})))
 

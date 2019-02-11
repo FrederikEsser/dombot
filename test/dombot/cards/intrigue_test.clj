@@ -153,6 +153,97 @@
                                             :actions 1}]}
                                 (play 0 :mining-village)))))))
 
+(deftest pawn-test
+  (testing "Pawn"
+    (is (= (-> {:players [{:hand    [pawn]
+                           :actions 1}]}
+               (play 0 :pawn))
+           {:players      [{:hand      []
+                            :play-area [pawn]
+                            :actions   0}]
+            :effect-stack [{:text      "Choose two:"
+                            :player-no 0
+                            :choice    ::intrigue/pawn-choices
+                            :source    :special
+                            :options   [{:option :card :text "+1 Card"}
+                                        {:option :action :text "+1 Action"}
+                                        {:option :buy :text "+1 Buy"}
+                                        {:option :coin :text "+$1"}]
+                            :min       2
+                            :max       2}]}))
+    (is (= (-> {:players [{:hand    [pawn]
+                           :deck    [copper estate]
+                           :actions 1}]}
+               (play 0 :pawn)
+               (choose [:card :action]))
+           {:players [{:hand      [copper]
+                       :deck      [estate]
+                       :play-area [pawn]
+                       :actions   1}]}))
+    (is (= (-> {:players [{:hand    [pawn]
+                           :deck    [copper estate]
+                           :actions 1
+                           :buys    1}]}
+               (play 0 :pawn)
+               (choose [:card :buy]))
+           {:players [{:hand      [copper]
+                       :deck      [estate]
+                       :play-area [pawn]
+                       :actions   0
+                       :buys      2}]}))
+    (is (= (-> {:players [{:hand    [pawn]
+                           :deck    [copper estate]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :pawn)
+               (choose [:card :coin]))
+           {:players [{:hand      [copper]
+                       :deck      [estate]
+                       :play-area [pawn]
+                       :actions   0
+                       :coins     1}]}))
+    (is (= (-> {:players [{:hand    [pawn]
+                           :deck    [copper estate]
+                           :actions 1
+                           :buys    1}]}
+               (play 0 :pawn)
+               (choose [:action :buy]))
+           {:players [{:hand      []
+                       :deck      [copper estate]
+                       :play-area [pawn]
+                       :actions   1
+                       :buys      2}]}))
+    (is (= (-> {:players [{:hand    [pawn]
+                           :deck    [copper estate]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :pawn)
+               (choose [:action :coin]))
+           {:players [{:hand      []
+                       :deck      [copper estate]
+                       :play-area [pawn]
+                       :actions   1
+                       :coins     1}]}))
+    (is (= (-> {:players [{:hand    [pawn]
+                           :deck    [copper estate]
+                           :actions 1
+                           :buys    1
+                           :coins   0}]}
+               (play 0 :pawn)
+               (choose [:buy :coin]))
+           {:players [{:hand      []
+                       :deck      [copper estate]
+                       :play-area [pawn]
+                       :actions   0
+                       :buys      2
+                       :coins     1}]}))
+    (is (thrown-with-msg? AssertionError #"The choices must be different."
+                          (-> {:players [{:hand    [pawn]
+                                          :deck    [copper estate]
+                                          :actions 1}]}
+                              (play 0 :pawn)
+                              (choose [:card :card]))))))
+
 (deftest upgrade-test
   (let [silver (assoc silver :id 1)]
     (testing "Upgrade"

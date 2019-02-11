@@ -1,5 +1,5 @@
 (ns dombot.cards.intrigue
-  (:require [dombot.operations :refer [move-card push-effect-stack give-choice]]
+  (:require [dombot.operations :refer [move-card push-effect-stack give-choice draw]]
             [dombot.cards.common :refer :all]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -33,6 +33,30 @@
                                               :options [:player :play-area {:this true}]
                                               :max     1}]]})
 
+(defn pawn-choices [game player-no choices]
+  (let [choices (set choices)]
+    (assert (= 2 (count choices)) "The choices must be different.")
+    (cond-> game
+            (:card choices) (draw player-no 1)
+            (:action choices) (give-actions player-no 1)
+            (:buy choices) (give-buys player-no 1)
+            (:coin choices) (give-money player-no 1))))
+
+(effects/register {::pawn-choices pawn-choices})
+
+(def pawn {:name    :pawn
+           :set     :intrigue
+           :type    #{:action}
+           :cost    2
+           :effects [[:give-choice {:text    "Choose two:"
+                                    :choice  ::pawn-choices
+                                    :options [:special {:option :card :text "+1 Card"}
+                                              {:option :action :text "+1 Action"}
+                                              {:option :buy :text "+1 Buy"}
+                                              {:option :coin :text "+$1"}]
+                                    :min     2
+                                    :max     2}]]})
+
 (defn upgrade-trash [game player-no card-name]
   (let [player (get-in game [:players player-no])
         {{:keys [cost]} :card} (ut/get-card-idx player :hand card-name)
@@ -61,4 +85,5 @@
 
 (def kingdom-cards [courtyard
                     mining-village
+                    pawn
                     upgrade])

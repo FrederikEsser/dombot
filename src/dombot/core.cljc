@@ -6,10 +6,9 @@
 
 ; todo:
 ;;; Intrigue
-; refer to :this for choices (mining village)
 
 ; refac supply to a map of lists of cards by name
-; change options into lists of maps with :name and :id (cards?)
+; change options into lists of maps with :name and :id (cards?) - or not??
 ; generalize checks for possible operations
 ; slow mode
 ; make frequencies optional

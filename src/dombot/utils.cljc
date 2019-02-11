@@ -82,6 +82,8 @@
             reacts-to (filter (comp #{reacts-to} :reacts-to))
             :always (map :name))))
 
+(effects/register {:player player-area})
+
 (defn supply-piles [{:keys [supply]} player-no card-id {:keys [max-cost cost type]}]
   (-> supply
       (cond->>
@@ -91,10 +93,14 @@
       (->> (filter (comp pos? :pile-size))
            (map (comp :name :card)))))
 
+(effects/register {:supply supply-piles})
+
+(defn special-choice [game player-no card-id & options]
+  options)
+
+(effects/register {:special special-choice})
+
 (defn empty-supply-piles [{:keys [supply] :as game}]
   (->> supply
        (filter (comp zero? :pile-size))
        count))
-
-(effects/register {:player player-area
-                   :supply supply-piles})
