@@ -409,7 +409,8 @@
             :trash   [estate copper]}))))
 
 (deftest upgrade-test
-  (let [silver (assoc silver :id 1)]
+  (let [silver (assoc silver :id 1)
+        estate (assoc estate :id 2)]
     (testing "Upgrade"
       (is (= (-> {:players [{:hand    [upgrade copper copper estate estate]
                              :deck    [silver]
@@ -468,18 +469,61 @@
                          :actions   1}]
               :trash   [estate]}))
       (is (= (-> {:supply  [{:card copper :pile-size 46}
-                            {:card silver :pile-size 40}
-                            {:card gold :pile-size 30}]
+                            {:card estate :pile-size 8}
+                            {:card silver :pile-size 40}]
                   :players [{:hand    [upgrade copper copper estate estate]
                              :deck    [silver]
                              :actions 1}]}
                  (play 0 :upgrade)
                  (choose :copper))
              {:supply  [{:card copper :pile-size 46}
-                        {:card silver :pile-size 40}
-                        {:card gold :pile-size 30}]
+                        {:card estate :pile-size 8}
+                        {:card silver :pile-size 40}]
               :players [{:hand      [copper estate estate silver]
                          :play-area [upgrade]
                          :deck      []
                          :actions   1}]
-              :trash   [copper]})))))
+              :trash   [copper]}))
+      (testing "with cost reduction"
+        (is (= (-> {:supply          (base/supply 2 8)
+                    :cost-reductions [{:reduction 1}]
+                    :players         [{:hand    [upgrade copper copper estate estate]
+                                       :deck    [silver]
+                                       :actions 1}]}
+                   (play 0 :upgrade)
+                   (choose :copper))
+               {:supply          (base/supply 2 8)
+                :cost-reductions [{:reduction 1}]
+                :players         [{:hand      [copper estate estate silver]
+                                   :play-area [upgrade]
+                                   :deck      []
+                                   :actions   1}]
+                :effect-stack    [{:text      "Gain a card costing exactly $1."
+                                   :player-no 0
+                                   :choice    :gain
+                                   :source    :supply
+                                   :options   [:estate]
+                                   :min       1
+                                   :max       1}]
+                :trash           [copper]}))
+        (is (= (-> {:supply          (base/supply 2 8)
+                    :cost-reductions [{:reduction 1}]
+                    :players         [{:hand    [upgrade copper copper estate estate]
+                                       :deck    [silver]
+                                       :actions 1}]}
+                   (play 0 :upgrade)
+                   (choose :estate))
+               {:supply          (base/supply 2 8)
+                :cost-reductions [{:reduction 1}]
+                :players         [{:hand      [copper copper estate silver]
+                                   :play-area [upgrade]
+                                   :deck      []
+                                   :actions   1}]
+                :effect-stack    [{:text      "Gain a card costing exactly $2."
+                                   :player-no 0
+                                   :choice    :gain
+                                   :source    :supply
+                                   :options   [:silver]
+                                   :min       1
+                                   :max       1}]
+                :trash           [estate]}))))))

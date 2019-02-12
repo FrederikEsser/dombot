@@ -92,13 +92,36 @@
                        :coins   0
                        :buys    0}]}))
     (is (= (buy-card {:supply  [{:card {:name :silver :cost 3} :pile-size 3}]
-                      :players [{:coins 6
+                      :players [{:coins 4
                                  :buys  2}]}
                      0 :silver)
            {:supply  [{:card {:name :silver :cost 3} :pile-size 2}]
             :players [{:discard [{:name :silver :cost 3 :id 4}]
-                       :coins   3
-                       :buys    1}]}))))
+                       :coins   1
+                       :buys    1}]}))
+    (testing "with cost reduction"
+      (is (= (-> {:supply          [{:card {:name :silver :cost 3} :pile-size 3}]
+                  :cost-reductions [{:reduction 1}]
+                  :players         [{:coins 4
+                                     :buys  2}]}
+                 (buy-card 0 :silver))
+             {:supply          [{:card {:name :silver :cost 3} :pile-size 2}]
+              :cost-reductions [{:reduction 1}]
+              :players         [{:discard [{:name :silver :cost 3 :id 5}]
+                                 :coins   2
+                                 :buys    1}]}))
+      (is (= (-> {:supply          [{:card {:name :silver :cost 3} :pile-size 3}]
+                  :cost-reductions [{:reduction 1}]
+                  :players         [{:coins 4
+                                     :buys  2}]}
+                 (buy-card 0 :silver)
+                 (buy-card 0 :silver))
+             {:supply          [{:card {:name :silver :cost 3} :pile-size 1}]
+              :cost-reductions [{:reduction 1}]
+              :players         [{:discard [{:name :silver :cost 3 :id 6}
+                                           {:name :silver :cost 3 :id 7}]
+                                 :coins   0
+                                 :buys    0}]})))))
 
 (deftest shuffle-test
   (testing "Shuffle discard"
@@ -341,6 +364,31 @@
                                                 :actions 1}]}
                                     0 :village)))))))
 
+(deftest cost-reduction-test
+  (testing "Cost reduction"
+    (is (= (ut/get-cost {:cost-reductions [{:reduction 1}]}
+                        {:cost 3})
+           2))
+    (is (= (ut/get-cost {:cost-reductions [{:reduction 2}]}
+                        {:cost 3})
+           1))
+    (is (= (ut/get-cost {:cost-reductions [{:reduction 1} {:reduction 1}]}
+                        {:cost 3})
+           1))
+    (is (= (ut/get-cost {:cost-reductions [{:reduction 1}]}
+                        {:cost 0})
+           0))
+    (is (= (ut/get-cost {:cost-reductions [{:type      :action
+                                            :reduction 2}]}
+                        {:type #{:action}
+                         :cost 5})
+           3))
+    (is (= (ut/get-cost {:cost-reductions [{:type      :action
+                                            :reduction 2}]}
+                        {:type #{:victory}
+                         :cost 5})
+           5))))
+
 (deftest clean-up-test
   (testing "Clean up"
     (is (= (clean-up {:players [{:hand            [{:name :estate}]
@@ -394,6 +442,21 @@
                                  :discard         []
                                  :number-of-turns 8
                                  :triggers        [{:some :trigger}]}]} 0)
+           {:players [{:hand            []
+                       :play-area       []
+                       :deck            []
+                       :discard         []
+                       :actions         0
+                       :coins           0
+                       :buys            0
+                       :number-of-turns 9
+                       :phase           :out-of-turn}]}))
+    (is (= (clean-up {:cost-reductions [{:reduction 1}]
+                      :players         [{:hand            []
+                                         :play-area       []
+                                         :deck            []
+                                         :discard         []
+                                         :number-of-turns 8}]} 0)
            {:players [{:hand            []
                        :play-area       []
                        :deck            []

@@ -120,7 +120,32 @@
                :type            #{:victory}
                :cost            2
                :number-of-cards 8
-               :interaction     :choosable}])))))
+               :interaction     :choosable}])))
+    (testing "with cost reduction"
+      (is (= (view-supply {:supply          [{:card copper :pile-size 46}
+                                             {:card silver :pile-size 40}
+                                             {:card estate :pile-size 8}]
+                           :cost-reductions [{:reduction 1}]
+                           :player          {:coins 2
+                                             :buys  1}})
+             [{:name            :copper
+               :name.ui         "Copper"
+               :type            #{:treasure}
+               :cost            0
+               :number-of-cards 46
+               :interaction     :buyable}
+              {:name            :silver
+               :name.ui         "Silver"
+               :type            #{:treasure}
+               :cost            2
+               :number-of-cards 40
+               :interaction     :buyable}
+              {:name            :estate
+               :name.ui         "Estate"
+               :type            #{:victory}
+               :cost            1
+               :number-of-cards 8
+               :interaction     :buyable}])))))
 
 (deftest deck-test
   (testing "Deck view"

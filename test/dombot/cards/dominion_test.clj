@@ -805,7 +805,65 @@
               :players [{:hand      [estate gold]
                          :play-area [mine]
                          :actions   0}]
-              :trash   [silver]})))))
+              :trash   [silver]}))
+      (testing "with cost reduction"
+        (is (= (-> {:supply          (base/supply 2 8)
+                    :cost-reductions [{:reduction 2}]
+                    :players         [{:hand    [mine copper estate]
+                                       :actions 1}]}
+                   (play 0 :mine)
+                   (choose :copper))
+               {:supply          (base/supply 2 8)
+                :cost-reductions [{:reduction 2}]
+                :players         [{:hand      [estate]
+                                   :play-area [mine]
+                                   :actions   0}]
+                :effect-stack    [{:text      "Gain a Treasure to your hand costing up to $3."
+                                   :player-no 0
+                                   :choice    :gain-to-hand
+                                   :source    :supply
+                                   :options   [:copper :silver]
+                                   :min       1
+                                   :max       1}]
+                :trash           [copper]}))
+        (is (= (-> {:supply          (base/supply 2 8)
+                    :cost-reductions [{:reduction 2}]
+                    :players         [{:hand    [mine silver estate]
+                                       :actions 1}]}
+                   (play 0 :mine)
+                   (choose :silver))
+               {:supply          (base/supply 2 8)
+                :cost-reductions [{:reduction 2}]
+                :players         [{:hand      [estate]
+                                   :play-area [mine]
+                                   :actions   0}]
+                :effect-stack    [{:text      "Gain a Treasure to your hand costing up to $4."
+                                   :player-no 0
+                                   :choice    :gain-to-hand
+                                   :source    :supply
+                                   :options   [:copper :silver :gold]
+                                   :min       1
+                                   :max       1}]
+                :trash           [silver]}))
+        (is (= (-> {:supply          (base/supply 2 8)
+                    :cost-reductions [{:reduction 3}]
+                    :players         [{:hand    [mine copper estate]
+                                       :actions 1}]}
+                   (play 0 :mine)
+                   (choose :copper))
+               {:supply          (base/supply 2 8)
+                :cost-reductions [{:reduction 3}]
+                :players         [{:hand      [estate]
+                                   :play-area [mine]
+                                   :actions   0}]
+                :effect-stack    [{:text      "Gain a Treasure to your hand costing up to $3."
+                                   :player-no 0
+                                   :choice    :gain-to-hand
+                                   :source    :supply
+                                   :options   [:copper :silver :gold]
+                                   :min       1
+                                   :max       1}]
+                :trash           [copper]}))))))
 
 (deftest moat-test
   (testing "Moat"
@@ -1167,7 +1225,46 @@
                          :play-area [remodel]
                          :discard   [duchy]
                          :actions   0}]
-              :trash   [silver]})))))
+              :trash   [silver]}))
+      (testing "with cost reduction"
+        (is (= (-> {:supply          (base/supply 2 8)
+                    :cost-reductions [{:reduction 1}]
+                    :players         [{:hand    [remodel copper estate]
+                                       :actions 1}]}
+                   (play 0 :remodel)
+                   (choose :estate))
+               {:supply          (base/supply 2 8)
+                :cost-reductions [{:reduction 1}]
+                :players         [{:hand      [copper]
+                                   :play-area [remodel]
+                                   :actions   0}]
+                :effect-stack    [{:text      "Gain a card costing up to $3."
+                                   :player-no 0
+                                   :choice    :gain
+                                   :source    :supply
+                                   :options   [:curse :estate :copper :silver]
+                                   :min       1
+                                   :max       1}]
+                :trash           [estate]}))
+        (is (= (-> {:supply          (base/supply 2 8)
+                    :cost-reductions [{:reduction 3}]
+                    :players         [{:hand    [remodel copper estate]
+                                       :actions 1}]}
+                   (play 0 :remodel)
+                   (choose :estate))
+               {:supply          (base/supply 2 8)
+                :cost-reductions [{:reduction 3}]
+                :players         [{:hand      [copper]
+                                   :play-area [remodel]
+                                   :actions   0}]
+                :effect-stack    [{:text      "Gain a card costing up to $2."
+                                   :player-no 0
+                                   :choice    :gain
+                                   :source    :supply
+                                   :options   [:curse :estate :duchy :copper :silver]
+                                   :min       1
+                                   :max       1}]
+                :trash           [estate]}))))))
 
 (deftest sentry-test
   (testing "Sentry"
@@ -1580,7 +1677,8 @@
                        :coins     2
                        :buys      2}]}))))
 (deftest workshop-test
-  (let [silver (assoc silver :id 1)]
+  (let [silver (assoc silver :id 1)
+        duchy (assoc duchy :id 2)]
     (testing "Workshop"
       (is (= (play {:supply  (base/supply 2 8)
                     :players [{:hand    [workshop copper]
@@ -1607,11 +1705,24 @@
                          :discard   [silver]
                          :play-area [workshop]
                          :actions   0}]}))
-      (is (= (-> {:supply  [{:card province :pile-size 8}]
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
                   :players [{:hand    [workshop copper]
                              :actions 1}]}
                  (play 0 :workshop))
-             {:supply  [{:card province :pile-size 8}]
+             {:supply  [{:card duchy :pile-size 8}]
               :players [{:hand      [copper]
                          :play-area [workshop]
-                         :actions   0}]})))))
+                         :actions   0}]}))
+      (testing "with cost reduction"
+        (is (= (-> {:supply          [{:card duchy :pile-size 8}]
+                    :cost-reductions [{:reduction 1}]
+                    :players         [{:hand    [workshop copper]
+                                       :actions 1}]}
+                   (play 0 :workshop)
+                   (choose :duchy))
+               {:supply          [{:card duchy :pile-size 7}]
+                :cost-reductions [{:reduction 1}]
+                :players         [{:hand      [copper]
+                                   :play-area [workshop]
+                                   :discard   [duchy]
+                                   :actions   0}]}))))))

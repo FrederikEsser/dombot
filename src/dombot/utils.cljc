@@ -68,6 +68,20 @@
                        (when (= effect-type effect-name) {:idx idx :effect effect})))
        first))
 
+(defn- minus-cost [cost reduction]
+  (if (< cost reduction) 0 (- cost reduction)))
+
+(defn- reduction-matches-card [{reduction-type :type}
+                               {card-type :type}]
+  (or (nil? reduction-type) (reduction-type card-type)))
+
+(defn get-cost [{:keys [cost-reductions]} card]
+  (-> (reduce (fn [card {:keys [reduction] :as reduction-data}]
+                (cond-> card
+                        (reduction-matches-card reduction-data card) (update :cost minus-cost reduction)))
+              card cost-reductions)
+      :cost))
+
 (defn options-from-player
   ([game player-no card-id area & [{:keys [last this name not-name type reacts-to]}]]
    (when this
@@ -83,11 +97,11 @@
 
 (effects/register-options {:player options-from-player})
 
-(defn options-from-supply [{:keys [supply]} player-no card-id {:keys [max-cost cost type]}]
+(defn options-from-supply [{:keys [supply] :as game} player-no card-id {:keys [max-cost cost type]}]
   (-> supply
       (cond->>
-        max-cost (filter (comp (partial >= max-cost) :cost :card))
-        cost (filter (comp #{cost} :cost :card))
+        max-cost (filter (comp (partial >= max-cost) (partial get-cost game) :card))
+        cost (filter (comp #{cost} (partial get-cost game) :card))
         type (filter (comp type :type :card)))
       (->> (filter (comp pos? :pile-size))
            (map (comp :name :card)))))

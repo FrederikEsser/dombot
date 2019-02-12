@@ -9,21 +9,23 @@
 
 (defn view-supply [{supply               :supply
                     {:keys [coins buys]} :player
-                    choice               :choice}]
+                    choice               :choice
+                    :as                  game}]
   (->> supply
-       (map (fn [{{:keys [name type cost]} :card
-                  number-of-cards          :pile-size}]
-              (merge {:name            name
-                      :name.ui         (ut/format-name name)
-                      :type            type
-                      :cost            cost
-                      :number-of-cards number-of-cards}
-                     (when (and (not choice)                ; todo: check phase
-                                (< 0 number-of-cards)
-                                buys (< 0 buys)
-                                coins (<= cost coins))
-                       {:interaction :buyable})
-                     (choice-interaction name :supply choice))))))
+       (map (fn [{{:keys [name type] :as card} :card
+                  number-of-cards              :pile-size}]
+              (let [cost (ut/get-cost game card)]
+                (merge {:name            name
+                        :name.ui         (ut/format-name name)
+                        :type            type
+                        :cost            cost
+                        :number-of-cards number-of-cards}
+                       (when (and (not choice)              ; todo: check phase
+                                  (< 0 number-of-cards)
+                                  buys (< 0 buys)
+                                  coins (<= cost coins))
+                         {:interaction :buyable})
+                       (choice-interaction name :supply choice)))))))
 
 (defn view-area [area {{:keys [phase actions] :as player} :player
                        choice                             :choice}
@@ -147,12 +149,13 @@
      :can-end-turn?       (and (not choice)
                                (not= phase :end-of-game))}))
 
-(defn view-game [{:keys [supply players trash effect-stack current-player] :as game}]
+(defn view-game [{:keys [supply cost-reductions players trash effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
-    (cond-> {:supply   (view-supply {:supply supply
-                                     :player player
-                                     :choice choice})
+    (cond-> {:supply   (view-supply {:supply          supply
+                                     :cost-reductions cost-reductions
+                                     :player          player
+                                     :choice          choice})
              :players  (->> players
                             (map-indexed (fn [idx player]
                                            (let [active-player? (and (= idx current-player)

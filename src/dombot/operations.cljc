@@ -62,9 +62,8 @@
 
 (defn buy-card [{:keys [effect-stack] :as game} player-no card-name]
   (let [{:keys [buys coins phase]} (get-in game [:players player-no])
-        {{:keys [cost]} :card
-         pile-size      :pile-size
-         :as            supply-pile} (ut/get-pile-idx game card-name)]
+        {:keys [card pile-size] :as supply-pile} (ut/get-pile-idx game card-name)
+        cost (ut/get-cost game card)]
     (assert (empty? effect-stack) "You can't buy cards when you have a choice to make.")
     (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
     (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))
@@ -386,6 +385,7 @@
        (set-approx-discard-size player-no)
        (draw player-no 5)
        (update :players (partial mapv (fn [player] (dissoc player :revealed-cards))))
+       (dissoc :cost-reductions)
        check-game-ended)))
 
 (defn- view-end-player [{:keys [name deck discard hand play-area] :as player}]

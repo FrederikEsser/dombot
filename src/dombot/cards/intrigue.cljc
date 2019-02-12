@@ -128,8 +128,8 @@
                                        :max     1}]]})
 
 (defn upgrade-trash [game player-no card-name]
-  (let [{{:keys [cost]} :card} (ut/get-card-idx game [:players player-no :hand] card-name)
-        cost (inc cost)]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] card-name)
+        cost (inc (ut/get-cost game card))]
     (-> game
         (push-effect-stack player-no [[:trash-from-hand card-name]
                                       [:give-choice {:text    (str "Gain a card costing exactly $" cost ".")

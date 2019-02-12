@@ -181,8 +181,8 @@
                         [:attack {:effects [[:discard-down-to 3]]}]]})
 
 (defn mine-trash [game player-no card-name]
-  (let [{{:keys [cost]} :card} (ut/get-card-idx game [:players player-no :hand] card-name)
-        max-cost (+ 3 cost)]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] card-name)
+        max-cost (+ 3 (ut/get-cost game card))]
     (-> game
         (push-effect-stack player-no [[:trash-from-hand card-name]
                                       [:give-choice {:text    (str "Gain a Treasure to your hand costing up to $" max-cost ".")
@@ -258,8 +258,8 @@
                         [::poacher-discard]]})
 
 (defn remodel-trash [game player-no card-name]
-  (let [{{:keys [cost]} :card} (ut/get-card-idx game [:players player-no :hand] card-name)
-        max-cost (+ 2 cost)]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] card-name)
+        max-cost (+ 2 (ut/get-cost game card))]
     (-> game
         (push-effect-stack player-no [[:trash-from-hand card-name]
                                       [:give-choice {:text    (str "Gain a card costing up to $" max-cost ".")
