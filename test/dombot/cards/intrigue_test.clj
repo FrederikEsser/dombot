@@ -324,6 +324,29 @@
                               (play 0 :pawn)
                               (choose [:card :card]))))))
 
+(deftest shanty-town-test
+  (testing "Shanty Town"
+    (is (= (-> {:players [{:hand    [shanty-town shanty-town copper copper copper]
+                           :deck    [silver silver estate]
+                           :actions 1}]}
+               (play 0 :shanty-town))
+           {:players [{:hand           [shanty-town copper copper copper]
+                       :play-area      [shanty-town]
+                       :deck           [silver silver estate]
+                       :actions        2
+                       :revealed-cards {:hand 4}}]}))
+    (is (= (-> {:players [{:hand           [shanty-town copper copper copper]
+                           :play-area      [shanty-town]
+                           :deck           [silver silver estate]
+                           :actions        2
+                           :revealed-cards {:hand 4}}]}
+               (play 0 :shanty-town))
+           {:players [{:hand           [copper copper copper silver silver]
+                       :play-area      [shanty-town shanty-town]
+                       :deck           [estate]
+                       :actions        3
+                       :revealed-cards {}}]}))))
+
 (deftest steward-test
   (testing "Steward"
     (is (= (-> {:players [{:hand    [steward]

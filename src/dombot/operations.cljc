@@ -137,14 +137,18 @@
   ([game player-no card-id data]
    (update game :effect-stack (partial concat (if (sequential? data)
                                                 (->> data
-                                                     (map (fn [effect] (merge {:player-no player-no
-                                                                               :effect    effect}
-                                                                              (when card-id
-                                                                                {:card-id card-id})))))
-                                                [(merge data
-                                                        {:player-no player-no}
-                                                        (when card-id
-                                                          {:card-id card-id}))]))))
+                                                     (map (fn [effect]
+                                                            (when effect
+                                                              (merge {:player-no player-no
+                                                                      :effect    effect}
+                                                                     (when card-id
+                                                                       {:card-id card-id})))))
+                                                     (remove nil?))
+                                                (when data
+                                                  [(merge data
+                                                          {:player-no player-no}
+                                                          (when card-id
+                                                            {:card-id card-id}))])))))
   ([game player-no data]
    (push-effect-stack game player-no nil data)))
 

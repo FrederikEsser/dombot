@@ -86,6 +86,22 @@
                                     :min     2
                                     :max     2}]]})
 
+(defn shanty-town-draw [game player-no]
+  (let [hand (get-in game [:players player-no :hand])
+        action-cards-in-hand? (some (comp :action :type) hand)]
+    (push-effect-stack game player-no [[:reveal-hand]
+                                       (when-not action-cards-in-hand?
+                                         [:draw 2])])))
+
+(effects/register {::shanty-town-draw shanty-town-draw})
+
+(def shanty-town {:name    :shanty-town
+                  :set     :intrigue
+                  :type    #{:action}
+                  :cost    3
+                  :effects [[:give-actions 2]
+                            [::shanty-town-draw]]})
+
 (defn steward-choices [game player-no choice]
   (cond-> game
           (= :cards choice) (draw player-no 2)
@@ -140,5 +156,6 @@
                     lurker
                     mining-village
                     pawn
+                    shanty-town
                     steward
                     upgrade])
