@@ -37,7 +37,8 @@
              :effects [[:give-actions 1]
                        [:give-choice {:text    "Choose one:"
                                       :choice  ::lurker-choice
-                                      :options [:special {:option :trash :text "Trash an Action card from the Supply."}
+                                      :options [:special
+                                                {:option :trash :text "Trash an Action card from the Supply."}
                                                 {:option :gain :text "Gain an Action card from the trash."}]
                                       :min     1
                                       :max     1}]]})
@@ -77,12 +78,38 @@
            :cost    2
            :effects [[:give-choice {:text    "Choose two:"
                                     :choice  ::pawn-choices
-                                    :options [:special {:option :card :text "+1 Card"}
+                                    :options [:special
+                                              {:option :card :text "+1 Card"}
                                               {:option :action :text "+1 Action"}
                                               {:option :buy :text "+1 Buy"}
                                               {:option :coin :text "+$1"}]
                                     :min     2
                                     :max     2}]]})
+
+(defn steward-choices [game player-no choice]
+  (cond-> game
+          (= :cards choice) (draw player-no 2)
+          (= :coins choice) (give-money player-no 2)
+          (= :trash choice) (give-choice player-no {:text    "Trash two cards from your hand."
+                                                    :choice  :trash-from-hand
+                                                    :options [:player :hand]
+                                                    :min     2
+                                                    :max     2})))
+
+(effects/register {::steward-choices steward-choices})
+
+(def steward {:name    :steward
+              :set     :intrigue
+              :type    #{:action}
+              :cost    3
+              :effects [[:give-choice {:text    "Choose one:"
+                                       :choice  ::steward-choices
+                                       :options [:special
+                                                 {:option :cards :text "+2 Cards"}
+                                                 {:option :coins :text "+$2"}
+                                                 {:option :trash :text "Trash two cards from your hand."}]
+                                       :min     1
+                                       :max     1}]]})
 
 (defn upgrade-trash [game player-no card-name]
   (let [{{:keys [cost]} :card} (ut/get-card-idx game [:players player-no :hand] card-name)
@@ -113,4 +140,5 @@
                     lurker
                     mining-village
                     pawn
+                    steward
                     upgrade])

@@ -324,6 +324,67 @@
                               (play 0 :pawn)
                               (choose [:card :card]))))))
 
+(deftest steward-test
+  (testing "Steward"
+    (is (= (-> {:players [{:hand    [steward]
+                           :actions 1}]}
+               (play 0 :steward))
+           {:players      [{:hand      []
+                            :play-area [steward]
+                            :actions   0}]
+            :effect-stack [{:text      "Choose one:"
+                            :player-no 0
+                            :choice    ::intrigue/steward-choices
+                            :source    :special
+                            :options   [{:option :cards :text "+2 Cards"}
+                                        {:option :coins :text "+$2"}
+                                        {:option :trash :text "Trash two cards from your hand."}]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand    [steward]
+                           :deck    [silver copper estate]
+                           :actions 1}]}
+               (play 0 :steward)
+               (choose :cards))
+           {:players [{:hand      [silver copper]
+                       :deck      [estate]
+                       :play-area [steward]
+                       :actions   0}]}))
+    (is (= (-> {:players [{:hand    [steward]
+                           :deck    [copper estate]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :steward)
+               (choose :coins))
+           {:players [{:hand      []
+                       :deck      [copper estate]
+                       :play-area [steward]
+                       :actions   0
+                       :coins     2}]}))
+    (is (= (-> {:players [{:hand    [steward copper estate silver]
+                           :actions 1}]}
+               (play 0 :steward)
+               (choose :trash))
+           {:players      [{:hand      [copper estate silver]
+                            :play-area [steward]
+                            :actions   0}]
+            :effect-stack [{:text      "Trash two cards from your hand."
+                            :player-no 0
+                            :choice    :trash-from-hand
+                            :source    :hand
+                            :options   [:copper :estate :silver]
+                            :min       2
+                            :max       2}]}))
+    (is (= (-> {:players [{:hand    [steward copper estate silver]
+                           :actions 1}]}
+               (play 0 :steward)
+               (choose :trash)
+               (choose [:estate :copper]))
+           {:players [{:hand      [silver]
+                       :play-area [steward]
+                       :actions   0}]
+            :trash   [estate copper]}))))
+
 (deftest upgrade-test
   (let [silver (assoc silver :id 1)]
     (testing "Upgrade"
