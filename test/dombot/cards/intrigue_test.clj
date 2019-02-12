@@ -7,6 +7,44 @@
             [dombot.cards.intrigue :as intrigue :refer :all]
             [dombot.utils :as ut]))
 
+(deftest bridge-test
+  (testing "Bridge"
+    (is (= (-> {:players [{:hand    [bridge]
+                           :actions 1
+                           :buys    1
+                           :coins   0}]}
+               (play 0 :bridge))
+           {:cost-reductions [{:reduction 1}]
+            :players         [{:hand      []
+                               :play-area [bridge]
+                               :actions   0
+                               :buys      2
+                               :coins     1}]}))
+    (is (= (-> {:cost-reductions [{:reduction 1}]
+                :players         [{:hand    [bridge]
+                                   :actions 1
+                                   :buys    1
+                                   :coins   0}]}
+               (play 0 :bridge))
+           {:cost-reductions [{:reduction 1} {:reduction 1}]
+            :players         [{:hand      []
+                               :play-area [bridge]
+                               :actions   0
+                               :buys      2
+                               :coins     1}]}))
+    (is (= (-> {:players [{:hand    [throne-room bridge]
+                           :actions 1
+                           :buys    1
+                           :coins   0}]}
+               (play 0 :throne-room)
+               (choose :bridge))
+           {:cost-reductions [{:reduction 1} {:reduction 1}]
+            :players         [{:hand      []
+                               :play-area [throne-room bridge]
+                               :actions   0
+                               :buys      3
+                               :coins     2}]}))))
+
 (deftest courtyard-test
   (testing "Courtyard"
     (is (= (play {:players [{:hand    [courtyard]

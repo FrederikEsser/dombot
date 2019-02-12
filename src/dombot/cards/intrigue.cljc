@@ -4,6 +4,14 @@
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
+(def bridge {:name    :bridge
+             :set     :intrigue
+             :type    #{:action}
+             :cost    4
+             :effects [[:give-buys 1]
+                       [:give-money 1]
+                       [:add-cost-reduction 1]]})
+
 (def courtyard {:name    :courtyard
                 :set     :intrigue
                 :type    #{:action}
@@ -152,7 +160,8 @@
                                        :min     1
                                        :max     1}]]})
 
-(def kingdom-cards [courtyard
+(def kingdom-cards [bridge
+                    courtyard
                     lurker
                     mining-village
                     pawn

@@ -4,16 +4,19 @@
             [dombot.effects :as effects]))
 
 (defn give-actions [game player-no n]
+  (assert (get-in game [:players player-no :actions]) (str ":actions is not specified for player " player-no))
   (update-in game [:players player-no :actions] + n))
 
 (effects/register {:give-actions give-actions})
 
 (defn give-money [game player-no n]
+  (assert (get-in game [:players player-no :coins]) (str ":coins is not specified for player " player-no))
   (update-in game [:players player-no :coins] + n))
 
 (effects/register {:give-money give-money})
 
 (defn give-buys [game player-no n]
+  (assert (get-in game [:players player-no :buys]) (str ":buys is not specified for player " player-no))
   (update-in game [:players player-no :buys] + n))
 
 (effects/register {:give-buys give-buys})
@@ -200,3 +203,8 @@
       (update-in [:players player-no :triggers] concat [trigger])))
 
 (effects/register {:add-trigger add-trigger})
+
+(defn add-cost-reduction [game player-no reduction]
+  (update game :cost-reductions concat [{:reduction reduction}]))
+
+(effects/register {:add-cost-reduction add-cost-reduction})
