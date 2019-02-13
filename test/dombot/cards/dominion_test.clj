@@ -456,6 +456,19 @@
                        :coins     2
                        :buys      2}]}))))
 
+(deftest gardens-test
+  (testing "Gardens"
+    (is (= (calc-victory-points {:deck (repeat 9 gardens)})
+           0))
+    (is (= (calc-victory-points {:deck (repeat 10 gardens)})
+           10))
+    (is (= (calc-victory-points {:deck (concat (repeat 10 gardens)
+                                               (repeat 9 copper))})
+           10))
+    (is (= (calc-victory-points {:deck (concat (repeat 10 gardens)
+                                               (repeat 10 copper))})
+           20))))
+
 (deftest harbinger-test
   (testing "Harbinger"
     (is (= (play {:players [{:hand    [harbinger]

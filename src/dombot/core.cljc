@@ -12,7 +12,7 @@
 ; generalize checks for possible operations
 ; slow mode
 ; make frequencies optional
-; unit tests for affect-other-players, give-choice, choose, gardens, calc-victory-points, ...
+; unit tests for affect-other-players, give-choice, choose, calc-victory-points, ...
 ; handle multiple reaction cards
 ; game log / turn counter
 
