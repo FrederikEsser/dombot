@@ -173,34 +173,40 @@
                          :deck      []
                          :actions   2}]})))
     (testing "Reaction"
-      (is (= (-> {:players [{:hand    [swindler]
+      (is (= (-> {:players [{:hand    [minion]
                              :actions 1}
                             {:hand [diplomat estate estate estate silver]
                              :deck [copper copper]}]}
-                 (play 0 :swindler))
+                 (play 0 :minion))
              {:players      [{:hand      []
-                              :play-area [swindler]
+                              :play-area [minion]
                               :actions   0}
                              {:hand [diplomat estate estate estate silver]
                               :deck [copper copper]}]
-              :effect-stack [{:text      "You may reveal a Reaction to react to the Swindler Attack."
+              :effect-stack [{:text      "You may reveal a Reaction to react to the Minion Attack."
                               :player-no 1
                               :choice    :reveal-reaction
                               :source    :hand
                               :options   [:diplomat]
                               :max       1}
                              {:player-no 0
-                              :effect    [:give-coins 2]}
+                              :effect    [:give-actions 1]}
                              {:player-no 0
-                              :effect    [:attack {:effects [[::intrigue/swindler-attack]]}]}]}))
-      (is (= (-> {:players [{:hand    [swindler]
+                              :effect    [:give-choice {:text    "Choose one:"
+                                                        :choice  ::intrigue/minion-choice
+                                                        :options [:special
+                                                                  {:option :coins :text "+$2"}
+                                                                  {:option :discard :text "Discard your hand, +4 Cards, and each other player with at least 5 cards in hand discards their hand and draws 4 cards."}]
+                                                        :min     1
+                                                        :max     1}]}]}))
+      (is (= (-> {:players [{:hand    [minion]
                              :actions 1}
                             {:hand [diplomat estate estate estate silver]
                              :deck [copper copper]}]}
-                 (play 0 :swindler)
+                 (play 0 :minion)
                  (choose :diplomat))
              {:players      [{:hand      []
-                              :play-area [swindler]
+                              :play-area [minion]
                               :actions   0}
                              {:hand [diplomat estate estate estate silver copper copper]
                               :deck []}]
@@ -212,57 +218,47 @@
                               :min       3
                               :max       3}
                              {:player-no 0
-                              :effect    [:give-coins 2]}
+                              :effect    [:give-actions 1]}
                              {:player-no 0
-                              :effect    [:attack {:effects [[::intrigue/swindler-attack]]}]}]}))
-      (is (= (-> {:supply  (base/supply 2 8)
-                  :players [{:hand    [swindler]
-                             :actions 1
-                             :coins   0}
+                              :effect    [:give-choice {:text    "Choose one:"
+                                                        :choice  ::intrigue/minion-choice
+                                                        :options [:special
+                                                                  {:option :coins :text "+$2"}
+                                                                  {:option :discard :text "Discard your hand, +4 Cards, and each other player with at least 5 cards in hand discards their hand and draws 4 cards."}]
+                                                        :min     1
+                                                        :max     1}]}]}))
+      (is (= (-> {:players [{:hand    [minion]
+                             :deck    (repeat 5 copper)
+                             :actions 1}
                             {:hand [diplomat estate estate estate silver]
                              :deck [copper copper]}]}
-                 (play 0 :swindler)
+                 (play 0 :minion)
                  (choose :diplomat)
-                 (choose [:estate :estate :estate]))
-             {:supply       (base/supply 2 8)
-              :players      [{:hand      []
-                              :play-area [swindler]
-                              :actions   0
-                              :coins     2}
-                             {:hand    [diplomat silver copper copper]
-                              :deck    [estate estate]
-                              :discard []}]
-              :effect-stack [{:text      "Gain a card costing $2 (attacker chooses)."
-                              :player-no 1
-                              :choice    :gain
-                              :source    :supply
-                              :options   [:estate]
-                              :min       1
-                              :max       1}]
-              :trash        [estate]}))
+                 (choose [:estate :estate :estate])
+                 (choose :discard))
+             {:players [{:hand      (repeat 4 copper)
+                         :play-area [minion]
+                         :deck      [copper]
+                         :actions   1}
+                        {:hand    [diplomat silver copper copper]
+                         :deck    []
+                         :discard [estate estate estate]}]}))
       (is (= (-> {:supply  (base/supply 2 8)
-                  :players [{:hand      [swindler]
+                  :players [{:hand      [minion]
                              :play-area []
                              :actions   1
                              :coins     0}
                             {:hand [diplomat silver copper copper]
                              :deck [estate]}]}
-                 (play 0 :swindler))
-             {:supply       (base/supply 2 8)
-              :players      [{:hand      []
-                              :play-area [swindler]
-                              :actions   0
-                              :coins     2}
-                             {:hand [diplomat silver copper copper]
-                              :deck []}]
-              :effect-stack [{:text      "Gain a card costing $2 (attacker chooses)."
-                              :player-no 1
-                              :choice    :gain
-                              :source    :supply
-                              :options   [:estate]
-                              :min       1
-                              :max       1}]
-              :trash        [estate]})))))
+                 (play 0 :minion)
+                 (choose :coins))
+             {:supply  (base/supply 2 8)
+              :players [{:hand      []
+                         :play-area [minion]
+                         :actions   1
+                         :coins     2}
+                        {:hand [diplomat silver copper copper]
+                         :deck [estate]}]})))))
 
 (deftest harem-test
   (testing "Harem"

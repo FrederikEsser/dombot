@@ -7,7 +7,6 @@
 ; todo:
 ;;; Intrigue
 
-; change diplomat tests to use minion as attack example
 ; handle multiple reaction cards
 ; refac supply to a map of lists of cards by name
 ; change options into lists of maps with :name and :id (cards?) - or not??
