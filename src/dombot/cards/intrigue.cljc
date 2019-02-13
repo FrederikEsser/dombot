@@ -76,6 +76,26 @@
                                               :options [:player :play-area {:this true}]
                                               :max     1}]]})
 
+(defn nobles-choices [game player-no choice]
+  (cond-> game
+          (= :cards choice) (draw player-no 3)
+          (= :actions choice) (give-actions player-no 2)))
+
+(effects/register {::nobles-choice nobles-choices})
+
+(def nobles {:name           :nobles
+             :set            :intrigue
+             :types          #{:action :victory}
+             :cost           6
+             :effects        [[:give-choice {:text    "Choose one:"
+                                             :choice  ::nobles-choice
+                                             :options [:special
+                                                       {:option :cards :text "+3 Cards"}
+                                                       {:option :actions :text "+2 Actions"}]
+                                             :min     1
+                                             :max     1}]]
+             :victory-points 2})
+
 (defn pawn-choices [game player-no choices]
   (let [choices (set choices)]
     (assert (= 2 (count choices)) "The choices must be different.")
@@ -213,6 +233,7 @@
                     harem
                     lurker
                     mining-village
+                    nobles
                     pawn
                     shanty-town
                     steward

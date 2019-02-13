@@ -74,12 +74,12 @@
 
 (deftest harem-test
   (testing "Harem"
-    (is (= (-> {:players [{:hand [harem]
+    (is (= (-> {:players [{:hand  [harem]
                            :coins 0}]}
                (play 0 :harem))
-           {:players [{:hand []
+           {:players [{:hand      []
                        :play-area [harem]
-                       :coins 2}]}))
+                       :coins     2}]}))
     (is (= (calc-victory-points {:deck [harem]})
            2))))
 
@@ -281,6 +281,41 @@
                                             :deck    [copper]
                                             :actions 1}]}
                                 (play 0 :mining-village)))))))
+
+(deftest nobles-test
+  (testing "Nobles"
+    (is (= (-> {:players [{:hand    [nobles]
+                           :actions 1}]}
+               (play 0 :nobles))
+           {:players      [{:hand      []
+                            :play-area [nobles]
+                            :actions   0}]
+            :effect-stack [{:text      "Choose one:"
+                            :player-no 0
+                            :choice    ::intrigue/nobles-choice
+                            :source    :special
+                            :options   [{:option :cards :text "+3 Cards"}
+                                        {:option :actions :text "+2 Actions"}]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand    [nobles]
+                           :deck    [copper copper estate estate]
+                           :actions 1}]}
+               (play 0 :nobles)
+               (choose :cards))
+           {:players [{:hand      [copper copper estate]
+                       :play-area [nobles]
+                       :deck      [estate]
+                       :actions   0}]}))
+    (is (= (-> {:players [{:hand    [nobles]
+                           :actions 1}]}
+               (play 0 :nobles)
+               (choose :actions))
+           {:players [{:hand      []
+                       :play-area [nobles]
+                       :actions   2}]}))
+    (is (= (calc-victory-points {:deck [nobles]})
+           2))))
 
 (deftest pawn-test
   (testing "Pawn"
