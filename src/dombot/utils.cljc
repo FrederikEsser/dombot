@@ -97,7 +97,7 @@
 
 (effects/register-options {:player options-from-player})
 
-(defn options-from-supply [{:keys [supply] :as game} player-no card-id {:keys [max-cost cost types]}]
+(defn options-from-supply [{:keys [supply] :as game} player-no card-id & [{:keys [max-cost cost types]}]]
   (-> supply
       (cond->>
         max-cost (filter (comp (partial >= max-cost) (partial get-cost game) :card))

@@ -1,5 +1,5 @@
 (ns dombot.cards.intrigue
-  (:require [dombot.operations :refer [move-card push-effect-stack give-choice draw ensure-deck-has-cards]]
+  (:require [dombot.operations :refer [move-card push-effect-stack give-choice draw peek-deck]]
             [dombot.cards.common :refer :all]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -164,7 +164,7 @@
 
 (defn swindler-attack [game player-no]
   (-> game
-      (ensure-deck-has-cards player-no 1)
+      (peek-deck player-no 1)
       (as-> game
             (let [[top-card] (get-in game [:players player-no :deck])
                   cost (ut/get-cost game top-card)]
@@ -228,6 +228,30 @@
                                        :min     1
                                        :max     1}]]})
 
+(defn wishing-well-guess [game player-no guess]
+  (-> game
+      (peek-deck player-no 1)
+      (as-> game
+            (let [[{:keys [name]}] (get-in game [:players player-no :deck])]
+              (push-effect-stack game player-no [[:reveal-from-deck 1]
+                                                 (if (= guess name)
+                                                   [:put-revealed-into-hand guess]
+                                                   [:topdeck-from-revealed name])])))))
+
+(effects/register {::wishing-well-guess wishing-well-guess})
+
+(def wishing-well {:name    :wishing-well
+                   :set     :intrigue
+                   :types   #{:action}
+                   :cost    3
+                   :effects [[:draw 1]
+                             [:give-actions 1]
+                             [:give-choice {:text    "Name a card."
+                                            :choice  ::wishing-well-guess
+                                            :options [:supply]
+                                            :min     1
+                                            :max     1}]]})
+
 (def kingdom-cards [bridge
                     courtyard
                     harem
@@ -239,4 +263,5 @@
                     steward
                     swindler
                     trading-post
-                    upgrade])
+                    upgrade
+                    wishing-well])

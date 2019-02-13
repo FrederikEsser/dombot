@@ -168,7 +168,23 @@
                               {:name    :gold
                                :name.ui "Gold"
                                :types   #{:treasure}}]
-            :number-of-cards 5}))))
+            :number-of-cards 5}))
+    (testing "revealed cards"
+      (is (= (view-deck {:player {:deck           [estate copper estate silver]
+                                  :revealed-cards {:deck 1}}})
+             {:visible-cards   [{:name    :estate
+                                 :name.ui "Estate"
+                                 :types   #{:victory}}]
+              :number-of-cards 4}))
+      (is (= (view-deck {:player {:deck           [estate copper estate silver]
+                                  :revealed-cards {:deck 2}}})
+             {:visible-cards   [{:name    :estate
+                                 :name.ui "Estate"
+                                 :types   #{:victory}}
+                                {:name    :copper
+                                 :name.ui "Copper"
+                                 :types   #{:treasure}}]
+              :number-of-cards 4})))))
 
 (deftest discard-test
   (testing "Discard view"
@@ -274,7 +290,7 @@
                                 {:name    :estate
                                  :name.ui "Estate"
                                  :types   #{:victory}}]
-              :number-of-cards 1})))))
+              :number-of-cards 2})))))
 
 (deftest hand-test
   (testing "Hand view"

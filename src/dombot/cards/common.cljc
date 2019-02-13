@@ -141,6 +141,15 @@
 
 (effects/register {:topdeck-from-look-at topdeck-from-look-at})
 
+(defn topdeck-from-revealed [game player-no card-names]
+  (-> game
+      (move-cards player-no {:card-names  card-names
+                             :from        :revealed
+                             :to          :deck
+                             :to-position :top})))
+
+(effects/register {:topdeck-from-revealed topdeck-from-revealed})
+
 (defn trash-from-hand [game player-no card-names]
   (move-cards game player-no {:card-names card-names
                               :from       :hand
@@ -204,6 +213,13 @@
                               :to              :look-at}))
 
 (effects/register {:look-at look-at})
+
+(defn put-revealed-into-hand [game player-no card-names]
+  (move-cards game player-no {:card-names card-names
+                              :from       :revealed
+                              :to         :hand}))
+
+(effects/register {:put-revealed-into-hand put-revealed-into-hand})
 
 (defn add-trigger [game player-no trigger]
   (-> game

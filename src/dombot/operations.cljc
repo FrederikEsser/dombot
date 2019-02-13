@@ -87,7 +87,7 @@
        (update-in [:players player-no] shuffle-discard)
        (update-status-fields player-no :discard :deck))))
 
-(defn ensure-deck-has-cards [game player-no number-of-cards]
+(defn peek-deck [game player-no number-of-cards]
   (let [deck (get-in game [:players player-no :deck])]
     (cond-> game
             (< (count deck) number-of-cards) (shuffle-discard player-no))))

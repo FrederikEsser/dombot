@@ -31,9 +31,10 @@
 
 (defn view-area [area {{:keys [phase actions] :as player} :player
                        choice                             :choice}
-                 & [number-of-cards]]
-  (let [cards (cond->> (get player area)
-                       number-of-cards (take-last number-of-cards))]
+                 & [position number-of-cards]]
+  (let [take-fn (if (= :bottom position) take-last take)
+        cards (cond->> (get player area)
+                       number-of-cards (take-fn number-of-cards))]
     (->> cards
          (map (fn [{:keys [name types]}]
                 (merge {:name    name
@@ -64,15 +65,20 @@
     [{:name.ui         "Hand"
       :number-of-cards (count hand)}]))
 
-(defn view-deck [{{:keys [deck look-at revealed]} :player
-                  :as                             data}]
-  (let [full-deck (concat look-at revealed deck)]
+(defn view-deck [{{:keys [deck
+                          look-at
+                          revealed
+                          revealed-cards]} :player
+                  :as                      data}]
+  (let [full-deck (concat look-at revealed deck)
+        revealed-cards-in-deck (:deck revealed-cards)]
     (if (empty? full-deck)
       {}
       (merge {:number-of-cards (count full-deck)}
-             (when (not-empty (concat look-at revealed))
+             (when (or (not-empty look-at) (not-empty revealed) revealed-cards-in-deck)
                {:visible-cards (concat (view-area :look-at data)
-                                       (view-area :revealed data))})))))
+                                       (view-area :revealed data)
+                                       (when revealed-cards-in-deck (view-area :deck data :top revealed-cards-in-deck)))})))))
 
 (defn view-discard [{{:keys [discard
                              approx-discard-size
@@ -81,11 +87,11 @@
                      :as                      data}]
   (if (empty? discard)
     {}
-    (let [number-of-cards (or (:discard revealed-cards)
-                              (and reveal-source (count discard))
+    (let [number-of-cards (or (and reveal-source (count discard))
+                              (:discard revealed-cards)
                               1)]
-      {:visible-cards   (view-area :discard data number-of-cards)
-       :number-of-cards approx-discard-size})))
+      {:visible-cards   (view-area :discard data :bottom number-of-cards)
+       :number-of-cards (max approx-discard-size number-of-cards)})))
 
 (defn view-options [options]
   (->> options

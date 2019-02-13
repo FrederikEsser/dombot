@@ -1,11 +1,17 @@
 (ns dombot.cards.intrigue-test
   (:require [clojure.test :refer :all]
+            [dombot.test-utils :refer :all]
             [dombot.operations :refer :all]
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.dominion :as dominion :refer [throne-room]]
             [dombot.cards.common :refer :all]
             [dombot.cards.intrigue :as intrigue :refer :all]
             [dombot.utils :as ut]))
+
+(defn fixture [f]
+  (with-rand-seed 123 (f)))
+
+(use-fixtures :each fixture)
 
 (deftest bridge-test
   (testing "Bridge"
@@ -726,3 +732,79 @@
                                    :min       1
                                    :max       1}]
                 :trash           [estate]}))))))
+
+(deftest wishing-well-test
+  (testing "Wishing Well"
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand    [wishing-well]
+                           :deck    [silver copper]
+                           :actions 1}]}
+               (play 0 :wishing-well))
+           {:supply       (base/supply 2 8)
+            :players      [{:hand      [silver]
+                            :play-area [wishing-well]
+                            :deck      [copper]
+                            :actions   1}]
+            :effect-stack [{:text      "Name a card."
+                            :player-no 0
+                            :choice    ::intrigue/wishing-well-guess
+                            :source    :supply
+                            :options   [:curse :estate :duchy :province :copper :silver :gold]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand    [wishing-well]
+                           :deck    [silver copper]
+                           :actions 1}]}
+               (play 0 :wishing-well)
+               (choose :copper))
+           {:supply  (base/supply 2 8)
+            :players [{:hand           [silver copper]
+                       :play-area      [wishing-well]
+                       :deck           []
+                       :actions        1
+                       :revealed       []
+                       :revealed-cards {:hand 1}}]}))
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand    [wishing-well]
+                           :deck    [silver copper]
+                           :actions 1}]}
+               (play 0 :wishing-well)
+               (choose :gold))
+           {:supply  (base/supply 2 8)
+            :players [{:hand           [silver]
+                       :play-area      [wishing-well]
+                       :deck           [copper]
+                       :actions        1
+                       :revealed       []
+                       :revealed-cards {:deck 1}}]}))
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand    [wishing-well]
+                           :deck    [silver]
+                           :discard [silver copper]
+                           :actions 1}]}
+               (play 0 :wishing-well)
+               (choose :copper))
+           {:supply  (base/supply 2 8)
+            :players [{:hand           [silver]
+                       :play-area      [wishing-well]
+                       :deck           [silver copper]
+                       :discard        []
+                       :actions        1
+                       :revealed       []
+                       :revealed-cards {:deck 1}}]}))
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand    [wishing-well]
+                           :deck    [silver]
+                           :discard [silver copper]
+                           :actions 1}]}
+               (play 0 :wishing-well)
+               (choose :copper))
+           {:supply  (base/supply 2 8)
+            :players [{:hand           [silver copper]
+                       :play-area      [wishing-well]
+                       :deck           [silver]
+                       :discard        []
+                       :actions        1
+                       :revealed       []
+                       :revealed-cards {:hand 1}}]}))))
