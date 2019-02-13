@@ -114,6 +114,14 @@
 
 (effects/register {:discard-all-set-aside discard-all-set-aside})
 
+(defn discard-all-hand [game player-no]
+  (let [hand (get-in game [:players player-no :hand])]
+    (move-cards game player-no {:card-names (map :name hand)
+                                :from       :hand
+                                :to         :discard})))
+
+(effects/register {:discard-all-hand discard-all-hand})
+
 (defn topdeck-from-hand [game player-no card-name]
   (cond-> game
           card-name (move-card player-no {:card-name   card-name

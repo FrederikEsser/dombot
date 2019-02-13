@@ -474,6 +474,61 @@
                                             :actions 1}]}
                                 (play 0 :mining-village)))))))
 
+(deftest minion-test
+  (testing "Minion"
+    (is (= (-> {:players [{:hand    [minion]
+                           :actions 1}]}
+               (play 0 :minion))
+           {:players      [{:hand      []
+                            :play-area [minion]
+                            :actions   1}]
+            :effect-stack [{:text      "Choose one:"
+                            :player-no 0
+                            :choice    ::intrigue/minion-choice
+                            :source    :special
+                            :options   [{:option :coins :text "+$2"}
+                                        {:option :discard :text "Discard your hand, +4 Cards, and each other player with at least 5 cards in hand discards their hand and draws 4 cards."}]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand    [minion]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :minion)
+               (choose :coins))
+           {:players [{:hand      []
+                       :play-area [minion]
+                       :actions   1
+                       :coins     2}]}))
+    (is (= (-> {:players [{:hand    [minion estate copper]
+                           :deck    [minion copper silver estate copper]
+                           :actions 1}
+                          {:hand (repeat 5 copper)
+                           :deck (repeat 5 estate)}]}
+               (play 0 :minion)
+               (choose :discard))
+           {:players [{:hand      [minion copper silver estate]
+                       :play-area [minion]
+                       :deck      [copper]
+                       :discard   [estate copper]
+                       :actions   1}
+                      {:hand    (repeat 4 estate)
+                       :deck    [estate]
+                       :discard (repeat 5 copper)}]}))
+    (is (= (-> {:players [{:hand    [minion estate copper]
+                           :deck    [minion copper silver estate copper]
+                           :actions 1}
+                          {:hand (repeat 4 copper)
+                           :deck (repeat 3 silver)}]}
+               (play 0 :minion)
+               (choose :discard))
+           {:players [{:hand      [minion copper silver estate]
+                       :play-area [minion]
+                       :deck      [copper]
+                       :discard   [estate copper]
+                       :actions   1}
+                      {:hand (repeat 4 copper)
+                       :deck (repeat 3 silver)}]}))))
+
 (deftest nobles-test
   (testing "Nobles"
     (is (= (-> {:players [{:hand    [nobles]

@@ -131,6 +131,36 @@
                                               :options [:player :play-area {:this true}]
                                               :max     1}]]})
 
+(defn minion-attack [game player-no]
+  (let [hand (get-in game [:players player-no :hand])]
+    (cond-> game
+            (<= 5 (count hand)) (push-effect-stack player-no [[:discard-all-hand]
+                                                              [:draw 4]]))))
+
+(effects/register {::minion-attack minion-attack})
+
+(defn minion-choice [game player-no choice]
+  (cond-> game
+          (= :coins choice) (give-coins player-no 2)
+          (= :discard choice) (push-effect-stack player-no [[:discard-all-hand]
+                                                            [:draw 4]
+                                                            [:attack {:effects [[::minion-attack]]}]])))
+
+(effects/register {::minion-choice minion-choice})
+
+(def minion {:name    :minion
+             :set     :intrigue
+             :types   #{:action :attack}
+             :cost    5
+             :effects [[:give-actions 1]
+                       [:give-choice {:text    "Choose one:"
+                                      :choice  ::minion-choice
+                                      :options [:special
+                                                {:option :coins :text "+$2"}
+                                                {:option :discard :text "Discard your hand, +4 Cards, and each other player with at least 5 cards in hand discards their hand and draws 4 cards."}]
+                                      :min     1
+                                      :max     1}]]})
+
 (defn nobles-choices [game player-no choice]
   (cond-> game
           (= :cards choice) (draw player-no 3)
@@ -314,6 +344,7 @@
                     harem
                     lurker
                     mining-village
+                    minion
                     nobles
                     pawn
                     shanty-town
