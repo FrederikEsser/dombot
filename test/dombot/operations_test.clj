@@ -127,8 +127,8 @@
   (testing "Shuffle discard"
     (is (= (shuffle-discard {:players [{:deck [] :discard [1]}]} 0)
            {:players [{:deck [1] :discard []}]}))
-    (is (thrown-with-msg? AssertionError #"Shuffle error: Your deck is not empty."
-                          (shuffle-discard {:players [{:deck [1] :discard [2]}]} 0)))))
+    (is (= (shuffle-discard {:players [{:deck [1] :discard [2]}]} 0)
+           {:players [{:deck [1 2] :discard []}]}))))
 
 (deftest move-card-test
   (testing "Playing a card from hand to play-area"

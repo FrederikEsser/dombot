@@ -1,5 +1,5 @@
 (ns dombot.cards.intrigue
-  (:require [dombot.operations :refer [move-card push-effect-stack give-choice draw]]
+  (:require [dombot.operations :refer [move-card push-effect-stack give-choice draw ensure-deck-has-cards]]
             [dombot.cards.common :refer :all]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -135,6 +135,29 @@
                                        :min     1
                                        :max     1}]]})
 
+(defn swindler-attack [game player-no]
+  (-> game
+      (ensure-deck-has-cards player-no 1)
+      (as-> game
+            (let [[top-card] (get-in game [:players player-no :deck])
+                  cost (ut/get-cost game top-card)]
+              (cond-> game
+                      top-card (push-effect-stack player-no [[:trash-from-topdeck]
+                                                             [:give-choice {:text    (str "Gain a card costing $" cost " (attacker chooses).")
+                                                                            :choice  :gain
+                                                                            :options [:supply {:cost cost}]
+                                                                            :min     1
+                                                                            :max     1}]]))))))
+
+(effects/register {::swindler-attack swindler-attack})
+
+(def swindler {:name    :swindler
+               :set     :intrigue
+               :type    #{:action :attack}
+               :cost    3
+               :effects [[:give-money 2]
+                         [:attack {:effects [[::swindler-attack]]}]]})
+
 (defn upgrade-trash [game player-no card-name]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] card-name)
         cost (inc (ut/get-cost game card))]
@@ -167,4 +190,5 @@
                     pawn
                     shanty-town
                     steward
+                    swindler
                     upgrade])

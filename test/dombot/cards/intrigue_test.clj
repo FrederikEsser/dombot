@@ -446,6 +446,80 @@
                        :actions   0}]
             :trash   [estate copper]}))))
 
+(deftest swindler-test
+  (testing "Swindler"
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand    [swindler]
+                           :actions 1
+                           :coins   0}
+                          {:deck [copper]}]}
+               (play 0 :swindler))
+           {:supply       (base/supply 2 8)
+            :players      [{:hand      []
+                            :play-area [swindler]
+                            :actions   0
+                            :coins     2}
+                           {:deck []}]
+            :effect-stack [{:text      "Gain a card costing $0 (attacker chooses)."
+                            :player-no 1
+                            :choice    :gain
+                            :source    :supply
+                            :options   [:curse :copper]
+                            :min       1
+                            :max       1}]
+            :trash        [copper]}))
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand    [swindler]
+                           :actions 1
+                           :coins   0}
+                          {:discard [copper]}]}
+               (play 0 :swindler))
+           {:supply       (base/supply 2 8)
+            :players      [{:hand      []
+                            :play-area [swindler]
+                            :actions   0
+                            :coins     2}
+                           {:deck    []
+                            :discard []}]
+            :effect-stack [{:text      "Gain a card costing $0 (attacker chooses)."
+                            :player-no 1
+                            :choice    :gain
+                            :source    :supply
+                            :options   [:curse :copper]
+                            :min       1
+                            :max       1}]
+            :trash        [copper]}))
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand    [swindler]
+                           :actions 1
+                           :coins   0}
+                          {:deck    []
+                           :discard []}]}
+               (play 0 :swindler))
+           {:supply  (base/supply 2 8)
+            :players [{:hand      []
+                       :play-area [swindler]
+                       :actions   0
+                       :coins     2}
+                      {:deck    []
+                       :discard []}]}))
+    (let [curse (assoc curse :id 1)]
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:hand    [swindler]
+                             :actions 1
+                             :coins   0}
+                            {:deck [copper]}]}
+                 (play 0 :swindler)
+                 (choose :curse))
+             {:supply  [{:card curse :pile-size 9}]
+              :players [{:hand      []
+                         :play-area [swindler]
+                         :actions   0
+                         :coins     2}
+                        {:deck    []
+                         :discard [curse]}]
+              :trash   [copper]})))))
+
 (deftest upgrade-test
   (let [silver (assoc silver :id 1)
         estate (assoc estate :id 2)]

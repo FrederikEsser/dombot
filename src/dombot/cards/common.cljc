@@ -176,6 +176,13 @@
 
 (effects/register {:trash-from-supply trash-from-supply})
 
+(defn trash-from-topdeck [game player-no]
+  (move-card game player-no {:from          :deck
+                             :from-position :top
+                             :to            :trash}))
+
+(effects/register {:trash-from-topdeck trash-from-topdeck})
+
 (defn reveal-hand [game player-no]
   (let [hand (get-in game [:players player-no :hand])]
     (assoc-in game [:players player-no :revealed-cards :hand] (count hand))))

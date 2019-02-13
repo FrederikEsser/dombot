@@ -78,15 +78,19 @@
         (update-in [:players player-no :buys] - 1))))
 
 (defn shuffle-discard
-  ([{:keys [deck discard] :as player}]
-   (assert (empty? deck) "Shuffle error: Your deck is not empty.")
+  ([{:keys [discard] :as player}]
    (-> player
-       (assoc :deck (shuffle discard))
+       (update :deck concat (shuffle discard))
        (assoc :discard [])))
   ([game player-no]
    (-> game
        (update-in [:players player-no] shuffle-discard)
        (update-status-fields player-no :discard :deck))))
+
+(defn ensure-deck-has-cards [game player-no number-of-cards]
+  (let [deck (get-in game [:players player-no :deck])]
+    (cond-> game
+            (< (count deck) number-of-cards) (shuffle-discard player-no))))
 
 (defn move-card [game player-no {:keys [card-name from from-position to to-position] :as args}]
   (let [{:keys [deck discard] :as player} (get-in game [:players player-no])]
