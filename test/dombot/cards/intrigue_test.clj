@@ -399,7 +399,7 @@
                             :source    :special
                             :options   [{:option :cards :text "+2 Cards"}
                                         {:option :coins :text "+$2"}
-                                        {:option :trash :text "Trash two cards from your hand."}]
+                                        {:option :trash :text "Trash 2 cards from your hand."}]
                             :min       1
                             :max       1}]}))
     (is (= (-> {:players [{:hand    [steward]
@@ -429,7 +429,7 @@
            {:players      [{:hand      [copper estate silver]
                             :play-area [steward]
                             :actions   0}]
-            :effect-stack [{:text      "Trash two cards from your hand."
+            :effect-stack [{:text      "Trash 2 cards from your hand."
                             :player-no 0
                             :choice    :trash-from-hand
                             :source    :hand
@@ -518,6 +518,47 @@
                          :coins     2}
                         {:deck    []
                          :discard [curse]}]
+              :trash   [copper]})))))
+
+(deftest trading-post-test
+  (let [silver (assoc silver :id 1)]
+    (testing "Trading Post"
+      (is (= (-> {:players [{:hand    [trading-post copper estate copper]
+                             :actions 1}]}
+                 (play 0 :trading-post))
+             {:players      [{:hand      [copper estate copper]
+                              :play-area [trading-post]
+                              :actions   0}]
+              :effect-stack [{:text      "Trash 2 cards from your hand."
+                              :player-no 0
+                              :choice    ::intrigue/trading-post-trash
+                              :source    :hand
+                              :options   [:copper :estate :copper]
+                              :min       2
+                              :max       2}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [trading-post copper estate copper]
+                             :actions 1}]}
+                 (play 0 :trading-post)
+                 (choose [:copper :estate]))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:hand      [copper silver]
+                         :play-area [trading-post]
+                         :actions   0}]
+              :trash   [copper estate]}))
+      (is (= (-> {:players [{:hand    [trading-post]
+                             :actions 1}]}
+                 (play 0 :trading-post))
+             {:players [{:hand      []
+                         :play-area [trading-post]
+                         :actions   0}]}))
+      (is (= (-> {:players [{:hand    [trading-post copper]
+                             :actions 1}]}
+                 (play 0 :trading-post)
+                 (choose :copper))
+             {:players [{:hand      []
+                         :play-area [trading-post]
+                         :actions   0}]
               :trash   [copper]})))))
 
 (deftest upgrade-test

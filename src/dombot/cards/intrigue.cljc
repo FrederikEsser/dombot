@@ -114,7 +114,7 @@
   (cond-> game
           (= :cards choice) (draw player-no 2)
           (= :coins choice) (give-coins player-no 2)
-          (= :trash choice) (give-choice player-no {:text    "Trash two cards from your hand."
+          (= :trash choice) (give-choice player-no {:text    "Trash 2 cards from your hand."
                                                     :choice  :trash-from-hand
                                                     :options [:player :hand]
                                                     :min     2
@@ -131,7 +131,7 @@
                                        :options [:special
                                                  {:option :cards :text "+2 Cards"}
                                                  {:option :coins :text "+$2"}
-                                                 {:option :trash :text "Trash two cards from your hand."}]
+                                                 {:option :trash :text "Trash 2 cards from your hand."}]
                                        :min     1
                                        :max     1}]]})
 
@@ -157,6 +157,24 @@
                :cost    3
                :effects [[:give-coins 2]
                          [:attack {:effects [[::swindler-attack]]}]]})
+
+(defn trading-post-trash [game player-no card-names]
+  (-> game
+      (push-effect-stack player-no [[:trash-from-hand card-names]
+                                    (when (and (coll? card-names) (= 2 (count card-names)))
+                                      [:gain-to-hand :silver])])))
+
+(effects/register {::trading-post-trash trading-post-trash})
+
+(def trading-post {:name    :trading-post
+                   :set     :intrigue
+                   :types   #{:action}
+                   :cost    5
+                   :effects [[:give-choice {:text    "Trash 2 cards from your hand."
+                                            :choice  ::trading-post-trash
+                                            :options [:player :hand]
+                                            :min     2
+                                            :max     2}]]})
 
 (defn upgrade-trash [game player-no card-name]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] card-name)
@@ -191,4 +209,5 @@
                     shanty-town
                     steward
                     swindler
+                    trading-post
                     upgrade])
