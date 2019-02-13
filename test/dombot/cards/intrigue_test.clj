@@ -387,6 +387,24 @@
            {:players [{:hand      []
                        :play-area [nobles]
                        :actions   2}]}))
+    (is (= (-> {:players [{:hand    [nobles throne-room]
+                           :deck    [copper copper estate estate]
+                           :actions 1}]}
+               (play 0 :throne-room)
+               (choose :nobles)
+               (choose :cards))
+           {:players      [{:hand      [copper copper estate]
+                            :play-area [throne-room nobles]
+                            :deck      [estate]
+                            :actions   0}]
+            :effect-stack [{:text      "Choose one:"
+                            :player-no 0
+                            :choice    ::intrigue/nobles-choice
+                            :source    :special
+                            :options   [{:option :cards :text "+3 Cards"}
+                                        {:option :actions :text "+2 Actions"}]
+                            :min       1
+                            :max       1}]}))
     (is (= (calc-victory-points {:deck [nobles]})
            2))))
 
@@ -612,17 +630,29 @@
                 :players [{:hand    [swindler]
                            :actions 1
                            :coins   0}
-                          {:deck    []
-                           :discard []}]}
+                          {:deck []}]}
                (play 0 :swindler))
            {:supply  (base/supply 2 8)
             :players [{:hand      []
                        :play-area [swindler]
                        :actions   0
                        :coins     2}
-                      {:deck    []
-                       :discard []}]}))
-    (let [curse (assoc curse :id 1)]
+                      {:deck []}]}))
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand    [swindler]
+                           :actions 1
+                           :coins   0}
+                          {:deck [mining-village]}]}
+               (play 0 :swindler))
+           {:supply  (base/supply 2 8)
+            :players [{:hand      []
+                       :play-area [swindler]
+                       :actions   0
+                       :coins     2}
+                      {:deck []}]
+            :trash   [mining-village]}))
+    (let [curse (assoc curse :id 1)
+          copper (assoc copper :id 2)]
       (is (= (-> {:supply  [{:card curse :pile-size 10}]
                   :players [{:hand    [swindler]
                              :actions 1
@@ -637,7 +667,33 @@
                          :coins     2}
                         {:deck    []
                          :discard [curse]}]
-              :trash   [copper]})))))
+              :trash   [copper]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 1}
+                            {:card copper :pile-size 46}]
+                  :players [{:hand    [swindler]
+                             :actions 1
+                             :coins   0}
+                            {:deck [copper]}
+                            {:deck [curse]}]}
+                 (play 0 :swindler)
+                 (choose :curse))
+             {:supply       [{:card curse :pile-size 0}
+                             {:card copper :pile-size 46}]
+              :players      [{:hand      []
+                              :play-area [swindler]
+                              :actions   0
+                              :coins     2}
+                             {:deck    []
+                              :discard [curse]}
+                             {:deck []}]
+              :effect-stack [{:text      "Gain a card costing $0 (attacker chooses)."
+                              :player-no 2
+                              :choice    :gain
+                              :source    :supply
+                              :options   [:copper]
+                              :min       1
+                              :max       1}]
+              :trash        [copper curse]})))))
 
 (deftest trading-post-test
   (let [silver (assoc silver :id 1)]

@@ -88,9 +88,9 @@
        (update-status-fields player-no :discard :deck))))
 
 (defn peek-deck [game player-no number-of-cards]
-  (let [deck (get-in game [:players player-no :deck])]
+  (let [{:keys [deck discard]} (get-in game [:players player-no])]
     (cond-> game
-            (< (count deck) number-of-cards) (shuffle-discard player-no))))
+            (and (< (count deck) number-of-cards) (not-empty discard)) (shuffle-discard player-no))))
 
 (defn move-card [game player-no {:keys [card-name from from-position to to-position] :as args}]
   (let [{:keys [deck discard] :as player} (get-in game [:players player-no])]
