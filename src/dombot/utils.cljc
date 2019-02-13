@@ -21,8 +21,8 @@
       (->> (map s/capitalize)
            (s/join " "))))
 
-(defn format-type [type]
-  (->> type
+(defn format-types [types]
+  (->> types
        (map format-name)
        (s/join "/")))
 
@@ -72,8 +72,8 @@
   (if (< cost reduction) 0 (- cost reduction)))
 
 (defn- reduction-matches-card [{reduction-type :type}
-                               {card-type :type}]
-  (or (nil? reduction-type) (reduction-type card-type)))
+                               {card-types :types}]
+  (or (nil? reduction-type) (reduction-type card-types)))
 
 (defn get-cost [{:keys [cost-reductions]} card]
   (-> (reduce (fn [card {:keys [reduction] :as reduction-data}]
@@ -83,7 +83,7 @@
       :cost))
 
 (defn options-from-player
-  ([game player-no card-id area & [{:keys [last this name not-name type reacts-to]}]]
+  ([game player-no card-id area & [{:keys [last this name not-name types reacts-to]}]]
    (when this
      (assert card-id (str "Card has no id, but is referring to :this in " area ".")))
    (cond->> (get-in game [:players player-no area])
@@ -91,26 +91,26 @@
             this (filter (comp #{card-id} :id))
             name (filter (comp #{name} :name))
             not-name (remove (comp #{not-name} :name))
-            type (filter (comp type :type))
+            types (filter (comp types :types))
             reacts-to (filter (comp #{reacts-to} :reacts-to))
             :always (map :name))))
 
 (effects/register-options {:player options-from-player})
 
-(defn options-from-supply [{:keys [supply] :as game} player-no card-id {:keys [max-cost cost type]}]
+(defn options-from-supply [{:keys [supply] :as game} player-no card-id {:keys [max-cost cost types]}]
   (-> supply
       (cond->>
         max-cost (filter (comp (partial >= max-cost) (partial get-cost game) :card))
         cost (filter (comp #{cost} (partial get-cost game) :card))
-        type (filter (comp type :type :card)))
+        types (filter (comp types :types :card)))
       (->> (filter (comp pos? :pile-size))
            (map (comp :name :card)))))
 
 (effects/register-options {:supply options-from-supply})
 
-(defn options-from-trash [{:keys [trash]} player-no card-id {:keys [type]}]
+(defn options-from-trash [{:keys [trash]} player-no card-id {:keys [types]}]
   (cond->> trash
-           type (filter (comp type :type))
+           types (filter (comp types :types))
            :always (map :name)))
 
 (effects/register-options {:trash options-from-trash})

@@ -334,12 +334,12 @@
 
 (deftest play-test
   (testing "Playing a card is impossible because"
-    (testing "it has no/wrong type"
-      (is (thrown-with-msg? AssertionError #"Play error: No Card has no type"
+    (testing "it has no/wrong types"
+      (is (thrown-with-msg? AssertionError #"Play error: No Card has no types"
                             (play {:players [{:hand [{:name :no-card}]}]}
                                   0 :no-card)))
       (is (thrown-with-msg? AssertionError #"Play error: Victory cards cannot be played."
-                            (play {:players [{:hand [{:name :estate :type #{:victory}}]}]}
+                            (play {:players [{:hand [{:name :estate :types #{:victory}}]}]}
                                   0 :estate))))
     (testing "player has no cards in hand"
       (is (thrown-with-msg? AssertionError #"Play error: There is no Copper in your Hand."
@@ -349,18 +349,18 @@
     (testing "is impossible because"
       (testing "card has no coin-value"
         (is (thrown-with-msg? AssertionError #"Play error: Copper has no coin value"
-                              (play {:players [{:hand [{:name :copper :type #{:treasure}}]}]}
+                              (play {:players [{:hand [{:name :copper :types #{:treasure}}]}]}
                                     0 :copper))))))
   (testing "Playing action"
     (testing "is impossible because"
       (testing "player has no more actions"
         (is (thrown-with-msg? AssertionError #"Play error: You have no more actions."
-                              (play {:players [{:hand    [{:name :village :type #{:action} :effects []}]
+                              (play {:players [{:hand    [{:name :village :types #{:action} :effects []}]
                                                 :actions 0}]}
                                     0 :village))))
       (testing "card has no effects"
         (is (thrown-with-msg? AssertionError #"Play error: Village has no effect."
-                              (play {:players [{:hand    [{:name :village :type #{:action}}]
+                              (play {:players [{:hand    [{:name :village :types #{:action}}]
                                                 :actions 1}]}
                                     0 :village)))))))
 
@@ -380,13 +380,13 @@
            0))
     (is (= (ut/get-cost {:cost-reductions [{:type      :action
                                             :reduction 2}]}
-                        {:type #{:action}
-                         :cost 5})
+                        {:types #{:action}
+                         :cost  5})
            3))
     (is (= (ut/get-cost {:cost-reductions [{:type      :action
                                             :reduction 2}]}
-                        {:type #{:victory}
-                         :cost 5})
+                        {:types #{:victory}
+                         :cost  5})
            5))))
 
 (deftest clean-up-test

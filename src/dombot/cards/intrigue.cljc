@@ -6,15 +6,15 @@
 
 (def bridge {:name    :bridge
              :set     :intrigue
-             :type    #{:action}
+             :types   #{:action}
              :cost    4
              :effects [[:give-buys 1]
-                       [:give-money 1]
+                       [:give-coins 1]
                        [:add-cost-reduction 1]]})
 
 (def courtyard {:name    :courtyard
                 :set     :intrigue
-                :type    #{:action}
+                :types   #{:action}
                 :cost    2
                 :effects [[:draw 3]
                           [:give-choice {:text    "Put a card from your hand onto your deck."
@@ -27,12 +27,12 @@
   (case choice
     :trash (give-choice game player-no {:text    "Trash an Action card from the Supply."
                                         :choice  :trash-from-supply
-                                        :options [:supply {:type :action}]
+                                        :options [:supply {:types :action}]
                                         :min     1
                                         :max     1})
     :gain (give-choice game player-no {:text    "Gain an Action card from the trash."
                                        :choice  :gain-from-trash
-                                       :options [:trash {:type :action}]
+                                       :options [:trash {:types :action}]
                                        :min     1
                                        :max     1})))
 
@@ -40,7 +40,7 @@
 
 (def lurker {:name    :lurker
              :set     :intrigue
-             :type    #{:action}
+             :types   #{:action}
              :cost    2
              :effects [[:give-actions 1]
                        [:give-choice {:text    "Choose one:"
@@ -54,13 +54,13 @@
 (defn mining-village-trash [game player-no card-name]
   (cond-> game
           (= :mining-village card-name) (push-effect-stack player-no [[:trash-last-from-play-area card-name]
-                                                                      [:give-money 2]])))
+                                                                      [:give-coins 2]])))
 
 (effects/register {::mining-village-trash mining-village-trash})
 
 (def mining-village {:name    :mining-village
                      :set     :intrigue
-                     :type    #{:action}
+                     :types   #{:action}
                      :cost    4
                      :effects [[:draw 1]
                                [:give-actions 2]
@@ -76,13 +76,13 @@
             (:card choices) (draw player-no 1)
             (:action choices) (give-actions player-no 1)
             (:buy choices) (give-buys player-no 1)
-            (:coin choices) (give-money player-no 1))))
+            (:coin choices) (give-coins player-no 1))))
 
 (effects/register {::pawn-choices pawn-choices})
 
 (def pawn {:name    :pawn
            :set     :intrigue
-           :type    #{:action}
+           :types   #{:action}
            :cost    2
            :effects [[:give-choice {:text    "Choose two:"
                                     :choice  ::pawn-choices
@@ -96,7 +96,7 @@
 
 (defn shanty-town-draw [game player-no]
   (let [hand (get-in game [:players player-no :hand])
-        action-cards-in-hand? (some (comp :action :type) hand)]
+        action-cards-in-hand? (some (comp :action :types) hand)]
     (push-effect-stack game player-no [[:reveal-hand]
                                        (when-not action-cards-in-hand?
                                          [:draw 2])])))
@@ -105,7 +105,7 @@
 
 (def shanty-town {:name    :shanty-town
                   :set     :intrigue
-                  :type    #{:action}
+                  :types   #{:action}
                   :cost    3
                   :effects [[:give-actions 2]
                             [::shanty-town-draw]]})
@@ -113,7 +113,7 @@
 (defn steward-choices [game player-no choice]
   (cond-> game
           (= :cards choice) (draw player-no 2)
-          (= :coins choice) (give-money player-no 2)
+          (= :coins choice) (give-coins player-no 2)
           (= :trash choice) (give-choice player-no {:text    "Trash two cards from your hand."
                                                     :choice  :trash-from-hand
                                                     :options [:player :hand]
@@ -124,7 +124,7 @@
 
 (def steward {:name    :steward
               :set     :intrigue
-              :type    #{:action}
+              :types   #{:action}
               :cost    3
               :effects [[:give-choice {:text    "Choose one:"
                                        :choice  ::steward-choices
@@ -153,9 +153,9 @@
 
 (def swindler {:name    :swindler
                :set     :intrigue
-               :type    #{:action :attack}
+               :types   #{:action :attack}
                :cost    3
-               :effects [[:give-money 2]
+               :effects [[:give-coins 2]
                          [:attack {:effects [[::swindler-attack]]}]]})
 
 (defn upgrade-trash [game player-no card-name]
@@ -173,7 +173,7 @@
 
 (def upgrade {:name    :upgrade
               :set     :intrigue
-              :type    #{:action}
+              :types   #{:action}
               :cost    5
               :effects [[:draw 1]
                         [:give-actions 1]

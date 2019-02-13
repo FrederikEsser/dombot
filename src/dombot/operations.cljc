@@ -141,7 +141,7 @@
    (update game :effect-stack (partial concat (if (sequential? data)
                                                 (->> data
                                                      (map (fn [effect]
-                                                             (when effect
+                                                            (when effect
                                                               (merge {:player-no player-no
                                                                       :effect    effect}
                                                                      (when card-id
@@ -279,14 +279,14 @@
     (cond-> game
             reaction (push-effect-stack player-no reaction))))
 
-(defn card-effect [game player-no {:keys [id name type effects] :as card}]
+(defn card-effect [game player-no {:keys [id name types effects] :as card}]
   (cond-> game
-          (:action type) (push-effect-stack player-no id effects)
-          (:attack type) (affect-other-players player-no {:effects [[:give-choice {:text    (str "You may reveal a Reaction to react to the " (ut/format-name name) " Attack.")
-                                                                                   :choice  :reveal-reaction
-                                                                                   :options [:player :hand {:type      :reaction
-                                                                                                            :reacts-to :attack}]
-                                                                                   :max     1}]]})))
+          (:action types) (push-effect-stack player-no id effects)
+          (:attack types) (affect-other-players player-no {:effects [[:give-choice {:text    (str "You may reveal a Reaction to react to the " (ut/format-name name) " Attack.")
+                                                                                    :choice  :reveal-reaction
+                                                                                    :options [:player :hand {:types     :reaction
+                                                                                                             :reacts-to :attack}]
+                                                                                    :max     1}]]})))
 
 (effects/register {:gain            gain
                    :draw            draw
@@ -298,30 +298,30 @@
 
 (defn play [{:keys [effect-stack] :as game} player-no card-name]
   (let [{:keys [phase actions triggers]} (get-in game [:players player-no])
-        {{:keys [type effects coin-value] :as card} :card} (ut/get-card-idx game [:players player-no :hand] card-name)]
+        {{:keys [types effects coin-value] :as card} :card} (ut/get-card-idx game [:players player-no :hand] card-name)]
     (assert (empty? effect-stack) "You can't play cards when you have a choice to make.")
     (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
-    (assert type (str "Play error: " (ut/format-name card-name) " has no type."))
+    (assert types (str "Play error: " (ut/format-name card-name) " has no types."))
     (cond
-      (:action type) (do (assert effects (str "Play error: " (ut/format-name card-name) " has no effect."))
-                         (assert (and actions (< 0 actions)) "Play error: You have no more actions."))
-      (:treasure type) (assert coin-value (str "Play error: " (ut/format-name card-name) " has no coin value"))
-      :else (assert false (str "Play error: " (ut/format-type type) " cards cannot be played.")))
+      (:action types) (do (assert effects (str "Play error: " (ut/format-name card-name) " has no effect."))
+                          (assert (and actions (< 0 actions)) "Play error: You have no more actions."))
+      (:treasure types) (assert coin-value (str "Play error: " (ut/format-name card-name) " has no coin value"))
+      :else (assert false (str "Play error: " (ut/format-types types) " cards cannot be played.")))
     (when phase
-      (assert (or (and (:action type)
+      (assert (or (and (:action types)
                        (#{:action} phase))
-                  (and (:treasure type)
+                  (and (:treasure types)
                        (#{:action :pay} phase)))
-              (str "You can't play " (ut/format-type type) " cards when you're in the " (ut/format-name phase) " phase.")))
+              (str "You can't play " (ut/format-types types) " cards when you're in the " (ut/format-name phase) " phase.")))
     (-> game
         (move-card player-no {:card-name card-name
                               :from      :hand
                               :to        :play-area})
         (card-effect player-no card)
         (cond->
-          phase (assoc-in [:players player-no :phase] (cond (:action type) :action
-                                                            (:treasure type) :pay))
-          (:action type) (update-in [:players player-no :actions] - 1)
+          phase (assoc-in [:players player-no :phase] (cond (:action types) :action
+                                                            (:treasure types) :pay))
+          (:action types) (update-in [:players player-no :actions] - 1)
           coin-value (update-in [:players player-no :coins] + coin-value) ; todo: put treasures on the stack
           (not-empty triggers) (apply-triggers player-no [:play card-name]))
         check-stack)))
@@ -329,7 +329,7 @@
 (defn play-treasures [game player-no]
   (let [{:keys [hand]} (get-in game [:players player-no])
         treasures (->> hand
-                       (filter (comp :treasure :type))
+                       (filter (comp :treasure :types))
                        (map :name))]
     (reduce (fn [game card-name] (play game player-no card-name)) game treasures))) ; TODO: Stack treasures separately
 

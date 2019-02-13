@@ -6,7 +6,7 @@
 
 (def artisan {:name    :artisan
               :set     :dominion
-              :type    #{:action}
+              :types   #{:action}
               :cost    6
               :effects [[:give-choice {:text    "Gain a card to your hand costing up to $5."
                                        :choice  :gain-to-hand
@@ -21,13 +21,13 @@
 
 (def bandit {:name    :bandit
              :set     :dominion
-             :type    #{:action :attack}
+             :types   #{:action :attack}
              :cost    5
              :effects [[:gain :gold]
                        [:attack {:effects [[:reveal-from-deck 2]
                                            [:give-choice {:text    "Trash a revealed Treasure other than Copper, and discards the rest."
                                                           :choice  :trash-from-revealed
-                                                          :options [:player :revealed {:type     :treasure
+                                                          :options [:player :revealed {:types    :treasure
                                                                                        :not-name :copper}]
                                                           :min     1
                                                           :max     1}]
@@ -35,10 +35,10 @@
 
 (defn bureaucrat-attack [game player-no]
   (let [hand (get-in game [:players player-no :hand])]
-    (if (some (comp :victory :type) hand)
+    (if (some (comp :victory :types) hand)
       (give-choice game player-no {:text    "Reveal a Victory card from your hand and put it onto your deck."
                                    :choice  :topdeck-from-hand
-                                   :options [:player :hand {:type :victory}]
+                                   :options [:player :hand {:types :victory}]
                                    :min     1
                                    :max     1})
       (-> game
@@ -48,7 +48,7 @@
 
 (def bureaucrat {:name    :bureaucrat
                  :set     :dominion
-                 :type    #{:action :attack}
+                 :types   #{:action :attack}
                  :cost    4
                  :effects [[:gain-to-topdeck :silver]
                            [:attack {:effects [[::bureaucrat-attack]]}]]})
@@ -61,7 +61,7 @@
 
 (def cellar {:name    :cellar
              :set     :dominion
-             :type    #{:action}
+             :types   #{:action}
              :cost    2
              :effects [[:give-actions 1]
                        [:give-choice {:text    "Discard any number of cards, then draw that many."
@@ -70,7 +70,7 @@
 
 (def chapel {:name    :chapel
              :set     :dominion
-             :type    #{:action}
+             :types   #{:action}
              :cost    2
              :effects [[:give-choice {:text    "Trash up to 4 cards from your hand."
                                       :choice  :trash-from-hand
@@ -79,7 +79,7 @@
 
 (def council-room {:name    :council-room
                    :set     :dominion
-                   :type    #{:action}
+                   :types   #{:action}
                    :cost    5
                    :effects [[:draw 4]
                              [:give-buys 1]
@@ -87,22 +87,22 @@
 
 (def festival {:name    :festival
                :set     :dominion
-               :type    #{:action}
+               :types   #{:action}
                :cost    5
                :effects [[:give-actions 2]
-                         [:give-money 2]
+                         [:give-coins 2]
                          [:give-buys 1]]})
 
 (def gardens {:name           :gardens
               :set            :dominion
-              :type           #{:victory}
+              :types          #{:victory}
               :cost           4
               :victory-points (fn [cards]
                                 (Math/floorDiv (int (count cards)) (int 10)))}) ; TODO: Convert to data
 
 (def harbinger {:name    :harbinger
                 :set     :dominion
-                :type    #{:action}
+                :types   #{:action}
                 :cost    3
                 :effects [[:draw 1]
                           [:give-actions 1]
@@ -113,7 +113,7 @@
 
 (def laboratory {:name    :laboratory
                  :set     :dominion
-                 :type    #{:action}
+                 :types   #{:action}
                  :cost    5
                  :effects [[:draw 2]
                            [:give-actions 1]]})
@@ -127,12 +127,12 @@
 
 (defn library-check-for-action [game player-no]
   (let [hand (get-in game [:players player-no :hand])
-        {:keys [type name]} (last hand)]
+        {:keys [types name]} (last hand)]
     (cond-> game
-            (:action type) (give-choice player-no {:text    (str "You may skip the " (ut/format-name name) "; set it aside, discarding it afterwards.")
-                                                   :choice  ::library-set-aside
-                                                   :options [:player :hand {:last true}]
-                                                   :max     1}))))
+            (:action types) (give-choice player-no {:text    (str "You may skip the " (ut/format-name name) "; set it aside, discarding it afterwards.")
+                                                    :choice  ::library-set-aside
+                                                    :options [:player :hand {:last true}]
+                                                    :max     1}))))
 
 (defn library-draw [game player-no]
   (let [{:keys [hand deck discard]} (get-in game [:players player-no])]
@@ -148,26 +148,26 @@
 
 (def library {:name    :library
               :set     :dominion
-              :type    #{:action}
+              :types   #{:action}
               :cost    5
               :effects [[::library-draw]
                         [:discard-all-set-aside]]})
 
 (def market {:name    :market
              :set     :dominion
-             :type    #{:action}
+             :types   #{:action}
              :cost    5
              :effects [[:draw 1]
                        [:give-actions 1]
-                       [:give-money 1]
+                       [:give-coins 1]
                        [:give-buys 1]]})
 
 (def merchant-trigger {:trigger [:play :silver]
-                       :effects [[:give-money 1]]})
+                       :effects [[:give-coins 1]]})
 
 (def merchant {:name    :merchant
                :set     :dominion
-               :type    #{:action}
+               :types   #{:action}
                :cost    3
                :effects [[:draw 1]
                          [:give-actions 1]
@@ -175,9 +175,9 @@
 
 (def militia {:name    :militia
               :set     :dominion
-              :type    #{:action :attack}
+              :types   #{:action :attack}
               :cost    4
-              :effects [[:give-money 2]
+              :effects [[:give-coins 2]
                         [:attack {:effects [[:discard-down-to 3]]}]]})
 
 (defn mine-trash [game player-no card-name]
@@ -187,7 +187,7 @@
         (push-effect-stack player-no [[:trash-from-hand card-name]
                                       [:give-choice {:text    (str "Gain a Treasure to your hand costing up to $" max-cost ".")
                                                      :choice  :gain-to-hand
-                                                     :options [:supply {:max-cost max-cost :type :treasure}]
+                                                     :options [:supply {:max-cost max-cost :types :treasure}]
                                                      :min     1
                                                      :max     1}]]))))
 
@@ -195,11 +195,11 @@
 
 (def mine {:name    :mine
            :set     :dominion
-           :type    #{:action}
+           :types   #{:action}
            :cost    5
            :effects [[:give-choice {:text    "You may trash a Treasure from your hand."
                                     :choice  ::mine-trash
-                                    :options [:player :hand {:type :treasure}]
+                                    :options [:player :hand {:types :treasure}]
                                     :max     1}]]})
 
 (defn moat-reaction [{:keys [effect-stack] :as game} player-no]
@@ -215,7 +215,7 @@
 
 (def moat {:name      :moat
            :set       :dominion
-           :type      #{:action :reaction}
+           :types     #{:action :reaction}
            :cost      2
            :effects   [[:draw 2]]
            :reacts-to :attack
@@ -224,13 +224,13 @@
 (defn moneylender-trash [game player-no card-name]
   (cond-> game
           (= :copper card-name) (push-effect-stack player-no [[:trash-from-hand :copper]
-                                                              [:give-money 3]])))
+                                                              [:give-coins 3]])))
 
 (effects/register {::moneylender-trash moneylender-trash})
 
 (def moneylender {:name    :moneylender
                   :set     :dominion
-                  :type    #{:action}
+                  :types   #{:action}
                   :cost    4
                   :effects [[:give-choice {:text    "You may trash a Copper from your hand for +$3"
                                            :choice  ::moneylender-trash
@@ -250,11 +250,11 @@
 
 (def poacher {:name    :poacher
               :set     :dominion
-              :type    #{:action}
+              :types   #{:action}
               :cost    4
               :effects [[:draw 1]
                         [:give-actions 1]
-                        [:give-money 1]
+                        [:give-coins 1]
                         [::poacher-discard]]})
 
 (defn remodel-trash [game player-no card-name]
@@ -272,7 +272,7 @@
 
 (def remodel {:name    :remodel
               :set     :dominion
-              :type    #{:action}
+              :types   #{:action}
               :cost    4
               :effects [[:give-choice {:text    "Trash a card from your hand."
                                        :choice  ::remodel-trash
@@ -282,7 +282,7 @@
 
 (def sentry {:name    :sentry
              :set     :dominion
-             :type    #{:action}
+             :types   #{:action}
              :cost    5
              :effects [[:draw 1]
                        [:give-actions 1]
@@ -300,17 +300,17 @@
 
 (def smithy {:name    :smithy
              :set     :dominion
-             :type    #{:action}
+             :types   #{:action}
              :cost    4
              :effects [[:draw 3]]})
 
 (def throne-room {:name    :throne-room
                   :set     :dominion
-                  :type    #{:action}
+                  :types   #{:action}
                   :cost    4
                   :effects [[:give-choice {:text    "You may play an Action card from your hand twice."
                                            :choice  :play-action-twice
-                                           :options [:player :hand {:type :action}]
+                                           :options [:player :hand {:types :action}]
                                            :max     1}]]})
 
 (defn vassal-play-action [game player-no card-name]
@@ -324,37 +324,37 @@
 
 (def vassal {:name    :vassal
              :set     :dominion
-             :type    #{:action}
+             :types   #{:action}
              :cost    3
-             :effects [[:give-money 2]
+             :effects [[:give-coins 2]
                        [:discard-from-topdeck 1]
                        [:give-choice {:text    "You may play the discarded Action."
                                       :choice  ::vassal-play-action
-                                      :options [:player :discard {:type :action :last true}]
+                                      :options [:player :discard {:types :action :last true}]
                                       :max     1}]]})
 
 (def village {:name    :village
               :set     :dominion
-              :type    #{:action}
+              :types   #{:action}
               :cost    3
               :effects [[:draw 1]
                         [:give-actions 2]]})
 
 (def witch {:name    :witch
             :set     :dominion
-            :type    #{:action :attack}
+            :types   #{:action :attack}
             :cost    5
             :effects [[:draw 2]
                       [:attack {:effects [[:gain :curse]]}]]})
 
 (def woodcutter {:name    :woodcutter
                  :set     :dominion
-                 :type    #{:action}
+                 :types   #{:action}
                  :cost    3
-                 :effects [[:give-money 2]
+                 :effects [[:give-coins 2]
                            [:give-buys 1]]})
 
-(def workshop {:name    :workshop :set :dominion :type #{:action} :cost 3
+(def workshop {:name    :workshop :set :dominion :types #{:action} :cost 3
                :effects [[:give-choice {:text    "Gain a card costing up to $4."
                                         :choice  :gain
                                         :options [:supply {:max-cost 4}]

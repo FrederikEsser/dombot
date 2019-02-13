@@ -180,7 +180,7 @@
                               :effect    [:give-choice
                                           {:text    "Trash a revealed Treasure other than Copper, and discards the rest."
                                            :choice  :trash-from-revealed
-                                           :options [:player :revealed {:not-name :copper :type :treasure}]
+                                           :options [:player :revealed {:not-name :copper :types :treasure}]
                                            :max     1
                                            :min     1}]}
                              {:player-no 2
@@ -902,7 +902,7 @@
                             :options   [:moat]
                             :max       1}
                            {:player-no 0
-                            :effect    [:give-money 2]}
+                            :effect    [:give-coins 2]}
                            {:player-no 0
                             :effect    [:attack {:effects [[:discard-down-to 3]]}]}]}))
     (is (= (-> {:players [{:hand    [militia]
@@ -955,7 +955,7 @@
                             :options   [:moat]
                             :max       1}
                            {:player-no 0
-                            :effect    [:give-money 2]}
+                            :effect    [:give-coins 2]}
                            {:player-no 0
                             :effect    [:attack {:effects [[:discard-down-to 3]]}]}]}))
     (is (= (-> {:players [{:hand    [throne-room militia]
@@ -974,7 +974,7 @@
                             :options   [:moat]
                             :max       1}
                            {:player-no 0
-                            :effect    [:give-money 2]}
+                            :effect    [:give-coins 2]}
                            {:player-no 0
                             :effect    [:attack {:effects [[:discard-down-to 3]]}]}
                            {:player-no 0
@@ -998,7 +998,7 @@
                             :options   [:moat]
                             :max       1}
                            {:player-no 0
-                            :effect    [:give-money 2]}
+                            :effect    [:give-coins 2]}
                            {:player-no 0
                             :effect    [:attack {:effects [[:discard-down-to 3]]}]}]}))))
 

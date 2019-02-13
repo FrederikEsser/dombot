@@ -9,11 +9,11 @@
 
 (effects/register {:give-actions give-actions})
 
-(defn give-money [game player-no n]
+(defn give-coins [game player-no n]
   (assert (get-in game [:players player-no :coins]) (str ":coins is not specified for player " player-no))
   (update-in game [:players player-no :coins] + n))
 
-(effects/register {:give-money give-money})
+(effects/register {:give-coins give-coins})
 
 (defn give-buys [game player-no n]
   (assert (get-in game [:players player-no :buys]) (str ":buys is not specified for player " player-no))

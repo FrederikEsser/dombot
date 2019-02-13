@@ -15,8 +15,8 @@
        shuffle
        (take 10)
        (sort-by (juxt :cost :name))
-       (map (fn [{:keys [:type] :as card}]
-              (let [pile-size (if (:victory type) victory-pile-size 10)]
+       (map (fn [{:keys [:types] :as card}]
+              (let [pile-size (if (:victory types) victory-pile-size 10)]
                 {:card card :pile-size pile-size})))))
 
 (defn create-player [name]
