@@ -880,140 +880,142 @@
 
 (deftest moat-test
   (testing "Moat"
-    (is (= (play {:players [{:deck    [copper copper copper]
-                             :hand    [moat]
-                             :actions 1}]}
-                 0 :moat)
-           {:players [{:hand      [copper copper]
-                       :deck      [copper]
-                       :play-area [moat]
-                       :actions   0}]}))
-    (is (= (play {:players [{:hand    [moat]
-                             :deck    [copper]
-                             :discard [estate estate]
-                             :actions 1}]}
-                 0 :moat)
-           {:players [{:hand      [copper estate]
-                       :deck      [estate]
-                       :discard   []
-                       :play-area [moat]
-                       :actions   0}]}))
-    (is (= (play {:players [{:hand    [militia]
+    (testing "Action"
+      (is (= (play {:players [{:deck    [copper copper copper]
+                               :hand    [moat]
+                               :actions 1}]}
+                   0 :moat)
+             {:players [{:hand      [copper copper]
+                         :deck      [copper]
+                         :play-area [moat]
+                         :actions   0}]}))
+      (is (= (play {:players [{:hand    [moat]
+                               :deck    [copper]
+                               :discard [estate estate]
+                               :actions 1}]}
+                   0 :moat)
+             {:players [{:hand      [copper estate]
+                         :deck      [estate]
+                         :discard   []
+                         :play-area [moat]
+                         :actions   0}]})))
+    (testing "Reaction"
+      (is (= (play {:players [{:hand    [militia]
+                               :actions 1
+                               :coins   0}
+                              {:hand [moat]}]}
+                   0 :militia)
+             {:players      [{:hand      []
+                              :play-area [militia]
+                              :actions   0
+                              :coins     0}
+                             {:hand [moat]}]
+              :effect-stack [{:text      "You may reveal a Reaction to react to the Militia Attack."
+                              :player-no 1
+                              :choice    :reveal-reaction
+                              :source    :hand
+                              :options   [:moat]
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:give-coins 2]}
+                             {:player-no 0
+                              :effect    [:attack {:effects [[:discard-down-to 3]]}]}]}))
+      (is (= (-> {:players [{:hand    [militia]
+                             :actions 1
+                             :coins   0}
+                            {:hand [moat copper copper copper copper]}]}
+                 (play 0 :militia)
+                 (choose :moat))
+             {:players [{:hand      []
+                         :play-area [militia]
+                         :actions   0
+                         :coins     2}
+                        {:hand [moat copper copper copper copper]}]}))
+      (is (= (-> {:players [{:hand    [militia]
+                             :actions 1
+                             :coins   0}
+                            {:hand [moat copper copper copper copper]}]}
+                 (play 0 :militia)
+                 (choose nil))
+             {:players      [{:hand      []
+                              :play-area [militia]
+                              :actions   0
+                              :coins     2}
+                             {:hand [moat copper copper copper copper]}]
+              :effect-stack [{:text      "Discard down to 3 cards in hand."
+                              :player-no 1
+                              :choice    :discard-from-hand
+                              :source    :hand
+                              :options   [:moat :copper :copper :copper :copper]
+                              :min       2
+                              :max       2}]}))
+      (is (= (-> {:players [{:hand    [vassal]
+                             :deck    [militia]
                              :actions 1
                              :coins   0}
                             {:hand [moat]}]}
-                 0 :militia)
-           {:players      [{:hand      []
-                            :play-area [militia]
-                            :actions   0
-                            :coins     0}
-                           {:hand [moat]}]
-            :effect-stack [{:text      "You may reveal a Reaction to react to the Militia Attack."
-                            :player-no 1
-                            :choice    :reveal-reaction
-                            :source    :hand
-                            :options   [:moat]
-                            :max       1}
-                           {:player-no 0
-                            :effect    [:give-coins 2]}
-                           {:player-no 0
-                            :effect    [:attack {:effects [[:discard-down-to 3]]}]}]}))
-    (is (= (-> {:players [{:hand    [militia]
-                           :actions 1
-                           :coins   0}
-                          {:hand [moat copper copper copper copper]}]}
-               (play 0 :militia)
-               (choose :moat))
-           {:players [{:hand      []
-                       :play-area [militia]
-                       :actions   0
-                       :coins     2}
-                      {:hand [moat copper copper copper copper]}]}))
-    (is (= (-> {:players [{:hand    [militia]
-                           :actions 1
-                           :coins   0}
-                          {:hand [moat copper copper copper copper]}]}
-               (play 0 :militia)
-               (choose nil))
-           {:players      [{:hand      []
-                            :play-area [militia]
-                            :actions   0
-                            :coins     2}
-                           {:hand [moat copper copper copper copper]}]
-            :effect-stack [{:text      "Discard down to 3 cards in hand."
-                            :player-no 1
-                            :choice    :discard-from-hand
-                            :source    :hand
-                            :options   [:moat :copper :copper :copper :copper]
-                            :min       2
-                            :max       2}]}))
-    (is (= (-> {:players [{:hand    [vassal]
-                           :deck    [militia]
-                           :actions 1
-                           :coins   0}
-                          {:hand [moat]}]}
-               (play 0 :vassal)
-               (choose :militia))
-           {:players      [{:hand      []
-                            :play-area [vassal militia]
-                            :deck      []
-                            :discard   []
-                            :actions   0
-                            :coins     2}
-                           {:hand [moat]}]
-            :effect-stack [{:text      "You may reveal a Reaction to react to the Militia Attack."
-                            :player-no 1
-                            :choice    :reveal-reaction
-                            :source    :hand
-                            :options   [:moat]
-                            :max       1}
-                           {:player-no 0
-                            :effect    [:give-coins 2]}
-                           {:player-no 0
-                            :effect    [:attack {:effects [[:discard-down-to 3]]}]}]}))
-    (is (= (-> {:players [{:hand    [throne-room militia]
-                           :actions 1}
-                          {:hand [moat]}]}
-               (play 0 :throne-room)
-               (choose :militia))
-           {:players      [{:hand      []
-                            :play-area [throne-room militia]
-                            :actions   0}
-                           {:hand [moat]}]
-            :effect-stack [{:text      "You may reveal a Reaction to react to the Militia Attack."
-                            :player-no 1
-                            :choice    :reveal-reaction
-                            :source    :hand
-                            :options   [:moat]
-                            :max       1}
-                           {:player-no 0
-                            :effect    [:give-coins 2]}
-                           {:player-no 0
-                            :effect    [:attack {:effects [[:discard-down-to 3]]}]}
-                           {:player-no 0
-                            :effect    [:card-effect militia]}]}))
-    (is (= (-> {:players [{:hand    [throne-room militia]
-                           :actions 1
-                           :coins   0}
-                          {:hand [moat]}]}
-               (play 0 :throne-room)
-               (choose :militia)
-               (choose :moat))
-           {:players      [{:hand      []
-                            :play-area [throne-room militia]
-                            :actions   0
-                            :coins     2}
-                           {:hand [moat]}]
-            :effect-stack [{:text      "You may reveal a Reaction to react to the Militia Attack."
-                            :player-no 1
-                            :choice    :reveal-reaction
-                            :source    :hand
-                            :options   [:moat]
-                            :max       1}
-                           {:player-no 0
-                            :effect    [:give-coins 2]}
-                           {:player-no 0
-                            :effect    [:attack {:effects [[:discard-down-to 3]]}]}]}))))
+                 (play 0 :vassal)
+                 (choose :militia))
+             {:players      [{:hand      []
+                              :play-area [vassal militia]
+                              :deck      []
+                              :discard   []
+                              :actions   0
+                              :coins     2}
+                             {:hand [moat]}]
+              :effect-stack [{:text      "You may reveal a Reaction to react to the Militia Attack."
+                              :player-no 1
+                              :choice    :reveal-reaction
+                              :source    :hand
+                              :options   [:moat]
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:give-coins 2]}
+                             {:player-no 0
+                              :effect    [:attack {:effects [[:discard-down-to 3]]}]}]}))
+      (is (= (-> {:players [{:hand    [throne-room militia]
+                             :actions 1}
+                            {:hand [moat]}]}
+                 (play 0 :throne-room)
+                 (choose :militia))
+             {:players      [{:hand      []
+                              :play-area [throne-room militia]
+                              :actions   0}
+                             {:hand [moat]}]
+              :effect-stack [{:text      "You may reveal a Reaction to react to the Militia Attack."
+                              :player-no 1
+                              :choice    :reveal-reaction
+                              :source    :hand
+                              :options   [:moat]
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:give-coins 2]}
+                             {:player-no 0
+                              :effect    [:attack {:effects [[:discard-down-to 3]]}]}
+                             {:player-no 0
+                              :effect    [:card-effect militia]}]}))
+      (is (= (-> {:players [{:hand    [throne-room militia]
+                             :actions 1
+                             :coins   0}
+                            {:hand [moat]}]}
+                 (play 0 :throne-room)
+                 (choose :militia)
+                 (choose :moat))
+             {:players      [{:hand      []
+                              :play-area [throne-room militia]
+                              :actions   0
+                              :coins     2}
+                             {:hand [moat]}]
+              :effect-stack [{:text      "You may reveal a Reaction to react to the Militia Attack."
+                              :player-no 1
+                              :choice    :reveal-reaction
+                              :source    :hand
+                              :options   [:moat]
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:give-coins 2]}
+                             {:player-no 0
+                              :effect    [:attack {:effects [[:discard-down-to 3]]}]}]})))))
 
 (deftest moneylender-test
   (testing "Moneylender"

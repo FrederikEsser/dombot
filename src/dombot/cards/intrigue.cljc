@@ -50,6 +50,34 @@
                                          :min     1
                                          :max     1}]]})
 
+(defn diplomat-give-actions [game player-no]
+  (let [hand (get-in game [:players player-no :hand])]
+    (cond-> game
+            (<= (count hand) 5) (give-actions player-no 2))))
+
+(effects/register {::diplomat-give-actions diplomat-give-actions})
+
+(defn diplomat-can-react? [game player-no]
+  (let [hand (get-in game [:players player-no :hand])]
+    (<= 5 (count hand))))
+
+(effects/register-options {::diplomat-can-react? diplomat-can-react?}) ; todo: should be registered somewhere else
+
+(def diplomat {:name       :diplomat
+               :set        :intrigue
+               :types      #{:action :reaction}
+               :cost       4
+               :effects    [[:draw 2]
+                            [::diplomat-give-actions]]
+               :reacts-to  :attack
+               :react-pred ::diplomat-can-react?
+               :reaction   [[:draw 2]
+                            [:give-choice {:text    "Discard 3 cards."
+                                           :choice  :discard-from-hand
+                                           :options [:player :hand]
+                                           :min     3
+                                           :max     3}]]})
+
 (def harem {:name           :harem
             :set            :intrigue
             :types          #{:treasure :victory}
@@ -282,6 +310,7 @@
 (def kingdom-cards [baron
                     bridge
                     courtyard
+                    diplomat
                     harem
                     lurker
                     mining-village

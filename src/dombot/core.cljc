@@ -7,13 +7,14 @@
 ; todo:
 ;;; Intrigue
 
+; change diplomat tests to use minion as attack example
+; handle multiple reaction cards
 ; refac supply to a map of lists of cards by name
 ; change options into lists of maps with :name and :id (cards?) - or not??
 ; generalize checks for possible operations
 ; slow mode
 ; make frequencies optional
 ; unit tests for affect-other-players, give-choice, choose, calc-victory-points, ...
-; handle multiple reaction cards
 ; game log / turn counter
 
 (defonce game-state (atom {}))

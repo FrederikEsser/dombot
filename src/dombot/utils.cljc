@@ -82,6 +82,12 @@
               card cost-reductions)
       :cost))
 
+(defn- can-react? [game player-no {:keys [react-pred]}]
+  (if react-pred
+    (let [can-react-fn (effects/get-option react-pred)]
+      (can-react-fn game player-no))
+    true))
+
 (defn options-from-player
   ([game player-no card-id area & [{:keys [last this name not-name types reacts-to]}]]
    (when this
@@ -92,7 +98,8 @@
             name (filter (comp #{name} :name))
             not-name (remove (comp #{not-name} :name))
             types (filter (comp types :types))
-            reacts-to (filter (comp #{reacts-to} :reacts-to))
+            reacts-to (filter (every-pred (comp #{reacts-to} :reacts-to)
+                                          (partial can-react? game player-no)))
             :always (map :name))))
 
 (effects/register-options {:player options-from-player})

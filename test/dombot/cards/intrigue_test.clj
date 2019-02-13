@@ -145,6 +145,125 @@
                        :deck      [copper]
                        :actions   0}]}))))
 
+(deftest diplomat-test
+  (testing "Diplimat"
+    (testing "Action"
+      (is (= (-> {:players [{:hand    [diplomat copper copper copper copper]
+                             :deck    [estate estate estate]
+                             :actions 1}]}
+                 (play 0 :diplomat))
+             {:players [{:hand      [copper copper copper copper estate estate]
+                         :play-area [diplomat]
+                         :deck      [estate]
+                         :actions   0}]}))
+      (is (= (-> {:players [{:hand    [diplomat copper copper copper]
+                             :deck    [estate estate estate]
+                             :actions 1}]}
+                 (play 0 :diplomat))
+             {:players [{:hand      [copper copper copper estate estate]
+                         :play-area [diplomat]
+                         :deck      [estate]
+                         :actions   2}]}))
+      (is (= (-> {:players [{:hand    [diplomat copper copper copper copper]
+                             :deck    [estate]
+                             :actions 1}]}
+                 (play 0 :diplomat))
+             {:players [{:hand      [copper copper copper copper estate]
+                         :play-area [diplomat]
+                         :deck      []
+                         :actions   2}]})))
+    (testing "Reaction"
+      (is (= (-> {:players [{:hand    [swindler]
+                             :actions 1}
+                            {:hand [diplomat estate estate estate silver]
+                             :deck [copper copper]}]}
+                 (play 0 :swindler))
+             {:players      [{:hand      []
+                              :play-area [swindler]
+                              :actions   0}
+                             {:hand [diplomat estate estate estate silver]
+                              :deck [copper copper]}]
+              :effect-stack [{:text      "You may reveal a Reaction to react to the Swindler Attack."
+                              :player-no 1
+                              :choice    :reveal-reaction
+                              :source    :hand
+                              :options   [:diplomat]
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:give-coins 2]}
+                             {:player-no 0
+                              :effect    [:attack {:effects [[::intrigue/swindler-attack]]}]}]}))
+      (is (= (-> {:players [{:hand    [swindler]
+                             :actions 1}
+                            {:hand [diplomat estate estate estate silver]
+                             :deck [copper copper]}]}
+                 (play 0 :swindler)
+                 (choose :diplomat))
+             {:players      [{:hand      []
+                              :play-area [swindler]
+                              :actions   0}
+                             {:hand [diplomat estate estate estate silver copper copper]
+                              :deck []}]
+              :effect-stack [{:text      "Discard 3 cards."
+                              :player-no 1
+                              :choice    :discard-from-hand
+                              :source    :hand
+                              :options   [:diplomat :estate :estate :estate :silver :copper :copper]
+                              :min       3
+                              :max       3}
+                             {:player-no 0
+                              :effect    [:give-coins 2]}
+                             {:player-no 0
+                              :effect    [:attack {:effects [[::intrigue/swindler-attack]]}]}]}))
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand    [swindler]
+                             :actions 1
+                             :coins   0}
+                            {:hand [diplomat estate estate estate silver]
+                             :deck [copper copper]}]}
+                 (play 0 :swindler)
+                 (choose :diplomat)
+                 (choose [:estate :estate :estate]))
+             {:supply       (base/supply 2 8)
+              :players      [{:hand      []
+                              :play-area [swindler]
+                              :actions   0
+                              :coins     2}
+                             {:hand    [diplomat silver copper copper]
+                              :deck    [estate estate]
+                              :discard []}]
+              :effect-stack [{:text      "Gain a card costing $2 (attacker chooses)."
+                              :player-no 1
+                              :choice    :gain
+                              :source    :supply
+                              :options   [:estate]
+                              :min       1
+                              :max       1}]
+              :trash        [estate]}))
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand      [swindler]
+                             :play-area []
+                             :actions   1
+                             :coins     0}
+                            {:hand [diplomat silver copper copper]
+                             :deck [estate]}]}
+                 (play 0 :swindler))
+             {:supply       (base/supply 2 8)
+              :players      [{:hand      []
+                              :play-area [swindler]
+                              :actions   0
+                              :coins     2}
+                             {:hand [diplomat silver copper copper]
+                              :deck []}]
+              :effect-stack [{:text      "Gain a card costing $2 (attacker chooses)."
+                              :player-no 1
+                              :choice    :gain
+                              :source    :supply
+                              :options   [:estate]
+                              :min       1
+                              :max       1}]
+              :trash        [estate]})))))
+
 (deftest harem-test
   (testing "Harem"
     (is (= (-> {:players [{:hand  [harem]
