@@ -1,5 +1,7 @@
 (ns dombot.front-end-view
-  (:require [dombot.utils :as ut]))
+  (:require [dombot.utils :as ut]
+            [dombot.specs :as specs]
+            [clojure.spec.alpha :as s]))
 
 (defn- choice-interaction [name area {:keys [source options min max]}]
   (when (and (= area source) ((set options) name))
@@ -85,12 +87,16 @@
       {:visible-cards   (view-area :discard data number-of-cards)
        :number-of-cards approx-discard-size})))
 
+(defn view-options [options]
+  (->> options
+       (map (fn [option] (select-keys option [:option :text])))))
+
 (defn view-choice [{:keys [source options min max] :as choice}]
   (merge (select-keys choice [:text :min :max])
          (when (= :special source)
-           {:options options})
+           {:options (view-options options)})
          (when (= 1 min (or max (count options)))
-           {:quick-choice true})))
+           {:quick-choice? true})))
 
 (defn view-player [active-player? {{:keys [name
                                            actions
@@ -101,7 +107,7 @@
                                            winner]} :player
                                    choice           :choice
                                    :as              data}]
-  (merge {:name      (ut/format-name name)
+  (merge {:name.ui   (ut/format-name name)
           :hand      (view-hand active-player? data)
           :play-area (view-area :play-area data)
           :deck      (view-deck data)
@@ -118,17 +124,17 @@
          (when victory-points
            {:victory-points victory-points})
          (when (not (nil? winner))
-           {:winner winner})))
+           {:winner? winner})))
 
 (defn view-trash [{:keys [trash choice]} mode]
   (if (empty? trash)
     []
     (case mode
       :compact (let [{:keys [name types]} (last trash)]
-                 [(merge {:name            name
-                          :name.ui         (ut/format-name name)
-                          :types           types
-                          :number-of-cards (count trash)})])
+                 [{:name            name
+                   :name.ui         (ut/format-name name)
+                   :types           types
+                   :number-of-cards (count trash)}])
       :full (->> trash
                  (map (fn [{:keys [name types]}]
                         (merge {:name    name
@@ -143,7 +149,7 @@
 (defn view-commands [{:keys [players effect-stack current-player can-undo?]}]
   (let [{:keys [hand phase]} (get players current-player)
         [choice] effect-stack]
-    {:can-undo?           can-undo?
+    {:can-undo?           (boolean can-undo?)
      :can-play-treasures? (boolean (and (not choice)
                                         (#{:action :pay} phase)
                                         (some (comp :treasure :types) hand)))
@@ -153,20 +159,21 @@
 (defn view-game [{:keys [supply cost-reductions players trash effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
-    (-> {:supply   (view-supply {:supply          supply
-                                 :cost-reductions cost-reductions
-                                 :player          player
-                                 :choice          choice})
-         :players  (->> players
-                        (map-indexed (fn [idx player]
-                                       (let [active-player? (and (= idx current-player)
-                                                                 (or (nil? choice)
-                                                                     (= idx player-no))
-                                                                 (not= phase :end-of-game))]
-                                         (view-player active-player?
-                                                      (merge {:player player}
-                                                             (when (= idx player-no)
-                                                               {:choice choice})))))))
-         :trash    {:compact (view-trash {:trash trash :choice choice} :compact)
-                    :full    (view-trash {:trash trash :choice choice} :full)}
-         :commands (view-commands game)})))
+    (->> {:supply   (view-supply {:supply          supply
+                                  :cost-reductions cost-reductions
+                                  :player          player
+                                  :choice          choice})
+          :players  (->> players
+                         (map-indexed (fn [idx player]
+                                        (let [active-player? (and (= idx current-player)
+                                                                  (or (nil? choice)
+                                                                      (= idx player-no))
+                                                                  (not= phase :end-of-game))]
+                                          (view-player active-player?
+                                                       (merge {:player player}
+                                                              (when (= idx player-no)
+                                                                {:choice choice})))))))
+          :trash    {:compact (view-trash {:trash trash :choice choice} :compact)
+                     :full    (view-trash {:trash trash :choice choice} :full)}
+          :commands (view-commands game)}
+         (s/assert* ::specs/game))))

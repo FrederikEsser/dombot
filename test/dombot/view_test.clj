@@ -414,7 +414,7 @@
                                        :coins               0
                                        :buys                1
                                        :phase               :action}})
-           {:name      "John Doe"
+           {:name.ui   "John Doe"
             :active?   true
             :hand      [{:name            :copper
                          :name.ui         "Copper"
@@ -456,7 +456,7 @@
                               :choice {:text    "Choice text"
                                        :source  :hand
                                        :options [:estate :moat]}})
-           {:name      "John Doe"
+           {:name.ui   "John Doe"
             :active?   true
             :hand      [{:name            :copper
                          :name.ui         "Copper"
@@ -501,7 +501,7 @@
                                        :options       [:estate]
                                        :min           1
                                        :quick-choice  true}})
-           {:name      "John Doe"
+           {:name.ui   "John Doe"
             :active?   true
             :hand      [{:name            :copper
                          :name.ui         "Copper"
@@ -534,9 +534,9 @@
             :actions   2
             :coins     0
             :buys      1
-            :choice    {:text         "Choice text"
-                        :min          1
-                        :quick-choice true}})
+            :choice    {:text          "Choice text"
+                        :min           1
+                        :quick-choice? true}})
         (is (= (view-player false {:player {:name                "John Doe"
                                             :hand                [copper copper remodel estate moat]
                                             :play-area           []
@@ -547,7 +547,7 @@
                                             :coins               0
                                             :buys                0
                                             :phase               :out-of-turn}})
-               {:name      "John Doe"
+               {:name.ui   "John Doe"
                 :hand      [{:name.ui         "Hand"
                              :number-of-cards 5}]
                 :play-area []
@@ -570,7 +570,7 @@
                                         :coins               0
                                         :buys                0
                                         :phase               :out-of-turn}})
-           {:name      "John Doe"
+           {:name.ui   "John Doe"
             :hand      [{:name            :copper
                          :name.ui         "Copper"
                          :types           #{:treasure}
@@ -608,7 +608,7 @@
                                         :min     2
                                         :max     2
                                         :options [:copper :copper :remodel :estate :moat]}})
-           {:name      "John Doe"
+           {:name.ui   "John Doe"
             :hand      [{:name            :copper
                          :name.ui         "Copper"
                          :types           #{:treasure}
@@ -649,7 +649,7 @@
                                        :coins               0
                                        :buys                0
                                        :phase               :action}})
-           {:name      "John Doe"
+           {:name.ui   "John Doe"
             :active?   true
             :hand      []
             :play-area [{:name    :library
@@ -674,7 +674,7 @@
                                         :phase          :end-of-game
                                         :victory-points 21
                                         :winner         true}})
-           {:name           "John Doe"
+           {:name.ui        "John Doe"
             :hand           [{:name            :copper
                               :name.ui         "Copper"
                               :types           #{:treasure}
@@ -695,7 +695,7 @@
             :coins          0
             :buys           0
             :victory-points 21
-            :winner         true}))))
+            :winner?        true}))))
 
 (deftest trash-view-test
   (testing "Trash view"
