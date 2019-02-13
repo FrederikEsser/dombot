@@ -120,20 +120,21 @@
          (when (not (nil? winner))
            {:winner winner})))
 
-(defn view-trash [trash mode]
+(defn view-trash [{:keys [trash choice]} mode]
   (if (empty? trash)
     []
     (case mode
-      :compressed (let [{:keys [name type]} (last trash)]
-                    [(merge {:name            name
-                             :name.ui         (ut/format-name name)
-                             :type            type
-                             :number-of-cards (count trash)})])
+      :compact (let [{:keys [name type]} (last trash)]
+                 [(merge {:name            name
+                          :name.ui         (ut/format-name name)
+                          :type            type
+                          :number-of-cards (count trash)})])
       :full (->> trash
                  (map (fn [{:keys [name type]}]
                         (merge {:name    name
                                 :name.ui (ut/format-name name)
-                                :type    type})))
+                                :type    type}
+                               (choice-interaction name :trash choice))))
                  frequencies
                  (map (fn [[card number-of-cards]]
                         (cond-> card
@@ -166,6 +167,6 @@
                                                           (merge {:player player}
                                                                  (when (= idx player-no)
                                                                    {:choice choice})))))))
-             :trash    {:compressed (view-trash trash :compressed)
-                        :full       (view-trash trash :full)}
+             :trash    {:compact (view-trash {:trash trash :choice choice} :compact)
+                        :full    (view-trash {:trash trash :choice choice} :full)}
              :commands (view-commands game)})))

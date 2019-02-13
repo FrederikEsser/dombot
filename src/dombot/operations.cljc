@@ -141,7 +141,7 @@
    (update game :effect-stack (partial concat (if (sequential? data)
                                                 (->> data
                                                      (map (fn [effect]
-                                                            (when effect
+                                                             (when effect
                                                               (merge {:player-no player-no
                                                                       :effect    effect}
                                                                      (when card-id

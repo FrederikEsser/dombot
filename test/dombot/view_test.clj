@@ -699,11 +699,11 @@
 
 (deftest trash-view-test
   (testing "Trash view"
-    (is (= (view-trash [] :full)
+    (is (= (view-trash {:trash []} :full)
            []))
-    (is (= (view-trash [] :compressed)
+    (is (= (view-trash {:trash []} :compact)
            []))
-    (is (= (view-trash [copper copper estate] :full)
+    (is (= (view-trash {:trash [copper copper estate]} :full)
            [{:name            :copper
              :name.ui         "Copper"
              :type            #{:treasure}
@@ -711,8 +711,31 @@
             {:name    :estate
              :name.ui "Estate"
              :type    #{:victory}}]))
-    (is (= (view-trash [copper copper estate] :compressed)
+    (is (= (view-trash {:trash [copper copper estate]} :compact)
            [{:name            :estate
              :name.ui         "Estate"
              :type            #{:victory}
-             :number-of-cards 3}]))))
+             :number-of-cards 3}]))
+    (testing "with choice"
+      (is (= (view-trash {:trash  [copper estate copper]
+                          :choice {:source  :trash
+                                   :options [:copper]
+                                   :max     1}}
+                         :full)
+             [{:name            :copper
+               :name.ui         "Copper"
+               :type            #{:treasure}
+               :number-of-cards 2
+               :interaction     :choosable}
+              {:name    :estate
+               :name.ui "Estate"
+               :type    #{:victory}}]))
+      (is (= (view-trash {:trash  [copper estate copper]
+                          :choice {:source  :trash
+                                   :options [:copper]
+                                   :max     1}}
+                         :compact)
+             [{:name            :copper
+               :name.ui         "Copper"
+               :type            #{:treasure}
+               :number-of-cards 3}])))))
