@@ -1,8 +1,35 @@
 (ns dombot.cards.intrigue
-  (:require [dombot.operations :refer [move-card push-effect-stack give-choice draw peek-deck]]
+  (:require [dombot.operations :refer [gain move-card push-effect-stack give-choice draw peek-deck]]
             [dombot.cards.common :refer :all]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
+
+(defn baron-choice [game player-no card-name]
+  (if (= :estate card-name)
+    (push-effect-stack game player-no [[:discard-from-hand :estate]
+                                       [:give-coins 4]])
+    (gain game player-no :estate)))
+
+(effects/register {::baron-choice baron-choice})
+
+(defn baron-discard-estate [game player-no]
+  (let [hand (get-in game [:players player-no :hand])]
+    (if (some (comp #{:estate} :name) hand)
+      (give-choice game player-no {:text      "You may discard an Estate for +$4. If you don't, gain an Estate."
+                                   :player-no 0
+                                   :choice    ::baron-choice
+                                   :options   [:player :hand {:name :estate}]
+                                   :max       1})
+      (gain game player-no :estate))))
+
+(effects/register {::baron-discard-estate baron-discard-estate})
+
+(def baron {:name    :baron
+            :set     :intrigue
+            :types   #{:action}
+            :cost    4
+            :effects [[:give-buys 1]
+                      [::baron-discard-estate]]})
 
 (def bridge {:name    :bridge
              :set     :intrigue
@@ -252,7 +279,8 @@
                                             :min     1
                                             :max     1}]]})
 
-(def kingdom-cards [bridge
+(def kingdom-cards [baron
+                    bridge
                     courtyard
                     harem
                     lurker

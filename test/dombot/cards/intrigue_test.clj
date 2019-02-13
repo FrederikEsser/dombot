@@ -13,6 +13,73 @@
 
 (use-fixtures :each fixture)
 
+(deftest baron-test
+  (let [estate (assoc estate :id 1)]
+    (testing "Baron"
+      (is (= (-> {:supply  [{:card estate :pile-size 8}]
+                  :players [{:hand    [baron]
+                             :actions 1
+                             :buys    1}]}
+                 (play 0 :baron))
+             {:supply  [{:card estate :pile-size 7}]
+              :players [{:hand      []
+                         :play-area [baron]
+                         :discard   [estate]
+                         :actions   0
+                         :buys      2}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}]
+                  :players [{:hand    [baron estate]
+                             :actions 1
+                             :buys    1}]}
+                 (play 0 :baron))
+             {:supply       [{:card estate :pile-size 8}]
+              :players      [{:hand      [estate]
+                              :play-area [baron]
+                              :actions   0
+                              :buys      2}]
+              :effect-stack [{:text      "You may discard an Estate for +$4. If you don't, gain an Estate."
+                              :player-no 0
+                              :choice    ::intrigue/baron-choice
+                              :source    :hand
+                              :options   [:estate]
+                              :max       1}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}]
+                  :players [{:hand    [baron estate]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :baron)
+                 (choose :estate))
+             {:supply  [{:card estate :pile-size 8}]
+              :players [{:hand      []
+                         :play-area [baron]
+                         :discard   [estate]
+                         :actions   0
+                         :coins     4
+                         :buys      2}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}]
+                  :players [{:hand    [baron estate]
+                             :actions 1
+                             :buys    1}]}
+                 (play 0 :baron)
+                 (choose nil))
+             {:supply  [{:card estate :pile-size 7}]
+              :players [{:hand      [estate]
+                         :play-area [baron]
+                         :discard   [estate]
+                         :actions   0
+                         :buys      2}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 0}]
+                  :players [{:hand    [baron]
+                             :actions 1
+                             :buys    1}]}
+                 (play 0 :baron))
+             {:supply  [{:card estate :pile-size 0}]
+              :players [{:hand      []
+                         :play-area [baron]
+                         :actions   0
+                         :buys      2}]})))))
+
 (deftest bridge-test
   (testing "Bridge"
     (is (= (-> {:players [{:hand    [bridge]
