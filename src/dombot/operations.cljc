@@ -391,14 +391,3 @@
        (update :players (partial mapv (fn [player] (dissoc player :revealed-cards))))
        (dissoc :cost-reductions)
        check-game-ended)))
-
-(defn- view-end-player [{:keys [name deck discard hand play-area] :as player}]
-  (let [cards (concat deck discard hand play-area)]
-    {:name           name
-     :cards          (ut/frequencies-of cards :name)
-     :victory-points (calc-victory-points player)}))
-
-(defn view-game [{:keys [players] :as game}]
-  (if (game-ended? game)
-    {:players (map view-end-player players)}
-    (view/view-game game)))

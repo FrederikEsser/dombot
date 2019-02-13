@@ -23,6 +23,13 @@
                                          :min     1
                                          :max     1}]]})
 
+(def harem {:name           :harem
+            :set            :intrigue
+            :types          #{:treasure :victory}
+            :cost           6
+            :coin-value     2
+            :victory-points 2})
+
 (defn lurker-choice [game player-no choice]
   (case choice
     :trash (give-choice game player-no {:text    "Trash an Action card from the Supply."
@@ -203,6 +210,7 @@
 
 (def kingdom-cards [bridge
                     courtyard
+                    harem
                     lurker
                     mining-village
                     pawn

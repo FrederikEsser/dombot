@@ -72,6 +72,17 @@
                        :deck      [copper]
                        :actions   0}]}))))
 
+(deftest harem-test
+  (testing "Harem"
+    (is (= (-> {:players [{:hand [harem]
+                           :coins 0}]}
+               (play 0 :harem))
+           {:players [{:hand []
+                       :play-area [harem]
+                       :coins 2}]}))
+    (is (= (calc-victory-points {:deck [harem]})
+           2))))
+
 (deftest lurker-test
   (let [upgrade (assoc upgrade :id 1)]
     (testing "Lurker"
