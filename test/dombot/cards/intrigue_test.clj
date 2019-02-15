@@ -396,6 +396,80 @@
     (is (= (calc-victory-points {:deck [harem]})
            2))))
 
+(deftest ironworks-test
+  (let [estate (assoc estate :id 1)
+        silver (assoc silver :id 2)
+        courtyard (assoc courtyard :id 3)
+        mill (assoc mill :id 4)]
+    (testing "Ironworks"
+      (is (= (-> {:supply  [{:card estate :pile-size 8}
+                            {:card duchy :pile-size 8}
+                            {:card silver :pile-size 40}
+                            {:card courtyard :pile-size 10}]
+                  :players [{:hand    [ironworks]
+                             :actions 1}]}
+                 (play 0 :ironworks))
+             {:supply       [{:card estate :pile-size 8}
+                             {:card duchy :pile-size 8}
+                             {:card silver :pile-size 40}
+                             {:card courtyard :pile-size 10}]
+              :players      [{:hand      []
+                              :play-area [ironworks]
+                              :actions   0}]
+              :effect-stack [{:text      "Gain a card costing up to $4."
+                              :player-no 0
+                              :choice    ::intrigue/ironworks-gain
+                              :source    :supply
+                              :options   [:estate :silver :courtyard]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}]
+                  :players [{:hand    [ironworks]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :ironworks)
+                 (choose :estate))
+             {:supply  [{:card estate :pile-size 7}]
+              :players [{:hand      [copper]
+                         :play-area [ironworks]
+                         :deck      [copper]
+                         :discard   [estate]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [ironworks]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :ironworks)
+                 (choose :silver))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:hand      []
+                         :play-area [ironworks]
+                         :discard   [silver]
+                         :actions   0
+                         :coins     1}]}))
+      (is (= (-> {:supply  [{:card courtyard :pile-size 10}]
+                  :players [{:hand    [ironworks]
+                             :actions 1}]}
+                 (play 0 :ironworks)
+                 (choose :courtyard))
+             {:supply  [{:card courtyard :pile-size 9}]
+              :players [{:hand      []
+                         :play-area [ironworks]
+                         :discard   [courtyard]
+                         :actions   1}]}))
+      (is (= (-> {:supply  [{:card mill :pile-size 8}]
+                  :players [{:hand    [ironworks]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :ironworks)
+                 (choose :mill))
+             {:supply  [{:card mill :pile-size 7}]
+              :players [{:hand      [copper]
+                         :play-area [ironworks]
+                         :deck      [copper]
+                         :discard   [mill]
+                         :actions   1}]})))))
+
 (deftest lurker-test
   (let [upgrade (assoc upgrade :id 1)]
     (testing "Lurker"

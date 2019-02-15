@@ -85,6 +85,25 @@
             :coin-value     2
             :victory-points 2})
 
+(defn ironworks-gain [game player-no card-name]
+  (let [{{:keys [types]} :card} (ut/get-pile-idx game card-name)]
+    (push-effect-stack game player-no [[:gain card-name]
+                                       (when (:action types) [:give-actions 1])
+                                       (when (:treasure types) [:give-coins 1])
+                                       (when (:victory types) [:draw 1])])))
+
+(effects/register {::ironworks-gain ironworks-gain})
+
+(def ironworks {:name    :ironworks
+                :set     :intrigue
+                :types   #{:action}
+                :cost    4
+                :effects [[:give-choice {:text    "Gain a card costing up to $4."
+                                         :choice  ::ironworks-gain
+                                         :options [:supply {:max-cost 4}]
+                                         :min     1
+                                         :max     1}]]})
+
 (defn lurker-choice [game player-no choice]
   (case choice
     :trash (give-choice game player-no {:text    "Trash an Action card from the Supply."
@@ -112,6 +131,12 @@
                                                 {:option :gain :text "Gain an Action card from the trash."}]
                                       :min     1
                                       :max     1}]]})
+
+(def mill {:name    :mill
+           :set     :intrigue
+           :types   #{:action :victory}
+           :cost    4
+           :effects []})
 
 (defn mining-village-trash [game player-no card-name]
   (cond-> game
@@ -342,6 +367,7 @@
                     courtyard
                     diplomat
                     harem
+                    ironworks
                     lurker
                     mining-village
                     minion

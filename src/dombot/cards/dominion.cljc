@@ -360,7 +360,10 @@
                  :effects [[:give-coins 2]
                            [:give-buys 1]]})
 
-(def workshop {:name    :workshop :set :dominion :types #{:action} :cost 3
+(def workshop {:name    :workshop
+               :set     :dominion
+               :types   #{:action}
+               :cost    3
                :effects [[:give-choice {:text    "Gain a card costing up to $4."
                                         :choice  :gain
                                         :options [:supply {:max-cost 4}]
