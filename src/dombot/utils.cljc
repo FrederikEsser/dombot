@@ -62,12 +62,6 @@
                        (when (= card-name name) {:idx idx :card card})))
        first))
 
-(defn get-effect-idx [effect-stack effect-type]
-  (->> effect-stack
-       (keep-indexed (fn [idx {[effect-name :as effect] :effect}]
-                       (when (= effect-type effect-name) {:idx idx :effect effect})))
-       first))
-
 (defn- minus-cost [cost reduction]
   (if (< cost reduction) 0 (- cost reduction)))
 

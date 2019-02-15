@@ -198,7 +198,9 @@
                                                                   {:option :coins :text "+$2"}
                                                                   {:option :discard :text "Discard your hand, +4 Cards."}]
                                                         :min     1
-                                                        :max     1}]}]}))
+                                                        :max     1}]}
+                             {:player-no 1
+                              :effect    [:clear-unaffected]}]}))
       (is (= (-> {:players [{:hand    [minion]
                              :actions 1}
                             {:hand [diplomat estate estate estate silver]
@@ -226,7 +228,9 @@
                                                                   {:option :coins :text "+$2"}
                                                                   {:option :discard :text "Discard your hand, +4 Cards."}]
                                                         :min     1
-                                                        :max     1}]}]}))
+                                                        :max     1}]}
+                             {:player-no 1
+                              :effect    [:clear-unaffected]}]}))
       (is (= (-> {:players [{:hand    [minion]
                              :deck    (repeat 5 copper)
                              :actions 1}
@@ -773,7 +777,9 @@
                             :source    :supply
                             :options   [:curse :copper]
                             :min       1
-                            :max       1}]
+                            :max       1}
+                           {:player-no 1
+                            :effect    [:clear-unaffected]}]
             :trash        [copper]}))
     (is (= (-> {:supply  (base/supply 2 8)
                 :players [{:hand    [swindler]
@@ -794,7 +800,9 @@
                             :source    :supply
                             :options   [:curse :copper]
                             :min       1
-                            :max       1}]
+                            :max       1}
+                           {:player-no 1
+                            :effect    [:clear-unaffected]}]
             :trash        [copper]}))
     (is (= (-> {:supply  (base/supply 2 8)
                 :players [{:hand    [swindler]
@@ -862,7 +870,11 @@
                               :source    :supply
                               :options   [:copper]
                               :min       1
-                              :max       1}]
+                              :max       1}
+                             {:player-no 1
+                              :effect    [:clear-unaffected]}
+                             {:player-no 2
+                              :effect    [:clear-unaffected]}]
               :trash        [copper curse]})))))
 
 (deftest trading-post-test

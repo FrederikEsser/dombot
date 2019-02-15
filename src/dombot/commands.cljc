@@ -6,6 +6,7 @@
 ; todo:
 ;;; Intrigue
 
+; colours and highlight of UI buttons
 ; handle multiple reaction cards
 ; refac supply to a map of lists of cards by name
 ; change options into lists of maps with :name and :id (cards?) - or not??

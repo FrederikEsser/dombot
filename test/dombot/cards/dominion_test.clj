@@ -5,6 +5,7 @@
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
             [dombot.cards.dominion :as dominion :refer :all]
+            [dombot.cards.intrigue :as intrigue :refer [minion]]
             [dombot.utils :as ut]))
 
 (defn fixture [f]
@@ -117,7 +118,9 @@
                               :min       1
                               :max       1}
                              {:player-no 1
-                              :effect    [:discard-all-revealed]}]}))
+                              :effect    [:discard-all-revealed]}
+                             {:player-no 1
+                              :effect    [:clear-unaffected]}]}))
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [bandit]
                              :actions 1}
@@ -184,7 +187,11 @@
                                            :max     1
                                            :min     1}]}
                              {:player-no 2
-                              :effect    [:discard-all-revealed]}]}))
+                              :effect    [:discard-all-revealed]}
+                             {:player-no 1
+                              :effect    [:clear-unaffected]}
+                             {:player-no 2
+                              :effect    [:clear-unaffected]}]}))
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [bandit]
                              :actions 1}
@@ -211,7 +218,11 @@
                               :min       1
                               :max       1}
                              {:player-no 2
-                              :effect    [:discard-all-revealed]}]
+                              :effect    [:discard-all-revealed]}
+                             {:player-no 1
+                              :effect    [:clear-unaffected]}
+                             {:player-no 2
+                              :effect    [:clear-unaffected]}]
               :trash        [silver]}))
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [bandit]
@@ -262,7 +273,9 @@
                               :source    :hand
                               :options   [:estate :estate]
                               :min       1
-                              :max       1}]}))
+                              :max       1}
+                             {:player-no 1
+                              :effect    [:clear-unaffected]}]}))
       (is (= (-> {:supply  [{:card silver :pile-size 40}]
                   :players [{:hand    [bureaucrat]
                              :deck    [copper]
@@ -725,7 +738,9 @@
                             :source    :hand
                             :options   (repeat 5 :copper)
                             :min       2
-                            :max       2}]}))
+                            :max       2}
+                           {:player-no 1
+                            :effect    [:clear-unaffected]}]}))
     (is (= (-> {:players [{:hand    [militia]
                            :actions 1
                            :coins   0}
@@ -923,7 +938,9 @@
                              {:player-no 0
                               :effect    [:give-coins 2]}
                              {:player-no 0
-                              :effect    [:attack {:effects [[:discard-down-to 3]]}]}]}))
+                              :effect    [:attack {:effects [[:discard-down-to 3]]}]}
+                             {:player-no 1
+                              :effect    [:clear-unaffected]}]}))
       (is (= (-> {:players [{:hand    [militia]
                              :actions 1
                              :coins   0}
@@ -952,7 +969,9 @@
                               :source    :hand
                               :options   [:moat :copper :copper :copper :copper]
                               :min       2
-                              :max       2}]}))
+                              :max       2}
+                             {:player-no 1
+                              :effect    [:clear-unaffected]}]}))
       (is (= (-> {:players [{:hand    [vassal]
                              :deck    [militia]
                              :actions 1
@@ -976,7 +995,9 @@
                              {:player-no 0
                               :effect    [:give-coins 2]}
                              {:player-no 0
-                              :effect    [:attack {:effects [[:discard-down-to 3]]}]}]}))
+                              :effect    [:attack {:effects [[:discard-down-to 3]]}]}
+                             {:player-no 1
+                              :effect    [:clear-unaffected]}]}))
       (is (= (-> {:players [{:hand    [throne-room militia]
                              :actions 1}
                             {:hand [moat]}]}
@@ -996,8 +1017,10 @@
                               :effect    [:give-coins 2]}
                              {:player-no 0
                               :effect    [:attack {:effects [[:discard-down-to 3]]}]}
-                             {:player-no 0
-                              :effect    [:card-effect militia]}]}))
+                             {:player-no 1
+                              :effect    [:clear-unaffected]}
+                             {:effect    [:card-effect militia]
+                              :player-no 0}]}))
       (is (= (-> {:players [{:hand    [throne-room militia]
                              :actions 1
                              :coins   0}
@@ -1019,7 +1042,44 @@
                              {:player-no 0
                               :effect    [:give-coins 2]}
                              {:player-no 0
-                              :effect    [:attack {:effects [[:discard-down-to 3]]}]}]})))))
+                              :effect    [:attack {:effects [[:discard-down-to 3]]}]}
+                             {:player-no 1
+                              :effect    [:clear-unaffected]}]}))
+      (testing "vs Minion"
+        (is (= (-> {:players [{:hand    [minion]
+                               :actions 1}
+                              {:hand [moat estate estate estate silver]
+                               :deck [copper copper]}]}
+                   (play 0 :minion)
+                   (choose :moat))
+               {:players      [{:hand      []
+                                :play-area [minion]
+                                :actions   1}
+                               {:hand       [moat estate estate estate silver]
+                                :deck       [copper copper]
+                                :unaffected true}]
+                :effect-stack [{:text      "Choose one:"
+                                :player-no 0
+                                :choice    ::intrigue/minion-choice
+                                :source    :special
+                                :options   [{:option :coins :text "+$2"}
+                                            {:option :discard :text "Discard your hand, +4 Cards."}]
+                                :min       1
+                                :max       1}
+                               {:player-no 1
+                                :effect    [:clear-unaffected]}]}))
+        (is (= (-> {:players [{:hand    [minion]
+                               :actions 1}
+                              {:hand [moat estate estate estate silver]
+                               :deck [copper copper]}]}
+                   (play 0 :minion)
+                   (choose :moat)
+                   (choose :discard))
+               {:players [{:hand      []
+                           :play-area [minion]
+                           :actions   1}
+                          {:hand [moat estate estate estate silver]
+                           :deck [copper copper]}]}))))))
 
 (deftest moneylender-test
   (testing "Moneylender"

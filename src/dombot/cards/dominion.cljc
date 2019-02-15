@@ -208,14 +208,8 @@
                                     :options [:player :hand {:types :treasure}]
                                     :max     1}]]})
 
-(defn moat-reaction [{:keys [effect-stack] :as game} player-no]
-  ; TODO: make sure it's the correct attack effect
-  (let [{:keys [idx]} (ut/get-effect-idx effect-stack :attack)]
-    (assert idx "There hasn't been played any Attack to Moat.")
-    (-> game
-        (assoc :effect-stack (-> effect-stack
-                                 vec
-                                 (update-in [idx :effect 1 :unaffected] conj player-no))))))
+(defn moat-reaction [game player-no]
+  (assoc-in game [:players player-no :unaffected] true))
 
 (effects/register {::moat-reaction moat-reaction})
 
