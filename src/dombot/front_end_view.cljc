@@ -57,13 +57,17 @@
 (defn view-hand [active-player? {{:keys [hand revealed-cards phase]} :player
                                  {:keys [source]}                    :choice
                                  :as                                 data}]
-  (if (or active-player?
-          (= (:hand revealed-cards) (count hand))
-          (= :hand source)
-          (= :end-of-game phase))
-    (view-area :hand data)
-    [{:name-ui         "Hand"
-      :number-of-cards (count hand)}]))
+  (let [revealed-cards-in-hand (:hand revealed-cards)]
+    (if (or active-player?
+            (= revealed-cards-in-hand (count hand))
+            (= :hand source)
+            (= :end-of-game phase))
+      (view-area :hand data)
+      (if (empty? hand)
+        {}
+        (merge {:number-of-cards (count hand)}
+               (when revealed-cards-in-hand
+                 {:visible-cards (view-area :hand data revealed-cards-in-hand)}))))))
 
 (defn view-deck [{{:keys [deck
                           look-at
@@ -98,13 +102,12 @@
        (map (fn [option] (select-keys option [:option :text])))))
 
 (defn view-choice [{:keys [text source options min max] :as choice}]
-  (merge {:text text
-          :min  (or min 0)
-          :max  (or max (count options))}
+  (merge {:text          text
+          :min           (or min 0)
+          :max           (or max (count options))
+          :quick-choice? (= 1 min (or max (count options)))}
          (when (= :special source)
-           {:options (view-options options)})
-         (when (= 1 min (or max (count options)))
-           {:quick-choice? true})))
+           {:options (view-options options)})))
 
 (defn view-player [active-player? {{:keys [name
                                            actions
@@ -122,28 +125,29 @@
           :discard   (view-discard data)
           :actions   actions
           :coins     coins
-          :buys      buys}
-         (when active-player?
-           {:active? true})
+          :buys      buys
+          :active?   active-player?}
          (when (not-empty set-aside)
            {:set-aside (view-area :set-aside data)})
          (when choice
            {:choice (view-choice choice)})
          (when victory-points
            {:victory-points victory-points})
-         (when (not (nil? winner))
+         (when-not (nil? winner)
            {:winner? winner})))
 
 (defn view-trash [{:keys [trash choice]} mode]
-  (if (empty? trash)
-    []
-    (case mode
-      :compact (let [{:keys [name types]} (last trash)]
-                 [{:name            name
-                   :name-ui         (ut/format-name name)
-                   :types           types
-                   :number-of-cards (count trash)}])
-      :full (->> trash
+  (case mode
+    :compact (if (empty? trash)
+               {}
+               (let [{:keys [name types]} (last trash)]
+                 {:visible-cards   [{:name    name
+                                     :name-ui (ut/format-name name)
+                                     :types   types}]
+                  :number-of-cards (count trash)}))
+    :full (if (empty? trash)
+            []
+            (->> trash
                  (map (fn [{:keys [name types]}]
                         (merge {:name    name
                                 :name-ui (ut/format-name name)

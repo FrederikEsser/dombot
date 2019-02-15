@@ -50,7 +50,7 @@
                                        :choosable (select! name)
                                        :quick-choosable (swap! state assoc :game (cmd/choose name))
                                        :buyable (swap! state assoc :game (cmd/buy name)))))}
-         (str name-ui (when cost (str " (" cost ")")) (when number-of-cards (str " x" number-of-cards)))]]))))
+         (str name-ui (when cost (str " ($" cost ")")) (when number-of-cards (str " x" number-of-cards)))]]))))
 
 (defn map-tag [tag coll]
   (map (fn [x] [tag x]) coll))
@@ -59,6 +59,12 @@
   [:tr (->> row
             (map view-card)
             (map (fn [card] [:td card])))])
+
+(defn view-pile [pile max]
+  [:div
+   (map (partial view-card max) (:visible-cards pile))
+   (when (:number-of-cards pile)
+     (str (:number-of-cards pile) " Cards"))])
 
 (defn home-page []
   [:div [:h2 "Dominion"]
@@ -106,10 +112,12 @@
                   [:td
                    (when active? [:div "Active"])
                    [:div name-ui]]
-                  [:td (map (partial view-card max) hand)]
+                  [:td (if (:number-of-cards hand)
+                         (view-pile hand max)
+                         (map (partial view-card max) hand))]
                   [:td (map (partial view-card max) play-area)]
-                  [:td (map (partial view-card max) (:visible-cards deck)) (:number-of-cards deck)]
-                  [:td (map (partial view-card max) (:visible-cards discard)) (:number-of-cards discard)]
+                  [:td (view-pile deck max)]
+                  [:td (view-pile discard max)]
                   [:td (if victory-points
                          [:div
                           (when winner? [:div "WINNER!"])
@@ -147,14 +155,17 @@
                                  :on-click (fn [] (swap! state assoc :game (cmd/end-turn)))}
                         "End Turn"]]))
                   (when set-aside
-                    [:td (map (partial view-card max) set-aside)])])))]]
+                    [:td
+                     [:div "Set aside"]
+                     [:div (map (partial view-card max) set-aside)]])])))]]
    (let [{:keys [compact full]} (get-in @state [:game :trash])]
-
-     [:div [:button {:on-click (fn [] (swap! state update :trash-unfolded? not))}
-            "Trash"]
-      (if (get @state :trash-unfolded?)
-        (map view-card full)
-        (map view-card compact))])])
+     [:div "Trash " [:button {:on-click (fn [] (swap! state update :trash-unfolded? not))}
+                     (if (:trash-unfolded? @state) "Hide" "Show")]
+      [:table
+       (if (get @state :trash-unfolded?)
+         [:tr [:td (map view-card full)]]
+         [:tr
+          [:td (view-pile compact nil)]])]])])
 
 ;; -------------------------
 ;; Initialize app
