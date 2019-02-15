@@ -72,7 +72,7 @@
 
 (s/def ::winner? boolean?)
 
-(s/def ::player (s/keys :req-un [::name.ui
+(s/def ::player (s/keys :req-un [::name-ui
                                  ::hand
                                  ::play-area
                                  ::deck

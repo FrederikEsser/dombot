@@ -18,7 +18,7 @@
                   number-of-cards               :pile-size}]
               (let [cost (ut/get-cost game card)]
                 (merge {:name            name
-                        :name.ui         (ut/format-name name)
+                        :name-ui         (ut/format-name name)
                         :types           types
                         :cost            cost
                         :number-of-cards number-of-cards}
@@ -38,7 +38,7 @@
     (->> cards
          (map (fn [{:keys [name types]}]
                 (merge {:name    name
-                        :name.ui (ut/format-name name)
+                        :name-ui (ut/format-name name)
                         :types   types}
                        (when (and (= :hand area)
                                   (not choice)
@@ -62,7 +62,7 @@
           (= :hand source)
           (= :end-of-game phase))
     (view-area :hand data)
-    [{:name.ui         "Hand"
+    [{:name-ui         "Hand"
       :number-of-cards (count hand)}]))
 
 (defn view-deck [{{:keys [deck
@@ -113,7 +113,7 @@
                                            winner]} :player
                                    choice           :choice
                                    :as              data}]
-  (merge {:name.ui   (ut/format-name name)
+  (merge {:name-ui   (ut/format-name name)
           :hand      (view-hand active-player? data)
           :play-area (view-area :play-area data)
           :deck      (view-deck data)
@@ -138,13 +138,13 @@
     (case mode
       :compact (let [{:keys [name types]} (last trash)]
                  [{:name            name
-                   :name.ui         (ut/format-name name)
+                   :name-ui         (ut/format-name name)
                    :types           types
                    :number-of-cards (count trash)}])
       :full (->> trash
                  (map (fn [{:keys [name types]}]
                         (merge {:name    name
-                                :name.ui (ut/format-name name)
+                                :name-ui (ut/format-name name)
                                 :types   types}
                                (choice-interaction name :trash choice))))
                  frequencies
