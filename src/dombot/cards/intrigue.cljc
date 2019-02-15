@@ -15,7 +15,7 @@
 (defn baron-discard-estate [game player-no]
   (let [hand (get-in game [:players player-no :hand])]
     (if (some (comp #{:estate} :name) hand)
-      (give-choice game player-no {:text      "You may discard an Estate for +$4. If you don't, gain an Estate."
+      (give-choice game player-no {:text      "You may discard an Estate for +$4."
                                    :player-no 0
                                    :choice    ::baron-choice
                                    :options   [:player :hand {:name :estate}]
@@ -157,7 +157,7 @@
                                       :choice  ::minion-choice
                                       :options [:special
                                                 {:option :coins :text "+$2"}
-                                                {:option :discard :text "Discard your hand, +4 Cards, and each other player with at least 5 cards in hand discards their hand and draws 4 cards."}]
+                                                {:option :discard :text "Discard your hand, +4 Cards."}]
                                       :min     1
                                       :max     1}]]})
 

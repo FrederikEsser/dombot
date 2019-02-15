@@ -37,7 +37,7 @@
                               :play-area [baron]
                               :actions   0
                               :buys      2}]
-              :effect-stack [{:text      "You may discard an Estate for +$4. If you don't, gain an Estate."
+              :effect-stack [{:text      "You may discard an Estate for +$4."
                               :player-no 0
                               :choice    ::intrigue/baron-choice
                               :source    :hand
@@ -196,7 +196,7 @@
                                                         :choice  ::intrigue/minion-choice
                                                         :options [:special
                                                                   {:option :coins :text "+$2"}
-                                                                  {:option :discard :text "Discard your hand, +4 Cards, and each other player with at least 5 cards in hand discards their hand and draws 4 cards."}]
+                                                                  {:option :discard :text "Discard your hand, +4 Cards."}]
                                                         :min     1
                                                         :max     1}]}]}))
       (is (= (-> {:players [{:hand    [minion]
@@ -224,7 +224,7 @@
                                                         :choice  ::intrigue/minion-choice
                                                         :options [:special
                                                                   {:option :coins :text "+$2"}
-                                                                  {:option :discard :text "Discard your hand, +4 Cards, and each other player with at least 5 cards in hand discards their hand and draws 4 cards."}]
+                                                                  {:option :discard :text "Discard your hand, +4 Cards."}]
                                                         :min     1
                                                         :max     1}]}]}))
       (is (= (-> {:players [{:hand    [minion]
@@ -483,7 +483,7 @@
                             :choice    ::intrigue/minion-choice
                             :source    :special
                             :options   [{:option :coins :text "+$2"}
-                                        {:option :discard :text "Discard your hand, +4 Cards, and each other player with at least 5 cards in hand discards their hand and draws 4 cards."}]
+                                        {:option :discard :text "Discard your hand, +4 Cards."}]
                             :min       1
                             :max       1}]}))
     (is (= (-> {:players [{:hand    [minion]
