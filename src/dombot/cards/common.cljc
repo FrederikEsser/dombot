@@ -206,6 +206,13 @@
 
 (effects/register {:reveal-hand reveal-hand})
 
+(defn reveal-from-hand [game player-no card-names]
+  (move-cards game player-no {:card-names card-names
+                              :from            :hand
+                              :to              :revealed}))
+
+(effects/register {:reveal-from-hand reveal-from-hand})
+
 (defn reveal-from-deck [game player-no number-of-cards]
   (move-cards game player-no {:number-of-cards number-of-cards
                               :from            :deck

@@ -33,11 +33,17 @@
                                                           :max     1}]
                                            [:discard-all-revealed]]}]]})
 
+(defn bureaucrat-topdeck-victory [game player-no card-name]
+  (push-effect-stack game player-no [[:reveal-from-hand card-name]
+                                     [:topdeck-from-revealed card-name]]))
+
+(effects/register {::bureaucrat-topdeck-victory bureaucrat-topdeck-victory})
+
 (defn bureaucrat-attack [game player-no]
   (let [hand (get-in game [:players player-no :hand])]
     (if (some (comp :victory :types) hand)
       (give-choice game player-no {:text    "Reveal a Victory card from your hand and put it onto your deck."
-                                   :choice  :topdeck-from-hand
+                                   :choice  ::bureaucrat-topdeck-victory
                                    :options [:player :hand {:types :victory}]
                                    :min     1
                                    :max     1})

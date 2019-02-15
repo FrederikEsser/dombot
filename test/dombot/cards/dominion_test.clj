@@ -258,7 +258,7 @@
                              {:hand [copper copper copper estate estate]}]
               :effect-stack [{:text      "Reveal a Victory card from your hand and put it onto your deck."
                               :player-no 1
-                              :choice    :topdeck-from-hand
+                              :choice    ::dominion/bureaucrat-topdeck-victory
                               :source    :hand
                               :options   [:estate :estate]
                               :min       1
@@ -276,8 +276,10 @@
                          :play-area [bureaucrat]
                          :deck      [silver copper]
                          :actions   0}
-                        {:hand [copper copper copper estate]
-                         :deck [estate gold]}]}))
+                        {:hand           [copper copper copper estate]
+                         :deck           [estate gold]
+                         :revealed       []
+                         :revealed-cards {:deck 1}}]}))
       (is (= (-> {:mode    :swift
                   :supply  [{:card silver :pile-size 40}]
                   :players [{:hand    [bureaucrat]
@@ -292,8 +294,10 @@
                          :play-area [bureaucrat]
                          :deck      [silver copper]
                          :actions   0}
-                        {:hand [copper copper copper estate]
-                         :deck [estate gold]}]}))
+                        {:hand           [copper copper copper estate]
+                         :deck           [estate gold]
+                         :revealed       []
+                         :revealed-cards {:deck 1}}]}))
       (is (= (-> {:supply  [{:card silver :pile-size 40}]
                   :players [{:hand    [bureaucrat militia]
                              :deck    [copper]
