@@ -1,8 +1,7 @@
-(ns dombot.core
+(ns dombot.commands
   (:require [dombot.cards.kingdom :as kingdom]
             [dombot.operations :as op]
-            [dombot.front-end-view])
-  (:gen-class))
+            [dombot.front-end-view]))
 
 ; todo:
 ;;; Intrigue
@@ -34,6 +33,7 @@
     (view)))
 
 (defn start-game [player-names & {:keys [mode sets]}]
+  (prn "start-game")
   (let [{:keys [current-player] :as game} (kingdom/create-game player-names (or mode :swift) (or sets #{:intrigue}))]
     (swap! game-state assoc :game (-> game
                                       (op/start-turn current-player)

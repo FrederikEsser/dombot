@@ -5,7 +5,7 @@
 
 (defn- choice-interaction [name area {:keys [source options min max]}]
   (when (and (= area source) ((set options) name))
-    (if (= 1 min (or max (count options)))
+    (if (= 1 (or max (count options)))
       {:interaction :quick-choosable}
       {:interaction :choosable})))
 
@@ -97,8 +97,10 @@
   (->> options
        (map (fn [option] (select-keys option [:option :text])))))
 
-(defn view-choice [{:keys [source options min max] :as choice}]
-  (merge (select-keys choice [:text :min :max])
+(defn view-choice [{:keys [text source options min max] :as choice}]
+  (merge {:text text
+          :min  (or min 0)
+          :max  (or max (count options))}
          (when (= :special source)
            {:options (view-options options)})
          (when (= 1 min (or max (count options)))

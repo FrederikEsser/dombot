@@ -14,3 +14,5 @@ pom.xml.asc
 .cpcache/
 .idea
 logs
+public/js/out
+figwheel_server.log

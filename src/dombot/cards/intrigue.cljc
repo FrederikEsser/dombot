@@ -1,6 +1,6 @@
 (ns dombot.cards.intrigue
   (:require [dombot.operations :refer [gain move-card push-effect-stack give-choice draw peek-deck]]
-            [dombot.cards.common :refer :all]
+            [dombot.cards.common :refer [give-actions give-coins give-buys]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 

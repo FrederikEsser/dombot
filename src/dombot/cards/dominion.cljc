@@ -1,6 +1,6 @@
 (ns dombot.cards.dominion
   (:require [dombot.operations :refer [move-card push-effect-stack give-choice]]
-            [dombot.cards.common :refer :all]
+            [dombot.cards.common :refer [reveal-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
