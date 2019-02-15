@@ -929,7 +929,7 @@
                               :actions   0
                               :coins     0}
                              {:hand [moat]}]
-              :effect-stack [{:text      "You may reveal a Reaction to react to the Militia Attack."
+              :effect-stack [{:text      "You may reveal a Reaction to react to the Attack."
                               :player-no 1
                               :choice    :reveal-reaction
                               :source    :hand
@@ -986,7 +986,7 @@
                               :actions   0
                               :coins     2}
                              {:hand [moat]}]
-              :effect-stack [{:text      "You may reveal a Reaction to react to the Militia Attack."
+              :effect-stack [{:text      "You may reveal a Reaction to react to the Attack."
                               :player-no 1
                               :choice    :reveal-reaction
                               :source    :hand
@@ -1007,7 +1007,7 @@
                               :play-area [throne-room militia]
                               :actions   0}
                              {:hand [moat]}]
-              :effect-stack [{:text      "You may reveal a Reaction to react to the Militia Attack."
+              :effect-stack [{:text      "You may reveal a Reaction to react to the Attack."
                               :player-no 1
                               :choice    :reveal-reaction
                               :source    :hand
@@ -1033,7 +1033,7 @@
                               :actions   0
                               :coins     2}
                              {:hand [moat]}]
-              :effect-stack [{:text      "You may reveal a Reaction to react to the Militia Attack."
+              :effect-stack [{:text      "You may reveal a Reaction to react to the Attack."
                               :player-no 1
                               :choice    :reveal-reaction
                               :source    :hand

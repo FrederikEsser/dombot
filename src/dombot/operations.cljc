@@ -274,10 +274,17 @@
     (-> (reduce apply-trigger game matching-triggers)
         (update-in [:players player-no :triggers] (partial remove (comp #{trigger} :trigger))))))
 
+(def reaction-choice [[:give-choice {:text    (str "You may reveal a Reaction to react to the Attack.")
+                                     :choice  :reveal-reaction
+                                     :options [:player :hand {:types     :reaction
+                                                              :reacts-to :attack}]
+                                     :max     1}]])
+
 (defn reveal-reaction [game player-no card-name]
   (let [{{:keys [reaction]} :card} (ut/get-card-idx game [:players player-no :hand] card-name)] ; TODO: Handle reactions that are not in hand
     (cond-> game
-            reaction (push-effect-stack player-no reaction))))
+            reaction (push-effect-stack player-no (concat reaction
+                                                          reaction-choice)))))
 
 (defn clear-unaffected [game player-no]
   (update-in game [:players player-no] dissoc :unaffected))
@@ -288,11 +295,7 @@
   (cond-> game
           (:attack types) (affect-other-players player-no {:effects [[:clear-unaffected]]})
           (:action types) (push-effect-stack player-no effects {:card-id id})
-          (:attack types) (affect-other-players player-no {:effects [[:give-choice {:text    (str "You may reveal a Reaction to react to the " (ut/format-name name) " Attack.")
-                                                                                    :choice  :reveal-reaction
-                                                                                    :options [:player :hand {:types     :reaction
-                                                                                                             :reacts-to :attack}]
-                                                                                    :max     1}]]})))
+          (:attack types) (affect-other-players player-no {:effects reaction-choice})))
 
 (effects/register {:gain            gain
                    :draw            draw

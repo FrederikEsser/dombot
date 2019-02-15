@@ -3,7 +3,7 @@
             [dombot.test-utils :refer :all]
             [dombot.operations :refer :all]
             [dombot.cards.base-cards :as base :refer :all]
-            [dombot.cards.dominion :as dominion :refer [throne-room]]
+            [dombot.cards.dominion :as dominion :refer [moat throne-room]]
             [dombot.cards.common :refer :all]
             [dombot.cards.intrigue :as intrigue :refer :all]
             [dombot.utils :as ut]))
@@ -183,7 +183,7 @@
                               :actions   0}
                              {:hand [diplomat estate estate estate silver]
                               :deck [copper copper]}]
-              :effect-stack [{:text      "You may reveal a Reaction to react to the Minion Attack."
+              :effect-stack [{:text      "You may reveal a Reaction to react to the Attack."
                               :player-no 1
                               :choice    :reveal-reaction
                               :source    :hand
@@ -219,6 +219,15 @@
                               :options   [:diplomat :estate :estate :estate :silver :copper :copper]
                               :min       3
                               :max       3}
+                             {:effect    [:give-choice
+                                          {:choice  :reveal-reaction
+                                           :max     1
+                                           :options [:player
+                                                     :hand
+                                                     {:reacts-to :attack
+                                                      :types     :reaction}]
+                                           :text    "You may reveal a Reaction to react to the Attack."}]
+                              :player-no 1}
                              {:player-no 0
                               :effect    [:give-actions 1]}
                              {:player-no 0
@@ -262,7 +271,119 @@
                          :actions   1
                          :coins     2}
                         {:hand [diplomat silver copper copper]
-                         :deck [estate]}]})))))
+                         :deck [estate]}]}))
+      (is (= (-> {:players [{:hand    [minion]
+                             :actions 1}
+                            {:hand [diplomat moat estate estate silver]
+                             :deck [copper copper]}]}
+                 (play 0 :minion))
+             {:players      [{:hand      []
+                              :play-area [minion]
+                              :actions   0}
+                             {:hand [diplomat moat estate estate silver]
+                              :deck [copper copper]}]
+              :effect-stack [{:text      "You may reveal a Reaction to react to the Attack."
+                              :player-no 1
+                              :choice    :reveal-reaction
+                              :source    :hand
+                              :options   [:diplomat :moat]
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:give-actions 1]}
+                             {:player-no 0
+                              :effect    [:give-choice {:text    "Choose one:"
+                                                        :choice  ::intrigue/minion-choice
+                                                        :options [:special
+                                                                  {:option :coins :text "+$2"}
+                                                                  {:option :discard :text "Discard your hand, +4 Cards."}]
+                                                        :min     1
+                                                        :max     1}]}
+                             {:player-no 1
+                              :effect    [:clear-unaffected]}]}))
+      (is (= (-> {:players [{:hand    [minion]
+                             :actions 1}
+                            {:hand [diplomat moat estate estate silver]
+                             :deck [copper copper]}]}
+                 (play 0 :minion)
+                 (choose :moat))
+             {:players      [{:hand      []
+                              :play-area [minion]
+                              :actions   0}
+                             {:hand       [diplomat moat estate estate silver]
+                              :deck       [copper copper]
+                              :unaffected true}]
+              :effect-stack [{:text      "You may reveal a Reaction to react to the Attack."
+                              :player-no 1
+                              :choice    :reveal-reaction
+                              :source    :hand
+                              :options   [:diplomat]
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:give-actions 1]}
+                             {:player-no 0
+                              :effect    [:give-choice {:text    "Choose one:"
+                                                        :choice  ::intrigue/minion-choice
+                                                        :options [:special
+                                                                  {:option :coins :text "+$2"}
+                                                                  {:option :discard :text "Discard your hand, +4 Cards."}]
+                                                        :min     1
+                                                        :max     1}]}
+                             {:player-no 1
+                              :effect    [:clear-unaffected]}]}))
+      (is (= (-> {:players [{:hand    [minion]
+                             :actions 1}
+                            {:hand [diplomat moat estate estate silver]
+                             :deck [copper copper]}]}
+                 (play 0 :minion)
+                 (choose :moat)
+                 (choose nil))
+             {:players      [{:hand      []
+                              :play-area [minion]
+                              :actions   1}
+                             {:hand       [diplomat moat estate estate silver]
+                              :deck       [copper copper]
+                              :unaffected true}]
+              :effect-stack [{:text      "Choose one:"
+                              :player-no 0
+                              :choice    ::intrigue/minion-choice
+                              :source    :special
+                              :options   [{:option :coins :text "+$2"}
+                                          {:option :discard :text "Discard your hand, +4 Cards."}]
+                              :min       1
+                              :max       1}
+                             {:player-no 1
+                              :effect    [:clear-unaffected]}]}))
+      (is (= (-> {:players [{:hand    [minion]
+                             :actions 1}
+                            {:hand [diplomat copper estate estate silver]
+                             :deck [moat copper]}]}
+                 (play 0 :minion)
+                 (choose :diplomat)
+                 (choose [:estate :estate :copper]))
+             {:players      [{:hand      []
+                              :play-area [minion]
+                              :actions   0}
+                             {:hand    [diplomat silver moat copper]
+                              :deck    []
+                              :discard [estate estate copper]}]
+              :effect-stack [{:text      "You may reveal a Reaction to react to the Attack."
+                              :player-no 1
+                              :choice    :reveal-reaction
+                              :source    :hand
+                              :options   [:moat]
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:give-actions 1]}
+                             {:player-no 0
+                              :effect    [:give-choice {:text    "Choose one:"
+                                                        :choice  ::intrigue/minion-choice
+                                                        :options [:special
+                                                                  {:option :coins :text "+$2"}
+                                                                  {:option :discard :text "Discard your hand, +4 Cards."}]
+                                                        :min     1
+                                                        :max     1}]}
+                             {:player-no 1
+                              :effect    [:clear-unaffected]}]})))))
 
 (deftest harem-test
   (testing "Harem"

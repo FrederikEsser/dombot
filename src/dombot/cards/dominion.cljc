@@ -213,13 +213,19 @@
 
 (effects/register {::moat-reaction moat-reaction})
 
-(def moat {:name      :moat
-           :set       :dominion
-           :types     #{:action :reaction}
-           :cost      2
-           :effects   [[:draw 2]]
-           :reacts-to :attack
-           :reaction  [[::moat-reaction]]})
+(defn moat-can-react? [game player-no]
+  (not (get-in game [:players player-no :unaffected])))
+
+(effects/register-options {::moat-can-react? moat-can-react?})
+
+(def moat {:name       :moat
+           :set        :dominion
+           :types      #{:action :reaction}
+           :cost       2
+           :effects    [[:draw 2]]
+           :reacts-to  :attack
+           :react-pred ::moat-can-react?
+           :reaction   [[::moat-reaction]]})
 
 (defn moneylender-trash [game player-no card-name]
   (cond-> game
