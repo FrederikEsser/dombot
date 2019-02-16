@@ -304,10 +304,13 @@
 (effects/register {:clear-unaffected clear-unaffected})
 
 (defn card-effect [game player-no {:keys [id types effects]}]
-  (cond-> game
-          (:attack types) (affect-other-players player-no {:effects [[:clear-unaffected]]})
-          (:action types) (push-effect-stack player-no effects {:card-id id})
-          (:attack types) (affect-other-players player-no {:effects reaction-choice})))
+  (let [{:keys [actions-played]} (get-in game [:players player-no])]
+    (cond-> game
+            (and (:action types)
+                 actions-played) (update-in [:players player-no :actions-played] inc)
+            (:attack types) (affect-other-players player-no {:effects [[:clear-unaffected]]})
+            (:action types) (push-effect-stack player-no effects {:card-id id})
+            (:attack types) (affect-other-players player-no {:effects reaction-choice}))))
 
 (effects/register {:gain            gain
                    :draw            draw
@@ -396,6 +399,7 @@
               :actions 0
               :coins 0
               :buys 0
+              :actions-played 0
               :phase :out-of-turn)
        (update :number-of-turns inc)
        (dissoc :triggers)))

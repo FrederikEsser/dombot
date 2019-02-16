@@ -29,6 +29,7 @@
    :actions             0
    :coins               0
    :buys                0
+   :actions-played      0
    :number-of-turns     0})
 
 (defn prepare-cards [game player-no]

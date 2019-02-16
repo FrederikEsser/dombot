@@ -39,6 +39,21 @@
                        [:give-coins 1]
                        [:add-cost-reduction 1]]})
 
+(defn conspirator-cantrip [game player-no]
+  (let [{:keys [actions-played]} (get-in game [:players player-no])]
+    (cond-> game
+            (<= 3 actions-played) (push-effect-stack player-no [[:draw 1]
+                                                                [:give-actions 1]]))))
+
+(effects/register {::conspirator-cantrip conspirator-cantrip})
+
+(def conspirator {:name    :conspirator
+                  :set     :intrigue
+                  :types   #{:action}
+                  :cost    4
+                  :effects [[:give-coins 2]
+                            [::conspirator-cantrip]]})
+
 (defn courtier-choices [game player-no choices]
   (let [choices (ut/ensure-coll choices)]
     (assert (apply distinct? choices) "The choices must be different.")
@@ -493,6 +508,7 @@
 
 (def kingdom-cards [baron
                     bridge
+                    conspirator
                     courtier
                     courtyard
                     diplomat

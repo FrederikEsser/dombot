@@ -413,6 +413,7 @@
                        :actions         0
                        :coins           0
                        :buys            0
+                       :actions-played  0
                        :number-of-turns 9
                        :phase           :out-of-turn}]}))
     (is (= (-> {:players [{:hand            [{:name :copper}]
@@ -429,6 +430,7 @@
                        :actions         0
                        :coins           0
                        :buys            0
+                       :actions-played  0
                        :number-of-turns 9
                        :phase           :out-of-turn}]}))
     (is (= (-> {:players [{:hand            [{:name :copper}]
@@ -445,6 +447,7 @@
                        :actions         0
                        :coins           0
                        :buys            0
+                       :actions-played  0
                        :number-of-turns 9
                        :phase           :out-of-turn}]}))
     (is (= (clean-up {:players [{:hand            []
@@ -460,6 +463,7 @@
                        :actions         0
                        :coins           0
                        :buys            0
+                       :actions-played  0
                        :number-of-turns 9
                        :phase           :out-of-turn}]}))
     (is (= (clean-up {:cost-reductions [{:reduction 1}]
@@ -475,6 +479,7 @@
                        :actions         0
                        :coins           0
                        :buys            0
+                       :actions-played  0
                        :number-of-turns 9
                        :phase           :out-of-turn}]}))
     (is (= (clean-up {:supply  [{:card {:name :province} :pile-size 0}]
@@ -495,6 +500,7 @@
                        :actions         0
                        :coins           0
                        :buys            0
+                       :actions-played  0
                        :number-of-turns 9
                        :phase           :end-of-game
                        :victory-points  6
@@ -524,6 +530,7 @@
                        :actions         0
                        :coins           0
                        :buys            0
+                       :actions-played  0
                        :number-of-turns 10
                        :phase           :end-of-game
                        :victory-points  6
@@ -553,6 +560,7 @@
                        :actions         0
                        :coins           0
                        :buys            0
+                       :actions-played  0
                        :number-of-turns 9
                        :phase           :end-of-game
                        :victory-points  6
@@ -582,6 +590,7 @@
                        :actions         0
                        :coins           0
                        :buys            0
+                       :actions-played  0
                        :number-of-turns 10
                        :phase           :end-of-game
                        :victory-points  6
