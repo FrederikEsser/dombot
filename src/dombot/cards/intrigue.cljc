@@ -108,12 +108,12 @@
   (case choice
     :trash (give-choice game player-no {:text    "Trash an Action card from the Supply."
                                         :choice  :trash-from-supply
-                                        :options [:supply {:types :action}]
+                                        :options [:supply {:type :action}]
                                         :min     1
                                         :max     1})
     :gain (give-choice game player-no {:text    "Gain an Action card from the trash."
                                        :choice  :gain-from-trash
-                                       :options [:trash {:types :action}]
+                                       :options [:trash {:type :action}]
                                        :min     1
                                        :max     1})))
 

@@ -27,7 +27,7 @@
                        [:attack {:effects [[:reveal-from-deck 2]
                                            [:give-choice {:text    "Trash a revealed Treasure other than Copper, and discards the rest."
                                                           :choice  :trash-from-revealed
-                                                          :options [:player :revealed {:types    :treasure
+                                                          :options [:player :revealed {:type     :treasure
                                                                                        :not-name :copper}]
                                                           :min     1
                                                           :max     1}]
@@ -44,7 +44,7 @@
     (if (some (comp :victory :types) hand)
       (give-choice game player-no {:text    "Reveal a Victory card from your hand and put it onto your deck."
                                    :choice  ::bureaucrat-topdeck-victory
-                                   :options [:player :hand {:types :victory}]
+                                   :options [:player :hand {:type :victory}]
                                    :min     1
                                    :max     1})
       (-> game
@@ -193,7 +193,7 @@
         (push-effect-stack player-no [[:trash-from-hand card-name]
                                       [:give-choice {:text    (str "Gain a Treasure to your hand costing up to $" max-cost ".")
                                                      :choice  :gain-to-hand
-                                                     :options [:supply {:max-cost max-cost :types :treasure}]
+                                                     :options [:supply {:max-cost max-cost :type :treasure}]
                                                      :min     1
                                                      :max     1}]]))))
 
@@ -205,7 +205,7 @@
            :cost    5
            :effects [[:give-choice {:text    "You may trash a Treasure from your hand."
                                     :choice  ::mine-trash
-                                    :options [:player :hand {:types :treasure}]
+                                    :options [:player :hand {:type :treasure}]
                                     :max     1}]]})
 
 (defn moat-reaction [game player-no]
@@ -316,7 +316,7 @@
                   :cost    4
                   :effects [[:give-choice {:text    "You may play an Action card from your hand twice."
                                            :choice  :play-action-twice
-                                           :options [:player :hand {:types :action}]
+                                           :options [:player :hand {:type :action}]
                                            :max     1}]]})
 
 (defn vassal-play-action [game player-no card-name]
@@ -336,7 +336,7 @@
                        [:discard-from-topdeck 1]
                        [:give-choice {:text    "You may play the discarded Action."
                                       :choice  ::vassal-play-action
-                                      :options [:player :discard {:types :action :last true}]
+                                      :options [:player :discard {:type :action :last true}]
                                       :max     1}]]})
 
 (def village {:name    :village

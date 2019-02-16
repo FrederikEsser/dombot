@@ -278,7 +278,7 @@
 
 (def reaction-choice [[:give-choice {:text    (str "You may reveal a Reaction to react to the Attack.")
                                      :choice  :reveal-reaction
-                                     :options [:player :hand {:types     :reaction
+                                     :options [:player :hand {:type      :reaction
                                                               :reacts-to :attack}]
                                      :max     1}]])
 

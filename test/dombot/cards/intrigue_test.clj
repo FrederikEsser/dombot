@@ -225,7 +225,7 @@
                                            :options [:player
                                                      :hand
                                                      {:reacts-to :attack
-                                                      :types     :reaction}]
+                                                      :type      :reaction}]
                                            :text    "You may reveal a Reaction to react to the Attack."}]
                               :player-no 1}
                              {:player-no 0

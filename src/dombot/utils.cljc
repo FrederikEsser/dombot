@@ -83,7 +83,7 @@
     true))
 
 (defn options-from-player
-  ([game player-no card-id area & [{:keys [last this name not-name types reacts-to]}]]
+  ([game player-no card-id area & [{:keys [last this name not-name type reacts-to]}]]
    (when this
      (assert card-id (str "Card has no id, but is referring to :this in " area ".")))
    (cond->> (get-in game [:players player-no area])
@@ -91,27 +91,27 @@
             this (filter (comp #{card-id} :id))
             name (filter (comp #{name} :name))
             not-name (remove (comp #{not-name} :name))
-            types (filter (comp types :types))
+            type (filter (comp type :types))
             reacts-to (filter (every-pred (comp #{reacts-to} :reacts-to)
                                           (partial can-react? game player-no)))
             :always (map :name))))
 
 (effects/register-options {:player options-from-player})
 
-(defn options-from-supply [{:keys [supply] :as game} player-no card-id & [{:keys [max-cost cost types]}]]
+(defn options-from-supply [{:keys [supply] :as game} player-no card-id & [{:keys [max-cost cost type]}]]
   (-> supply
       (cond->>
         max-cost (filter (comp (partial >= max-cost) (partial get-cost game) :card))
         cost (filter (comp #{cost} (partial get-cost game) :card))
-        types (filter (comp types :types :card)))
+        type (filter (comp type :types :card)))
       (->> (filter (comp pos? :pile-size))
            (map (comp :name :card)))))
 
 (effects/register-options {:supply options-from-supply})
 
-(defn options-from-trash [{:keys [trash]} player-no card-id {:keys [types]}]
+(defn options-from-trash [{:keys [trash]} player-no card-id {:keys [type]}]
   (cond->> trash
-           types (filter (comp types :types))
+           type (filter (comp type :types))
            :always (map :name)))
 
 (effects/register-options {:trash options-from-trash})
