@@ -847,6 +847,78 @@
     (is (= (calc-victory-points {:deck [nobles]})
            2))))
 
+(deftest patrol-test
+  (testing "Patrol"
+    (is (= (-> {:players [{:hand    [patrol]
+                           :deck    (repeat 8 copper)
+                           :actions 1}]}
+               (play 0 :patrol))
+           {:players      [{:hand      (repeat 3 copper)
+                            :play-area [patrol]
+                            :deck      [copper]
+                            :revealed  (repeat 4 copper)
+                            :actions   0}]
+            :effect-stack [{:text      "Put the revealed cards back on your deck."
+                            :player-no 0
+                            :choice    :topdeck-from-revealed
+                            :source    :revealed
+                            :options   [:copper :copper :copper :copper]
+                            :min       4
+                            :max       4}]}))
+    (is (= (-> {:players [{:hand    [patrol]
+                           :deck    (repeat 8 copper)
+                           :actions 1}]}
+               (play 0 :patrol)
+               (choose [:copper :copper :copper :copper]))
+           {:players [{:hand           (repeat 3 copper)
+                       :play-area      [patrol]
+                       :deck           (repeat 5 copper)
+                       :revealed       []
+                       :revealed-cards {:deck 4}
+                       :actions        0}]}))
+    (is (= (-> {:players [{:hand    [patrol]
+                           :deck    [copper copper copper copper estate silver curse copper]
+                           :actions 1}]}
+               (play 0 :patrol))
+           {:players      [{:hand           [copper copper copper estate curse]
+                            :play-area      [patrol]
+                            :deck           [copper]
+                            :revealed       [copper silver]
+                            :revealed-cards {:hand 2}
+                            :actions        0}]
+            :effect-stack [{:text      "Put the revealed cards back on your deck."
+                            :player-no 0
+                            :choice    :topdeck-from-revealed
+                            :source    :revealed
+                            :options   [:copper :silver]
+                            :min       2
+                            :max       2}]}))
+    (is (= (-> {:players [{:hand    [patrol]
+                           :deck    [copper copper copper copper estate silver curse copper]
+                           :actions 1}]}
+               (play 0 :patrol)
+               (choose [:silver :copper]))
+           {:players [{:hand           [copper copper copper estate curse]
+                       :play-area      [patrol]
+                       :deck           [copper silver copper]
+                       :revealed       []
+                       :revealed-cards {:hand 2
+                                        :deck 2}
+                       :actions        0}]}))
+    (is (= (-> {:mode    :swift
+                :players [{:hand    [patrol]
+                           :deck    [copper copper copper copper estate copper harem silver]
+                           :actions 1}]}
+               (play 0 :patrol))
+           {:mode    :swift
+            :players [{:hand           [copper copper copper estate harem]
+                       :play-area      [patrol]
+                       :deck           [copper copper silver]
+                       :revealed       []
+                       :revealed-cards {:hand 2
+                                        :deck 2}
+                       :actions        0}]}))))
+
 (deftest pawn-test
   (testing "Pawn"
     (is (= (-> {:players [{:hand    [pawn]

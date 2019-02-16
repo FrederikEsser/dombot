@@ -236,6 +236,16 @@
 
 (effects/register {:put-revealed-into-hand put-revealed-into-hand})
 
+(defn put-revealed-type-into-hand [game player-no type]
+  (let [card-names (->> (get-in game [:players player-no :revealed])
+                        (filter (comp type :types))
+                        (map :name))]
+    (move-cards game player-no {:card-names card-names
+                                :from       :revealed
+                                :to         :hand})))
+
+(effects/register {:put-revealed-type-into-hand put-revealed-type-into-hand})
+
 (defn add-trigger [game player-no trigger]
   (-> game
       (update-in [:players player-no :triggers] concat [trigger])))

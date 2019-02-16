@@ -236,6 +236,20 @@
                                              :max     1}]]
              :victory-points 2})
 
+(def patrol {:name    :patrol
+             :set     :intrigue
+             :types   #{:action}
+             :cost    5
+             :effects [[:draw 3]
+                       [:reveal-from-deck 4]
+                       [:put-revealed-type-into-hand :victory]
+                       [:put-revealed-type-into-hand :curse]
+                       [:give-choice {:text    "Put the revealed cards back on your deck."
+                                      :choice  :topdeck-from-revealed
+                                      :options [:player :revealed]
+                                      :min     4
+                                      :max     4}]]})
+
 (defn pawn-choices [game player-no choices]
   (let [choices (set choices)]
     (assert (= 2 (count choices)) "The choices must be different.")
@@ -404,6 +418,7 @@
                     mining-village
                     minion
                     nobles
+                    patrol
                     pawn
                     shanty-town
                     steward
