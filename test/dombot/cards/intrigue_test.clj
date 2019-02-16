@@ -118,6 +118,115 @@
                                :buys      3
                                :coins     2}]}))))
 
+(deftest courtier-test
+  (let [gold (assoc gold :id 1)]
+    (testing "Courtier"
+      (is (= (-> {:players [{:hand    [courtier copper nobles]
+                             :actions 1}]}
+                 (play 0 :courtier))
+             {:players      [{:hand      [copper nobles]
+                              :play-area [courtier]
+                              :actions   0}]
+              :effect-stack [{:text      "Reveal a card from your hand."
+                              :player-no 0
+                              :choice    ::intrigue/courtier-reveal
+                              :source    :hand
+                              :options   [:copper :nobles]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:players [{:hand    [courtier copper nobles]
+                             :actions 1}]}
+                 (play 0 :courtier)
+                 (choose :copper))
+             {:players      [{:hand      [copper nobles]
+                              :play-area [courtier]
+                              :actions   0}]
+              :effect-stack [{:text      "Choose one:"
+                              :player-no 0
+                              :choice    ::intrigue/courtier-choices
+                              :source    :special
+                              :options   [{:option :action :text "+1 Action"}
+                                          {:option :buy :text "+1 Buy"}
+                                          {:option :coins :text "+$3"}
+                                          {:option :gold :text "Gain a Gold."}]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:players [{:hand    [courtier copper nobles]
+                             :actions 1}]}
+                 (play 0 :courtier)
+                 (choose :copper)
+                 (choose [:action]))
+             {:players [{:hand      [copper nobles]
+                         :play-area [courtier]
+                         :actions   1}]}))
+      (is (= (-> {:players [{:hand    [courtier copper nobles]
+                             :actions 1
+                             :buys    1}]}
+                 (play 0 :courtier)
+                 (choose :copper)
+                 (choose :buy))
+             {:players [{:hand      [copper nobles]
+                         :play-area [courtier]
+                         :actions   0
+                         :buys      2}]}))
+      (is (= (-> {:players [{:hand    [courtier copper nobles]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :courtier)
+                 (choose :copper)
+                 (choose :coins))
+             {:players [{:hand      [copper nobles]
+                         :play-area [courtier]
+                         :actions   0
+                         :coins     3}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [courtier copper nobles]
+                             :actions 1}]}
+                 (play 0 :courtier)
+                 (choose :copper)
+                 (choose :gold))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:hand      [copper nobles]
+                         :play-area [courtier]
+                         :discard   [gold]
+                         :actions   0}]}))
+      (is (= (-> {:players [{:hand    [courtier copper nobles]
+                             :actions 1}]}
+                 (play 0 :courtier)
+                 (choose :nobles))
+             {:players      [{:hand      [copper nobles]
+                              :play-area [courtier]
+                              :actions   0}]
+              :effect-stack [{:text      "Choose two:"
+                              :player-no 0
+                              :choice    ::intrigue/courtier-choices
+                              :source    :special
+                              :options   [{:option :action :text "+1 Action"}
+                                          {:option :buy :text "+1 Buy"}
+                                          {:option :coins :text "+$3"}
+                                          {:option :gold :text "Gain a Gold."}]
+                              :min       2
+                              :max       2}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [courtier copper nobles]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :courtier)
+                 (choose :nobles)
+                 (choose [:coins :gold]))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:hand      [copper nobles]
+                         :play-area [courtier]
+                         :discard   [gold]
+                         :actions   0
+                         :coins     3}]}))
+      (is (= (-> {:players [{:hand    [courtier]
+                             :actions 1}]}
+                 (play 0 :courtier))
+             {:players [{:hand      []
+                         :play-area [courtier]
+                         :actions   0}]})))))
+
 (deftest courtyard-test
   (testing "Courtyard"
     (is (= (play {:players [{:hand    [courtyard]

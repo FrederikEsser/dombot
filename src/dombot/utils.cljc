@@ -26,6 +26,14 @@
        (map format-name)
        (s/join "/")))
 
+(defn number->text [n]
+  (case n
+    1 "one"
+    2 "two"
+    3 "three"
+    4 "four"
+    :default n))
+
 (defn redupeat [val n f & args]
   (loop [acc val n n]
     (if (> n 0)

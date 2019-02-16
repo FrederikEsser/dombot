@@ -39,6 +39,42 @@
                        [:give-coins 1]
                        [:add-cost-reduction 1]]})
 
+(defn courtier-choices [game player-no choices]
+  (let [choices (ut/ensure-coll choices)]
+    (assert (apply distinct? choices) "The choices must be different.")
+    (cond-> game
+            (:action (set choices)) (give-actions player-no 1)
+            (:buy (set choices)) (give-buys player-no 1)
+            (:coins (set choices)) (give-coins player-no 3)
+            (:gold (set choices)) (gain player-no :gold))))
+
+(effects/register {::courtier-choices courtier-choices})
+
+(defn courtier-reveal [game player-no card-name]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] card-name)
+        num-types (-> card :types count)]
+    (push-effect-stack game player-no [[:give-choice {:text    (str "Choose " (ut/number->text num-types) ":")
+                                                      :choice  ::courtier-choices
+                                                      :options [:special
+                                                                {:option :action :text "+1 Action"}
+                                                                {:option :buy :text "+1 Buy"}
+                                                                {:option :coins :text "+$3"}
+                                                                {:option :gold :text "Gain a Gold."}]
+                                                      :min     num-types
+                                                      :max     num-types}]])))
+
+(effects/register {::courtier-reveal courtier-reveal})
+
+(def courtier {:name    :courtier
+               :set     :intrigue
+               :types   #{:action}
+               :cost    5
+               :effects [[:give-choice {:text      "Reveal a card from your hand."
+                                        :choice    ::courtier-reveal
+                                        :options   [:player :hand]
+                                        :min       1
+                                        :max       1}]]})
+
 (def courtyard {:name    :courtyard
                 :set     :intrigue
                 :types   #{:action}
@@ -251,13 +287,12 @@
                                       :max     4}]]})
 
 (defn pawn-choices [game player-no choices]
-  (let [choices (set choices)]
-    (assert (= 2 (count choices)) "The choices must be different.")
-    (cond-> game
-            (:card choices) (draw player-no 1)
-            (:action choices) (give-actions player-no 1)
-            (:buy choices) (give-buys player-no 1)
-            (:coin choices) (give-coins player-no 1))))
+  (assert (apply distinct? choices) "The choices must be different.")
+  (cond-> game
+          (:card (set choices)) (draw player-no 1)
+          (:action (set choices)) (give-actions player-no 1)
+          (:buy (set choices)) (give-buys player-no 1)
+          (:coin (set choices)) (give-coins player-no 1)))
 
 (effects/register {::pawn-choices pawn-choices})
 
@@ -408,6 +443,7 @@
 
 (def kingdom-cards [baron
                     bridge
+                    courtier
                     courtyard
                     diplomat
                     duke
