@@ -385,6 +385,15 @@
                              {:player-no 1
                               :effect    [:clear-unaffected]}]})))))
 
+(deftest duke-test
+  (testing "Duke"
+    (doseq [duchies (range 9)
+            dukes (range 9)]
+      (is (= (calc-victory-points {:deck (concat (repeat duchies duchy)
+                                                 (repeat dukes duke))})
+             (+ (* dukes duchies)
+                (* duchies 3)))))))
+
 (deftest harem-test
   (testing "Harem"
     (is (= (-> {:players [{:hand  [harem]

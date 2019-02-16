@@ -99,12 +99,16 @@
                          [:give-coins 2]
                          [:give-buys 1]]})
 
+(defn gardens-victory-points [cards]
+  (Math/floorDiv (int (count cards)) (int 10)))
+
+(effects/register {::gardens-victory-points gardens-victory-points})
+
 (def gardens {:name           :gardens
               :set            :dominion
               :types          #{:victory}
               :cost           4
-              :victory-points (fn [cards]
-                                (Math/floorDiv (int (count cards)) (int 10)))}) ; TODO: Convert to data
+              :victory-points ::gardens-victory-points})
 
 (def harbinger {:name    :harbinger
                 :set     :dominion

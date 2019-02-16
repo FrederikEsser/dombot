@@ -345,8 +345,9 @@
     (reduce (fn [game card-name] (play game player-no card-name)) game treasures))) ; TODO: Stack treasures separately
 
 (defn- get-victory-points [cards {:keys [victory-points]}]
-  (if (fn? victory-points)
-    (victory-points cards)
+  (if (keyword? victory-points)
+    (let [vp-fn (effects/get-effect victory-points)]
+      (vp-fn cards))
     victory-points))
 
 (defn calc-victory-points [{:keys [deck discard hand play-area]}]

@@ -78,6 +78,19 @@
                                            :min     3
                                            :max     3}]]})
 
+(defn duke-victory-points [cards]
+  (->> cards
+       (filter (comp #{:duchy} :name))
+       count))
+
+(effects/register {::duke-victory-points duke-victory-points})
+
+(def duke {:name           :duke
+           :set            :intrigue
+           :types          #{:victory}
+           :cost           5
+           :victory-points ::duke-victory-points})
+
 (def harem {:name           :harem
             :set            :intrigue
             :types          #{:treasure :victory}
@@ -383,6 +396,7 @@
                     bridge
                     courtyard
                     diplomat
+                    duke
                     harem
                     ironworks
                     lurker
