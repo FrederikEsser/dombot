@@ -29,21 +29,43 @@
 (defn deselect! [idx]
   (swap! state update :selection remove-idx idx))
 
+(defn button-style [& [disabled types]]
+  (merge {:color            (if disabled :grey :black)
+          :font-weight      :bold
+          :background-color (cond (:action types) "#F3EEDF"
+                                  (:treasure types) "#FFE64F"
+                                  (:reaction types) "#77ADE3"
+                                  (:victory types) "#9FD688"
+                                  (:curse types) "#B890D7")
+          :border-color     (cond
+                              (:curse types) "#9F76B8"
+                              (:victory types) "#6DB954"
+                              (:reaction types) "#6295CE"
+                              (:treasure types) "#EFD34E"
+                              (:attack types) "#940000"
+                              (:action types) "#DED7C4"
+                              :else :grey)
+          :border-width     2}
+         (when (:attack types)
+           {:border-style :dotted})))
+
 (defn view-card
   ([card]
    (view-card nil card))
-  ([max {:keys [name name-ui cost number-of-cards interaction]}]
+  ([max {:keys [name name-ui types cost number-of-cards interaction]}]
    (let [num-selected (->> (:selection @state) (filter #{name}) count)
          number-of-cards (if (= :choosable interaction)
                            (let [num (- (or number-of-cards 1) num-selected)]
                              (if (= 1 num) nil num))
-                           number-of-cards)]
+                           number-of-cards)
+         disabled (or (nil? interaction)
+                      (and (= :choosable interaction)
+                           (= (count (:selection @state)) max)))]
      (when-not (and (= :choosable interaction)
                     (= 0 number-of-cards))
        [:div {:key [:supply name]}
-        [:button {:disabled (or (nil? interaction)
-                                (and (= :choosable interaction)
-                                     (= (count (:selection @state)) max)))
+        [:button {:style    (button-style disabled types)
+                  :disabled disabled
                   :on-click (when interaction
                               (fn [] (case interaction
                                        :playable (swap! state assoc :game (cmd/play name))
@@ -79,12 +101,15 @@
    [:div "Intrigue" [:input {:type      :checkbox
                              :checked   (-> @state :sets :intrigue)
                              :on-change (fn [event] (swap! state update :sets (if (-> event .-target .-checked) conj disj) :intrigue))}]]
-   [:div [:button {:on-click (fn [] (swap! state assoc :game (cmd/start-game (take (:num-players @state) (:players @state))
+   [:div [:button {:style    (button-style)
+                   :on-click (fn [] (swap! state assoc :game (cmd/start-game (take (:num-players @state) (:players @state))
                                                                              :sets (:sets @state))))}
           "Start Game"]
-    [:button {:disabled (-> @state :game :commands :can-undo? not)
-              :on-click (fn [] (swap! state assoc :game (cmd/undo) :selection []))}
-     "Undo"]]
+    (let [disabled (-> @state :game :commands :can-undo? not)]
+      [:button {:style    (button-style disabled)
+                :disabled disabled
+                :on-click (fn [] (swap! state assoc :game (cmd/undo) :selection []))}
+       "Undo"])]
    [:div "Supply"
     (let [supply (-> (:game @state) :supply)
           row1 (->> supply (take 4))
@@ -100,9 +125,9 @@
     [:table
      [:tr (map-tag :th ["Name" "Hand" "Play area" "Deck" "Discard"])]
      (->> (get-in @state [:game :players])
-          (map (fn [{:keys                   [name-ui hand play-area deck discard
-                                              actions coins buys set-aside
-                                              active? victory-points winner?]
+          (map (fn [{:keys               [name-ui hand play-area deck discard
+                                          actions coins buys set-aside
+                                          active? victory-points winner?]
                      {:keys [text
                              options
                              min
@@ -130,32 +155,41 @@
                   (if text
                     [:td text
                      [:div (map (fn [{:keys [option text]}]
-                                  [:button {:disabled (and (not quick-choice?)
-                                                           (or (= max (count (:selection @state)))
-                                                               (-> (:selection @state) set option)))
-                                            :on-click (fn [] (if quick-choice?
-                                                               (swap! state assoc :game (cmd/choose option))
-                                                               (select! option)))}
-                                   text]) options)]
+                                  (let [disabled (and (not quick-choice?)
+                                                      (or (= max (count (:selection @state)))
+                                                          (-> (:selection @state) set option)))]
+                                    [:button {:style    (button-style disabled)
+                                              :disabled disabled
+                                              :on-click (fn [] (if quick-choice?
+                                                                 (swap! state assoc :game (cmd/choose option))
+                                                                 (select! option)))}
+                                     text])) options)]
                      (when-not quick-choice?
                        [:div
                         (when (< 1 max)
                           [:div "Selected: " (map-indexed (fn [idx selected]
-                                                            [:button {:on-click (fn [] (deselect! idx))}
+                                                            [:button {:style    (button-style)
+                                                                      :on-click (fn [] (deselect! idx))}
                                                              (ut/format-name selected)]) (:selection @state))])
-                        [:button {:disabled (and min (< (count (:selection @state)) min)
-                                                 (not (and optional? (empty? (:selection @state)))))
-                                  :on-click (fn [] (swap! state assoc
-                                                          :game (cmd/choose (:selection @state))
-                                                          :selection []))}
-                         "Done"]])]
+                        (let [disabled (and min (< (count (:selection @state)) min)
+                                            (not (and optional? (empty? (:selection @state)))))]
+                          [:button {:style    (button-style disabled)
+                                    :disabled disabled
+                                    :on-click (fn [] (swap! state assoc
+                                                            :game (cmd/choose (:selection @state))
+                                                            :selection []))}
+                           "Done"])])]
                     (when active?
-                      [:td [:button {:disabled (-> @state :game :commands :can-play-treasures? not)
-                                     :on-click (fn [] (swap! state assoc :game (cmd/play-treasures)))}
-                            "Play Treasures"]
-                       [:button {:disabled (-> @state :game :commands :can-end-turn? not)
-                                 :on-click (fn [] (swap! state assoc :game (cmd/end-turn)))}
-                        "End Turn"]]))
+                      [:td (let [disabled (-> @state :game :commands :can-play-treasures? not)]
+                             [:button {:style    (button-style disabled)
+                                       :disabled disabled
+                                       :on-click (fn [] (swap! state assoc :game (cmd/play-treasures)))}
+                              "Play Treasures"])
+                       (let [disabled (-> @state :game :commands :can-end-turn? not)]
+                         [:button {:style    (button-style disabled)
+                                   :disabled disabled
+                                   :on-click (fn [] (swap! state assoc :game (cmd/end-turn)))}
+                          "End Turn"])]))
                   (when set-aside
                     [:td
                      [:div "Set aside"]
