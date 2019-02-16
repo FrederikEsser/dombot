@@ -2,7 +2,8 @@
   (:require [dombot.operations :refer [gain move-card push-effect-stack give-choice draw peek-deck]]
             [dombot.cards.common :refer [give-actions give-coins give-buys]]
             [dombot.utils :as ut]
-            [dombot.effects :as effects]))
+            [dombot.effects :as effects])
+  (:refer-clojure :exclude [replace]))
 
 (defn baron-choice [game player-no card-name]
   (if (= :estate card-name)
@@ -310,6 +311,41 @@
                                     :min     2
                                     :max     2}]]})
 
+(defn replace-gain [game player-no card-name]
+  (let [{{:keys [types]} :card} (ut/get-pile-idx game card-name)
+        gain-method (if (or (:action types) (:treasure types))
+                      :gain-to-topdeck
+                      :gain)]
+    (-> game
+        (push-effect-stack player-no [[gain-method card-name]
+                                      (when (:victory types)
+                                        [:attack {:effects [[:gain :curse]]}])]))))
+
+(effects/register {::replace-gain replace-gain})
+
+(defn replace-trash [game player-no card-name]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] card-name)
+        max-cost (+ 2 (ut/get-cost game card))]
+    (-> game
+        (push-effect-stack player-no [[:trash-from-hand card-name]
+                                      [:give-choice {:text    (str "Gain a card costing up to $" max-cost ".")
+                                                     :choice  ::replace-gain
+                                                     :options [:supply {:max-cost max-cost}]
+                                                     :min     1
+                                                     :max     1}]]))))
+
+(effects/register {::replace-trash replace-trash})
+
+(def replace {:name    :replace
+              :set     :intrigue
+              :types   #{:action :attack}
+              :cost    5
+              :effects [[:give-choice {:text    "Trash a card from your hand."
+                                       :choice  ::replace-trash
+                                       :options [:player :hand]
+                                       :min     1
+                                       :max     1}]]})
+
 (defn shanty-town-draw [game player-no]
   (let [hand (get-in game [:players player-no :hand])
         action-cards-in-hand? (some (comp :action :types) hand)]
@@ -480,6 +516,7 @@
                     nobles
                     patrol
                     pawn
+                    replace
                     shanty-town
                     steward
                     swindler

@@ -3,10 +3,10 @@
             [dombot.test-utils :refer :all]
             [dombot.operations :refer :all]
             [dombot.cards.base-cards :as base :refer :all]
-            [dombot.cards.dominion :as dominion :refer [moat throne-room]]
+            [dombot.cards.dominion :refer [moat throne-room]]
             [dombot.cards.common :refer :all]
-            [dombot.cards.intrigue :as intrigue :refer :all]
-            [dombot.utils :as ut]))
+            [dombot.cards.intrigue :as intrigue :refer :all])
+  (:refer-clojure :exclude [replace]))
 
 (defn fixture [f]
   (with-rand-seed 123 (f)))
@@ -1118,6 +1118,97 @@
                                           :actions 1}]}
                               (play 0 :pawn)
                               (choose [:card :card]))))))
+
+(deftest replace-test
+  (let [silver (assoc silver :id 1)
+        duchy (assoc duchy :id 2)
+        curse (assoc curse :id 3)
+        nobles (assoc nobles :id 4)]
+    (testing "Replace"
+      (is (= (play {:players [{:hand    [replace copper estate]
+                               :actions 1}]}
+                   0 :replace)
+             {:players      [{:hand      [copper estate]
+                              :play-area [replace]
+                              :actions   0}]
+              :effect-stack [{:text      "Trash a card from your hand."
+                              :player-no 0
+                              :choice    ::intrigue/replace-trash
+                              :source    :hand
+                              :options   [:copper :estate]
+                              :min       1
+                              :max       1}]}))
+      (is (= (play {:players [{:hand    [replace]
+                               :actions 1}]}
+                   0 :replace)
+             {:players [{:hand      []
+                         :play-area [replace]
+                         :actions   0}]}))
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand    [replace copper estate]
+                             :actions 1}]}
+                 (play 0 :replace)
+                 (choose :estate))
+             {:supply       (base/supply 2 8)
+              :players      [{:hand      [copper]
+                              :play-area [replace]
+                              :actions   0}]
+              :effect-stack [{:text      "Gain a card costing up to $4."
+                              :player-no 0
+                              :choice    ::intrigue/replace-gain
+                              :source    :supply
+                              :options   [:curse :estate :copper :silver]
+                              :min       1
+                              :max       1}]
+              :trash        [estate]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [replace silver estate]
+                             :deck    [copper]
+                             :actions 1}]}
+                 (play 0 :replace)
+                 (choose :estate)
+                 (choose :silver))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:hand      [silver]
+                         :play-area [replace]
+                         :deck      [silver copper]
+                         :actions   0}]
+              :trash   [estate]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}
+                            {:card duchy :pile-size 8}]
+                  :players [{:hand    [replace silver estate]
+                             :deck    [copper]
+                             :actions 1}
+                            {}]}
+                 (play 0 :replace)
+                 (choose :silver)
+                 (choose :duchy))
+             {:supply  [{:card curse :pile-size 9}
+                        {:card duchy :pile-size 7}]
+              :players [{:hand      [estate]
+                         :play-area [replace]
+                         :deck      [copper]
+                         :discard   [duchy]
+                         :actions   0}
+                        {:discard [curse]}]
+              :trash   [silver]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}
+                            {:card nobles :pile-size 8}]
+                  :players [{:hand    [replace silver duchy]
+                             :deck    [copper]
+                             :actions 1}
+                            {}]}
+                 (play 0 :replace)
+                 (choose :duchy)
+                 (choose :nobles))
+             {:supply  [{:card curse :pile-size 9}
+                        {:card nobles :pile-size 7}]
+              :players [{:hand      [silver]
+                         :play-area [replace]
+                         :deck      [nobles copper]
+                         :actions   0}
+                        {:discard [curse]}]
+              :trash   [duchy]})))))
 
 (deftest shanty-town-test
   (testing "Shanty Town"
