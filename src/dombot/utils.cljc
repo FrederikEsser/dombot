@@ -53,9 +53,13 @@
        (into (sorted-map))))
 
 (defn ensure-coll [data]
-  (if (coll? data)
-    data
-    [data]))
+  (cond
+    (coll? data) data
+    data [data]
+    :else []))
+
+(defn count-as-coll [data]
+  (-> data ensure-coll count))
 
 (defn get-pile-idx [game card-name]
   (->> game
@@ -86,7 +90,7 @@
 
 (defn- can-react? [game player-no {:keys [react-pred]}]
   (if react-pred
-    (let [can-react-fn (effects/get-option react-pred)]
+    (let [can-react-fn (effects/get-effect react-pred)]
       (can-react-fn game player-no))
     true))
 

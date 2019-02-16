@@ -37,8 +37,6 @@
   (push-effect-stack game player-no [[:reveal-from-hand card-name]
                                      [:topdeck-from-revealed card-name]]))
 
-(effects/register {::bureaucrat-topdeck-victory bureaucrat-topdeck-victory})
-
 (defn bureaucrat-attack [game player-no]
   (let [hand (get-in game [:players player-no :hand])]
     (if (some (comp :victory :types) hand)
@@ -50,7 +48,8 @@
       (-> game
           (reveal-hand player-no)))))
 
-(effects/register {::bureaucrat-attack bureaucrat-attack})
+(effects/register {::bureaucrat-topdeck-victory bureaucrat-topdeck-victory
+                   ::bureaucrat-attack          bureaucrat-attack})
 
 (def bureaucrat {:name    :bureaucrat
                  :set     :dominion
@@ -212,15 +211,14 @@
                                     :options [:player :hand {:type :treasure}]
                                     :max     1}]]})
 
-(defn moat-reaction [game player-no]
-  (assoc-in game [:players player-no :unaffected] true))
-
-(effects/register {::moat-reaction moat-reaction})
-
 (defn moat-can-react? [game player-no]
   (not (get-in game [:players player-no :unaffected])))
 
-(effects/register-options {::moat-can-react? moat-can-react?})
+(defn moat-reaction [game player-no]
+  (assoc-in game [:players player-no :unaffected] true))
+
+(effects/register {::moat-can-react? moat-can-react?
+                   ::moat-reaction   moat-reaction})
 
 (def moat {:name       :moat
            :set        :dominion

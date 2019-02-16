@@ -4,7 +4,49 @@
             [dombot.front-end-view :as view]
             [clojure.set]))
 
-(declare game-ended?)
+(defn game-ended? [game]
+  (let [{province-pile-size :pile-size} (ut/get-pile-idx game :province)]
+    (or (and province-pile-size (zero? province-pile-size))
+        (>= (ut/empty-supply-piles game) 3))))
+
+(defn push-effect-stack
+  ([game player-no data {:keys [card-id]}]
+   (update game :effect-stack (partial concat (if (sequential? data)
+                                                (->> data
+                                                     (map (fn [effect]
+                                                            (when effect
+                                                              (merge {:player-no player-no
+                                                                      :effect    effect}
+                                                                     (when card-id
+                                                                       {:card-id card-id})))))
+                                                     (remove nil?))
+                                                (when data
+                                                  [(merge data
+                                                          {:player-no player-no}
+                                                          (when card-id
+                                                            {:card-id card-id}))])))))
+  ([game player-no data]
+   (push-effect-stack game player-no data nil)))
+
+(defn pop-effect-stack [{:keys [effect-stack] :as game}]
+  (if (= 1 (count effect-stack))
+    (dissoc game :effect-stack)
+    (update game :effect-stack (partial drop 1))))
+
+(defn do-effect [game player-no [name args] {:keys [card-id]}]
+  (let [effect-fn (effects/get-effect name)
+        args (cond-> args
+                     (and (map? args) card-id) (assoc :card-id card-id))]
+    (if args
+      (effect-fn game player-no args)
+      (effect-fn game player-no))))
+
+(defn check-stack [game]
+  (let [[{:keys [player-no card-id effect] :as top}] (get game :effect-stack)]
+    (cond-> game
+            effect (-> pop-effect-stack
+                       (do-effect player-no effect {:card-id card-id})
+                       check-stack))))
 
 (defn start-turn
   ([player]
@@ -13,8 +55,9 @@
                  :buys 1
                  :phase :action))
   ([game player-no]
-   (cond-> game
-           (not (game-ended? game)) (update-in [:players player-no] start-turn))))
+   (-> (cond-> game
+               (not (game-ended? game)) (update-in [:players player-no] start-turn))
+       check-stack)))
 
 (defn set-approx-discard-size [game player-no & [n]]
   (let [{:keys [discard approx-discard-size]} (get-in game [:players player-no])
@@ -75,7 +118,8 @@
         (cond-> phase (assoc-in [:players player-no :phase] :buy))
         (gain player-no card-name)
         (update-in [:players player-no :coins] - cost)
-        (update-in [:players player-no :buys] - 1))))
+        (update-in [:players player-no :buys] - 1)
+        check-stack)))
 
 (defn shuffle-discard
   ([{:keys [discard] :as player}]
@@ -87,17 +131,20 @@
        (update-in [:players player-no] shuffle-discard)
        (update-status-fields player-no :discard :deck))))
 
+(effects/register {:shuffle shuffle-discard})
+
 (defn peek-deck [game player-no number-of-cards]
   (let [{:keys [deck discard]} (get-in game [:players player-no])]
     (cond-> game
             (and (< (count deck) number-of-cards) (not-empty discard)) (shuffle-discard player-no))))
 
+(effects/register {:peek-deck peek-deck})
+
 (defn move-card [game player-no {:keys [card-name from from-position to to-position] :as args}]
   (let [{:keys [deck discard] :as player} (get-in game [:players player-no])]
     (if (and (= :deck from) (empty? deck) (not-empty discard))
-      (-> game
-          (shuffle-discard player-no)
-          (move-card player-no args))
+      (push-effect-stack game player-no [[:shuffle]
+                                         [:move-card args]])
       (let [from-path (if (= from :trash)
                         [:trash]
                         [:players player-no from])
@@ -121,6 +168,8 @@
                          (update-in to-path add-card-to-coll card)
                          (update-status-fields player-no from to)))))))
 
+(effects/register {:move-card move-card})
+
 (defn move-cards [game player-no {:keys [card-names number-of-cards from-position] :as args}]
   (assert (or card-names
               (and number-of-cards from-position)) "Can't move unspecified cards.")
@@ -136,30 +185,6 @@
                               :from-position   :top
                               :to              :hand}))
 
-(defn push-effect-stack
-  ([game player-no data {:keys [card-id]}]
-   (update game :effect-stack (partial concat (if (sequential? data)
-                                                (->> data
-                                                     (map (fn [effect]
-                                                            (when effect
-                                                              (merge {:player-no player-no
-                                                                      :effect    effect}
-                                                                     (when card-id
-                                                                       {:card-id card-id})))))
-                                                     (remove nil?))
-                                                (when data
-                                                  [(merge data
-                                                          {:player-no player-no}
-                                                          (when card-id
-                                                            {:card-id card-id}))])))))
-  ([game player-no data]
-   (push-effect-stack game player-no data nil)))
-
-(defn pop-effect-stack [{:keys [effect-stack] :as game}]
-  (if (= 1 (count effect-stack))
-    (dissoc game :effect-stack)
-    (update game :effect-stack (partial drop 1))))
-
 (defn affect-other-players [{:keys [players] :as game} player-no {:keys [effects]}]
   (let [other-player-nos (->> (range 1 (count players))
                               (map (fn [n] (-> n (+ player-no) (mod (count players)))))
@@ -169,21 +194,6 @@
               (push-effect-stack game other-player-no effects))
             game
             other-player-nos)))
-
-(defn do-effect [game player-no [name args] {:keys [card-id]}]
-  (let [effect-fn (effects/get-effect name)
-        args (cond-> args
-                     (and (map? args) card-id) (assoc :card-id card-id))]
-    (if args
-      (effect-fn game player-no args)
-      (effect-fn game player-no))))
-
-(defn check-stack [game]
-  (let [[{:keys [player-no card-id effect] :as top}] (get game :effect-stack)]
-    (cond-> game
-            effect (-> pop-effect-stack
-                       (do-effect player-no effect {:card-id card-id})
-                       check-stack))))
 
 (defn- choose-single [game valid-choices selection]
   (if (coll? selection)
@@ -358,11 +368,6 @@
          (apply + 0))))
 
 (def calc-score (juxt calc-victory-points (comp - :number-of-turns)))
-
-(defn game-ended? [game]
-  (let [{province-pile-size :pile-size} (ut/get-pile-idx game :province)]
-    (or (and province-pile-size (zero? province-pile-size))
-        (>= (ut/empty-supply-piles game) 3))))
 
 (defn end-game-for-player [best-score {:keys [deck discard] :as player}]
   (let [victory-points (calc-victory-points player)]

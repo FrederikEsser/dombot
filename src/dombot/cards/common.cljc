@@ -92,18 +92,18 @@
 (effects/register {:discard-all-revealed discard-all-revealed})
 
 (defn discard-from-look-at [game player-no card-names]
-  (-> game
-      (move-cards player-no {:card-names card-names
-                             :from       :look-at
-                             :to         :discard})))
+  (move-cards game player-no {:card-names card-names
+                              :from       :look-at
+                              :to         :discard}))
+
 (effects/register {:discard-from-look-at discard-from-look-at})
 
 (defn discard-from-topdeck [game player-no number-of-cards]
-  (-> game
-      (move-card player-no {:number-of-cards number-of-cards
-                            :from            :deck
-                            :from-position   :top
-                            :to              :discard})))
+  (move-card game player-no {:number-of-cards number-of-cards
+                             :from            :deck
+                             :from-position   :top
+                             :to              :discard}))
+
 (effects/register {:discard-from-topdeck discard-from-topdeck})
 
 (defn discard-all-set-aside [game player-no]
@@ -141,20 +141,18 @@
 (effects/register {:topdeck-from-discard topdeck-from-discard})
 
 (defn topdeck-from-look-at [game player-no card-names]
-  (-> game
-      (move-cards player-no {:card-names  card-names
-                             :from        :look-at
-                             :to          :deck
-                             :to-position :top})))
+  (move-cards game player-no {:card-names  card-names
+                              :from        :look-at
+                              :to          :deck
+                              :to-position :top}))
 
 (effects/register {:topdeck-from-look-at topdeck-from-look-at})
 
 (defn topdeck-from-revealed [game player-no card-names]
-  (-> game
-      (move-cards player-no {:card-names  card-names
-                             :from        :revealed
-                             :to          :deck
-                             :to-position :top})))
+  (move-cards game player-no {:card-names  card-names
+                              :from        :revealed
+                              :to          :deck
+                              :to-position :top}))
 
 (effects/register {:topdeck-from-revealed topdeck-from-revealed})
 
@@ -181,10 +179,9 @@
 (effects/register {:trash-from-revealed trash-from-revealed})
 
 (defn trash-from-look-at [game player-no card-names]
-  (-> game
-      (move-cards player-no {:card-names card-names
-                             :from       :look-at
-                             :to         :trash})))
+  (move-cards game player-no {:card-names card-names
+                              :from       :look-at
+                              :to         :trash}))
 
 (effects/register {:trash-from-look-at trash-from-look-at})
 
@@ -200,16 +197,21 @@
 
 (effects/register {:trash-from-topdeck trash-from-topdeck})
 
+(defn reveal [game player-no card-names]
+  (assoc-in game [:players player-no :revealed-cards :hand] (ut/count-as-coll card-names)))
+
+(effects/register {:reveal reveal})
+
 (defn reveal-hand [game player-no]
   (let [hand (get-in game [:players player-no :hand])]
-    (assoc-in game [:players player-no :revealed-cards :hand] (count hand))))
+    (reveal game player-no (map :name hand))))
 
 (effects/register {:reveal-hand reveal-hand})
 
 (defn reveal-from-hand [game player-no card-names]
   (move-cards game player-no {:card-names card-names
-                              :from            :hand
-                              :to              :revealed}))
+                              :from       :hand
+                              :to         :revealed}))
 
 (effects/register {:reveal-from-hand reveal-from-hand})
 
@@ -236,19 +238,18 @@
 
 (effects/register {:put-revealed-into-hand put-revealed-into-hand})
 
-(defn put-revealed-type-into-hand [game player-no type]
+(defn put-revealed-types-into-hand [game player-no types]
   (let [card-names (->> (get-in game [:players player-no :revealed])
-                        (filter (comp type :types))
+                        (filter (comp (partial some types) :types))
                         (map :name))]
     (move-cards game player-no {:card-names card-names
                                 :from       :revealed
                                 :to         :hand})))
 
-(effects/register {:put-revealed-type-into-hand put-revealed-type-into-hand})
+(effects/register {:put-revealed-types-into-hand put-revealed-types-into-hand})
 
 (defn add-trigger [game player-no trigger]
-  (-> game
-      (update-in [:players player-no :triggers] concat [trigger])))
+  (update-in game [:players player-no :triggers] concat [trigger]))
 
 (effects/register {:add-trigger add-trigger})
 

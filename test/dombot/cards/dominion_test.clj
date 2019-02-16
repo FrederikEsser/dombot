@@ -1504,6 +1504,16 @@
            {:players [{:deck      []
                        :hand      [copper copper copper]
                        :play-area [smithy]
+                       :actions   0}]}))
+    (is (= (play {:players [{:hand    [smithy]
+                             :deck    []
+                             :discard [copper copper copper]
+                             :actions 1}]}
+                 0 :smithy)
+           {:players [{:deck      []
+                       :discard   []
+                       :hand      [copper copper copper]
+                       :play-area [smithy]
                        :actions   0}]}))))
 
 (deftest throne-room-test

@@ -177,11 +177,12 @@
                        :from-position :top
                        :to            :discard})
            {:players [{:deck []}]}))
-    (is (= (move-card {:players [{:deck    []
-                                  :discard [{:name :copper} {:name :copper}]}]} 0
-                      {:from          :deck
-                       :from-position :top
-                       :to            :discard})
+    (is (= (-> {:players [{:deck    []
+                           :discard [{:name :copper} {:name :copper}]}]}
+               (move-card 0 {:from          :deck
+                             :from-position :top
+                             :to            :discard})
+               check-stack)
            {:players [{:deck    [{:name :copper}]
                        :discard [{:name :copper}]}]}))
     (is (= (move-card {:players [{:deck                [{:name :copper} {:name :smithy}]
@@ -205,16 +206,24 @@
 (deftest draw-test
   (testing "Draw"
     (let [game {:players [{:hand [1 2 3] :deck [4 5] :discard [6 7]}]}]
-      (is (= (draw game 0 1)
+      (is (= (-> game
+                 (draw 0 1))
              {:players [{:hand [1 2 3 4] :deck [5] :discard [6 7]}]}))
-      (is (= (draw game 0 2)
+      (is (= (-> game
+                 (draw 0 2))
              {:players [{:hand [1 2 3 4 5] :deck [] :discard [6 7]}]}))
-      (let [result (draw game 0 3)]
-        (is (= result {:players [{:hand [1 2 3 4 5 6] :deck [7] :discard []}]})))
-      (let [result (draw game 0 4)]
-        (is (= result {:players [{:hand [1 2 3 4 5 7 6] :deck [] :discard []}]})))
-      (let [result (draw game 0 5)]
-        (is (= result {:players [{:hand [1 2 3 4 5 6 7] :deck [] :discard []}]}))))))
+      (is (= (-> game
+                 (draw 0 3)
+                 check-stack)
+             {:players [{:hand [1 2 3 4 5 6] :deck [7] :discard []}]}))
+      (is (= (-> game
+                 (draw 0 4)
+                 check-stack)
+             {:players [{:hand [1 2 3 4 5 7 6] :deck [] :discard []}]}))
+      (is (= (-> game
+                 (draw 0 5)
+                 check-stack)
+             {:players [{:hand [1 2 3 4 5 6 7] :deck [] :discard []}]})))))
 
 #_(deftest choose-test
     (testing "No/invalid choice"
@@ -406,12 +415,13 @@
                        :buys            0
                        :number-of-turns 9
                        :phase           :out-of-turn}]}))
-    (is (= (clean-up {:players [{:hand            [{:name :copper}]
-                                 :play-area       [{:name :copper}]
-                                 :deck            [{:name :copper}]
-                                 :discard         [{:name :copper}]
-                                 :number-of-turns 8}]}
-                     0)
+    (is (= (-> {:players [{:hand            [{:name :copper}]
+                           :play-area       [{:name :copper}]
+                           :deck            [{:name :copper}]
+                           :discard         [{:name :copper}]
+                           :number-of-turns 8}]}
+               (clean-up 0)
+               check-stack)
            {:players [{:hand            (repeat 4 {:name :copper})
                        :play-area       []
                        :deck            []
@@ -421,12 +431,13 @@
                        :buys            0
                        :number-of-turns 9
                        :phase           :out-of-turn}]}))
-    (is (= (clean-up {:players [{:hand            [{:name :copper}]
-                                 :play-area       [{:name :copper}]
-                                 :deck            (repeat 3 {:name :silver})
-                                 :discard         [{:name :copper}]
-                                 :number-of-turns 8}]}
-                     0)
+    (is (= (-> {:players [{:hand            [{:name :copper}]
+                           :play-area       [{:name :copper}]
+                           :deck            (repeat 3 {:name :silver})
+                           :discard         [{:name :copper}]
+                           :number-of-turns 8}]}
+               (clean-up 0)
+               check-stack)
            {:players [{:hand            (concat (repeat 3 {:name :silver}) (repeat 2 {:name :copper}))
                        :play-area       []
                        :deck            [{:name :copper}]

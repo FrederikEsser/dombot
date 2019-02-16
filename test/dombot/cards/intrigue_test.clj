@@ -138,9 +138,10 @@
                              :actions 1}]}
                  (play 0 :courtier)
                  (choose :copper))
-             {:players      [{:hand      [copper nobles]
-                              :play-area [courtier]
-                              :actions   0}]
+             {:players      [{:hand           [copper nobles]
+                              :play-area      [courtier]
+                              :revealed-cards {:hand 1}
+                              :actions        0}]
               :effect-stack [{:text      "Choose one:"
                               :player-no 0
                               :choice    ::intrigue/courtier-choices
@@ -156,29 +157,32 @@
                  (play 0 :courtier)
                  (choose :copper)
                  (choose [:action]))
-             {:players [{:hand      [copper nobles]
-                         :play-area [courtier]
-                         :actions   1}]}))
+             {:players [{:hand           [copper nobles]
+                         :play-area      [courtier]
+                         :revealed-cards {:hand 1}
+                         :actions        1}]}))
       (is (= (-> {:players [{:hand    [courtier copper nobles]
                              :actions 1
                              :buys    1}]}
                  (play 0 :courtier)
                  (choose :copper)
                  (choose :buy))
-             {:players [{:hand      [copper nobles]
-                         :play-area [courtier]
-                         :actions   0
-                         :buys      2}]}))
+             {:players [{:hand           [copper nobles]
+                         :play-area      [courtier]
+                         :revealed-cards {:hand 1}
+                         :actions        0
+                         :buys           2}]}))
       (is (= (-> {:players [{:hand    [courtier copper nobles]
                              :actions 1
                              :coins   0}]}
                  (play 0 :courtier)
                  (choose :copper)
                  (choose :coins))
-             {:players [{:hand      [copper nobles]
-                         :play-area [courtier]
-                         :actions   0
-                         :coins     3}]}))
+             {:players [{:hand           [copper nobles]
+                         :play-area      [courtier]
+                         :revealed-cards {:hand 1}
+                         :actions        0
+                         :coins          3}]}))
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [courtier copper nobles]
                              :actions 1}]}
@@ -186,17 +190,19 @@
                  (choose :copper)
                  (choose :gold))
              {:supply  [{:card gold :pile-size 29}]
-              :players [{:hand      [copper nobles]
-                         :play-area [courtier]
-                         :discard   [gold]
-                         :actions   0}]}))
+              :players [{:hand           [copper nobles]
+                         :play-area      [courtier]
+                         :discard        [gold]
+                         :revealed-cards {:hand 1}
+                         :actions        0}]}))
       (is (= (-> {:players [{:hand    [courtier copper nobles]
                              :actions 1}]}
                  (play 0 :courtier)
                  (choose :nobles))
-             {:players      [{:hand      [copper nobles]
-                              :play-area [courtier]
-                              :actions   0}]
+             {:players      [{:hand           [copper nobles]
+                              :play-area      [courtier]
+                              :revealed-cards {:hand 1}
+                              :actions        0}]
               :effect-stack [{:text      "Choose two:"
                               :player-no 0
                               :choice    ::intrigue/courtier-choices
@@ -215,11 +221,12 @@
                  (choose :nobles)
                  (choose [:coins :gold]))
              {:supply  [{:card gold :pile-size 29}]
-              :players [{:hand      [copper nobles]
-                         :play-area [courtier]
-                         :discard   [gold]
-                         :actions   0
-                         :coins     3}]}))
+              :players [{:hand           [copper nobles]
+                         :play-area      [courtier]
+                         :discard        [gold]
+                         :revealed-cards {:hand 1}
+                         :actions        0
+                         :coins          3}]}))
       (is (= (-> {:players [{:hand    [courtier]
                              :actions 1}]}
                  (play 0 :courtier))

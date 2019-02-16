@@ -11,8 +11,6 @@
                                        [:give-coins 4]])
     (gain game player-no :estate)))
 
-(effects/register {::baron-choice baron-choice})
-
 (defn baron-discard-estate [game player-no]
   (let [hand (get-in game [:players player-no :hand])]
     (if (some (comp #{:estate} :name) hand)
@@ -23,7 +21,8 @@
                                    :max       1})
       (gain game player-no :estate))))
 
-(effects/register {::baron-discard-estate baron-discard-estate})
+(effects/register {::baron-choice         baron-choice
+                   ::baron-discard-estate baron-discard-estate})
 
 (def baron {:name    :baron
             :set     :intrigue
@@ -43,18 +42,16 @@
 (defn courtier-choices [game player-no choices]
   (let [choices (ut/ensure-coll choices)]
     (assert (apply distinct? choices) "The choices must be different.")
-    (cond-> game
-            (:action (set choices)) (give-actions player-no 1)
-            (:buy (set choices)) (give-buys player-no 1)
-            (:coins (set choices)) (give-coins player-no 3)
-            (:gold (set choices)) (gain player-no :gold))))
-
-(effects/register {::courtier-choices courtier-choices})
+    (push-effect-stack game player-no [(when (:action (set choices)) [:give-actions 1])
+                                       (when (:buy (set choices)) [:give-buys 1])
+                                       (when (:coins (set choices)) [:give-coins 3])
+                                       (when (:gold (set choices)) [:gain :gold])])))
 
 (defn courtier-reveal [game player-no card-name]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] card-name)
         num-types (-> card :types count)]
-    (push-effect-stack game player-no [[:give-choice {:text    (str "Choose " (ut/number->text num-types) ":")
+    (push-effect-stack game player-no [[:reveal card-name]
+                                       [:give-choice {:text    (str "Choose " (ut/number->text num-types) ":")
                                                       :choice  ::courtier-choices
                                                       :options [:special
                                                                 {:option :action :text "+1 Action"}
@@ -64,7 +61,8 @@
                                                       :min     num-types
                                                       :max     num-types}]])))
 
-(effects/register {::courtier-reveal courtier-reveal})
+(effects/register {::courtier-choices courtier-choices
+                   ::courtier-reveal  courtier-reveal})
 
 (def courtier {:name    :courtier
                :set     :intrigue
@@ -92,13 +90,12 @@
     (cond-> game
             (<= (count hand) 5) (give-actions player-no 2))))
 
-(effects/register {::diplomat-give-actions diplomat-give-actions})
-
 (defn diplomat-can-react? [game player-no]
   (let [hand (get-in game [:players player-no :hand])]
     (<= 5 (count hand))))
 
-(effects/register-options {::diplomat-can-react? diplomat-can-react?}) ; todo: should be registered somewhere else
+(effects/register {::diplomat-give-actions diplomat-give-actions
+                   ::diplomat-can-react?   diplomat-can-react?})
 
 (def diplomat {:name       :diplomat
                :set        :intrigue
@@ -185,8 +182,7 @@
 (defn mill-discard [game player-no card-names]
   (cond-> game
           card-names (push-effect-stack player-no [[:discard-from-hand card-names]
-                                                   (when (and (coll? card-names)
-                                                              (= 2 (count card-names)))
+                                                   (when (= 2 (ut/count-as-coll card-names))
                                                      [:give-coins 2])])))
 
 (effects/register {::mill-discard mill-discard})
@@ -207,7 +203,7 @@
 
 (defn mining-village-trash [game player-no card-name]
   (cond-> game
-          (= :mining-village card-name) (push-effect-stack player-no [[:trash-last-from-play-area card-name]
+          (= :mining-village card-name) (push-effect-stack player-no [[:trash-last-from-play-area :mining-village]
                                                                       [:give-coins 2]])))
 
 (effects/register {::mining-village-trash mining-village-trash})
@@ -229,8 +225,6 @@
             (<= 5 (count hand)) (push-effect-stack player-no [[:discard-all-hand]
                                                               [:draw 4]]))))
 
-(effects/register {::minion-attack minion-attack})
-
 (defn minion-choice [game player-no choice]
   (cond-> game
           (= :coins choice) (give-coins player-no 2)
@@ -238,7 +232,8 @@
                                                             [:draw 4]
                                                             [:attack {:effects [[::minion-attack]]}]])))
 
-(effects/register {::minion-choice minion-choice})
+(effects/register {::minion-attack minion-attack
+                   ::minion-choice minion-choice})
 
 (def minion {:name    :minion
              :set     :intrigue
@@ -254,9 +249,9 @@
                                       :max     1}]]})
 
 (defn nobles-choices [game player-no choice]
-  (cond-> game
-          (= :cards choice) (draw player-no 3)
-          (= :actions choice) (give-actions player-no 2)))
+  (case choice
+    :cards (draw game player-no 3)
+    :actions (give-actions game player-no 2)))
 
 (effects/register {::nobles-choice nobles-choices})
 
@@ -279,8 +274,7 @@
              :cost    5
              :effects [[:draw 3]
                        [:reveal-from-deck 4]
-                       [:put-revealed-type-into-hand :victory]
-                       [:put-revealed-type-into-hand :curse]
+                       [:put-revealed-types-into-hand #{:victory :curse}]
                        [:give-choice {:text    "Put the revealed cards back on your deck."
                                       :choice  :topdeck-from-revealed
                                       :options [:player :revealed]
@@ -289,11 +283,10 @@
 
 (defn pawn-choices [game player-no choices]
   (assert (apply distinct? choices) "The choices must be different.")
-  (cond-> game
-          (:card (set choices)) (draw player-no 1)
-          (:action (set choices)) (give-actions player-no 1)
-          (:buy (set choices)) (give-buys player-no 1)
-          (:coin (set choices)) (give-coins player-no 1)))
+  (push-effect-stack game player-no [(when (:card (set choices)) [:draw 1])
+                                     (when (:action (set choices)) [:give-actions 1])
+                                     (when (:buy (set choices)) [:give-buys 1])
+                                     (when (:coin (set choices)) [:give-coins 1])]))
 
 (effects/register {::pawn-choices pawn-choices})
 
@@ -312,16 +305,13 @@
                                     :max     2}]]})
 
 (defn replace-gain [game player-no card-name]
-  (let [{{:keys [types]} :card} (ut/get-pile-idx game card-name)
-        gain-method (if (or (:action types) (:treasure types))
-                      :gain-to-topdeck
-                      :gain)]
+  (let [{{:keys [types]} :card} (ut/get-pile-idx game card-name)]
     (-> game
-        (push-effect-stack player-no [[gain-method card-name]
+        (push-effect-stack player-no [(if (some #{:action :treasure} types)
+                                        [:gain-to-topdeck card-name]
+                                        [:gain card-name])
                                       (when (:victory types)
                                         [:attack {:effects [[:gain :curse]]}])]))))
-
-(effects/register {::replace-gain replace-gain})
 
 (defn replace-trash [game player-no card-name]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] card-name)
@@ -334,7 +324,8 @@
                                                      :min     1
                                                      :max     1}]]))))
 
-(effects/register {::replace-trash replace-trash})
+(effects/register {::replace-gain  replace-gain
+                   ::replace-trash replace-trash})
 
 (def replace {:name    :replace
               :set     :intrigue
@@ -347,10 +338,9 @@
                                        :max     1}]]})
 
 (defn shanty-town-draw [game player-no]
-  (let [hand (get-in game [:players player-no :hand])
-        action-cards-in-hand? (some (comp :action :types) hand)]
+  (let [hand (get-in game [:players player-no :hand])]
     (push-effect-stack game player-no [[:reveal-hand]
-                                       (when-not action-cards-in-hand?
+                                       (when-not (some (comp :action :types) hand)
                                          [:draw 2])])))
 
 (effects/register {::shanty-town-draw shanty-town-draw})
@@ -363,14 +353,14 @@
                             [::shanty-town-draw]]})
 
 (defn steward-choices [game player-no choice]
-  (cond-> game
-          (= :cards choice) (draw player-no 2)
-          (= :coins choice) (give-coins player-no 2)
-          (= :trash choice) (give-choice player-no {:text    "Trash 2 cards from your hand."
-                                                    :choice  :trash-from-hand
-                                                    :options [:player :hand]
-                                                    :min     2
-                                                    :max     2})))
+  (case choice
+    :cards (draw game player-no 2)
+    :coins (give-coins game player-no 2)
+    :trash (give-choice game player-no {:text    "Trash 2 cards from your hand."
+                                        :choice  :trash-from-hand
+                                        :options [:player :hand]
+                                        :min     2
+                                        :max     2})))
 
 (effects/register {::steward-choices steward-choices})
 
@@ -388,18 +378,17 @@
                                        :max     1}]]})
 
 (defn swindler-attack [game player-no]
-  (-> game
-      (peek-deck player-no 1)
-      (as-> game
-            (let [[top-card] (get-in game [:players player-no :deck])
-                  cost (ut/get-cost game top-card)]
-              (cond-> game
-                      top-card (push-effect-stack player-no [[:trash-from-topdeck]
-                                                             [:give-choice {:text    (str "Gain a card costing $" cost " (attacker chooses).")
-                                                                            :choice  :gain
-                                                                            :options [:supply {:cost cost}]
-                                                                            :min     1
-                                                                            :max     1}]]))))))
+  (let [{[top-card] :deck
+         discard    :discard} (get-in game [:players player-no])
+        cost (ut/get-cost game top-card)]
+    (assert (or top-card (empty? discard)) "Discard was not properly shuffled for Swindler Attack.")
+    (cond-> game
+            top-card (push-effect-stack player-no [[:trash-from-topdeck]
+                                                   [:give-choice {:text    (str "Gain a card costing $" cost " (attacker chooses).")
+                                                                  :choice  :gain
+                                                                  :options [:supply {:cost cost}]
+                                                                  :min     1
+                                                                  :max     1}]]))))
 
 (effects/register {::swindler-attack swindler-attack})
 
@@ -408,7 +397,8 @@
                :types   #{:action :attack}
                :cost    3
                :effects [[:give-coins 2]
-                         [:attack {:effects [[::swindler-attack]]}]]})
+                         [:attack {:effects [[:peek-deck 1]
+                                             [::swindler-attack]]}]]})
 
 (defn torturer-choice [game player-no choice]
   (case choice
@@ -437,7 +427,7 @@
 (defn trading-post-trash [game player-no card-names]
   (-> game
       (push-effect-stack player-no [[:trash-from-hand card-names]
-                                    (when (and (coll? card-names) (= 2 (count card-names)))
+                                    (when (= 2 (ut/count-as-coll card-names))
                                       [:gain-to-hand :silver])])))
 
 (effects/register {::trading-post-trash trading-post-trash})
@@ -478,14 +468,13 @@
                                        :max     1}]]})
 
 (defn wishing-well-guess [game player-no guess]
-  (-> game
-      (peek-deck player-no 1)
-      (as-> game
-            (let [[{:keys [name]}] (get-in game [:players player-no :deck])]
-              (push-effect-stack game player-no [[:reveal-from-deck 1]
-                                                 (if (= guess name)
-                                                   [:put-revealed-into-hand guess]
-                                                   [:topdeck-from-revealed name])])))))
+  (let [{[{:keys [name]}] :deck
+         discard          :discard} (get-in game [:players player-no])]
+    (assert (or name (empty? discard)) "Discard was not properly shuffled for Wishing Well.")
+    (push-effect-stack game player-no [[:reveal-from-deck 1]
+                                       (if (= guess name)
+                                         [:put-revealed-into-hand guess]
+                                         [:topdeck-from-revealed name])])))
 
 (effects/register {::wishing-well-guess wishing-well-guess})
 
@@ -495,6 +484,7 @@
                    :cost    3
                    :effects [[:draw 1]
                              [:give-actions 1]
+                             [:peek-deck 1]
                              [:give-choice {:text    "Name a card."
                                             :choice  ::wishing-well-guess
                                             :options [:supply]
