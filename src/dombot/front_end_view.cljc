@@ -55,12 +55,12 @@
                         (< 1 number-of-cards) (assoc :number-of-cards number-of-cards)))))))
 
 (defn view-hand [active-player? {{:keys [hand revealed-cards phase]} :player
-                                 {:keys [source]}                    :choice
+                                 choice                              :choice
                                  :as                                 data}]
   (let [revealed-cards-in-hand (:hand revealed-cards)]
     (if (or active-player?
             (= revealed-cards-in-hand (count hand))
-            (= :hand source)
+            choice
             (= :end-of-game phase))
       (view-area :hand data)
       (if (empty? hand)

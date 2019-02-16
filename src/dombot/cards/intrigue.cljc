@@ -69,11 +69,11 @@
                :set     :intrigue
                :types   #{:action}
                :cost    5
-               :effects [[:give-choice {:text      "Reveal a card from your hand."
-                                        :choice    ::courtier-reveal
-                                        :options   [:player :hand]
-                                        :min       1
-                                        :max       1}]]})
+               :effects [[:give-choice {:text    "Reveal a card from your hand."
+                                        :choice  ::courtier-reveal
+                                        :options [:player :hand]
+                                        :min     1
+                                        :max     1}]]})
 
 (def courtyard {:name    :courtyard
                 :set     :intrigue
@@ -374,6 +374,30 @@
                :effects [[:give-coins 2]
                          [:attack {:effects [[::swindler-attack]]}]]})
 
+(defn torturer-choice [game player-no choice]
+  (case choice
+    :discard (give-choice game player-no {:text    "Discard 2 cards."
+                                          :choice  :discard-from-hand
+                                          :options [:player :hand]
+                                          :min     2
+                                          :max     2})
+    :curse (push-effect-stack game player-no [[:gain-to-hand :curse]])))
+
+(effects/register {::torturer-choice torturer-choice})
+
+(def torturer {:name    :torturer
+               :set     :intrigue
+               :types   #{:action :attack}
+               :cost    5
+               :effects [[:draw 3]
+                         [:attack {:effects [[:give-choice {:text    "Choose one:"
+                                                            :choice  ::torturer-choice
+                                                            :options [:special
+                                                                      {:option :discard :text "Discard 2 cards."}
+                                                                      {:option :curse :text "Gain a Curse to your hand."}]
+                                                            :min     1
+                                                            :max     1}]]}]]})
+
 (defn trading-post-trash [game player-no card-names]
   (-> game
       (push-effect-stack player-no [[:trash-from-hand card-names]
@@ -459,6 +483,7 @@
                     shanty-town
                     steward
                     swindler
+                    torturer
                     trading-post
                     upgrade
                     wishing-well])

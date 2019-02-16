@@ -1323,6 +1323,113 @@
                               :effect    [:clear-unaffected]}]
               :trash        [copper curse]})))))
 
+(deftest torturer-test
+  (let [curse (assoc curse :id 1)]
+    (testing "Torturer"
+      (is (= (-> {:players [{:hand    [torturer]
+                             :deck    [copper copper copper copper]
+                             :actions 1}
+                            {:hand [copper copper copper copper]}]}
+                 (play 0 :torturer))
+             {:players      [{:hand      [copper copper copper]
+                              :play-area [torturer]
+                              :deck      [copper]
+                              :actions   0}
+                             {:hand [copper copper copper copper]}]
+              :effect-stack [{:text      "Choose one:"
+                              :player-no 1
+                              :choice    ::intrigue/torturer-choice
+                              :source    :special
+                              :options   [{:option :discard :text "Discard 2 cards."}
+                                          {:option :curse :text "Gain a Curse to your hand."}]
+                              :min       1
+                              :max       1}
+                             {:player-no 1
+                              :effect    [:clear-unaffected]}]}))
+      (is (= (-> {:players [{:hand    [torturer]
+                             :deck    [copper copper copper copper]
+                             :actions 1}
+                            {:hand [copper copper copper copper]}]}
+                 (play 0 :torturer)
+                 (choose :discard))
+             {:players      [{:hand      [copper copper copper]
+                              :play-area [torturer]
+                              :deck      [copper]
+                              :actions   0}
+                             {:hand [copper copper copper copper]}]
+              :effect-stack [{:text      "Discard 2 cards."
+                              :player-no 1
+                              :choice    :discard-from-hand
+                              :source    :hand
+                              :options   [:copper :copper :copper :copper]
+                              :min       2
+                              :max       2}
+                             {:player-no 1
+                              :effect    [:clear-unaffected]}]}))
+      (is (= (-> {:players [{:hand    [torturer]
+                             :deck    [copper copper copper copper]
+                             :actions 1}
+                            {:hand [copper copper copper copper]}]}
+                 (play 0 :torturer)
+                 (choose :discard)
+                 (choose [:copper :copper]))
+             {:players [{:hand      [copper copper copper]
+                         :play-area [torturer]
+                         :deck      [copper]
+                         :actions   0}
+                        {:hand    [copper copper]
+                         :discard [copper copper]}]}))
+      (is (= (-> {:players [{:hand    [torturer]
+                             :deck    [copper copper copper copper]
+                             :actions 1}
+                            {:hand [copper]}]}
+                 (play 0 :torturer)
+                 (choose :discard)
+                 (choose :copper))
+             {:players [{:hand      [copper copper copper]
+                         :play-area [torturer]
+                         :deck      [copper]
+                         :actions   0}
+                        {:hand    []
+                         :discard [copper]}]}))
+      (is (= (-> {:players [{:hand    [torturer]
+                             :deck    [copper copper copper copper]
+                             :actions 1}
+                            {:hand []}]}
+                 (play 0 :torturer)
+                 (choose :discard))
+             {:players [{:hand      [copper copper copper]
+                         :play-area [torturer]
+                         :deck      [copper]
+                         :actions   0}
+                        {:hand []}]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:hand    [torturer]
+                             :deck    [copper copper copper copper]
+                             :actions 1}
+                            {:hand [copper copper copper copper]}]}
+                 (play 0 :torturer)
+                 (choose :curse))
+             {:supply  [{:card curse :pile-size 9}]
+              :players [{:hand      [copper copper copper]
+                         :play-area [torturer]
+                         :deck      [copper]
+                         :actions   0}
+                        {:hand [copper copper copper copper curse]}]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 0}]
+                  :players [{:hand    [torturer]
+                             :deck    [copper copper copper copper]
+                             :actions 1}
+                            {:hand [copper copper copper copper]}]}
+                 (play 0 :torturer)
+                 (choose :curse))
+             {:supply  [{:card curse :pile-size 0}]
+              :players [{:hand      [copper copper copper]
+                         :play-area [torturer]
+                         :deck      [copper]
+                         :actions   0}
+                        {:hand [copper copper copper copper]}]})))))
+
 (deftest trading-post-test
   (let [silver (assoc silver :id 1)]
     (testing "Trading Post"
