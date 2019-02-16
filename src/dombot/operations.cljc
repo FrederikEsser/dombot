@@ -188,13 +188,13 @@
 (defn- choose-single [game valid-choices selection]
   (if (coll? selection)
     (assert (<= (count selection) 1) "Choose error: You can only pick 1 option."))
-  (let [[{:keys [player-no choice options min]}] (get game :effect-stack)
+  (let [[{:keys [player-no choice min optional?]}] (get game :effect-stack)
         choice-fn (effects/get-effect choice)
         single-selection (if (coll? selection)
                            (first selection)
                            selection)]
     (if (= min 1)
-      (assert single-selection "Choose error: You must pick an option"))
+      (assert (or single-selection optional?) "Choose error: You must pick an option"))
     (when single-selection
       (assert (valid-choices single-selection) (str "Choose error: " (ut/format-name single-selection) " is not a valid option.")))
 
@@ -203,7 +203,7 @@
         (choice-fn player-no single-selection))))
 
 (defn- choose-multi [game valid-choices selection]
-  (let [[{:keys [player-no choice options min max]}] (get game :effect-stack)
+  (let [[{:keys [player-no choice min max optional?]}] (get game :effect-stack)
         choice-fn (effects/get-effect choice)
         multi-selection (if (coll? selection)
                           selection
@@ -212,7 +212,8 @@
                             []))]
 
     (when min
-      (assert (<= min (count multi-selection)) (str "Choose error: You must pick at least " min " options.")))
+      (assert (or (<= min (count multi-selection))
+                  (and optional? (empty? multi-selection))) (str "Choose error: You must pick at least " min " options.")))
     (when max
       (assert (<= (count multi-selection) max) (str "Choose error: You can only pick " max " options.")))
     (doseq [sel multi-selection]
@@ -248,7 +249,7 @@
             (and (= :discard source) reveal-source) (set-approx-discard-size player-no (count discard)))))
 
 (defn give-choice [{:keys [mode] :as game} player-no {[opt-name & opt-args] :options
-                                                      :keys                 [min max card-id]
+                                                      :keys                 [min max optional? card-id]
                                                       :as                   choice}]
   (let [opt-fn (effects/get-option opt-name)
         options (apply opt-fn game player-no card-id opt-args)
@@ -260,7 +261,8 @@
         swiftable (and (= :swift mode)
                        (not-empty options)
                        (apply = options)
-                       (= min (or max (count options))))]
+                       (= min (or max (count options)))
+                       (not optional?))]
     (-> game
         (cond-> (not-empty options) (push-effect-stack player-no choice' {:card-id card-id})
                 swiftable (choose (take min options)))
@@ -291,7 +293,7 @@
 
 (effects/register {:clear-unaffected clear-unaffected})
 
-(defn card-effect [game player-no {:keys [id name types effects] :as card}]
+(defn card-effect [game player-no {:keys [id types effects]}]
   (cond-> game
           (:attack types) (affect-other-players player-no {:effects [[:clear-unaffected]]})
           (:action types) (push-effect-stack player-no effects {:card-id id})

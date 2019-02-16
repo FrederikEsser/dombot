@@ -132,11 +132,28 @@
                                       :min     1
                                       :max     1}]]})
 
-(def mill {:name    :mill
-           :set     :intrigue
-           :types   #{:action :victory}
-           :cost    4
-           :effects []})
+(defn mill-discard [game player-no card-names]
+  (cond-> game
+          card-names (push-effect-stack player-no [[:discard-from-hand card-names]
+                                                   (when (and (coll? card-names)
+                                                              (= 2 (count card-names)))
+                                                     [:give-coins 2])])))
+
+(effects/register {::mill-discard mill-discard})
+
+(def mill {:name           :mill
+           :set            :intrigue
+           :types          #{:action :victory}
+           :cost           4
+           :effects        [[:draw 1]
+                            [:give-actions 1]
+                            [:give-choice {:text      "You may discard 2 cards, for +$2."
+                                           :choice    ::mill-discard
+                                           :options   [:player :hand]
+                                           :min       2
+                                           :max       2
+                                           :optional? true}]]
+           :victory-points 1})
 
 (defn mining-village-trash [game player-no card-name]
   (cond-> game
@@ -369,6 +386,7 @@
                     harem
                     ironworks
                     lurker
+                    mill
                     mining-village
                     minion
                     nobles

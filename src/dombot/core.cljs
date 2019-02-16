@@ -107,7 +107,8 @@
                              options
                              min
                              max
-                             quick-choice?]} :choice}]
+                             quick-choice?
+                             optional?]} :choice}]
                  [:tr
                   [:td
                    (when active? [:div "Active"])
@@ -142,7 +143,8 @@
                           [:div "Selected: " (map-indexed (fn [idx selected]
                                                             [:button {:on-click (fn [] (deselect! idx))}
                                                              (ut/format-name selected)]) (:selection @state))])
-                        [:button {:disabled (and min (< (count (:selection @state)) min))
+                        [:button {:disabled (and min (< (count (:selection @state)) min)
+                                                 (not (and optional? (empty? (:selection @state)))))
                                   :on-click (fn [] (swap! state assoc
                                                           :game (cmd/choose (:selection @state))
                                                           :selection []))}

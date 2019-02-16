@@ -550,6 +550,67 @@
                          :actions   1}]
               :trash   [copper estate]})))))
 
+(deftest mill-test
+  (testing "Mill"
+    (is (= (-> {:players [{:hand    [mill copper silver]
+                           :deck    [estate copper]
+                           :actions 1}]}
+               (play 0 :mill))
+           {:players      [{:hand      [copper silver estate]
+                            :play-area [mill]
+                            :deck      [copper]
+                            :actions   1}]
+            :effect-stack [{:text      "You may discard 2 cards, for +$2."
+                            :player-no 0
+                            :choice    ::intrigue/mill-discard
+                            :source    :hand
+                            :options   [:copper :silver :estate]
+                            :min       2
+                            :max       2
+                            :optional? true}]}))
+    (is (= (-> {:players [{:hand    [mill copper silver]
+                           :deck    [estate copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :mill)
+               (choose [:copper :estate]))
+           {:players [{:hand      [silver]
+                       :play-area [mill]
+                       :deck      [copper]
+                       :discard   [copper estate]
+                       :actions   1
+                       :coins     2}]}))
+    (is (= (-> {:players [{:hand    [mill copper silver]
+                           :deck    [gold copper]
+                           :actions 1}]}
+               (play 0 :mill)
+               (choose nil))
+           {:players [{:hand      [copper silver gold]
+                       :play-area [mill]
+                       :deck      [copper]
+                       :actions   1}]}))
+    (is (= (-> {:players [{:hand    [mill]
+                           :deck    [estate copper]
+                           :actions 1}]}
+               (play 0 :mill)
+               (choose nil))
+           {:players [{:hand      [estate]
+                       :play-area [mill]
+                       :deck      [copper]
+                       :actions   1}]}))
+    (is (= (-> {:players [{:hand    [mill]
+                           :deck    [estate copper]
+                           :actions 1}]}
+               (play 0 :mill)
+               (choose :estate))
+           {:players [{:hand      []
+                       :play-area [mill]
+                       :deck      [copper]
+                       :discard   [estate]
+                       :actions   1}]}))
+    (is (= (calc-victory-points {:deck [mill]})
+           1))))
+
 (deftest mining-village-test
   (testing "Mining Village"
     (let [mining-village-1 (assoc mining-village :id 1)

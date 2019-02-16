@@ -63,11 +63,14 @@
 
 (s/def ::quick-choice? boolean?)
 
+(s/def ::optional? boolean?)
+
 (s/def ::choice (s/keys :req-un [::text
                                  ::min
                                  ::max
                                  ::quick-choice?]
-                        :opt-un [::options]))
+                        :opt-un [::options
+                                 ::optional?]))
 
 (s/def ::victory-points nat-int?)
 
