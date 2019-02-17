@@ -79,13 +79,15 @@
     (cond-> game
             revealed-cards (update-in [:players player-no :revealed-cards] dissoc area))))
 
-(defn update-status-fields [game player-no from to]
-  (cond-> game
-          (and (= from :deck) (:can-undo? game)) (assoc :can-undo? false)
-          (or (= from :discard) (= to :discard)) (set-approx-discard-size player-no)
-          (= from :revealed) (increase-revealed-number-of-cards player-no to)
-          (not= from :revealed) (-> (reset-revealed-number-of-cards player-no from)
-                                    (reset-revealed-number-of-cards player-no to))))
+(defn state-maintenance [game player-no from to]
+  (let [from-cards (get-in game [:players player-no from])]
+    (cond-> game
+            (and (= from :deck) (:can-undo? game)) (assoc :can-undo? false)
+            (or (= from :discard) (= to :discard)) (set-approx-discard-size player-no)
+            (= from :revealed) (increase-revealed-number-of-cards player-no to)
+            (not= from :revealed) (-> (reset-revealed-number-of-cards player-no from)
+                                      (reset-revealed-number-of-cards player-no to))
+            (empty? from-cards) (update-in [:players player-no] dissoc from))))
 
 (defn gain [game player-no card-name & [{:keys [to to-position]
                                          :or   {to :discard}}]]
@@ -101,7 +103,7 @@
     (cond-> game
             (< 0 pile-size) (-> (update-in [:supply idx :pile-size] dec)
                                 (update-in to-path add-card-to-coll (ut/give-id! card))
-                                (update-status-fields player-no :supply to)))))
+                                (state-maintenance player-no :supply to)))))
 
 (defn buy-card [{:keys [effect-stack] :as game} player-no card-name]
   (let [{:keys [buys coins phase]} (get-in game [:players player-no])
@@ -124,12 +126,12 @@
 (defn shuffle-discard
   ([{:keys [discard] :as player}]
    (-> player
-       (update :deck concat (shuffle discard))
-       (assoc :discard [])))
+       (cond-> (not-empty discard) (update :deck concat (shuffle discard)))
+       (dissoc :discard)))
   ([game player-no]
    (-> game
        (update-in [:players player-no] shuffle-discard)
-       (update-status-fields player-no :discard :deck))))
+       (state-maintenance player-no :discard :deck))))
 
 (effects/register {:shuffle shuffle-discard})
 
@@ -166,7 +168,7 @@
         (cond-> game
                 card (-> (update-in from-path ut/vec-remove idx)
                          (update-in to-path add-card-to-coll card)
-                         (update-status-fields player-no from to)))))))
+                         (state-maintenance player-no from to)))))))
 
 (effects/register {:move-card move-card})
 
@@ -282,12 +284,20 @@
         (?reveal-discard-size player-no choice')
         check-stack)))
 
+(defn remove-trigger [game player-no trigger]
+  (-> game
+      (update-in [:players player-no :triggers] (partial remove (comp #{trigger} :trigger)))
+      (as-> game
+            (let [triggers (get-in game [:players player-no :triggers])]
+              (cond-> game
+                      (empty? triggers) (update-in [:players player-no] dissoc :triggers))))))
+
 (defn- apply-triggers [game player-no trigger]
   (let [triggers (get-in game [:players player-no :triggers])
         apply-trigger (fn [game {:keys [effects]}] (push-effect-stack game player-no effects))
         matching-triggers (filter (comp #{trigger} :trigger) triggers)]
     (-> (reduce apply-trigger game matching-triggers)
-        (update-in [:players player-no :triggers] (partial remove (comp #{trigger} :trigger))))))
+        (remove-trigger player-no trigger))))
 
 (def reaction-choice [[:give-choice {:text    (str "You may reveal a Reaction to react to the Attack.")
                                      :choice  :reveal-reaction
@@ -379,9 +389,8 @@
   (let [victory-points (calc-victory-points player)]
     (-> player
         (update :hand concat deck discard)
-        (assoc :deck []
-               :discard []
-               :phase :end-of-game
+        (dissoc :deck :discard)
+        (assoc :phase :end-of-game
                :victory-points victory-points
                :winner (= best-score (calc-score player))))))
 
@@ -395,17 +404,17 @@
 
 (defn clean-up
   ([{:keys [play-area hand] :as player}]
-   (-> player
-       (update :discard concat hand play-area)
-       (assoc :play-area []
-              :hand []
-              :actions 0
-              :coins 0
-              :buys 0
-              :actions-played 0
-              :phase :out-of-turn)
-       (update :number-of-turns inc)
-       (dissoc :triggers)))
+   (let [used-cards (concat hand play-area)]
+     (-> player
+         (cond-> (not-empty used-cards) (update :discard concat used-cards))
+         (dissoc :hand :play-area)
+         (assoc :actions 0
+                :coins 0
+                :buys 0
+                :actions-played 0
+                :phase :out-of-turn)
+         (dissoc :triggers)
+         (update :number-of-turns inc))))
   ([{:keys [effect-stack] :as game} player-no]
    (assert (empty? effect-stack) "You can't end your turn when you have a choice to make.")
    (-> game

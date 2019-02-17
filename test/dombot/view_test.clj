@@ -558,9 +558,6 @@
                         :quick-choice? true}}))
     (is (= (view-player true {:player {:name                "John Doe"
                                        :hand                [estate copper copper]
-                                       :play-area           []
-                                       :deck                []
-                                       :discard             []
                                        :approx-discard-size 3
                                        :actions             2
                                        :coins               0
@@ -594,7 +591,6 @@
                         :optional?     true}}))
     (is (= (view-player false {:player {:name                "John Doe"
                                         :hand                [copper copper remodel estate moat]
-                                        :play-area           []
                                         :deck                [copper estate]
                                         :discard             [copper estate silver]
                                         :approx-discard-size 3
@@ -617,7 +613,6 @@
     (is (= (view-player false {:player {:name                "John Doe"
                                         :hand                [copper copper remodel estate moat]
                                         :revealed-cards      {:hand 5}
-                                        :play-area           []
                                         :deck                [copper estate]
                                         :discard             [copper estate silver]
                                         :approx-discard-size 3
@@ -651,7 +646,6 @@
             :buys      0}))
     (is (= (view-player false {:player {:name                "John Doe"
                                         :hand                [copper copper remodel estate moat]
-                                        :play-area           []
                                         :deck                [copper estate]
                                         :discard             [copper estate silver]
                                         :approx-discard-size 3
@@ -697,10 +691,7 @@
                         :min           2
                         :max           2}}))
     (is (= (view-player true {:player {:name                "John Doe"
-                                       :hand                []
                                        :play-area           [library]
-                                       :deck                []
-                                       :discard             []
                                        :approx-discard-size 0
                                        :set-aside           [festival village]
                                        :actions             0

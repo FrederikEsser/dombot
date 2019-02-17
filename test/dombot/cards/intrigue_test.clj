@@ -22,8 +22,7 @@
                              :buys    1}]}
                  (play 0 :baron))
              {:supply  [{:card estate :pile-size 7}]
-              :players [{:hand      []
-                         :play-area [baron]
+              :players [{:play-area [baron]
                          :discard   [estate]
                          :actions   0
                          :buys      2}]}))
@@ -51,8 +50,7 @@
                  (play 0 :baron)
                  (choose :estate))
              {:supply  [{:card estate :pile-size 8}]
-              :players [{:hand      []
-                         :play-area [baron]
+              :players [{:play-area [baron]
                          :discard   [estate]
                          :actions   0
                          :coins     4
@@ -75,8 +73,7 @@
                              :buys    1}]}
                  (play 0 :baron))
              {:supply  [{:card estate :pile-size 0}]
-              :players [{:hand      []
-                         :play-area [baron]
+              :players [{:play-area [baron]
                          :actions   0
                          :buys      2}]})))))
 
@@ -88,8 +85,7 @@
                            :coins   0}]}
                (play 0 :bridge))
            {:cost-reductions [{:reduction 1}]
-            :players         [{:hand      []
-                               :play-area [bridge]
+            :players         [{:play-area [bridge]
                                :actions   0
                                :buys      2
                                :coins     1}]}))
@@ -100,8 +96,7 @@
                                    :coins   0}]}
                (play 0 :bridge))
            {:cost-reductions [{:reduction 1} {:reduction 1}]
-            :players         [{:hand      []
-                               :play-area [bridge]
+            :players         [{:play-area [bridge]
                                :actions   0
                                :buys      2
                                :coins     1}]}))
@@ -112,8 +107,7 @@
                (play 0 :throne-room)
                (choose :bridge))
            {:cost-reductions [{:reduction 1} {:reduction 1}]
-            :players         [{:hand      []
-                               :play-area [throne-room bridge]
+            :players         [{:play-area [throne-room bridge]
                                :actions   0
                                :buys      3
                                :coins     2}]}))))
@@ -125,8 +119,7 @@
                            :actions-played 0
                            :coins          0}]}
                (play 0 :conspirator))
-           {:players [{:hand           []
-                       :play-area      [conspirator]
+           {:players [{:play-area      [conspirator]
                        :actions        0
                        :actions-played 1
                        :coins          2}]}))
@@ -135,8 +128,7 @@
                            :actions-played 1
                            :coins          0}]}
                (play 0 :conspirator))
-           {:players [{:hand           []
-                       :play-area      [conspirator]
+           {:players [{:play-area      [conspirator]
                        :actions        0
                        :actions-played 2
                        :coins          2}]}))
@@ -278,8 +270,7 @@
       (is (= (-> {:players [{:hand    [courtier]
                              :actions 1}]}
                  (play 0 :courtier))
-             {:players [{:hand      []
-                         :play-area [courtier]
+             {:players [{:play-area [courtier]
                          :actions   0}]})))))
 
 (deftest courtyard-test
@@ -290,7 +281,6 @@
                  0 :courtyard)
            {:players      [{:hand      [copper copper copper]
                             :play-area [courtyard]
-                            :deck      []
                             :actions   0}]
             :effect-stack [{:text      "Put a card from your hand onto your deck."
                             :player-no 0
@@ -334,7 +324,6 @@
                  (play 0 :diplomat))
              {:players [{:hand      [copper copper copper copper estate]
                          :play-area [diplomat]
-                         :deck      []
                          :actions   2}]})))
     (testing "Reaction"
       (is (= (-> {:players [{:hand    [minion]
@@ -342,8 +331,7 @@
                             {:hand [diplomat estate estate estate silver]
                              :deck [copper copper]}]}
                  (play 0 :minion))
-             {:players      [{:hand      []
-                              :play-area [minion]
+             {:players      [{:play-area [minion]
                               :actions   0}
                              {:hand [diplomat estate estate estate silver]
                               :deck [copper copper]}]
@@ -371,11 +359,9 @@
                              :deck [copper copper]}]}
                  (play 0 :minion)
                  (choose :diplomat))
-             {:players      [{:hand      []
-                              :play-area [minion]
+             {:players      [{:play-area [minion]
                               :actions   0}
-                             {:hand [diplomat estate estate estate silver copper copper]
-                              :deck []}]
+                             {:hand [diplomat estate estate estate silver copper copper]}]
               :effect-stack [{:text      "Discard 3 cards."
                               :player-no 1
                               :choice    :discard-from-hand
@@ -418,20 +404,17 @@
                          :deck      [copper]
                          :actions   1}
                         {:hand    [diplomat silver copper copper]
-                         :deck    []
                          :discard [estate estate estate]}]}))
       (is (= (-> {:supply  (base/supply 2 8)
-                  :players [{:hand      [minion]
-                             :play-area []
-                             :actions   1
-                             :coins     0}
+                  :players [{:hand    [minion]
+                             :actions 1
+                             :coins   0}
                             {:hand [diplomat silver copper copper]
                              :deck [estate]}]}
                  (play 0 :minion)
                  (choose :coins))
              {:supply  (base/supply 2 8)
-              :players [{:hand      []
-                         :play-area [minion]
+              :players [{:play-area [minion]
                          :actions   1
                          :coins     2}
                         {:hand [diplomat silver copper copper]
@@ -441,8 +424,7 @@
                             {:hand [diplomat moat estate estate silver]
                              :deck [copper copper]}]}
                  (play 0 :minion))
-             {:players      [{:hand      []
-                              :play-area [minion]
+             {:players      [{:play-area [minion]
                               :actions   0}
                              {:hand [diplomat moat estate estate silver]
                               :deck [copper copper]}]
@@ -470,8 +452,7 @@
                              :deck [copper copper]}]}
                  (play 0 :minion)
                  (choose :moat))
-             {:players      [{:hand      []
-                              :play-area [minion]
+             {:players      [{:play-area [minion]
                               :actions   0}
                              {:hand       [diplomat moat estate estate silver]
                               :deck       [copper copper]
@@ -501,8 +482,7 @@
                  (play 0 :minion)
                  (choose :moat)
                  (choose nil))
-             {:players      [{:hand      []
-                              :play-area [minion]
+             {:players      [{:play-area [minion]
                               :actions   1}
                              {:hand       [diplomat moat estate estate silver]
                               :deck       [copper copper]
@@ -524,11 +504,9 @@
                  (play 0 :minion)
                  (choose :diplomat)
                  (choose [:estate :estate :copper]))
-             {:players      [{:hand      []
-                              :play-area [minion]
+             {:players      [{:play-area [minion]
                               :actions   0}
                              {:hand    [diplomat silver moat copper]
-                              :deck    []
                               :discard [estate estate copper]}]
               :effect-stack [{:text      "You may reveal a Reaction to react to the Attack."
                               :player-no 1
@@ -563,8 +541,7 @@
     (is (= (-> {:players [{:hand  [harem]
                            :coins 0}]}
                (play 0 :harem))
-           {:players [{:hand      []
-                       :play-area [harem]
+           {:players [{:play-area [harem]
                        :coins     2}]}))
     (is (= (calc-victory-points {:deck [harem]})
            2))))
@@ -586,8 +563,7 @@
                              {:card duchy :pile-size 8}
                              {:card silver :pile-size 40}
                              {:card courtyard :pile-size 10}]
-              :players      [{:hand      []
-                              :play-area [ironworks]
+              :players      [{:play-area [ironworks]
                               :actions   0}]
               :effect-stack [{:text      "Gain a card costing up to $4."
                               :player-no 0
@@ -615,8 +591,7 @@
                  (play 0 :ironworks)
                  (choose :silver))
              {:supply  [{:card silver :pile-size 39}]
-              :players [{:hand      []
-                         :play-area [ironworks]
+              :players [{:play-area [ironworks]
                          :discard   [silver]
                          :actions   0
                          :coins     1}]}))
@@ -626,8 +601,7 @@
                  (play 0 :ironworks)
                  (choose :courtyard))
              {:supply  [{:card courtyard :pile-size 9}]
-              :players [{:hand      []
-                         :play-area [ironworks]
+              :players [{:play-area [ironworks]
                          :discard   [courtyard]
                          :actions   1}]}))
       (is (= (-> {:supply  [{:card mill :pile-size 8}]
@@ -649,8 +623,7 @@
       (is (= (-> {:players [{:hand    [lurker]
                              :actions 1}]}
                  (play 0 :lurker))
-             {:players      [{:hand      []
-                              :play-area [lurker]
+             {:players      [{:play-area [lurker]
                               :actions   1}]
               :effect-stack [{:text      "Choose one:"
                               :player-no 0
@@ -670,8 +643,7 @@
              {:supply       [{:card lurker :pile-size 9}
                              {:card mining-village :pile-size 0}
                              {:card upgrade :pile-size 10}]
-              :players      [{:hand      []
-                              :play-area [lurker]
+              :players      [{:play-area [lurker]
                               :actions   1}]
               :effect-stack [{:text      "Trash an Action card from the Supply."
                               :player-no 0
@@ -691,8 +663,7 @@
              {:supply  [{:card lurker :pile-size 9}
                         {:card mining-village :pile-size 0}
                         {:card upgrade :pile-size 9}]
-              :players [{:hand      []
-                         :play-area [lurker]
+              :players [{:play-area [lurker]
                          :actions   1}]
               :trash   [upgrade]}))
       (is (= (-> {:players [{:hand    [lurker]
@@ -700,8 +671,7 @@
                   :trash   [upgrade copper estate]}
                  (play 0 :lurker)
                  (choose :gain))
-             {:players      [{:hand      []
-                              :play-area [lurker]
+             {:players      [{:play-area [lurker]
                               :actions   1}]
               :trash        [upgrade copper estate]
               :effect-stack [{:text      "Gain an Action card from the trash."
@@ -717,8 +687,7 @@
                  (play 0 :lurker)
                  (choose :gain)
                  (choose :upgrade))
-             {:players [{:hand      []
-                         :play-area [lurker]
+             {:players [{:play-area [lurker]
                          :discard   [upgrade]
                          :actions   1}]
               :trash   [copper estate]})))))
@@ -776,8 +745,7 @@
                            :actions 1}]}
                (play 0 :mill)
                (choose :estate))
-           {:players [{:hand      []
-                       :play-area [mill]
+           {:players [{:play-area [mill]
                        :deck      [copper]
                        :discard   [estate]
                        :actions   1}]}))
@@ -818,11 +786,10 @@
                              :coins   0}]}
                  (play 0 :mining-village)
                  (choose :mining-village))
-             {:players [{:hand      [silver]
-                         :play-area []
-                         :deck      [copper]
-                         :actions   2
-                         :coins     2}]
+             {:players [{:hand    [silver]
+                         :deck    [copper]
+                         :actions 2
+                         :coins   2}]
               :trash   [mining-village-1]}))
       (is (= (-> {:players [{:hand    [throne-room mining-village-1]
                              :deck    [silver copper]
@@ -833,7 +800,6 @@
                  (choose :mining-village))
              {:players [{:hand      [silver copper]
                          :play-area [throne-room]
-                         :deck      []
                          :actions   4
                          :coins     2}]
               :trash   [mining-village-1]}))
@@ -847,7 +813,6 @@
                  (choose :mining-village))
              {:players [{:hand      [silver copper]
                          :play-area [throne-room]
-                         :deck      []
                          :actions   4
                          :coins     2}]
               :trash   [mining-village-1]}))
@@ -861,7 +826,6 @@
                  (choose :mining-village))
              {:players [{:hand      [silver copper]
                          :play-area [mining-village-1]
-                         :deck      []
                          :actions   3
                          :coins     2}]
               :trash   [mining-village-2]}))
@@ -876,7 +840,6 @@
                  (choose :mining-village))
              {:players [{:hand      [silver copper]
                          :play-area [mining-village-1 throne-room]
-                         :deck      []
                          :actions   5
                          :coins     2}]
               :trash   [mining-village-2]}))
@@ -893,7 +856,6 @@
                  (choose :mining-village))                  ; trash mining-village-2
              {:players [{:hand      [silver copper]
                          :play-area [throne-room throne-room mining-village-1]
-                         :deck      []
                          :actions   8
                          :coins     2}]
               :trash   [mining-village-2]}))
@@ -908,8 +870,7 @@
     (is (= (-> {:players [{:hand    [minion]
                            :actions 1}]}
                (play 0 :minion))
-           {:players      [{:hand      []
-                            :play-area [minion]
+           {:players      [{:play-area [minion]
                             :actions   1}]
             :effect-stack [{:text      "Choose one:"
                             :player-no 0
@@ -924,8 +885,7 @@
                            :coins   0}]}
                (play 0 :minion)
                (choose :coins))
-           {:players [{:hand      []
-                       :play-area [minion]
+           {:players [{:play-area [minion]
                        :actions   1
                        :coins     2}]}))
     (is (= (-> {:players [{:hand    [minion estate copper]
@@ -963,8 +923,7 @@
     (is (= (-> {:players [{:hand    [nobles]
                            :actions 1}]}
                (play 0 :nobles))
-           {:players      [{:hand      []
-                            :play-area [nobles]
+           {:players      [{:play-area [nobles]
                             :actions   0}]
             :effect-stack [{:text      "Choose one:"
                             :player-no 0
@@ -987,8 +946,7 @@
                            :actions 1}]}
                (play 0 :nobles)
                (choose :actions))
-           {:players [{:hand      []
-                       :play-area [nobles]
+           {:players [{:play-area [nobles]
                        :actions   2}]}))
     (is (= (-> {:players [{:hand    [nobles throne-room]
                            :deck    [copper copper estate estate]
@@ -1037,7 +995,6 @@
            {:players [{:hand           (repeat 3 copper)
                        :play-area      [patrol]
                        :deck           (repeat 5 copper)
-                       :revealed       []
                        :revealed-cards {:deck 4}
                        :actions        0}]}))
     (is (= (-> {:players [{:hand    [patrol]
@@ -1065,7 +1022,6 @@
            {:players [{:hand           [copper copper copper estate curse]
                        :play-area      [patrol]
                        :deck           [copper silver copper]
-                       :revealed       []
                        :revealed-cards {:hand 2
                                         :deck 2}
                        :actions        0}]}))
@@ -1078,7 +1034,6 @@
             :players [{:hand           [copper copper copper estate harem]
                        :play-area      [patrol]
                        :deck           [copper copper silver]
-                       :revealed       []
                        :revealed-cards {:hand 2
                                         :deck 2}
                        :actions        0}]}))))
@@ -1088,8 +1043,7 @@
     (is (= (-> {:players [{:hand    [pawn]
                            :actions 1}]}
                (play 0 :pawn))
-           {:players      [{:hand      []
-                            :play-area [pawn]
+           {:players      [{:play-area [pawn]
                             :actions   0}]
             :effect-stack [{:text      "Choose two:"
                             :player-no 0
@@ -1138,8 +1092,7 @@
                            :buys    1}]}
                (play 0 :pawn)
                (choose [:action :buy]))
-           {:players [{:hand      []
-                       :deck      [copper estate]
+           {:players [{:deck      [copper estate]
                        :play-area [pawn]
                        :actions   1
                        :buys      2}]}))
@@ -1149,8 +1102,7 @@
                            :coins   0}]}
                (play 0 :pawn)
                (choose [:action :coin]))
-           {:players [{:hand      []
-                       :deck      [copper estate]
+           {:players [{:deck      [copper estate]
                        :play-area [pawn]
                        :actions   1
                        :coins     1}]}))
@@ -1161,8 +1113,7 @@
                            :coins   0}]}
                (play 0 :pawn)
                (choose [:buy :coin]))
-           {:players [{:hand      []
-                       :deck      [copper estate]
+           {:players [{:deck      [copper estate]
                        :play-area [pawn]
                        :actions   0
                        :buys      2
@@ -1196,8 +1147,7 @@
       (is (= (play {:players [{:hand    [replace]
                                :actions 1}]}
                    0 :replace)
-             {:players [{:hand      []
-                         :play-area [replace]
+             {:players [{:play-area [replace]
                          :actions   0}]}))
       (is (= (-> {:supply  (base/supply 2 8)
                   :players [{:hand    [replace copper estate]
@@ -1293,8 +1243,7 @@
     (is (= (-> {:players [{:hand    [steward]
                            :actions 1}]}
                (play 0 :steward))
-           {:players      [{:hand      []
-                            :play-area [steward]
+           {:players      [{:play-area [steward]
                             :actions   0}]
             :effect-stack [{:text      "Choose one:"
                             :player-no 0
@@ -1320,8 +1269,7 @@
                            :coins   0}]}
                (play 0 :steward)
                (choose :coins))
-           {:players [{:hand      []
-                       :deck      [copper estate]
+           {:players [{:deck      [copper estate]
                        :play-area [steward]
                        :actions   0
                        :coins     2}]}))
@@ -1358,11 +1306,10 @@
                           {:deck [copper]}]}
                (play 0 :swindler))
            {:supply       (base/supply 2 8)
-            :players      [{:hand      []
-                            :play-area [swindler]
+            :players      [{:play-area [swindler]
                             :actions   0
                             :coins     2}
-                           {:deck []}]
+                           {}]
             :effect-stack [{:text      "Gain a card costing $0 (attacker chooses)."
                             :player-no 1
                             :choice    :gain
@@ -1380,12 +1327,10 @@
                           {:discard [copper]}]}
                (play 0 :swindler))
            {:supply       (base/supply 2 8)
-            :players      [{:hand      []
-                            :play-area [swindler]
+            :players      [{:play-area [swindler]
                             :actions   0
                             :coins     2}
-                           {:deck    []
-                            :discard []}]
+                           {}]
             :effect-stack [{:text      "Gain a card costing $0 (attacker chooses)."
                             :player-no 1
                             :choice    :gain
@@ -1400,14 +1345,13 @@
                 :players [{:hand    [swindler]
                            :actions 1
                            :coins   0}
-                          {:deck []}]}
+                          {}]}
                (play 0 :swindler))
            {:supply  (base/supply 2 8)
-            :players [{:hand      []
-                       :play-area [swindler]
+            :players [{:play-area [swindler]
                        :actions   0
                        :coins     2}
-                      {:deck []}]}))
+                      {}]}))
     (is (= (-> {:supply  (base/supply 2 8)
                 :players [{:hand    [swindler]
                            :actions 1
@@ -1415,11 +1359,10 @@
                           {:deck [mining-village]}]}
                (play 0 :swindler))
            {:supply  (base/supply 2 8)
-            :players [{:hand      []
-                       :play-area [swindler]
+            :players [{:play-area [swindler]
                        :actions   0
                        :coins     2}
-                      {:deck []}]
+                      {}]
             :trash   [mining-village]}))
     (let [curse (assoc curse :id 1)
           copper (assoc copper :id 2)]
@@ -1431,12 +1374,10 @@
                  (play 0 :swindler)
                  (choose :curse))
              {:supply  [{:card curse :pile-size 9}]
-              :players [{:hand      []
-                         :play-area [swindler]
+              :players [{:play-area [swindler]
                          :actions   0
                          :coins     2}
-                        {:deck    []
-                         :discard [curse]}]
+                        {:discard [curse]}]
               :trash   [copper]}))
       (is (= (-> {:supply  [{:card curse :pile-size 1}
                             {:card copper :pile-size 46}]
@@ -1449,13 +1390,11 @@
                  (choose :curse))
              {:supply       [{:card curse :pile-size 0}
                              {:card copper :pile-size 46}]
-              :players      [{:hand      []
-                              :play-area [swindler]
+              :players      [{:play-area [swindler]
                               :actions   0
                               :coins     2}
-                             {:deck    []
-                              :discard [curse]}
-                             {:deck []}]
+                             {:discard [curse]}
+                             {}]
               :effect-stack [{:text      "Gain a card costing $0 (attacker chooses)."
                               :player-no 2
                               :choice    :gain
@@ -1536,19 +1475,18 @@
                          :play-area [torturer]
                          :deck      [copper]
                          :actions   0}
-                        {:hand    []
-                         :discard [copper]}]}))
+                        {:discard [copper]}]}))
       (is (= (-> {:players [{:hand    [torturer]
                              :deck    [copper copper copper copper]
                              :actions 1}
-                            {:hand []}]}
+                            {}]}
                  (play 0 :torturer)
                  (choose :discard))
              {:players [{:hand      [copper copper copper]
                          :play-area [torturer]
                          :deck      [copper]
                          :actions   0}
-                        {:hand []}]}))
+                        {}]}))
       (is (= (-> {:supply  [{:card curse :pile-size 10}]
                   :players [{:hand    [torturer]
                              :deck    [copper copper copper copper]
@@ -1605,15 +1543,13 @@
       (is (= (-> {:players [{:hand    [trading-post]
                              :actions 1}]}
                  (play 0 :trading-post))
-             {:players [{:hand      []
-                         :play-area [trading-post]
+             {:players [{:play-area [trading-post]
                          :actions   0}]}))
       (is (= (-> {:players [{:hand    [trading-post copper]
                              :actions 1}]}
                  (play 0 :trading-post)
                  (choose :copper))
-             {:players [{:hand      []
-                         :play-area [trading-post]
+             {:players [{:play-area [trading-post]
                          :actions   0}]
               :trash   [copper]})))))
 
@@ -1627,7 +1563,6 @@
                  (play 0 :upgrade))
              {:players      [{:hand      [copper copper estate estate silver]
                               :play-area [upgrade]
-                              :deck      []
                               :actions   1}]
               :effect-stack [{:text      "Trash a card from your hand."
                               :player-no 0
@@ -1649,7 +1584,6 @@
                              {:card gold :pile-size 30}]
               :players      [{:hand      [copper copper estate silver]
                               :play-area [upgrade]
-                              :deck      []
                               :actions   1}]
               :effect-stack [{:text      "Gain a card costing exactly $3."
                               :player-no 0
@@ -1673,7 +1607,6 @@
                         {:card gold :pile-size 30}]
               :players [{:hand      [copper copper estate silver]
                          :play-area [upgrade]
-                         :deck      []
                          :discard   [silver]
                          :actions   1}]
               :trash   [estate]}))
@@ -1690,7 +1623,6 @@
                         {:card silver :pile-size 40}]
               :players [{:hand      [copper estate estate silver]
                          :play-area [upgrade]
-                         :deck      []
                          :actions   1}]
               :trash   [copper]}))
       (testing "with cost reduction"
@@ -1705,7 +1637,6 @@
                 :cost-reductions [{:reduction 1}]
                 :players         [{:hand      [copper estate estate silver]
                                    :play-area [upgrade]
-                                   :deck      []
                                    :actions   1}]
                 :effect-stack    [{:text      "Gain a card costing exactly $1."
                                    :player-no 0
@@ -1726,7 +1657,6 @@
                 :cost-reductions [{:reduction 1}]
                 :players         [{:hand      [copper copper estate silver]
                                    :play-area [upgrade]
-                                   :deck      []
                                    :actions   1}]
                 :effect-stack    [{:text      "Gain a card costing exactly $2."
                                    :player-no 0
@@ -1765,9 +1695,7 @@
            {:supply  (base/supply 2 8)
             :players [{:hand           [silver copper]
                        :play-area      [wishing-well]
-                       :deck           []
                        :actions        1
-                       :revealed       []
                        :revealed-cards {:hand 1}}]}))
     (is (= (-> {:supply  (base/supply 2 8)
                 :players [{:hand    [wishing-well]
@@ -1780,7 +1708,6 @@
                        :play-area      [wishing-well]
                        :deck           [copper]
                        :actions        1
-                       :revealed       []
                        :revealed-cards {:deck 1}}]}))
     (is (= (-> {:supply  (base/supply 2 8)
                 :players [{:hand    [wishing-well]
@@ -1793,9 +1720,7 @@
             :players [{:hand           [silver]
                        :play-area      [wishing-well]
                        :deck           [silver copper]
-                       :discard        []
                        :actions        1
-                       :revealed       []
                        :revealed-cards {:deck 1}}]}))
     (is (= (-> {:supply  (base/supply 2 8)
                 :players [{:hand    [wishing-well]
@@ -1808,7 +1733,5 @@
             :players [{:hand           [silver copper]
                        :play-area      [wishing-well]
                        :deck           [silver]
-                       :discard        []
                        :actions        1
-                       :revealed       []
                        :revealed-cards {:hand 1}}]}))))

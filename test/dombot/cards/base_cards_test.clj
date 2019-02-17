@@ -8,22 +8,19 @@
     (is (= (play {:players [{:hand  [copper]
                              :coins 0}]}
                  0 :copper)
-           {:players [{:hand      []
-                       :play-area [copper]
+           {:players [{:play-area [copper]
                        :coins     1}]})))
   (testing "Silver"
     (is (= (play {:players [{:hand  [silver]
                              :coins 0}]}
                  0 :silver)
-           {:players [{:hand      []
-                       :play-area [silver]
+           {:players [{:play-area [silver]
                        :coins     2}]})))
   (testing "Gold"
     (is (= (play {:players [{:hand  [gold]
                              :coins 0}]}
                  0 :gold)
-           {:players [{:hand      []
-                       :play-area [gold]
+           {:players [{:play-area [gold]
                        :coins     3}]}))))
 
 (deftest play-treasures-test
