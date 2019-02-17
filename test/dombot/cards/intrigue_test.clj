@@ -692,6 +692,141 @@
                          :actions   1}]
               :trash   [copper estate]})))))
 
+(deftest masquerade-test
+  (testing "Masquerade"
+    (is (= (-> {:players [{:hand    [masquerade]
+                           :deck    [estate estate copper]
+                           :actions 1}
+                          {:hand [copper]}]}
+               (play 0 :masquerade))
+           {:players      [{:hand      [estate estate]
+                            :play-area [masquerade]
+                            :deck      [copper]
+                            :actions   0}
+                           {:hand [copper]}]
+            :effect-stack [{:text      "Pass a card to the next player."
+                            :player-no 0
+                            :choice    ::intrigue/masquerade-pass
+                            :source    :hand
+                            :options   [:estate :estate]
+                            :min       1
+                            :max       1}
+                           {:player-no 1
+                            :effect    [:give-choice {:text    "Pass a card to the next player."
+                                                      :choice  ::intrigue/masquerade-pass
+                                                      :options [:player :hand]
+                                                      :min     1
+                                                      :max     1}]}
+                           {:player-no 0
+                            :effect    [:all-players {:effects [[::intrigue/masquerade-take]]}]}
+                           {:player-no 0
+                            :effect    [:give-choice {:text    "You may trash a card from your hand."
+                                                      :choice  :trash-from-hand
+                                                      :options [:player :hand]
+                                                      :max     1}]}]}))
+    (is (= (-> {:players [{:hand    [masquerade]
+                           :deck    [estate estate copper]
+                           :actions 1}
+                          {:hand [copper]}]}
+               (play 0 :masquerade)
+               (choose :estate))
+           {:players      [{:hand      [estate]
+                            :play-area [masquerade]
+                            :deck      [copper]
+                            :actions   0}
+                           {:hand              [copper]
+                            :masquerade-passed [estate]}]
+            :effect-stack [{:text      "Pass a card to the next player."
+                            :player-no 1
+                            :choice    ::intrigue/masquerade-pass
+                            :source    :hand
+                            :options   [:copper]
+                            :min       1
+                            :max       1}
+                           {:player-no 0
+                            :effect    [:all-players {:effects [[::intrigue/masquerade-take]]}]}
+                           {:player-no 0
+                            :effect    [:give-choice {:text    "You may trash a card from your hand."
+                                                      :choice  :trash-from-hand
+                                                      :options [:player :hand]
+                                                      :max     1}]}]}))
+    (is (= (-> {:players [{:hand    [masquerade]
+                           :deck    [estate estate copper]
+                           :actions 1}
+                          {:hand [copper]}]}
+               (play 0 :masquerade)
+               (choose :estate)
+               (choose :copper))
+           {:players      [{:hand      [estate copper]
+                            :play-area [masquerade]
+                            :deck      [copper]
+                            :actions   0}
+                           {:hand [estate]}]
+            :effect-stack [{:text      "You may trash a card from your hand."
+                            :player-no 0
+                            :choice    :trash-from-hand
+                            :source    :hand
+                            :options   [:estate :copper]
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand    [masquerade]
+                           :deck    [estate estate copper]
+                           :actions 1}
+                          {:hand [copper]}
+                          {:hand [silver]}]}
+               (play 0 :masquerade))
+           {:players      [{:hand      [estate estate]
+                            :play-area [masquerade]
+                            :deck      [copper]
+                            :actions   0}
+                           {:hand [copper]}
+                           {:hand [silver]}]
+            :effect-stack [{:text      "Pass a card to the next player."
+                            :player-no 0
+                            :choice    ::intrigue/masquerade-pass
+                            :source    :hand
+                            :options   [:estate :estate]
+                            :min       1
+                            :max       1}
+                           {:player-no 2
+                            :effect    [:give-choice {:text    "Pass a card to the next player."
+                                                      :choice  ::intrigue/masquerade-pass
+                                                      :options [:player :hand]
+                                                      :min     1
+                                                      :max     1}]}
+                           {:player-no 1
+                            :effect    [:give-choice {:text    "Pass a card to the next player."
+                                                      :choice  ::intrigue/masquerade-pass
+                                                      :options [:player :hand]
+                                                      :min     1
+                                                      :max     1}]}
+                           {:player-no 0
+                            :effect    [:all-players {:effects [[::intrigue/masquerade-take]]}]}
+                           {:player-no 0
+                            :effect    [:give-choice {:text    "You may trash a card from your hand."
+                                                      :choice  :trash-from-hand
+                                                      :options [:player :hand]
+                                                      :max     1}]}]}))
+    (is (= (-> {:mode    :swift
+                :players [{:hand    [masquerade]
+                           :deck    [estate estate copper]
+                           :actions 1}
+                          {:hand [copper copper]}
+                          {:hand [silver silver]}]}
+               (play 0 :masquerade))
+           {:mode         :swift
+            :players      [{:hand      [estate silver]
+                            :play-area [masquerade]
+                            :deck      [copper]
+                            :actions   0}
+                           {:hand [copper estate]}
+                           {:hand [silver copper]}]
+            :effect-stack [{:text      "You may trash a card from your hand."
+                            :player-no 0
+                            :choice    :trash-from-hand
+                            :source    :hand
+                            :options   [:estate :silver]
+                            :max       1}]}))))
+
 (deftest mill-test
   (testing "Mill"
     (is (= (-> {:players [{:hand    [mill copper silver]

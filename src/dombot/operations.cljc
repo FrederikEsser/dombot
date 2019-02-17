@@ -142,7 +142,7 @@
 
 (effects/register {:peek-deck peek-deck})
 
-(defn move-card [game player-no {:keys [card-name from from-position to to-position] :as args}]
+(defn move-card [game player-no {:keys [card-name from from-position to to-position to-player] :as args}]
   (let [{:keys [deck discard] :as player} (get-in game [:players player-no])]
     (if (and (= :deck from) (empty? deck) (not-empty discard))
       (push-effect-stack game player-no [[:shuffle]
@@ -158,7 +158,7 @@
                                    {:idx 0 :card (first (get player from))}))
             to-path (if (= to :trash)
                       [:trash]
-                      [:players player-no to])
+                      [:players (or to-player player-no) to])
             add-card-to-coll (fn [coll card]
                                (case to-position
                                  :top (concat [card] coll)
@@ -187,18 +187,26 @@
                               :from-position   :top
                               :to              :hand}))
 
-(defn affect-other-players [{:keys [players] :as game} player-no {:keys [effects attack?]}]
-  (let [other-player-nos (->> (range 1 (count players))
-                              (map (fn [n] (-> n (+ player-no) (mod (count players)))))
-                              (remove (fn [n] (and attack? (get-in game [:players n :unaffected]))))
-                              reverse)]
+(defn affect-other-players [{:keys [players] :as game} player-no {:keys [effects attack all at-once]}]
+  (let [player-nos (cond-> (->> (range 1 (count players))
+                                (map (fn [n] (-> n (+ player-no) (mod (count players)))))
+                                (remove (fn [n] (and attack (get-in game [:players n :unaffected])))))
+                           (not at-once) reverse
+                           all (concat [player-no]))]
     (reduce (fn [game other-player-no]
               (push-effect-stack game other-player-no effects))
             game
-            other-player-nos)))
+            player-nos)))
 
 (defn attack-other-players [game player-no args]
-  (affect-other-players game player-no (assoc args :attack? true)))
+  (affect-other-players game player-no (assoc args :attack true)))
+
+(defn affect-all-players [game player-no args]
+  (affect-other-players game player-no (assoc args :all true)))
+
+(effects/register {:other-players affect-other-players
+                   :attack        attack-other-players
+                   :all-players   affect-all-players})
 
 (defn- choose-single [game valid-choices selection]
   (if (coll? selection)
@@ -327,8 +335,6 @@
 
 (effects/register {:gain            gain
                    :draw            draw
-                   :other-players   affect-other-players
-                   :attack          attack-other-players
                    :give-choice     give-choice
                    :reveal-reaction reveal-reaction
                    :card-effect     card-effect})

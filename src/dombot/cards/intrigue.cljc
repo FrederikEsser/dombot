@@ -1,5 +1,5 @@
 (ns dombot.cards.intrigue
-  (:require [dombot.operations :refer [gain move-card push-effect-stack give-choice draw peek-deck]]
+  (:require [dombot.operations :refer [gain move-card move-cards push-effect-stack give-choice draw peek-deck]]
             [dombot.cards.common :refer [give-actions give-coins give-buys]]
             [dombot.utils :as ut]
             [dombot.effects :as effects])
@@ -193,6 +193,40 @@
                                                 {:option :gain :text "Gain an Action card from the trash."}]
                                       :min     1
                                       :max     1}]]})
+
+(defn masquerade-pass [{:keys [players] :as game} player-no card-name]
+  (let [next-player (mod (inc player-no) (count players))]
+    (move-card game player-no {:card-name card-name
+                               :from      :hand
+                               :to-player next-player
+                               :to        :masquerade-passed})))
+
+(defn masquerade-take [game player-no]
+  (let [passed (get-in game [:players player-no :masquerade-passed])]
+    (move-cards game player-no {:card-names (map :name passed)
+                                :from       :masquerade-passed
+                                :to         :hand})))
+
+(effects/register {::masquerade-pass masquerade-pass
+                   ::masquerade-take masquerade-take})
+
+(def masquerade {:name    :masquerade
+                 :set     :intrigue
+                 :types   #{:action}
+                 :cost    3
+                 :effects [[:draw 2]
+                           [:all-players {:effects [[:give-choice {:text    "Pass a card to the next player."
+                                                                   :choice  ::masquerade-pass
+                                                                   :options [:player :hand]
+                                                                   :min     1
+                                                                   :max     1}]]
+                                          :at-once true
+                                          }]
+                           [:all-players {:effects [[::masquerade-take]]}]
+                           [:give-choice {:text    "You may trash a card from your hand."
+                                          :choice  :trash-from-hand
+                                          :options [:player :hand]
+                                          :max     1}]]})
 
 (defn mill-discard [game player-no card-names]
   (cond-> game
@@ -516,6 +550,7 @@
                     harem
                     ironworks
                     lurker
+                    masquerade
                     mill
                     mining-village
                     minion
