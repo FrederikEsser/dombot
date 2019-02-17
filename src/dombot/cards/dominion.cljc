@@ -99,7 +99,7 @@
                          [:give-buys 1]]})
 
 (defn gardens-victory-points [cards]
-  (Math/floorDiv (int (count cards)) (int 10)))
+  (quot (count cards) 10))
 
 (effects/register {::gardens-victory-points gardens-victory-points})
 

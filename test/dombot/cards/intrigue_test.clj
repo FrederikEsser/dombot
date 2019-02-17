@@ -1734,4 +1734,21 @@
                        :play-area      [wishing-well]
                        :deck           [silver]
                        :actions        1
-                       :revealed-cards {:hand 1}}]}))))
+                       :revealed-cards {:hand 1}}]}))
+    (is (= (-> {:supply  [{:card wishing-well :pile-size 0}]
+                :players [{:hand    [wishing-well]
+                           :deck    [silver copper]
+                           :actions 1}]}
+               (play 0 :wishing-well))
+           {:supply       [{:card wishing-well :pile-size 0}]
+            :players      [{:hand      [silver]
+                            :play-area [wishing-well]
+                            :deck      [copper]
+                            :actions   1}]
+            :effect-stack [{:text      "Name a card."
+                            :player-no 0
+                            :choice    ::intrigue/wishing-well-guess
+                            :source    :supply
+                            :options   [:wishing-well]
+                            :min       1
+                            :max       1}]}))))

@@ -29,7 +29,7 @@
 (defn deselect! [idx]
   (swap! state update :selection remove-idx idx))
 
-(defn button-style [& [disabled types]]
+(defn button-style [& [disabled types number-of-cards]]
   (merge {:color            (if disabled :grey :black)
           :font-weight      :bold
           :background-color (cond (:action types) "#F3EEDF"
@@ -38,6 +38,7 @@
                                   (:victory types) "#9FD688"
                                   (:curse types) "#B890D7")
           :border-color     (cond
+                              (zero? number-of-cards) :red
                               (:curse types) "#9F76B8"
                               (:victory types) "#6DB954"
                               (:reaction types) "#6295CE"
@@ -64,7 +65,7 @@
      (when-not (and (= :choosable interaction)
                     (= 0 number-of-cards))
        [:div {:key [:supply name]}
-        [:button {:style    (button-style disabled types)
+        [:button {:style    (button-style disabled types number-of-cards)
                   :disabled disabled
                   :on-click (when interaction
                               (fn [] (case interaction

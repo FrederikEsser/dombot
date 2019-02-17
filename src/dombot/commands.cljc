@@ -6,6 +6,7 @@
 ; todo:
 ;;; Intrigue
 
+; handle revealed-cards in hand as a list of card-names
 ; refac supply to a map of lists of cards by name
 ; change options into lists of maps with :name and :id (cards?) - or not??
 ; generalize checks for possible operations

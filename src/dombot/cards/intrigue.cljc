@@ -502,7 +502,7 @@
                              [:peek-deck 1]
                              [:give-choice {:text    "Name a card."
                                             :choice  ::wishing-well-guess
-                                            :options [:supply]
+                                            :options [:supply {:all true}]
                                             :min     1
                                             :max     1}]]})
 
