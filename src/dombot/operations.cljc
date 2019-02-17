@@ -123,17 +123,30 @@
         (update-in [:players player-no :buys] - 1)
         check-stack)))
 
-(defn shuffle-discard
+(defn do-shuffle
   ([{:keys [discard] :as player}]
    (-> player
        (cond-> (not-empty discard) (update :deck concat (shuffle discard)))
        (dissoc :discard)))
   ([game player-no]
    (-> game
-       (update-in [:players player-no] shuffle-discard)
+       (update-in [:players player-no] do-shuffle)
        (state-maintenance player-no :discard :deck))))
 
-(effects/register {:shuffle shuffle-discard})
+(defn shuffle-discard [game player-no]
+  (let [discard (get-in game [:players player-no :discard])
+        before (->> discard
+                    (keep (comp :shuffle :before-triggers))
+                    (apply concat))
+        after (->> discard
+                   (keep (comp :shuffle :after-triggers))
+                   (apply concat))]
+    (push-effect-stack game player-no (concat before
+                                              [[:do-shuffle]]
+                                              after))))
+
+(effects/register {:do-shuffle do-shuffle
+                   :shuffle    shuffle-discard})
 
 (defn peek-deck [game player-no number-of-cards]
   (let [{:keys [deck discard]} (get-in game [:players player-no])]
@@ -160,14 +173,15 @@
                       [:trash]
                       [:players (or to-player player-no) to])
             add-card-to-coll (fn [coll card]
-                               (if (empty? coll)
-                                 [card]
-                                 (cond
-                                   (= :top to-position) (concat [card] coll)
-                                   (integer? to-position) (concat (subvec coll 0 to-position)
-                                                                  [card]
-                                                                  (subvec coll to-position (count coll)))
-                                   :else (concat coll [card]))))]
+                               (let [coll (vec coll)]
+                                 (if (empty? coll)
+                                   [card]
+                                   (cond
+                                     (= :top to-position) (concat [card] coll)
+                                     (integer? to-position) (concat (subvec coll 0 to-position)
+                                                                    [card]
+                                                                    (subvec coll to-position (count coll)))
+                                     :else (concat coll [card])))))]
         (when card-name
           (assert card (str "Move error: There is no " (ut/format-name card-name) " in your " (ut/format-name from) ".")))
         (cond-> game
@@ -181,10 +195,19 @@
   (assert (or card-names
               (and number-of-cards from-position)) "Can't move unspecified cards.")
   (if number-of-cards
-    (ut/redupeat game number-of-cards move-card player-no args)
-    (reduce (fn [game card-name] (move-card game player-no (assoc args :card-name card-name)))
-            game
-            (ut/ensure-coll card-names))))
+    (cond-> game
+            (< 0 number-of-cards)
+            (push-effect-stack player-no
+                               (repeat number-of-cards [:move-card (dissoc args :number-of-cards)])))
+    (let [card-names (ut/ensure-coll card-names)]
+      (cond-> game
+              (not-empty card-names)
+              (push-effect-stack player-no
+                                 (map (fn [card-name]
+                                        [:move-card (-> args
+                                                        (dissoc :card-names)
+                                                        (assoc :card-name card-name))])
+                                      card-names))))))
 
 (defn draw [game player-no number-of-cards]
   (move-cards game player-no {:number-of-cards number-of-cards

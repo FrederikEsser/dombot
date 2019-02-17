@@ -3,11 +3,13 @@
             [dombot.cards.base-cards :as base :refer [copper estate]]
             [dombot.cards.dominion :as dominion]
             [dombot.cards.intrigue :as intrigue]
+            [dombot.cards.promos :as promos]
             [dombot.utils :as ut]))
 
 (def kingdom-cards (concat
                      dominion/kingdom-cards
-                     intrigue/kingdom-cards))
+                     intrigue/kingdom-cards
+                     promos/kingdom-cards))
 
 (defn create-kingdom [sets victory-pile-size]
   (->> kingdom-cards

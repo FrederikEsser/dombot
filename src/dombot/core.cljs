@@ -8,7 +8,7 @@
 ;; -------------------------
 ;; Views
 
-(defonce state (r/atom {:sets            #{:dominion :intrigue}
+(defonce state (r/atom {:sets            #{:dominion :intrigue :promos}
                         :selection       []
                         :trash-unfolded? false
                         :num-players     2
