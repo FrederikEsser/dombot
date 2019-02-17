@@ -58,8 +58,17 @@
 
 (s/def ::option keyword?)
 
-(s/def ::options (s/coll-of (s/keys :req-un [::text
-                                             ::option])))
+(s/def ::option-elem (s/keys :req-un [::text
+                                      ::option]))
+
+(s/def ::options (s/coll-of ::option-elem))
+
+(s/def ::from nat-int?)
+
+(s/def ::to nat-int?)
+
+(s/def ::interval (s/keys :req-un [::from
+                                   ::to]))
 
 (s/def ::quick-choice? boolean?)
 
@@ -70,6 +79,7 @@
                                  ::max
                                  ::quick-choice?]
                         :opt-un [::options
+                                 ::interval
                                  ::optional?]))
 
 (s/def ::victory-points nat-int?)

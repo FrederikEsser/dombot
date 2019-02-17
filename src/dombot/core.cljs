@@ -131,6 +131,7 @@
                                           active? victory-points winner?]
                      {:keys [text
                              options
+                             interval
                              min
                              max
                              quick-choice?
@@ -165,7 +166,24 @@
                                                                  (swap! state assoc :game (cmd/choose option))
                                                                  (select! option)))}
                                      text])) options)]
-                     (when-not quick-choice?
+                     (when interval
+                       [:div [:button {:style    (button-style)
+                                       :on-click (fn [] (swap! state assoc
+                                                               :game (cmd/choose 0)
+                                                               :selection []))}
+                              "Top"]
+                        (when (< 0 (:to interval))
+                          [:span [:input {:type      :number
+                                          :min       1
+                                          :max       (dec (:to interval))
+                                          :on-change (fn [event] (swap! state assoc :selection [(js/parseInt (-> event .-target .-value))]))
+                                          :value     (or (-> @state :selection first) 0)}]
+                           [:button {:style    (button-style)
+                                     :on-click (fn [] (swap! state assoc
+                                                             :game (cmd/choose (:to interval))
+                                                             :selection []))}
+                            "Bottom"]])])
+                     (when (or (not quick-choice?) interval)
                        [:div
                         (when (< 1 max)
                           [:div "Selected: " (map-indexed (fn [idx selected]

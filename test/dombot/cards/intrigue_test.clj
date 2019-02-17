@@ -1350,6 +1350,107 @@
                         {:discard [curse]}]
               :trash   [duchy]})))))
 
+(deftest secret-passage-test
+  (testing "Secret Passage"
+    (is (= (-> {:players [{:hand    [secret-passage]
+                           :deck    [silver silver copper copper copper]
+                           :actions 1}]}
+               (play 0 :secret-passage))
+           {:players      [{:hand      [silver silver]
+                            :play-area [secret-passage]
+                            :deck      [copper copper copper]
+                            :actions   1}]
+            :effect-stack [{:text      "Put a card from your hand anywhere in your deck."
+                            :player-no 0
+                            :choice    ::intrigue/secret-passage-take
+                            :source    :hand
+                            :options   [:silver :silver]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand    [secret-passage]
+                           :deck    [silver silver copper copper copper]
+                           :actions 1}]}
+               (play 0 :secret-passage)
+               (choose :silver))
+           {:players      [{:hand           [silver]
+                            :play-area      [secret-passage]
+                            :secret-passage [silver]
+                            :deck           [copper copper copper]
+                            :actions        1}]
+            :effect-stack [{:text      "Put the Silver anywhere in your deck."
+                            :player-no 0
+                            :choice    ::intrigue/secret-passage-put
+                            :source    :deck-position
+                            :options   [0 1 2 3]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand    [secret-passage]
+                           :deck    [silver silver copper copper copper]
+                           :actions 1}]}
+               (play 0 :secret-passage)
+               (choose :silver)
+               (choose 0))
+           {:players [{:hand      [silver]
+                       :play-area [secret-passage]
+                       :deck      [silver copper copper copper]
+                       :actions   1}]}))
+    (is (= (-> {:players [{:hand    [secret-passage]
+                           :deck    [silver silver copper copper copper]
+                           :actions 1}]}
+               (play 0 :secret-passage)
+               (choose :silver)
+               (choose 1))
+           {:players [{:hand      [silver]
+                       :play-area [secret-passage]
+                       :deck      [copper silver copper copper]
+                       :actions   1}]}))
+    (is (= (-> {:players [{:hand    [secret-passage]
+                           :deck    [silver silver copper copper copper]
+                           :actions 1}]}
+               (play 0 :secret-passage)
+               (choose :silver)
+               (choose 2))
+           {:players [{:hand      [silver]
+                       :play-area [secret-passage]
+                       :deck      [copper copper silver copper]
+                       :actions   1}]}))
+    (is (= (-> {:players [{:hand    [secret-passage]
+                           :deck    [silver silver copper copper copper]
+                           :actions 1}]}
+               (play 0 :secret-passage)
+               (choose :silver)
+               (choose 3))
+           {:players [{:hand      [silver]
+                       :play-area [secret-passage]
+                       :deck      [copper copper copper silver]
+                       :actions   1}]}))
+    (is (= (-> {:players [{:hand    [secret-passage]
+                           :deck    [silver silver]
+                           :actions 1}]}
+               (play 0 :secret-passage)
+               (choose :silver))
+           {:players      [{:hand           [silver]
+                            :play-area      [secret-passage]
+                            :secret-passage [silver]
+                            :actions        1}]
+            :effect-stack [{:text      "Put the Silver anywhere in your deck."
+                            :player-no 0
+                            :choice    ::intrigue/secret-passage-put
+                            :source    :deck-position
+                            :options   [0]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand    [secret-passage]
+                           :deck    [silver silver]
+                           :actions 1}]}
+               (play 0 :secret-passage)
+               (choose :silver)
+               (choose 0))
+           {:players [{:hand      [silver]
+                       :play-area [secret-passage]
+                       :deck      [silver]
+                       :actions   1}]}))))
+
 (deftest shanty-town-test
   (testing "Shanty Town"
     (is (= (-> {:players [{:hand    [shanty-town shanty-town copper copper copper]

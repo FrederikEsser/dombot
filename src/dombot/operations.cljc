@@ -160,9 +160,14 @@
                       [:trash]
                       [:players (or to-player player-no) to])
             add-card-to-coll (fn [coll card]
-                               (case to-position
-                                 :top (concat [card] coll)
-                                 (concat coll [card])))]
+                               (if (empty? coll)
+                                 [card]
+                                 (cond
+                                   (= :top to-position) (concat [card] coll)
+                                   (integer? to-position) (concat (subvec coll 0 to-position)
+                                                                  [card]
+                                                                  (subvec coll to-position (count coll)))
+                                   :else (concat coll [card]))))]
         (when card-name
           (assert card (str "Move error: There is no " (ut/format-name card-name) " in your " (ut/format-name from) ".")))
         (cond-> game

@@ -4,7 +4,7 @@
             [dombot.front-end-view]))
 
 ; todo:
-;;; Intrigue
+;;; Seaside
 
 ; handle revealed-cards in hand as a list of card-names
 ; refac supply to a map of lists of cards by name
@@ -33,7 +33,6 @@
     (view)))
 
 (defn start-game [player-names & {:keys [mode sets]}]
-  (prn "start-game")
   (let [{:keys [current-player] :as game} (kingdom/create-game player-names (or mode :swift) (or sets #{:intrigue}))]
     (swap! game-state assoc :game (-> game
                                       (op/start-turn current-player)

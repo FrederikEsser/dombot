@@ -386,6 +386,36 @@
                                        :min     1
                                        :max     1}]]})
 
+(defn secret-passage-put [game player-no position]
+  (move-card game player-no {:from        :secret-passage
+                             :to          :deck
+                             :to-position position}))
+
+(defn secret-passage-take [game player-no card-name]
+  (push-effect-stack game player-no [[:move-card {:card-name card-name
+                                                  :from      :hand
+                                                  :to        :secret-passage}]
+                                     [:give-choice {:text    (str "Put the " (ut/format-name card-name) " anywhere in your deck.")
+                                                    :choice  ::secret-passage-put
+                                                    :options [:deck-position]
+                                                    :min     1
+                                                    :max     1}]]))
+
+(effects/register {::secret-passage-put  secret-passage-put
+                   ::secret-passage-take secret-passage-take})
+
+(def secret-passage {:name    :secret-passage
+                     :set     :intrigue
+                     :types   #{:action}
+                     :cost    4
+                     :effects [[:draw 2]
+                               [:give-actions 1]
+                               [:give-choice {:text    "Put a card from your hand anywhere in your deck."
+                                              :choice  ::secret-passage-take
+                                              :options [:player :hand]
+                                              :min     1
+                                              :max     1}]]})
+
 (defn shanty-town-draw [game player-no]
   (let [hand (get-in game [:players player-no :hand])]
     (push-effect-stack game player-no [[:reveal-hand]
@@ -558,6 +588,7 @@
                     patrol
                     pawn
                     replace
+                    secret-passage
                     shanty-town
                     steward
                     swindler

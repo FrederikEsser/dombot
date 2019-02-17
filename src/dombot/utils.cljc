@@ -120,6 +120,12 @@
 
 (effects/register-options {:supply options-from-supply})
 
+(defn options-from-deck-position [game player-no & args]
+  (let [deck (get-in game [:players player-no :deck])]
+    (-> deck count inc range)))
+
+(effects/register-options {:deck-position options-from-deck-position})
+
 (defn options-from-trash [{:keys [trash]} player-no card-id {:keys [type]}]
   (cond->> trash
            type (filter (comp type :types))

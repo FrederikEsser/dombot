@@ -418,6 +418,55 @@
                :name-ui "Estate"
                :types   #{:victory}}])))))
 
+(deftest view-choice-test
+  (testing "Choice view"
+    (is (= (view-choice {:text    "Choice text"
+                         :source  :hand
+                         :options [:estate :moat]})
+           {:text          "Choice text"
+            :quick-choice? false
+            :min           0
+            :max           2}))
+    (is (= (view-choice {:text    "Choice text"
+                         :source  :hand
+                         :options [:estate :moat]
+                         :max     1})
+           {:text          "Choice text"
+            :quick-choice? false
+            :min           0
+            :max           1}))
+    (is (= (view-choice {:text    "Choice text"
+                         :source  :hand
+                         :options [:estate :moat]
+                         :min     1
+                         :max     1})
+           {:text          "Choice text"
+            :quick-choice? true
+            :min           1
+            :max           1}))
+    (is (= (view-choice {:text    "Choice text"
+                         :source  :special
+                         :options [{:option :coin :text "+$1"}
+                                   {:option :card :text "+1 Card"}]
+                         :min     1
+                         :max     1})
+           {:text          "Choice text"
+            :quick-choice? true
+            :options       [{:option :coin :text "+$1"}
+                            {:option :card :text "+1 Card"}]
+            :min           1
+            :max           1}))
+    (is (= (view-choice {:text    "Choice text"
+                         :source  :deck-position
+                         :options [0 1 2 3]
+                         :min     1
+                         :max     1})
+           {:text          "Choice text"
+            :quick-choice? true
+            :interval       {:from 0 :to 3}
+            :min           1
+            :max           1}))))
+
 (deftest player-view-test
   (testing "Player view"
     (is (= (view-player true {:player {:name                "John Doe"
