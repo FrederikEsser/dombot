@@ -456,7 +456,23 @@
                        :actions   0
                        :buys      2}
                       {:deck [copper]
-                       :hand [copper]}]}))))
+                       :hand [copper]}]}))
+    (is (= (play {:players [{:deck    (repeat 5 copper)
+                             :hand    [council-room]
+                             :actions 1
+                             :buys    1}
+                            {:deck       [copper copper]
+                             :hand       []
+                             :unaffected true}]}
+                 0 :council-room)
+           {:players [{:deck      [copper]
+                       :hand      (repeat 4 copper)
+                       :play-area [council-room]
+                       :actions   0
+                       :buys      2}
+                      {:deck       [copper]
+                       :hand       [copper]
+                       :unaffected true}]}))))
 
 (deftest festival-test
   (testing "Festival"

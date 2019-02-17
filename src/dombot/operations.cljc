@@ -185,15 +185,18 @@
                               :from-position   :top
                               :to              :hand}))
 
-(defn affect-other-players [{:keys [players] :as game} player-no {:keys [effects]}]
+(defn affect-other-players [{:keys [players] :as game} player-no {:keys [effects attack?]}]
   (let [other-player-nos (->> (range 1 (count players))
                               (map (fn [n] (-> n (+ player-no) (mod (count players)))))
-                              (remove (fn [n] (get-in game [:players n :unaffected])))
+                              (remove (fn [n] (and attack? (get-in game [:players n :unaffected]))))
                               reverse)]
     (reduce (fn [game other-player-no]
               (push-effect-stack game other-player-no effects))
             game
             other-player-nos)))
+
+(defn attack-other-players [game player-no args]
+  (affect-other-players game player-no (assoc args :attack? true)))
 
 (defn- choose-single [game valid-choices selection]
   (if (coll? selection)
@@ -315,7 +318,7 @@
 (effects/register {:gain            gain
                    :draw            draw
                    :other-players   affect-other-players
-                   :attack          affect-other-players
+                   :attack          attack-other-players
                    :give-choice     give-choice
                    :reveal-reaction reveal-reaction
                    :card-effect     card-effect})
