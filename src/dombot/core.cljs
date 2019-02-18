@@ -8,7 +8,7 @@
 ;; -------------------------
 ;; Views
 
-(defonce state (r/atom {:sets            #{:dominion :intrigue :promos}
+(defonce state (r/atom {:sets            #{:dominion :intrigue :seaside :promos}
                         :selection       []
                         :trash-unfolded? false
                         :num-players     2
@@ -32,9 +32,10 @@
 (defn button-style [& [disabled types number-of-cards]]
   (merge {:color            (if disabled :grey :black)
           :font-weight      :bold
-          :background-color (cond (:action types) "#F3EEDF"
-                                  (:treasure types) "#FFE64F"
+          :background-color (cond (:duration types) "#FF9E37"
                                   (:reaction types) "#77ADE3"
+                                  (:action types) "#F3EEDF"
+                                  (:treasure types) "#FFE64F"
                                   (:victory types) "#9FD688"
                                   (:curse types) "#B890D7")
           :border-color     (cond
@@ -43,6 +44,7 @@
                               (:victory types) "#6DB954"
                               (:reaction types) "#6295CE"
                               (:treasure types) "#EFD34E"
+                              (:duration types) "#F1820E"
                               (:attack types) "#940000"
                               (:action types) "#DED7C4"
                               :else :grey)
@@ -201,9 +203,9 @@
                          [:div
                           (when (< 1 max)
                             [:div "Selected: " (mapk-indexed (fn [idx selected]
-                                                              [:button {:style    (button-style)
-                                                                        :on-click (fn [] (deselect! idx))}
-                                                               (ut/format-name selected)]) (:selection @state))])
+                                                               [:button {:style    (button-style)
+                                                                         :on-click (fn [] (deselect! idx))}
+                                                                (ut/format-name selected)]) (:selection @state))])
                           (let [disabled (and min (< (count (:selection @state)) min)
                                               (not (and optional? (empty? (:selection @state)))))]
                             [:button {:style    (button-style disabled)

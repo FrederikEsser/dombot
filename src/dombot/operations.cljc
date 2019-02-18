@@ -55,9 +55,18 @@
                  :buys 1
                  :phase :action))
   ([game player-no]
-   (-> (cond-> game
-               (not (game-ended? game)) (update-in [:players player-no] start-turn))
-       check-stack)))
+   (if (game-ended? game)
+     game
+     (let [duration-effects (->> (get-in game [:players player-no :play-area-duration])
+                                 (mapcat (fn [{:keys [name duration]}]
+                                           (concat [[:move-card {:card-name name
+                                                                 :from      :play-area-duration
+                                                                 :to        :play-area}]]
+                                                   duration))))]
+       (-> game
+           (update-in [:players player-no] start-turn)
+           (cond-> (not-empty duration-effects) (push-effect-stack player-no duration-effects))
+           check-stack)))))
 
 (defn set-approx-discard-size [game player-no & [n]]
   (let [{:keys [discard approx-discard-size]} (get-in game [:players player-no])
@@ -387,7 +396,7 @@
     (-> game
         (move-card player-no {:card-name card-name
                               :from      :hand
-                              :to        :play-area})
+                              :to        (if (:duration types) :play-area-duration :play-area)})
         (card-effect player-no card)
         (cond->
           phase (assoc-in [:players player-no :phase] (cond (:action types) :action
@@ -419,10 +428,10 @@
 
 (def calc-score (juxt calc-victory-points (comp - :number-of-turns)))
 
-(defn end-game-for-player [best-score {:keys [deck discard] :as player}]
+(defn end-game-for-player [best-score {:keys [deck discard play-area-duration] :as player}]
   (let [victory-points (calc-victory-points player)]
     (-> player
-        (update :hand concat deck discard)
+        (update :hand concat deck discard play-area-duration)
         (dissoc :deck :discard)
         (assoc :phase :end-of-game
                :victory-points victory-points
@@ -457,4 +466,5 @@
        (draw player-no 5)
        (update :players (partial mapv (fn [player] (dissoc player :revealed-cards))))
        (dissoc :cost-reductions)
-       check-game-ended)))
+       check-game-ended
+       check-stack)))

@@ -110,7 +110,7 @@
               (case source
                 :special {:options (view-options options)}
                 :deck-position {:interval {:from (first options)
-                                          :to   (last options)}}
+                                           :to   (last options)}}
                 {})
               (when-not (nil? optional?)
                 {:optional? optional?}))
@@ -127,7 +127,8 @@
                                    :as              data}]
   (merge {:name-ui   (ut/format-name name)
           :hand      (view-hand active-player? data)
-          :play-area (view-area :play-area data)
+          :play-area (concat (view-area :play-area-duration data)
+                             (view-area :play-area data))
           :deck      (view-deck data)
           :discard   (view-discard data)
           :actions   actions
