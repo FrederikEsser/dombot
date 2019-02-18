@@ -64,7 +64,7 @@
                            (= (count (:selection @state)) max)))]
      (when-not (and (= :choosable interaction)
                     (= 0 number-of-cards))
-       [:div {:key [:supply name]}
+       [:div
         [:button {:style    (button-style disabled types number-of-cards)
                   :disabled disabled
                   :on-click (when interaction
@@ -75,17 +75,29 @@
                                        :buyable (swap! state assoc :game (cmd/buy name)))))}
          (str name-ui (when cost (str " ($" cost ")")) (when number-of-cards (str " x" number-of-cards)))]]))))
 
+(defn mapk [f coll]
+  (->> coll
+       (map (fn [e]
+              (-> e f (with-meta {:key (random-uuid)}))))
+       doall))
+
+(defn mapk-indexed [f coll]
+  (->> coll
+       (map-indexed (fn [i e]
+                      (with-meta (f i e) {:key (random-uuid)})))
+       doall))
+
 (defn map-tag [tag coll]
-  (map (fn [x] [tag x]) coll))
+  (mapk (fn [x] [tag x]) coll))
 
 (defn view-row [row]
   [:tr (->> row
             (map view-card)
-            (map (fn [card] [:td card])))])
+            (mapk (fn [card] [:td card])))])
 
 (defn view-pile [pile max]
   [:div
-   (map (partial view-card max) (:visible-cards pile))
+   (mapk (partial view-card max) (:visible-cards pile))
    (when (:number-of-cards pile)
      (str (:number-of-cards pile) " Cards"))])
 
@@ -118,109 +130,112 @@
           row3 (->> supply (drop 7) (take 5))
           row4 (->> supply (drop 12) (take 5))]
       [:table
-       (view-row row1)
-       (view-row (concat [{}] row2))
-       (view-row row3)
-       (view-row row4)])]
+       [:tbody
+        (view-row row1)
+        (view-row (concat [{}] row2))
+        (view-row row3)
+        (view-row row4)]])]
    [:div "Players"
     [:table
-     [:tr (map-tag :th ["Name" "Hand" "Play area" "Deck" "Discard"])]
-     (->> (get-in @state [:game :players])
-          (map (fn [{:keys               [name-ui hand play-area deck discard
-                                          actions coins buys set-aside
-                                          active? victory-points winner?]
-                     {:keys [text
-                             options
-                             interval
-                             min
-                             max
-                             quick-choice?
-                             optional?]} :choice}]
-                 [:tr
-                  [:td
-                   (when active? [:div "Active"])
-                   [:div name-ui]]
-                  [:td (if (:number-of-cards hand)
-                         (view-pile hand max)
-                         (map (partial view-card max) hand))]
-                  [:td (map (partial view-card max) play-area)]
-                  [:td (view-pile deck max)]
-                  [:td (view-pile discard max)]
-                  [:td (if victory-points
-                         [:div
-                          (when winner? [:div "WINNER!"])
-                          [:div "Victory Points: " victory-points]]
-                         [:div
-                          [:div "Actions: " actions]
-                          [:div "Coins: " coins]
-                          [:div "Buys: " buys]])]
-                  (if text
-                    [:td text
-                     [:div (map (fn [{:keys [option text]}]
-                                  (let [disabled (and (not quick-choice?)
-                                                      (or (= max (count (:selection @state)))
-                                                          (-> (:selection @state) set option)))]
-                                    [:button {:style    (button-style disabled)
-                                              :disabled disabled
-                                              :on-click (fn [] (if quick-choice?
-                                                                 (swap! state assoc :game (cmd/choose option))
-                                                                 (select! option)))}
-                                     text])) options)]
-                     (when interval
-                       [:div [:button {:style    (button-style)
-                                       :on-click (fn [] (swap! state assoc
-                                                               :game (cmd/choose 0)
-                                                               :selection []))}
-                              "Top"]
-                        (when (< 0 (:to interval))
-                          [:span [:input {:type      :number
-                                          :min       1
-                                          :max       (dec (:to interval))
-                                          :on-change (fn [event] (swap! state assoc :selection [(js/parseInt (-> event .-target .-value))]))
-                                          :value     (or (-> @state :selection first) 0)}]
-                           [:button {:style    (button-style)
-                                     :on-click (fn [] (swap! state assoc
-                                                             :game (cmd/choose (:to interval))
-                                                             :selection []))}
-                            "Bottom"]])])
-                     (when (or (not quick-choice?) interval)
-                       [:div
-                        (when (< 1 max)
-                          [:div "Selected: " (map-indexed (fn [idx selected]
-                                                            [:button {:style    (button-style)
-                                                                      :on-click (fn [] (deselect! idx))}
-                                                             (ut/format-name selected)]) (:selection @state))])
-                        (let [disabled (and min (< (count (:selection @state)) min)
-                                            (not (and optional? (empty? (:selection @state)))))]
-                          [:button {:style    (button-style disabled)
-                                    :disabled disabled
-                                    :on-click (fn [] (swap! state assoc
-                                                            :game (cmd/choose (:selection @state))
-                                                            :selection []))}
-                           "Done"])])]
-                    (when active?
-                      [:td (let [disabled (-> @state :game :commands :can-play-treasures? not)]
-                             [:button {:style    (button-style disabled)
-                                       :disabled disabled
-                                       :on-click (fn [] (swap! state assoc :game (cmd/play-treasures)))}
-                              "Play Treasures"])
-                       (let [disabled (-> @state :game :commands :can-end-turn? not)]
-                         [:button {:style    (button-style disabled)
-                                   :disabled disabled
-                                   :on-click (fn [] (swap! state assoc :game (cmd/end-turn)))}
-                          "End Turn"])]))
-                  (when set-aside
+     [:tbody
+      [:tr (map-tag :th ["Name" "Hand" "Play area" "Deck" "Discard"])]
+      (->> (get-in @state [:game :players])
+           (mapk (fn [{:keys               [name-ui hand play-area deck discard
+                                            actions coins buys set-aside
+                                            active? victory-points winner?]
+                       {:keys [text
+                               options
+                               interval
+                               min
+                               max
+                               quick-choice?
+                               optional?]} :choice}]
+                   [:tr
                     [:td
-                     [:div "Set aside"]
-                     [:div (map (partial view-card max) set-aside)]])])))]]
+                     (when active? [:div "Active"])
+                     [:div name-ui]]
+                    [:td (if (:number-of-cards hand)
+                           (view-pile hand max)
+                           (mapk (partial view-card max) hand))]
+                    [:td (mapk (partial view-card max) play-area)]
+                    [:td (view-pile deck max)]
+                    [:td (view-pile discard max)]
+                    [:td (if victory-points
+                           [:div
+                            (when winner? [:div "WINNER!"])
+                            [:div "Victory Points: " victory-points]]
+                           [:div
+                            [:div "Actions: " actions]
+                            [:div "Coins: " coins]
+                            [:div "Buys: " buys]])]
+                    (if text
+                      [:td text
+                       [:div (mapk (fn [{:keys [option text]}]
+                                     (let [disabled (and (not quick-choice?)
+                                                         (or (= max (count (:selection @state)))
+                                                             (-> (:selection @state) set option)))]
+                                       [:button {:style    (button-style disabled)
+                                                 :disabled disabled
+                                                 :on-click (fn [] (if quick-choice?
+                                                                    (swap! state assoc :game (cmd/choose option))
+                                                                    (select! option)))}
+                                        text])) options)]
+                       (when interval
+                         [:div [:button {:style    (button-style)
+                                         :on-click (fn [] (swap! state assoc
+                                                                 :game (cmd/choose 0)
+                                                                 :selection []))}
+                                "Top"]
+                          (when (< 0 (:to interval))
+                            [:span [:input {:type      :number
+                                            :min       1
+                                            :max       (dec (:to interval))
+                                            :on-change (fn [event] (swap! state assoc :selection [(js/parseInt (-> event .-target .-value))]))
+                                            :value     (or (-> @state :selection first) 0)}]
+                             [:button {:style    (button-style)
+                                       :on-click (fn [] (swap! state assoc
+                                                               :game (cmd/choose (:to interval))
+                                                               :selection []))}
+                              "Bottom"]])])
+                       (when (or (not quick-choice?) interval)
+                         [:div
+                          (when (< 1 max)
+                            [:div "Selected: " (mapk-indexed (fn [idx selected]
+                                                              [:button {:style    (button-style)
+                                                                        :on-click (fn [] (deselect! idx))}
+                                                               (ut/format-name selected)]) (:selection @state))])
+                          (let [disabled (and min (< (count (:selection @state)) min)
+                                              (not (and optional? (empty? (:selection @state)))))]
+                            [:button {:style    (button-style disabled)
+                                      :disabled disabled
+                                      :on-click (fn [] (swap! state assoc
+                                                              :game (cmd/choose (:selection @state))
+                                                              :selection []))}
+                             "Done"])])]
+                      (when active?
+                        [:td (let [disabled (-> @state :game :commands :can-play-treasures? not)]
+                               [:button {:style    (button-style disabled)
+                                         :disabled disabled
+                                         :on-click (fn [] (swap! state assoc :game (cmd/play-treasures)))}
+                                "Play Treasures"])
+                         (let [disabled (-> @state :game :commands :can-end-turn? not)]
+                           [:button {:style    (button-style disabled)
+                                     :disabled disabled
+                                     :on-click (fn [] (swap! state assoc :game (cmd/end-turn)))}
+                            "End Turn"])]))
+                    (when set-aside
+                      [:td
+                       [:div "Set aside"]
+                       [:div (mapk (partial view-card max) set-aside)]])])))]]]
    (let [{:keys [compact full]} (get-in @state [:game :trash])]
      [:div "Trash " [:button {:on-click (fn [] (swap! state update :trash-unfolded? not))}
                      (if (:trash-unfolded? @state) "Hide" "Show")]
       [:table
-       (if (get @state :trash-unfolded?)
-         [:tr [:td (map view-card full)]]
-         [:tr
-          [:td (view-pile compact nil)]])]])])
+       [:tbody
+        (if (get @state :trash-unfolded?)
+          [:tr [:td (mapk view-card full)]]
+          [:tr
+           [:td (view-pile compact nil)]])]]])])
 
 ;; -------------------------
 ;; Initialize app
