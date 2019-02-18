@@ -64,9 +64,12 @@
                                                                  :to        :play-area}]]
                                                    duration))))]
        (-> game
+           (assoc :current-player player-no)
            (update-in [:players player-no] start-turn)
            (cond-> (not-empty duration-effects) (push-effect-stack player-no duration-effects))
            check-stack)))))
+
+(effects/register {:start-turn start-turn})
 
 (defn set-approx-discard-size [game player-no & [n]]
   (let [{:keys [discard approx-discard-size]} (get-in game [:players player-no])
@@ -419,8 +422,8 @@
       (vp-fn cards))
     victory-points))
 
-(defn calc-victory-points [{:keys [deck discard hand play-area]}]
-  (let [cards (concat deck discard hand play-area)]
+(defn calc-victory-points [{:keys [deck discard hand play-area play-area-duration]}]
+  (let [cards (concat deck discard hand play-area play-area-duration)]
     (->> cards
          (filter :victory-points)
          (map (partial get-victory-points cards))
@@ -458,8 +461,7 @@
                 :phase :out-of-turn)
          (dissoc :triggers)
          (update :number-of-turns inc))))
-  ([{:keys [effect-stack] :as game} player-no]
-   (assert (empty? effect-stack) "You can't end your turn when you have a choice to make.")
+  ([game player-no]
    (-> game
        (update-in [:players player-no] clean-up)
        (set-approx-discard-size player-no)
@@ -468,3 +470,13 @@
        (dissoc :cost-reductions)
        check-game-ended
        check-stack)))
+
+(effects/register {:clean-up clean-up})
+
+(defn end-turn [{:keys [effect-stack players] :as game} player-no]
+  (assert (empty? effect-stack) "You can't end your turn when you have a choice to make.")
+  (let [next-player (mod (inc player-no) (count players))]
+    (-> game
+        (push-effect-stack next-player [[:start-turn]])
+        (push-effect-stack player-no [[:clean-up]])
+        check-stack)))

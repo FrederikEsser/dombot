@@ -38,31 +38,31 @@
                            :actions         1
                            :number-of-turns 2}]}
                (play 0 :caravan)
-               (clean-up 0)
-               (start-turn 0))
-           {:players [{:hand            [copper copper copper copper copper silver]
-                       :play-area       [caravan]
-                       :discard         [estate estate estate copper copper]
-                       :actions         1
-                       :coins           0
-                       :buys            1
-                       :actions-played  0
-                       :phase           :action
-                       :number-of-turns 3}]}))
+               (end-turn 0))
+           {:current-player 0
+            :players        [{:hand            [copper copper copper copper copper silver]
+                              :play-area       [caravan]
+                              :discard         [estate estate estate copper copper]
+                              :actions         1
+                              :coins           0
+                              :buys            1
+                              :actions-played  0
+                              :phase           :action
+                              :number-of-turns 3}]}))
     (is (= (-> {:players [{:hand            [caravan caravan copper copper copper]
                            :deck            [copper copper estate estate copper copper silver]
                            :actions         1
                            :number-of-turns 2}]}
                (play 0 :caravan)
                (play 0 :caravan)
-               (clean-up 0)
-               (start-turn 0))
-           {:players [{:hand            [estate estate copper copper silver copper copper]
-                       :play-area       [caravan caravan]
-                       :deck            [copper copper copper]
-                       :actions         1
-                       :coins           0
-                       :buys            1
-                       :actions-played  0
-                       :phase           :action
-                       :number-of-turns 3}]}))))
+               (end-turn 0))
+           {:current-player 0
+            :players        [{:hand            [estate estate copper copper silver copper copper]
+                              :play-area       [caravan caravan]
+                              :deck            [copper copper copper]
+                              :actions         1
+                              :coins           0
+                              :buys            1
+                              :actions-played  0
+                              :phase           :action
+                              :number-of-turns 3}]}))))

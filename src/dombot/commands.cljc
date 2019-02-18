@@ -64,12 +64,9 @@
     (view)))
 
 (defn end-turn []
-  (let [{:keys [players current-player] :as game} (get-game)
-        next-player (mod (inc current-player) (count players))]
+  (let [{:keys [current-player] :as game} (get-game)]
     (swap! game-state update :game conj (-> game
-                                            (op/clean-up current-player)
-                                            (assoc :current-player next-player)
-                                            (op/start-turn next-player)))
+                                            (op/end-turn current-player)))
     (view)))
 
 (defn -main
