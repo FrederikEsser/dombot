@@ -66,3 +66,57 @@
                               :actions-played  0
                               :phase           :action
                               :number-of-turns 3}]}))))
+
+(deftest fishing-village-test
+  (testing "Fishing Village"
+    (is (= (-> {:players [{:hand    [fishing-village]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :fishing-village))
+           {:players [{:play-area-duration [fishing-village]
+                       :actions            2
+                       :coins              1}]}))
+    (is (= (-> {:players [{:hand            [fishing-village]
+                           :actions         1
+                           :coins           0
+                           :number-of-turns 2}]}
+               (play 0 :fishing-village)
+               (end-turn 0))
+           {:current-player 0
+            :players        [{:play-area       [fishing-village]
+                              :actions         2
+                              :coins           1
+                              :buys            1
+                              :actions-played  0
+                              :phase           :action
+                              :number-of-turns 3}]}))))
+
+(deftest wharf-test
+  (testing "Wharf"
+    (is (= (-> {:players [{:hand    [wharf estate estate estate copper]
+                           :deck    [copper copper copper copper copper copper silver]
+                           :actions 1
+                           :buys    1}]}
+               (play 0 :wharf))
+           {:players [{:hand               [estate estate estate copper copper copper]
+                       :play-area-duration [wharf]
+                       :deck               [copper copper copper copper silver]
+                       :actions            0
+                       :buys               2}]}))
+    (is (= (-> {:players [{:hand            [wharf estate estate estate copper]
+                           :deck            [copper copper copper copper copper copper silver silver silver]
+                           :actions         1
+                           :buys 1
+                           :number-of-turns 2}]}
+               (play 0 :wharf)
+               (end-turn 0))
+           {:current-player 0
+            :players        [{:hand            [copper copper copper copper silver silver silver]
+                              :play-area       [wharf]
+                              :discard         [estate estate estate copper copper copper]
+                              :actions         1
+                              :coins           0
+                              :buys            2
+                              :actions-played  0
+                              :phase           :action
+                              :number-of-turns 3}]}))))
