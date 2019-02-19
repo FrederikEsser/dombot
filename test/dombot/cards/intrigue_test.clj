@@ -352,7 +352,7 @@
                                                         :min     1
                                                         :max     1}]}
                              {:player-no 1
-                              :effect    [:clear-unaffected]}]}))
+                              :effect    [:clear-unaffected {:works :once}]}]}))
       (is (= (-> {:players [{:hand    [minion]
                              :actions 1}
                             {:hand [diplomat estate estate estate silver]
@@ -389,7 +389,7 @@
                                                         :min     1
                                                         :max     1}]}
                              {:player-no 1
-                              :effect    [:clear-unaffected]}]}))
+                              :effect    [:clear-unaffected {:works :once}]}]}))
       (is (= (-> {:players [{:hand    [minion]
                              :deck    (repeat 5 copper)
                              :actions 1}
@@ -445,7 +445,7 @@
                                                         :min     1
                                                         :max     1}]}
                              {:player-no 1
-                              :effect    [:clear-unaffected]}]}))
+                              :effect    [:clear-unaffected {:works :once}]}]}))
       (is (= (-> {:players [{:hand    [minion]
                              :actions 1}
                             {:hand [diplomat moat estate estate silver]
@@ -456,7 +456,7 @@
                               :actions   0}
                              {:hand       [diplomat moat estate estate silver]
                               :deck       [copper copper]
-                              :unaffected true}]
+                              :unaffected [{:works :once}]}]
               :effect-stack [{:text      "You may reveal a Reaction to react to the Attack."
                               :player-no 1
                               :choice    :reveal-reaction
@@ -474,7 +474,7 @@
                                                         :min     1
                                                         :max     1}]}
                              {:player-no 1
-                              :effect    [:clear-unaffected]}]}))
+                              :effect    [:clear-unaffected {:works :once}]}]}))
       (is (= (-> {:players [{:hand    [minion]
                              :actions 1}
                             {:hand [diplomat moat estate estate silver]
@@ -486,7 +486,7 @@
                               :actions   1}
                              {:hand       [diplomat moat estate estate silver]
                               :deck       [copper copper]
-                              :unaffected true}]
+                              :unaffected [{:works :once}]}]
               :effect-stack [{:text      "Choose one:"
                               :player-no 0
                               :choice    ::intrigue/minion-choice
@@ -496,7 +496,7 @@
                               :min       1
                               :max       1}
                              {:player-no 1
-                              :effect    [:clear-unaffected]}]}))
+                              :effect    [:clear-unaffected {:works :once}]}]}))
       (is (= (-> {:players [{:hand    [minion]
                              :actions 1}
                             {:hand [diplomat copper estate estate silver]
@@ -525,7 +525,7 @@
                                                         :min     1
                                                         :max     1}]}
                              {:player-no 1
-                              :effect    [:clear-unaffected]}]})))))
+                              :effect    [:clear-unaffected {:works :once}]}]})))))
 
 (deftest duke-test
   (testing "Duke"
@@ -1554,7 +1554,7 @@
                             :min       1
                             :max       1}
                            {:player-no 1
-                            :effect    [:clear-unaffected]}]
+                            :effect    [:clear-unaffected {:works :once}]}]
             :trash        [copper]}))
     (is (= (-> {:supply  (base/supply 2 8)
                 :players [{:hand    [swindler]
@@ -1575,7 +1575,7 @@
                             :min       1
                             :max       1}
                            {:player-no 1
-                            :effect    [:clear-unaffected]}]
+                            :effect    [:clear-unaffected {:works :once}]}]
             :trash        [copper]}))
     (is (= (-> {:supply  (base/supply 2 8)
                 :players [{:hand    [swindler]
@@ -1639,9 +1639,9 @@
                               :min       1
                               :max       1}
                              {:player-no 1
-                              :effect    [:clear-unaffected]}
+                              :effect    [:clear-unaffected {:works :once}]}
                              {:player-no 2
-                              :effect    [:clear-unaffected]}]
+                              :effect    [:clear-unaffected {:works :once}]}]
               :trash        [copper curse]})))))
 
 (deftest torturer-test
@@ -1666,7 +1666,7 @@
                               :min       1
                               :max       1}
                              {:player-no 1
-                              :effect    [:clear-unaffected]}]}))
+                              :effect    [:clear-unaffected {:works :once}]}]}))
       (is (= (-> {:players [{:hand    [torturer]
                              :deck    [copper copper copper copper]
                              :actions 1}
@@ -1686,7 +1686,7 @@
                               :min       2
                               :max       2}
                              {:player-no 1
-                              :effect    [:clear-unaffected]}]}))
+                              :effect    [:clear-unaffected {:works :once}]}]}))
       (is (= (-> {:players [{:hand    [torturer]
                              :deck    [copper copper copper copper]
                              :actions 1}

@@ -21,6 +21,16 @@
                       :duration [[:give-actions 1]
                                  [:give-coins 1]]})
 
+(def lighthouse {:name     :lighthouse
+                 :set      :seaside
+                 :types    #{:action :duration}
+                 :cost     2
+                 :effects  [[:give-actions 1]
+                            [:give-coins 1]
+                            [:mark-unaffected {}]]
+                 :duration [[:give-coins 1]
+                            [:clear-unaffected {}]]})
+
 (def wharf {:name     :wharf
             :set      :seaside
             :types    #{:action :duration}
@@ -32,4 +42,5 @@
 
 (def kingdom-cards [caravan
                     fishing-village
+                    lighthouse
                     wharf])

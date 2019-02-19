@@ -1,5 +1,5 @@
 (ns dombot.cards.dominion
-  (:require [dombot.operations :refer [move-card push-effect-stack give-choice]]
+  (:require [dombot.operations :refer [move-card push-effect-stack give-choice is-unaffected?]]
             [dombot.cards.common :refer [reveal-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -212,13 +212,9 @@
                                     :max     1}]]})
 
 (defn moat-can-react? [game player-no]
-  (not (get-in game [:players player-no :unaffected])))
+  (not (is-unaffected? game player-no)))
 
-(defn moat-reaction [game player-no]
-  (assoc-in game [:players player-no :unaffected] true))
-
-(effects/register {::moat-can-react? moat-can-react?
-                   ::moat-reaction   moat-reaction})
+(effects/register {::moat-can-react? moat-can-react?})
 
 (def moat {:name       :moat
            :set        :dominion
@@ -227,7 +223,7 @@
            :effects    [[:draw 2]]
            :reacts-to  :attack
            :react-pred ::moat-can-react?
-           :reaction   [[::moat-reaction]]})
+           :reaction   [[:mark-unaffected {:works :once}]]})
 
 (defn moneylender-trash [game player-no card-name]
   (cond-> game

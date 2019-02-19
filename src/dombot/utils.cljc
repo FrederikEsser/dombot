@@ -52,6 +52,17 @@
        frequencies
        (into (sorted-map))))
 
+(defn dissoc-if-empty [map key]
+  (cond-> map
+          (empty? (get map key)) (dissoc map key)))
+
+(defn match [data1]
+  (fn [data2]
+    (->> data1
+         (map (fn [[k v]]
+                (#{v} (get data2 k))))
+         (every? (comp not nil?)))))
+
 (defn ensure-coll [data]
   (cond
     (coll? data) data

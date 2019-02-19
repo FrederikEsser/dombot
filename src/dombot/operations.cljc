@@ -227,10 +227,28 @@
                               :from-position   :top
                               :to              :hand}))
 
+(defn mark-unaffected [game player-no tag]
+  (update-in game [:players player-no :unaffected] conj tag))
+
+(defn is-unaffected?
+  ([{:keys [unaffected]}]
+   (not-empty unaffected))
+  ([game player-no]
+   (-> (get-in game [:players player-no])
+       is-unaffected?)))
+
+(defn clear-unaffected [game player-no criteria]
+  (-> game
+      (update-in [:players player-no :unaffected] (partial remove (ut/match criteria)))
+      (update-in [:players player-no] ut/dissoc-if-empty :unaffected)))
+
+(effects/register {:mark-unaffected  mark-unaffected
+                   :clear-unaffected clear-unaffected})
+
 (defn affect-other-players [{:keys [players] :as game} player-no {:keys [effects attack all at-once]}]
   (let [player-nos (cond-> (->> (range 1 (count players))
                                 (map (fn [n] (-> n (+ player-no) (mod (count players)))))
-                                (remove (fn [n] (and attack (get-in game [:players n :unaffected])))))
+                                (remove (fn [n] (and attack (is-unaffected? game n)))))
                            (not at-once) reverse
                            all (concat [player-no]))]
     (reduce (fn [game other-player-no]
@@ -334,11 +352,8 @@
 
 (defn remove-trigger [game player-no trigger]
   (-> game
-      (update-in [:players player-no :triggers] (partial remove (comp #{trigger} :trigger)))
-      (as-> game
-            (let [triggers (get-in game [:players player-no :triggers])]
-              (cond-> game
-                      (empty? triggers) (update-in [:players player-no] dissoc :triggers))))))
+      (update-in [:players player-no :triggers] (partial remove (ut/match {:trigger trigger})))
+      (update-in [:players player-no] ut/dissoc-if-empty :triggers)))
 
 (defn- apply-triggers [game player-no trigger]
   (let [triggers (get-in game [:players player-no :triggers])
@@ -359,17 +374,12 @@
             reaction (push-effect-stack player-no (concat reaction
                                                           reaction-choice)))))
 
-(defn clear-unaffected [game player-no]
-  (update-in game [:players player-no] dissoc :unaffected))
-
-(effects/register {:clear-unaffected clear-unaffected})
-
 (defn card-effect [game player-no {:keys [id types effects]}]
   (let [{:keys [actions-played]} (get-in game [:players player-no])]
     (cond-> game
             (and (:action types)
                  actions-played) (update-in [:players player-no :actions-played] inc)
-            (:attack types) (affect-other-players player-no {:effects [[:clear-unaffected]]})
+            (:attack types) (affect-other-players player-no {:effects [[:clear-unaffected {:works :once}]]})
             (:action types) (push-effect-stack player-no effects {:card-id id})
             (:attack types) (affect-other-players player-no {:effects reaction-choice}))))
 
@@ -441,15 +451,16 @@
                :winner (= best-score (calc-score player))))))
 
 (defn check-game-ended [{:keys [players] :as game}]
-  (let [best-score (->> players
-                        (map calc-score)
-                        sort
-                        last)]
-    (cond-> game
-            (game-ended? game) (-> (update :players (partial mapv (partial end-game-for-player best-score)))))))
+  (cond-> game
+          (game-ended? game) (as-> game
+                                   (let [best-score (->> players
+                                                         (map calc-score)
+                                                         sort
+                                                         last)]
+                                     (update game :players (partial mapv (partial end-game-for-player best-score)))))))
 
 (defn clean-up
-  ([{:keys [play-area hand] :as player}]
+  ([{:keys [play-area hand number-of-turns] :as player}]
    (let [used-cards (concat hand play-area)]
      (-> player
          (cond-> (not-empty used-cards) (update :discard concat used-cards))
@@ -460,7 +471,7 @@
                 :actions-played 0
                 :phase :out-of-turn)
          (dissoc :triggers)
-         (update :number-of-turns inc))))
+         (cond-> number-of-turns (update :number-of-turns inc)))))
   ([game player-no]
    (-> game
        (update-in [:players player-no] clean-up)
