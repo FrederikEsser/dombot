@@ -1,5 +1,5 @@
 (ns dombot.cards.seaside
-  (:require [dombot.operations :refer []]
+  (:require [dombot.operations :refer [move-card move-cards]]
             [dombot.cards.common :refer []]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -38,6 +38,27 @@
                     :effects  [[:give-coins 2]]
                     :duration [[:give-coins 2]]})
 
+(defn tactician-discard [game player-no]
+  (let [hand (get-in game [:players player-no :hand])]
+    (if (< 0 (count hand))
+      (move-cards game player-no {:card-names (map :name hand)
+                                  :from       :hand
+                                  :to         :discard})
+      (move-card game player-no {:card-name :tactician
+                                 :from      :play-area-duration
+                                 :to        :play-area}))))
+
+(effects/register {::tactician-discard tactician-discard})
+
+(def tactician {:name     :tactician
+                :set      :seaside
+                :types    #{:action :duration}
+                :cost     5
+                :effects  [[::tactician-discard]]
+                :duration [[:draw 5]
+                           [:give-actions 1]
+                           [:give-buys 1]]})
+
 (def wharf {:name     :wharf
             :set      :seaside
             :types    #{:action :duration}
@@ -51,4 +72,5 @@
                     fishing-village
                     lighthouse
                     merchant-ship
+                    tactician
                     wharf])

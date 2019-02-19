@@ -198,6 +198,50 @@
                               :actions-played 0
                               :phase          :action}]}))))
 
+(deftest tactician-test
+  (testing "Tactician"
+    (is (= (-> {:players [{:hand    [tactician estate]
+                           :actions 1}]}
+               (play 0 :tactician))
+           {:players [{:play-area-duration [tactician]
+                       :discard            [estate]
+                       :actions            0}]}))
+    (is (= (-> {:players [{:hand    [tactician]
+                           :actions 1}]}
+               (play 0 :tactician))
+           {:players [{:play-area [tactician]
+                       :actions   0}]}))
+    (is (= (-> {:players [{:hand    [tactician estate]
+                           :deck    (repeat 10 copper)
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :tactician)
+               (end-turn 0))
+           {:current-player 0
+            :players        [{:hand           (repeat 10 copper)
+                              :play-area      [tactician]
+                              :discard        [estate]
+                              :actions        2
+                              :coins          0
+                              :buys           2
+                              :actions-played 0
+                              :phase          :action}]}))
+    (is (= (-> {:players [{:hand    [tactician]
+                           :deck    (repeat 10 copper)
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :tactician)
+               (end-turn 0))
+           {:current-player 0
+            :players        [{:hand           (repeat 5 copper)
+                              :deck           (repeat 5 copper)
+                              :discard        [tactician]
+                              :actions        1
+                              :coins          0
+                              :buys           1
+                              :actions-played 0
+                              :phase          :action}]}))))
+
 (deftest wharf-test
   (testing "Wharf"
     (is (= (-> {:players [{:hand    [wharf estate estate estate copper]
