@@ -31,6 +31,13 @@
                  :duration [[:give-coins 1]
                             [:clear-unaffected {}]]})
 
+(def merchant-ship {:name     :merchant-ship
+                    :set      :seaside
+                    :types    #{:action :duration}
+                    :cost     5
+                    :effects  [[:give-coins 2]]
+                    :duration [[:give-coins 2]]})
+
 (def wharf {:name     :wharf
             :set      :seaside
             :types    #{:action :duration}
@@ -43,4 +50,5 @@
 (def kingdom-cards [caravan
                     fishing-village
                     lighthouse
+                    merchant-ship
                     wharf])

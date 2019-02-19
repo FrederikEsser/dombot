@@ -176,6 +176,28 @@
                                   :actions-played 0
                                   :phase          :action}]}))))))
 
+(deftest merchant-ship-test
+  (testing "Merchant Ship"
+    (is (= (-> {:players [{:hand    [merchant-ship]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :merchant-ship))
+           {:players [{:play-area-duration [merchant-ship]
+                       :actions            0
+                       :coins              2}]}))
+    (is (= (-> {:players [{:hand    [merchant-ship]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :merchant-ship)
+               (end-turn 0))
+           {:current-player 0
+            :players        [{:play-area      [merchant-ship]
+                              :actions        1
+                              :coins          2
+                              :buys           1
+                              :actions-played 0
+                              :phase          :action}]}))))
+
 (deftest wharf-test
   (testing "Wharf"
     (is (= (-> {:players [{:hand    [wharf estate estate estate copper]
