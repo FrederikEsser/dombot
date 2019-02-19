@@ -63,7 +63,7 @@
                                        (when (:gold (set choices)) [:gain :gold])])))
 
 (defn courtier-reveal [game player-no card-name]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] card-name)
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         num-types (-> card :types count)]
     (push-effect-stack game player-no [[:reveal card-name]
                                        [:give-choice {:text    (str "Choose " (ut/number->text num-types) ":")
@@ -363,7 +363,7 @@
                                         [:attack {:effects [[:gain :curse]]}])]))))
 
 (defn replace-trash [game player-no card-name]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] card-name)
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         max-cost (+ 2 (ut/get-cost game card))]
     (-> game
         (push-effect-stack player-no [[:trash-from-hand card-name]
@@ -522,7 +522,7 @@
                                             :max     2}]]})
 
 (defn upgrade-trash [game player-no card-name]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] card-name)
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         cost (inc (ut/get-cost game card))]
     (-> game
         (push-effect-stack player-no [[:trash-from-hand card-name]

@@ -36,7 +36,8 @@
 (defn do-effect [game player-no [name args] {:keys [card-id]}]
   (let [effect-fn (effects/get-effect name)
         args (cond-> args
-                     (and (map? args) card-id) (assoc :card-id card-id))]
+                     (and card-id
+                          (or (nil? args) (map? args))) (assoc :card-id card-id))]
     (if args
       (effect-fn game player-no args)
       (effect-fn game player-no))))
@@ -48,6 +49,17 @@
                        (do-effect player-no effect {:card-id card-id})
                        check-stack))))
 
+(defn duration-effects [game player-no]
+  (let [duration-cards (get-in game [:players player-no :play-area-duration])]
+    (reduce (fn [game {:keys [id duration]}]
+              (push-effect-stack game player-no (concat [[:move-card {:card-id id
+                                                                      :from    :play-area-duration
+                                                                      :to      :play-area}]]
+                                                        duration)
+                                 {:card-id id}))
+            game
+            (reverse duration-cards))))
+
 (defn start-turn
   ([player]
    (assoc player :actions 1
@@ -57,17 +69,11 @@
   ([game player-no]
    (if (game-ended? game)
      game
-     (let [duration-effects (->> (get-in game [:players player-no :play-area-duration])
-                                 (mapcat (fn [{:keys [name duration]}]
-                                           (concat [[:move-card {:card-name name
-                                                                 :from      :play-area-duration
-                                                                 :to        :play-area}]]
-                                                   duration))))]
-       (-> game
-           (assoc :current-player player-no)
-           (update-in [:players player-no] start-turn)
-           (cond-> (not-empty duration-effects) (push-effect-stack player-no duration-effects))
-           check-stack)))))
+     (-> game
+         (assoc :current-player player-no)
+         (update-in [:players player-no] start-turn)
+         (duration-effects player-no)
+         check-stack))))
 
 (effects/register {:start-turn start-turn})
 
@@ -167,7 +173,7 @@
 
 (effects/register {:peek-deck peek-deck})
 
-(defn move-card [game player-no {:keys [card-name from from-position to to-position to-player] :as args}]
+(defn move-card [game player-no {:keys [card-name card-id from from-position to to-position to-player] :as args}]
   (let [{:keys [deck discard] :as player} (get-in game [:players player-no])]
     (if (and (= :deck from) (empty? deck) (not-empty discard))
       (push-effect-stack game player-no [[:shuffle]
@@ -178,9 +184,10 @@
             {:keys [idx card]} (case from-position
                                  :bottom {:idx (dec (count (get player from))) :card (last (get player from))}
                                  :top {:idx 0 :card (first (get player from))}
-                                 (if card-name
-                                   (ut/get-card-idx game from-path card-name)
-                                   {:idx 0 :card (first (get player from))}))
+                                 (cond
+                                   card-name (ut/get-card-idx game from-path {:name card-name})
+                                   card-id (ut/get-card-idx game from-path {:id card-id})
+                                   :else {:idx 0 :card (first (get player from))}))
             to-path (if (= to :trash)
                       [:trash]
                       [:players (or to-player player-no) to])
@@ -196,6 +203,8 @@
                                      :else (concat coll [card])))))]
         (when card-name
           (assert card (str "Move error: There is no " (ut/format-name card-name) " in your " (ut/format-name from) ".")))
+        (when card-id
+          (assert card (str "Move error: Card-id " card-id " is not in your " (ut/format-name from) ".")))
         (cond-> game
                 card (-> (update-in from-path ut/vec-remove idx)
                          (update-in to-path add-card-to-coll card)
@@ -369,7 +378,7 @@
                                      :max     1}]])
 
 (defn reveal-reaction [game player-no card-name]
-  (let [{{:keys [reaction]} :card} (ut/get-card-idx game [:players player-no :hand] card-name)] ; TODO: Handle reactions that are not in hand
+  (let [{{:keys [reaction]} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})] ; TODO: Handle reactions that are not in hand
     (cond-> game
             reaction (push-effect-stack player-no (concat reaction
                                                           reaction-choice)))))
@@ -391,7 +400,7 @@
 
 (defn play [{:keys [effect-stack] :as game} player-no card-name]
   (let [{:keys [phase actions triggers]} (get-in game [:players player-no])
-        {{:keys [types effects coin-value] :as card} :card} (ut/get-card-idx game [:players player-no :hand] card-name)]
+        {{:keys [types effects coin-value] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
     (assert (empty? effect-stack) "You can't play cards when you have a choice to make.")
     (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
     (assert types (str "Play error: " (ut/format-name card-name) " has no types."))

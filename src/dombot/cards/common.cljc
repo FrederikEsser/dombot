@@ -48,7 +48,7 @@
 (effects/register {:play play-from-hand})
 
 (defn play-action-twice [game player-no card-name]
-  (let [{card :card} (ut/get-card-idx game [:players player-no :hand] card-name)]
+  (let [{card :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
     (cond-> game
             card-name (push-effect-stack player-no [[:play card-name]
                                                     [:card-effect card]

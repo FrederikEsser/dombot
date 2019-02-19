@@ -21,15 +21,45 @@
                       :duration [[:give-actions 1]
                                  [:give-coins 1]]})
 
+(defn haven-set-aside [game player-no card-name]
+  (let [{:keys [card idx]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        haven-idx (-> game (get-in [:players player-no :play-area-duration]) count dec)]
+    (-> game
+        (update-in [:players player-no :hand] ut/vec-remove idx)
+        (update-in [:players player-no :play-area-duration haven-idx :set-aside] conj card))))
+
+(defn haven-put-in-hand [game player-no {:keys [card-id]}]
+  game
+  (let [{:keys [card idx]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
+    (-> game
+        (update-in [:players player-no :play-area idx] dissoc :set-aside)
+        (update-in [:players player-no :hand] concat (:set-aside card)))))
+
+(effects/register {::haven-set-aside   haven-set-aside
+                   ::haven-put-in-hand haven-put-in-hand})
+
+(def haven {:name     :haven
+            :set      :seaside
+            :types    #{:action :duration}
+            :cost     2
+            :effects  [[:draw 1]
+                       [:give-actions 1]
+                       [:give-choice {:text    "Set aside a card from your hand."
+                                      :choice  ::haven-set-aside
+                                      :options [:player :hand]
+                                      :min     1
+                                      :max     1}]]
+            :duration [[::haven-put-in-hand]]})
+
 (def lighthouse {:name     :lighthouse
                  :set      :seaside
                  :types    #{:action :duration}
                  :cost     2
                  :effects  [[:give-actions 1]
                             [:give-coins 1]
-                            [:mark-unaffected {}]]
+                            [:mark-unaffected]]
                  :duration [[:give-coins 1]
-                            [:clear-unaffected {}]]})
+                            [:clear-unaffected]]})
 
 (def merchant-ship {:name     :merchant-ship
                     :set      :seaside
@@ -70,6 +100,7 @@
 
 (def kingdom-cards [caravan
                     fishing-village
+                    haven
                     lighthouse
                     merchant-ship
                     tactician

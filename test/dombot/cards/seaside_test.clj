@@ -84,25 +84,69 @@
                               :actions-played 0
                               :phase          :action}]}))))
 
+(deftest haven-test
+  (let [haven (assoc haven :id 1)]
+    (testing "Haven"
+      (is (= (-> {:players [{:hand    [haven estate]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :haven))
+             {:players      [{:hand               [estate copper]
+                              :play-area-duration [haven]
+                              :deck               [copper]
+                              :actions            1}]
+              :effect-stack [{:text      "Set aside a card from your hand."
+                              :player-no 0
+                              :card-id   1
+                              :choice    ::seaside/haven-set-aside
+                              :source    :hand
+                              :options   [:estate :copper]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:players [{:hand    [haven estate]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :haven)
+                 (choose :copper))
+             {:players [{:hand               [estate]
+                         :play-area-duration [(assoc haven :set-aside [copper])]
+                         :deck               [copper]
+                         :actions            1}]}))
+      (is (= (-> {:players [{:hand    [haven estate]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :haven)
+                 (choose :copper)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand           [copper estate copper]
+                                :play-area      [haven]
+                                :actions        1
+                                :coins          0
+                                :buys           1
+                                :actions-played 0
+                                :phase          :action}]})))))
+
 (deftest lighthouse-test
-  (let [lighthouse (assoc lighthouse :id 1)]
+  (let [lighthouse-1 (assoc lighthouse :id 1)
+        lighthouse-2 (assoc lighthouse :id 2)]
     (testing "Lighthouse"
-      (is (= (-> {:players [{:hand    [lighthouse]
+      (is (= (-> {:players [{:hand    [lighthouse-1]
                              :actions 1
                              :coins   0}]}
                  (play 0 :lighthouse))
-             {:players [{:play-area-duration [lighthouse]
+             {:players [{:play-area-duration [lighthouse-1]
                          :actions            1
                          :coins              1
                          :unaffected         [{:card-id 1}]}]}))
-      (is (= (-> {:players [{:hand    [lighthouse]
+      (is (= (-> {:players [{:hand    [lighthouse-1]
                              :actions 1
                              :coins   0}
                             {}]}
                  (play 0 :lighthouse)
                  (end-turn 0))
              {:current-player 1
-              :players        [{:play-area-duration [lighthouse]
+              :players        [{:play-area-duration [lighthouse-1]
                                 :actions            0
                                 :coins              0
                                 :buys               0
@@ -115,7 +159,7 @@
                                 :phase   :action}]}))
       (let [curse (assoc curse :id 1)]
         (is (= (-> {:supply  [{:card curse :pile-size 20}]
-                    :players [{:hand    [lighthouse]
+                    :players [{:hand    [lighthouse-1]
                                :deck    [moat]
                                :actions 1
                                :coins   0}
@@ -129,7 +173,7 @@
                {:current-player 2
                 :supply         [{:card curse :pile-size 18}]
                 :players        [{:hand               [moat]
-                                  :play-area-duration [lighthouse]
+                                  :play-area-duration [lighthouse-1]
                                   :actions            0
                                   :coins              0
                                   :buys               0
@@ -149,32 +193,31 @@
                                   :coins     0
                                   :buys      1
                                   :phase     :action}]})))
-      (is (= (-> {:players [{:hand    [lighthouse]
+      (is (= (-> {:players [{:hand    [lighthouse-1]
                              :actions 1
                              :coins   0}]}
                  (play 0 :lighthouse)
                  (end-turn 0))
              {:current-player 0
-              :players        [{:play-area      [lighthouse]
+              :players        [{:play-area      [lighthouse-1]
                                 :actions        1
                                 :coins          1
                                 :buys           1
                                 :actions-played 0
                                 :phase          :action}]}))
-      (let [lighthouse-2 (assoc lighthouse :id 2)]
-        (is (= (-> {:players [{:hand    [lighthouse lighthouse-2]
-                               :actions 1
-                               :coins   0}]}
-                   (play 0 :lighthouse)
-                   (play 0 :lighthouse)
-                   (end-turn 0))
-               {:current-player 0
-                :players        [{:play-area      [lighthouse lighthouse-2]
-                                  :actions        1
-                                  :coins          2
-                                  :buys           1
-                                  :actions-played 0
-                                  :phase          :action}]}))))))
+      (is (= (-> {:players [{:hand    [lighthouse-1 lighthouse-2]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :lighthouse)
+                 (play 0 :lighthouse)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:play-area      [lighthouse-1 lighthouse-2]
+                                :actions        1
+                                :coins          2
+                                :buys           1
+                                :actions-played 0
+                                :phase          :action}]})))))
 
 (deftest merchant-ship-test
   (testing "Merchant Ship"

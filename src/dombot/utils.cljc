@@ -79,10 +79,10 @@
                        (when ((comp #{card-name} :name :card) pile) (merge pile {:idx idx}))))
        first))
 
-(defn get-card-idx [game path card-name]
+(defn get-card-idx [game path criteria]
   (->> (get-in game path)
-       (keep-indexed (fn [idx {:keys [name] :as card}]
-                       (when (= card-name name) {:idx idx :card card})))
+       (keep-indexed (fn [idx card]
+                       (when ((match criteria) card) {:idx idx :card card})))
        first))
 
 (defn- minus-cost [cost reduction]
