@@ -9,31 +9,29 @@
     (or (and province-pile-size (zero? province-pile-size))
         (>= (ut/empty-supply-piles game) 3))))
 
-(defn push-effect-stack
-  ([game player-no data {:keys [card-id]}]
-   (update game :effect-stack (partial concat (if (sequential? data)
-                                                (->> data
-                                                     (map (fn [effect]
-                                                            (when effect
-                                                              (merge {:player-no player-no
-                                                                      :effect    effect}
-                                                                     (when card-id
-                                                                       {:card-id card-id})))))
-                                                     (remove nil?))
-                                                (when data
-                                                  [(merge data
-                                                          {:player-no player-no}
-                                                          (when card-id
-                                                            {:card-id card-id}))])))))
-  ([game player-no data]
-   (push-effect-stack game player-no data nil)))
+(defn push-effect-stack [game {:keys [player-no card-id effects]}]
+  (update game :effect-stack (partial concat (if (sequential? effects)
+                                               (->> effects
+                                                    (map (fn [effect]
+                                                           (when effect
+                                                             (merge {:player-no player-no
+                                                                     :effect    effect}
+                                                                    (when card-id
+                                                                      {:card-id card-id})))))
+                                                    (remove nil?))
+                                               (when effects
+                                                 [(merge effects
+                                                         {:player-no player-no}
+                                                         (when card-id
+                                                           {:card-id card-id}))])))))
 
 (defn pop-effect-stack [{:keys [effect-stack] :as game}]
   (if (= 1 (count effect-stack))
     (dissoc game :effect-stack)
     (update game :effect-stack (partial drop 1))))
 
-(defn do-effect [game player-no [name args] {:keys [card-id]}]
+(defn do-effect [game {:keys       [player-no card-id]
+                       [name args] :effect}]
   (let [effect-fn (effects/get-effect name)
         args (cond-> args
                      (and card-id
@@ -46,7 +44,9 @@
   (let [[{:keys [player-no card-id effect] :as top}] (get game :effect-stack)]
     (cond-> game
             effect (-> pop-effect-stack
-                       (do-effect player-no effect {:card-id card-id})
+                       (do-effect {:player-no player-no
+                                   :card-id   card-id
+                                   :effect    effect})
                        check-stack))))
 
 (defn duration-effects [game player-no]
@@ -55,7 +55,9 @@
         do-duration-effect (fn [game {:keys [id duration]}]
                              (-> game
                                  (ut/update-in-vec [:players player-no :play-area] {:id id} dissoc :stay-in-play)
-                                 (push-effect-stack player-no duration {:card-id id})))]
+                                 (push-effect-stack {:player-no player-no
+                                                     :card-id   id
+                                                     :effects   duration})))]
     (reduce do-duration-effect game (reverse duration-cards))))
 
 (defn start-turn
@@ -157,9 +159,10 @@
         after (->> discard
                    (keep (comp :shuffle :after-triggers))
                    (apply concat))]
-    (push-effect-stack game player-no (concat before
-                                              [[:do-shuffle]]
-                                              after))))
+    (push-effect-stack game {:player-no player-no
+                             :effects   (concat before
+                                                [[:do-shuffle]]
+                                                after)})))
 
 (effects/register {:do-shuffle do-shuffle
                    :shuffle    shuffle-discard})
@@ -174,8 +177,9 @@
 (defn move-card [game player-no {:keys [card-name card-id from from-position to to-position to-player] :as args}]
   (let [{:keys [deck discard] :as player} (get-in game [:players player-no])]
     (if (and (= :deck from) (empty? deck) (not-empty discard))
-      (push-effect-stack game player-no [[:shuffle]
-                                         [:move-card args]])
+      (push-effect-stack game {:player-no player-no
+                               :effects   [[:shuffle]
+                                           [:move-card args]]})
       (let [from-path (if (= from :trash)
                         [:trash]
                         [:players player-no from])
@@ -216,17 +220,17 @@
   (if number-of-cards
     (cond-> game
             (< 0 number-of-cards)
-            (push-effect-stack player-no
-                               (repeat number-of-cards [:move-card (dissoc args :number-of-cards)])))
+            (push-effect-stack {:player-no player-no
+                                :effects   (repeat number-of-cards [:move-card (dissoc args :number-of-cards)])}))
     (let [card-names (ut/ensure-coll card-names)]
       (cond-> game
               (not-empty card-names)
-              (push-effect-stack player-no
-                                 (map (fn [card-name]
-                                        [:move-card (-> args
-                                                        (dissoc :card-names)
-                                                        (assoc :card-name card-name))])
-                                      card-names))))))
+              (push-effect-stack {:player-no player-no
+                                  :effects   (map (fn [card-name]
+                                                    [:move-card (-> args
+                                                                    (dissoc :card-names)
+                                                                    (assoc :card-name card-name))])
+                                                  card-names)})))))
 
 (defn draw [game player-no number-of-cards]
   (move-cards game player-no {:number-of-cards number-of-cards
@@ -259,7 +263,8 @@
                            (not at-once) reverse
                            all (concat [player-no]))]
     (reduce (fn [game other-player-no]
-              (push-effect-stack game other-player-no effects))
+              (push-effect-stack game {:player-no other-player-no
+                                       :effects   effects}))
             game
             player-nos)))
 
@@ -352,7 +357,9 @@
                        (= min (or max (count options)))
                        (not optional?))]
     (-> game
-        (cond-> (not-empty options) (push-effect-stack player-no choice' {:card-id card-id})
+        (cond-> (not-empty options) (push-effect-stack {:player-no player-no
+                                                        :card-id   card-id
+                                                        :effects   choice'})
                 swiftable (choose (take min options)))
         (?reveal-discard-size player-no choice')
         check-stack)))
@@ -364,7 +371,8 @@
 
 (defn- apply-triggers [game player-no trigger]
   (let [triggers (get-in game [:players player-no :triggers])
-        apply-trigger (fn [game {:keys [effects]}] (push-effect-stack game player-no effects))
+        apply-trigger (fn [game {:keys [effects]}] (push-effect-stack game {:player-no player-no
+                                                                            :effects   effects}))
         matching-triggers (filter (comp #{trigger} :trigger) triggers)]
     (-> (reduce apply-trigger game matching-triggers)
         (remove-trigger player-no trigger))))
@@ -378,8 +386,8 @@
 (defn reveal-reaction [game player-no card-name]
   (let [{{:keys [reaction]} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})] ; TODO: Handle reactions that are not in hand
     (cond-> game
-            reaction (push-effect-stack player-no (concat reaction
-                                                          reaction-choice)))))
+            reaction (push-effect-stack {:player-no player-no
+                                         :effects   (concat reaction reaction-choice)}))))
 
 (defn card-effect [game player-no {:keys [id types effects]}]
   (let [{:keys [actions-played]} (get-in game [:players player-no])]
@@ -387,7 +395,9 @@
             (and (:action types)
                  actions-played) (update-in [:players player-no :actions-played] inc)
             (:attack types) (affect-other-players player-no {:effects [[:clear-unaffected {:works :once}]]})
-            (:action types) (push-effect-stack player-no effects {:card-id id})
+            (:action types) (push-effect-stack {:player-no player-no
+                                                :card-id   id
+                                                :effects   effects})
             (:attack types) (affect-other-players player-no {:effects reaction-choice})
             (:duration types) (ut/update-in-vec [:players player-no :play-area] {:id id} assoc :stay-in-play true))))
 
@@ -498,6 +508,8 @@
   (assert (empty? effect-stack) "You can't end your turn when you have a choice to make.")
   (let [next-player (mod (inc player-no) (count players))]
     (-> game
-        (push-effect-stack next-player [[:start-turn]])
-        (push-effect-stack player-no [[:clean-up]])
+        (push-effect-stack {:player-no next-player
+                            :effects   [[:start-turn]]})
+        (push-effect-stack {:player-no player-no
+                            :effects   [[:clean-up]]})
         check-stack)))

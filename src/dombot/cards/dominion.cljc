@@ -34,8 +34,9 @@
                                            [:discard-all-revealed]]}]]})
 
 (defn bureaucrat-topdeck-victory [game player-no card-name]
-  (push-effect-stack game player-no [[:reveal-from-hand card-name]
-                                     [:topdeck-from-revealed card-name]]))
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:reveal-from-hand card-name]
+                                       [:topdeck-from-revealed card-name]]}))
 
 (defn bureaucrat-attack [game player-no]
   (let [hand (get-in game [:players player-no :hand])]
@@ -59,8 +60,9 @@
                            [:attack {:effects [[::bureaucrat-attack]]}]]})
 
 (defn cellar-sift [game player-no card-names]
-  (push-effect-stack game player-no [[:discard-from-hand card-names]
-                                     [:draw (count card-names)]]))
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:discard-from-hand card-names]
+                                       [:draw (count card-names)]]}))
 
 (effects/register {::cellar-sift cellar-sift})
 
@@ -147,9 +149,10 @@
   (let [{:keys [hand deck discard]} (get-in game [:players player-no])]
     (cond-> game
             (and (< (count hand) 7)
-                 (not-empty (concat deck discard))) (push-effect-stack player-no [[:draw 1]
-                                                                                  [::library-check-for-action]
-                                                                                  [::library-draw]]))))
+                 (not-empty (concat deck discard))) (push-effect-stack {:player-no player-no
+                                                                        :effects   [[:draw 1]
+                                                                                    [::library-check-for-action]
+                                                                                    [::library-draw]]}))))
 
 (effects/register {::library-draw             library-draw
                    ::library-check-for-action library-check-for-action
@@ -193,12 +196,13 @@
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         max-cost (+ 3 (ut/get-cost game card))]
     (-> game
-        (push-effect-stack player-no [[:trash-from-hand card-name]
-                                      [:give-choice {:text    (str "Gain a Treasure to your hand costing up to $" max-cost ".")
-                                                     :choice  :gain-to-hand
-                                                     :options [:supply {:max-cost max-cost :type :treasure}]
-                                                     :min     1
-                                                     :max     1}]]))))
+        (push-effect-stack {:player-no player-no
+                            :effects   [[:trash-from-hand card-name]
+                                        [:give-choice {:text    (str "Gain a Treasure to your hand costing up to $" max-cost ".")
+                                                       :choice  :gain-to-hand
+                                                       :options [:supply {:max-cost max-cost :type :treasure}]
+                                                       :min     1
+                                                       :max     1}]]}))))
 
 (effects/register {::mine-trash mine-trash})
 
@@ -227,8 +231,9 @@
 
 (defn moneylender-trash [game player-no card-name]
   (cond-> game
-          (= :copper card-name) (push-effect-stack player-no [[:trash-from-hand :copper]
-                                                              [:give-coins 3]])))
+          (= :copper card-name) (push-effect-stack {:player-no player-no
+                                                    :effects   [[:trash-from-hand :copper]
+                                                                [:give-coins 3]]})))
 
 (effects/register {::moneylender-trash moneylender-trash})
 
@@ -265,12 +270,13 @@
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         max-cost (+ 2 (ut/get-cost game card))]
     (-> game
-        (push-effect-stack player-no [[:trash-from-hand card-name]
-                                      [:give-choice {:text    (str "Gain a card costing up to $" max-cost ".")
-                                                     :choice  :gain
-                                                     :options [:supply {:max-cost max-cost}]
-                                                     :min     1
-                                                     :max     1}]]))))
+        (push-effect-stack {:player-no player-no
+                            :effects   [[:trash-from-hand card-name]
+                                        [:give-choice {:text    (str "Gain a card costing up to $" max-cost ".")
+                                                       :choice  :gain
+                                                       :options [:supply {:max-cost max-cost}]
+                                                       :min     1
+                                                       :max     1}]]}))))
 
 (effects/register {::remodel-trash remodel-trash})
 
@@ -321,8 +327,9 @@
   (let [{:keys [discard]} (get-in game [:players player-no])
         {:keys [name] :as card} (last discard)]
     (cond-> game
-            (= name card-name) (-> (push-effect-stack player-no [[:play-from-discard card-name]
-                                                                 [:card-effect card]])))))
+            (= name card-name) (-> (push-effect-stack {:player-no player-no
+                                                       :effects   [[:play-from-discard card-name]
+                                                                   [:card-effect card]]})))))
 
 (effects/register {::vassal-play-action vassal-play-action})
 

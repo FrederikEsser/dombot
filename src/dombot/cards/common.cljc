@@ -50,9 +50,10 @@
 (defn play-action-twice [game player-no card-name]
   (let [{card :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
     (cond-> game
-            card-name (push-effect-stack player-no [[:play card-name]
-                                                    [:card-effect card]
-                                                    [:card-effect card]]))))
+            card-name (push-effect-stack {:player-no player-no
+                                          :effects   [[:play card-name]
+                                                      [:card-effect card]
+                                                      [:card-effect card]]}))))
 
 (effects/register {:play-action-twice play-action-twice})
 
