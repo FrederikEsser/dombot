@@ -1,5 +1,5 @@
 (ns dombot.cards.common
-  (:require [dombot.operations :refer [gain move-card move-cards give-choice card-effect push-effect-stack]]
+  (:require [dombot.operations :refer [gain move-card move-cards give-choice push-effect-stack]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 

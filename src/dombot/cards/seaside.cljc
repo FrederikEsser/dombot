@@ -23,16 +23,16 @@
 
 (defn haven-set-aside [game player-no card-name]
   (let [{:keys [card idx]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        haven-idx (-> game (get-in [:players player-no :play-area-duration]) count dec)]
+        haven-idx (-> game (get-in [:players player-no :play-area]) count dec)]
     (-> game
         (update-in [:players player-no :hand] ut/vec-remove idx)
-        (update-in [:players player-no :play-area-duration haven-idx :set-aside] conj card))))
+        (update-in [:players player-no :play-area haven-idx :set-aside] conj card))))
 
 (defn haven-put-in-hand [game player-no {:keys [card-id]}]
   game
-  (let [{:keys [card idx]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
     (-> game
-        (update-in [:players player-no :play-area idx] dissoc :set-aside)
+        (ut/update-in-vec [:players player-no :play-area] {:id card-id} dissoc :set-aside)
         (update-in [:players player-no :hand] concat (:set-aside card)))))
 
 (effects/register {::haven-set-aside   haven-set-aside
@@ -68,15 +68,13 @@
                     :effects  [[:give-coins 2]]
                     :duration [[:give-coins 2]]})
 
-(defn tactician-discard [game player-no]
+(defn tactician-discard [game player-no {:keys [card-id]}]
   (let [hand (get-in game [:players player-no :hand])]
     (if (< 0 (count hand))
       (move-cards game player-no {:card-names (map :name hand)
                                   :from       :hand
                                   :to         :discard})
-      (move-card game player-no {:card-name :tactician
-                                 :from      :play-area-duration
-                                 :to        :play-area}))))
+      (ut/update-in-vec game [:players player-no :play-area] {:id card-id} dissoc :stay-in-play))))
 
 (effects/register {::tactician-discard tactician-discard})
 

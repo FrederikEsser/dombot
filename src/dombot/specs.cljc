@@ -15,12 +15,15 @@
 
 (s/def ::interaction #{:buyable :playable :choosable :quick-choosable})
 
+(s/def ::stay-in-play boolean?)
+
 (s/def ::card (s/keys :req-un [::name
                                ::name-ui
                                ::types]
                       :opt-un [::cost
                                ::number-of-cards
-                               ::interaction]))
+                               ::interaction
+                               ::stay-in-play]))
 
 (s/def ::cards (s/coll-of ::card))
 

@@ -186,6 +186,24 @@
                                  :types   #{:treasure}}]
               :number-of-cards 4})))))
 
+(deftest play-area-test
+  (testing "Play area view"
+    (is (= (view-area :play-area {:player {:play-area []}})
+           []))
+    (is (= (view-area :play-area {:player {:play-area [copper copper]}})
+           [{:name            :copper
+             :name-ui         "Copper"
+             :types           #{:treasure}
+             :number-of-cards 2}]))
+    (is (= (view-area :play-area {:player {:play-area [copper (assoc copper :stay-in-play true)]}})
+           [{:name         :copper
+             :name-ui      "Copper"
+             :types        #{:treasure}
+             :stay-in-play true}
+            {:name         :copper
+             :name-ui      "Copper"
+             :types        #{:treasure}}]))))
+
 (deftest discard-test
   (testing "Discard view"
     (is (= (view-discard {:player {:discard []}})
@@ -463,7 +481,7 @@
                          :max     1})
            {:text          "Choice text"
             :quick-choice? true
-            :interval       {:from 0 :to 3}
+            :interval      {:from 0 :to 3}
             :min           1
             :max           1}))))
 

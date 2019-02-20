@@ -36,10 +36,12 @@
         cards (cond->> (get player area)
                        number-of-cards (take-fn number-of-cards))]
     (->> cards
-         (map (fn [{:keys [name types]}]
+         (map (fn [{:keys [name types stay-in-play]}]
                 (merge {:name    name
                         :name-ui (ut/format-name name)
                         :types   types}
+                       (when stay-in-play
+                         {:stay-in-play stay-in-play})
                        (when (and (= :hand area)
                                   (not choice)
                                   (or (and (:action types)
@@ -50,6 +52,7 @@
                          {:interaction :playable})
                        (choice-interaction name area choice))))
          frequencies
+         (sort-by (comp not :stay-in-play first))
          (map (fn [[card number-of-cards]]
                 (cond-> card
                         (< 1 number-of-cards) (assoc :number-of-cards number-of-cards)))))))

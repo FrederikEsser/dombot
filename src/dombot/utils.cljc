@@ -85,6 +85,12 @@
                        (when ((match criteria) card) {:idx idx :card card})))
        first))
 
+(defn update-in-vec [game path criteria f & args]
+  (let [{:keys [idx]} (get-card-idx game path criteria)]
+    (-> game
+        (update-in path vec)
+        (as-> game (apply update-in game (concat path [idx]) f args)))))
+
 (defn- minus-cost [cost reduction]
   (if (< cost reduction) 0 (- cost reduction)))
 

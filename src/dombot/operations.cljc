@@ -50,15 +50,13 @@
                        check-stack))))
 
 (defn duration-effects [game player-no]
-  (let [duration-cards (get-in game [:players player-no :play-area-duration])]
-    (reduce (fn [game {:keys [id duration]}]
-              (push-effect-stack game player-no (concat [[:move-card {:card-id id
-                                                                      :from    :play-area-duration
-                                                                      :to      :play-area}]]
-                                                        duration)
-                                 {:card-id id}))
-            game
-            (reverse duration-cards))))
+  (let [duration-cards (->> (get-in game [:players player-no :play-area])
+                            (filter :stay-in-play))
+        do-duration-effect (fn [game {:keys [id duration]}]
+                             (-> game
+                                 (ut/update-in-vec [:players player-no :play-area] {:id id} dissoc :stay-in-play)
+                                 (push-effect-stack player-no duration {:card-id id})))]
+    (reduce do-duration-effect game (reverse duration-cards))))
 
 (defn start-turn
   ([player]
@@ -390,7 +388,8 @@
                  actions-played) (update-in [:players player-no :actions-played] inc)
             (:attack types) (affect-other-players player-no {:effects [[:clear-unaffected {:works :once}]]})
             (:action types) (push-effect-stack player-no effects {:card-id id})
-            (:attack types) (affect-other-players player-no {:effects reaction-choice}))))
+            (:attack types) (affect-other-players player-no {:effects reaction-choice})
+            (:duration types) (ut/update-in-vec [:players player-no :play-area] {:id id} assoc :stay-in-play true))))
 
 (effects/register {:gain            gain
                    :draw            draw
@@ -418,7 +417,7 @@
     (-> game
         (move-card player-no {:card-name card-name
                               :from      :hand
-                              :to        (if (:duration types) :play-area-duration :play-area)})
+                              :to        :play-area})
         (card-effect player-no card)
         (cond->
           phase (assoc-in [:players player-no :phase] (cond (:action types) :action
@@ -441,8 +440,8 @@
       (vp-fn cards))
     victory-points))
 
-(defn calc-victory-points [{:keys [deck discard hand play-area play-area-duration]}]
-  (let [cards (concat deck discard hand play-area play-area-duration)]
+(defn calc-victory-points [{:keys [deck discard hand play-area]}]
+  (let [cards (concat deck discard hand play-area)]
     (->> cards
          (filter :victory-points)
          (map (partial get-victory-points cards))
@@ -450,10 +449,10 @@
 
 (def calc-score (juxt calc-victory-points (comp - :number-of-turns)))
 
-(defn end-game-for-player [best-score {:keys [deck discard play-area-duration] :as player}]
+(defn end-game-for-player [best-score {:keys [deck discard play-area] :as player}]
   (let [victory-points (calc-victory-points player)]
     (-> player
-        (update :hand concat deck discard play-area-duration)
+        (update :hand concat deck discard play-area)
         (dissoc :deck :discard)
         (assoc :phase :end-of-game
                :victory-points victory-points
@@ -470,10 +469,12 @@
 
 (defn clean-up
   ([{:keys [play-area hand number-of-turns] :as player}]
-   (let [used-cards (concat hand play-area)]
+   (let [used-cards (concat hand (remove :stay-in-play play-area))]
      (-> player
          (cond-> (not-empty used-cards) (update :discard concat used-cards))
-         (dissoc :hand :play-area)
+         (dissoc :hand)
+         (update :play-area (partial filter :stay-in-play))
+         (ut/dissoc-if-empty :play-area)
          (assoc :actions 0
                 :coins 0
                 :buys 0
