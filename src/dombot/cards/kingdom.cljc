@@ -38,9 +38,11 @@
 
 (defn prepare-cards [game player-no]
   (-> game
-      (ut/redupeat 7 op/gain player-no :copper)
-      (ut/redupeat 3 op/gain player-no :estate)
-      (op/draw player-no 5)))
+      (ut/redupeat 7 op/gain {:player-no player-no
+                              :card-name :copper})
+      (ut/redupeat 3 op/gain {:player-no player-no
+                              :card-name :estate})
+      (op/draw {:player-no player-no :arg 5})))
 
 (defn create-game [player-names mode sets]
   (let [number-of-players (count player-names)

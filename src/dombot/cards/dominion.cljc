@@ -1,5 +1,5 @@
 (ns dombot.cards.dominion
-  (:require [dombot.operations :refer [move-card push-effect-stack give-choice is-unaffected?]]
+  (:require [dombot.operations :refer [move-cards push-effect-stack give-choice is-unaffected?]]
             [dombot.cards.common :refer [reveal-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -23,7 +23,7 @@
              :set     :dominion
              :types   #{:action :attack}
              :cost    5
-             :effects [[:gain :gold]
+             :effects [[:gain {:card-name :gold}]
                        [:attack {:effects [[:reveal-from-deck 2]
                                            [:give-choice {:text    "Trash a revealed Treasure other than Copper, and discards the rest."
                                                           :choice  :trash-from-revealed
@@ -33,21 +33,22 @@
                                                           :max     1}]
                                            [:discard-all-revealed]]}]]})
 
-(defn bureaucrat-topdeck-victory [game player-no card-name]
+(defn bureaucrat-topdeck-victory [game {:keys [player-no card-name]}]
   (push-effect-stack game {:player-no player-no
-                           :effects   [[:reveal-from-hand card-name]
-                                       [:topdeck-from-revealed card-name]]}))
+                           :effects   [[:reveal-from-hand {:card-name card-name}]
+                                       [:topdeck-from-revealed {:card-name card-name}]]}))
 
-(defn bureaucrat-attack [game player-no]
+(defn bureaucrat-attack [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])]
     (if (some (comp :victory :types) hand)
-      (give-choice game player-no {:text    "Reveal a Victory card from your hand and put it onto your deck."
-                                   :choice  ::bureaucrat-topdeck-victory
-                                   :options [:player :hand {:type :victory}]
-                                   :min     1
-                                   :max     1})
+      (give-choice game {:player-no player-no
+                         :text      "Reveal a Victory card from your hand and put it onto your deck."
+                         :choice    ::bureaucrat-topdeck-victory
+                         :options   [:player :hand {:type :victory}]
+                         :min       1
+                         :max       1})
       (-> game
-          (reveal-hand player-no)))))
+          (reveal-hand {:player-no player-no})))))
 
 (effects/register {::bureaucrat-topdeck-victory bureaucrat-topdeck-victory
                    ::bureaucrat-attack          bureaucrat-attack})
@@ -56,12 +57,12 @@
                  :set     :dominion
                  :types   #{:action :attack}
                  :cost    4
-                 :effects [[:gain-to-topdeck :silver]
+                 :effects [[:gain-to-topdeck {:card-name :silver}]
                            [:attack {:effects [[::bureaucrat-attack]]}]]})
 
-(defn cellar-sift [game player-no card-names]
+(defn cellar-sift [game {:keys [player-no card-names]}]
   (push-effect-stack game {:player-no player-no
-                           :effects   [[:discard-from-hand card-names]
+                           :effects   [[:discard-from-hand {:card-names card-names}]
                                        [:draw (count card-names)]]}))
 
 (effects/register {::cellar-sift cellar-sift})
@@ -129,23 +130,23 @@
                  :effects [[:draw 2]
                            [:give-actions 1]]})
 
-(defn library-set-aside [game player-no card-name]
+(defn library-set-aside [game {:keys [card-name] :as args}]
   (cond-> game
-          card-name (move-card player-no {:card-name     card-name
-                                          :from          :hand
-                                          :from-position :bottom
-                                          :to            :set-aside})))
+          card-name (move-cards (merge args {:from          :hand
+                                             :from-position :bottom
+                                             :to            :set-aside}))))
 
-(defn library-check-for-action [game player-no]
+(defn library-check-for-action [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])
         {:keys [types name]} (last hand)]
     (cond-> game
-            (:action types) (give-choice player-no {:text    (str "You may skip the " (ut/format-name name) "; set it aside, discarding it afterwards.")
-                                                    :choice  ::library-set-aside
-                                                    :options [:player :hand {:last true}]
-                                                    :max     1}))))
+            (:action types) (give-choice {:player-no player-no
+                                          :text      (str "You may skip the " (ut/format-name name) "; set it aside, discarding it afterwards.")
+                                          :choice    ::library-set-aside
+                                          :options   [:player :hand {:last true}]
+                                          :max       1}))))
 
-(defn library-draw [game player-no]
+(defn library-draw [game {:keys [player-no]}]
   (let [{:keys [hand deck discard]} (get-in game [:players player-no])]
     (cond-> game
             (and (< (count hand) 7)
@@ -183,7 +184,7 @@
                :cost    3
                :effects [[:draw 1]
                          [:give-actions 1]
-                         [:add-trigger merchant-trigger]]})
+                         [:add-trigger {:trigger merchant-trigger}]]})
 
 (def militia {:name    :militia
               :set     :dominion
@@ -192,12 +193,12 @@
               :effects [[:give-coins 2]
                         [:attack {:effects [[:discard-down-to 3]]}]]})
 
-(defn mine-trash [game player-no card-name]
+(defn mine-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         max-cost (+ 3 (ut/get-cost game card))]
     (-> game
         (push-effect-stack {:player-no player-no
-                            :effects   [[:trash-from-hand card-name]
+                            :effects   [[:trash-from-hand {:card-name card-name}]
                                         [:give-choice {:text    (str "Gain a Treasure to your hand costing up to $" max-cost ".")
                                                        :choice  :gain-to-hand
                                                        :options [:supply {:max-cost max-cost :type :treasure}]
@@ -229,10 +230,10 @@
            :react-pred ::moat-can-react?
            :reaction   [[:mark-unaffected {:works :once}]]})
 
-(defn moneylender-trash [game player-no card-name]
+(defn moneylender-trash [game {:keys [player-no card-name]}]
   (cond-> game
           (= :copper card-name) (push-effect-stack {:player-no player-no
-                                                    :effects   [[:trash-from-hand :copper]
+                                                    :effects   [[:trash-from-hand {:card-name :copper}]
                                                                 [:give-coins 3]]})))
 
 (effects/register {::moneylender-trash moneylender-trash})
@@ -246,14 +247,15 @@
                                            :options [:player :hand {:name :copper}]
                                            :max     1}]]})
 
-(defn poacher-discard [game player-no]
+(defn poacher-discard [game {:keys [player-no]}]
   (let [empty-piles (ut/empty-supply-piles game)]
     (cond-> game
-            (< 0 empty-piles) (give-choice player-no {:text    (str "Discard a card per empty supply pile [" empty-piles "].")
-                                                      :choice  :discard-from-hand
-                                                      :options [:player :hand]
-                                                      :min     empty-piles
-                                                      :max     empty-piles}))))
+            (< 0 empty-piles) (give-choice {:player-no player-no
+                                            :text      (str "Discard a card per empty supply pile [" empty-piles "].")
+                                            :choice    :discard-from-hand
+                                            :options   [:player :hand]
+                                            :min       empty-piles
+                                            :max       empty-piles}))))
 
 (effects/register {::poacher-discard poacher-discard})
 
@@ -266,12 +268,12 @@
                         [:give-coins 1]
                         [::poacher-discard]]})
 
-(defn remodel-trash [game player-no card-name]
+(defn remodel-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         max-cost (+ 2 (ut/get-cost game card))]
     (-> game
         (push-effect-stack {:player-no player-no
-                            :effects   [[:trash-from-hand card-name]
+                            :effects   [[:trash-from-hand {:card-name card-name}]
                                         [:give-choice {:text    (str "Gain a card costing up to $" max-cost ".")
                                                        :choice  :gain
                                                        :options [:supply {:max-cost max-cost}]
@@ -323,13 +325,13 @@
                                            :options [:player :hand {:type :action}]
                                            :max     1}]]})
 
-(defn vassal-play-action [game player-no card-name]
+(defn vassal-play-action [game {:keys [player-no card-name]}]
   (let [{:keys [discard]} (get-in game [:players player-no])
         {:keys [name] :as card} (last discard)]
     (cond-> game
             (= name card-name) (-> (push-effect-stack {:player-no player-no
-                                                       :effects   [[:play-from-discard card-name]
-                                                                   [:card-effect card]]})))))
+                                                       :effects   [[:play-from-discard {:card-name card-name}]
+                                                                   [:card-effect {:card card}]]})))))
 
 (effects/register {::vassal-play-action vassal-play-action})
 
@@ -356,7 +358,7 @@
             :types   #{:action :attack}
             :cost    5
             :effects [[:draw 2]
-                      [:attack {:effects [[:gain :curse]]}]]})
+                      [:attack {:effects [[:gain {:card-name :curse}]]}]]})
 
 (def woodcutter {:name    :woodcutter
                  :set     :dominion

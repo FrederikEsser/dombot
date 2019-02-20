@@ -24,7 +24,7 @@
                              :deck    [copper copper copper copper copper copper silver]
                              :actions 1}]}
                  (play 0 :caravan)
-                 (clean-up 0))
+                 (clean-up {:player-no 0}))
              {:players [{:hand           [copper copper copper copper copper]
                          :play-area      [(assoc caravan-1 :stay-in-play true)]
                          :deck           [silver]
@@ -53,7 +53,7 @@
                              :actions 1}]}
                  (play 0 :caravan)
                  (play 0 :caravan)
-                 (clean-up 0))
+                 (clean-up {:player-no 0}))
              {:players [{:hand           [estate estate copper copper silver]
                          :play-area      [(assoc caravan-1 :stay-in-play true) (assoc caravan-2 :stay-in-play true)]
                          :discard        [copper copper copper copper copper]

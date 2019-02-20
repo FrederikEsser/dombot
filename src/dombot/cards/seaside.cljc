@@ -1,5 +1,5 @@
 (ns dombot.cards.seaside
-  (:require [dombot.operations :refer [move-card move-cards]]
+  (:require [dombot.operations :refer [move-cards]]
             [dombot.cards.common :refer []]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -21,14 +21,14 @@
                       :duration [[:give-actions 1]
                                  [:give-coins 1]]})
 
-(defn haven-set-aside [game player-no card-name]
+(defn haven-set-aside [game {:keys [player-no card-name]}]
   (let [{:keys [card idx]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         haven-idx (-> game (get-in [:players player-no :play-area]) count dec)]
     (-> game
         (update-in [:players player-no :hand] ut/vec-remove idx)
         (update-in [:players player-no :play-area haven-idx :set-aside] conj card))))
 
-(defn haven-put-in-hand [game player-no {:keys [card-id]}]
+(defn haven-put-in-hand [game {:keys [player-no card-id]}]
   game
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
     (-> game
@@ -68,12 +68,13 @@
                     :effects  [[:give-coins 2]]
                     :duration [[:give-coins 2]]})
 
-(defn tactician-discard [game player-no {:keys [card-id]}]
+(defn tactician-discard [game {:keys [player-no card-id]}]
   (let [hand (get-in game [:players player-no :hand])]
     (if (< 0 (count hand))
-      (move-cards game player-no {:card-names (map :name hand)
-                                  :from       :hand
-                                  :to         :discard})
+      (move-cards game {:player-no  player-no
+                        :card-names (map :name hand)
+                        :from       :hand
+                        :to         :discard})
       (ut/update-in-vec game [:players player-no :play-area] {:id card-id} dissoc :stay-in-play))))
 
 (effects/register {::tactician-discard tactician-discard})

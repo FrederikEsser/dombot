@@ -80,10 +80,12 @@
        first))
 
 (defn get-card-idx [game path criteria]
-  (->> (get-in game path)
-       (keep-indexed (fn [idx card]
-                       (when ((match criteria) card) {:idx idx :card card})))
-       first))
+  (let [result (->> (get-in game path)
+                    (keep-indexed (fn [idx card]
+                                    (when ((match criteria) card) {:idx idx :card card})))
+                    first)]
+    (assert result (str "No card found in " path " with " criteria "."))
+    result))
 
 (defn update-in-vec [game path criteria f & args]
   (let [{:keys [idx]} (get-card-idx game path criteria)]

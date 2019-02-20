@@ -22,26 +22,31 @@
   (testing "Gain"
     (is (= (-> {:supply  [{:card {:name :province} :pile-size 8}]
                 :players [{}]}
-               (gain 0 :province))
+               (gain {:player-no 0
+                      :card-name :province}))
            {:supply  [{:card {:name :province} :pile-size 7}]
             :players [{:discard [{:name :province :id 1}]}]}))
     (is (= (-> {:supply  [{:card {:name :province} :pile-size 1}]
                 :players [{}]}
-               (gain 0 :province))
+               (gain {:player-no 0
+                      :card-name :province}))
            {:supply  [{:card {:name :province} :pile-size 0}]
             :players [{:discard [{:name :province :id 2}]}]}))
     (is (= (-> {:supply  [{:card {:name :province} :pile-size 0}]
                 :players [{}]}
-               (gain 0 :province))
+               (gain {:player-no 0
+                      :card-name :province}))
            {:supply  [{:card {:name :province} :pile-size 0}]
             :players [{}]}))
     (is (thrown-with-msg? AssertionError #"Gain error: The supply doesn't have a Province pile"
                           (-> {:players [{}]}
-                              (gain 0 :province))))
+                              (gain {:player-no 0
+                                     :card-name :province}))))
     (is (= (-> {:supply  [{:card {:name :province} :pile-size 8}]
                 :players [{:discard             [{:name :copper} {:name :copper}]
                            :approx-discard-size 1}]}
-               (gain 0 :province))
+               (gain {:player-no 0
+                      :card-name :province}))
            {:supply  [{:card {:name :province} :pile-size 7}]
             :players [{:discard             [{:name :copper} {:name :copper} {:name :province :id 3}]
                        :approx-discard-size 2}]}))))
@@ -124,70 +129,80 @@
 (deftest shuffle-test
   (testing "Shuffle discard"
     (is (= (-> {:players [{:discard [1]}]}
-               (shuffle-discard 0)
+               (shuffle-discard {:player-no 0})
                check-stack)
            {:players [{:deck [1]}]}))
     (is (= (-> {:players [{:deck [1] :discard [2]}]}
-               (shuffle-discard 0)
+               (shuffle-discard {:player-no 0})
                check-stack)
            {:players [{:deck [1 2]}]}))))
 
 (deftest move-card-test
   (testing "Playing a card from hand to play-area"
-    (is (= (move-card {:players [{:hand [{:name :smithy}]}]} 0
-                      {:card-name :smithy
+    (is (= (move-card {:players [{:hand [{:name :smithy}]}]}
+                      {:player-no 0
+                       :card-name :smithy
                        :from      :hand
                        :to        :play-area})
            {:players [{:play-area [{:name :smithy}]}]}))
-    (is (thrown-with-msg? AssertionError #"Move error: There is no Copper in your Hand"
-                          (move-card {:players [{:hand [{:name :smithy}]}]} 0
-                                     {:card-name :copper
-                                      :from      :hand
-                                      :to        :play-area})))
-    (is (= (move-card {:players [{:hand [{:name :copper} {:name :smithy}]}]} 0
-                      {:card-name :smithy
+    (is (thrown? AssertionError
+                 (move-card {:players [{:hand [{:name :smithy}]}]}
+                            {:player-no 0
+                             :card-name :copper
+                             :from      :hand
+                             :to        :play-area})))
+    (is (= (move-card {:players [{:hand [{:name :copper} {:name :smithy}]}]}
+                      {:player-no 0
+                       :card-name :smithy
                        :from      :hand
                        :to        :play-area})
            {:players [{:hand [{:name :copper}] :play-area [{:name :smithy}]}]}))
-    (is (= (move-card {:players [{:hand [{:name :smithy} {:name :smithy}]}]} 0
-                      {:card-name :smithy
+    (is (= (move-card {:players [{:hand [{:name :smithy} {:name :smithy}]}]}
+                      {:player-no 0
+                       :card-name :smithy
                        :from      :hand
                        :to        :play-area})
            {:players [{:hand [{:name :smithy}] :play-area [{:name :smithy}]}]}))
     (is (= (move-card {:players [{:hand [{:name :smithy}]
-                                  :deck [{:name :copper}]}]} 0
-                      {:card-name   :smithy
+                                  :deck [{:name :copper}]}]}
+                      {:player-no   0
+                       :card-name   :smithy
                        :from        :hand
                        :to          :deck
                        :to-position :top})
            {:players [{:deck [{:name :smithy} {:name :copper}]}]}))
-    (is (= (move-card {:players [{:hand [{:name :smithy}]}]} 0
-                      {:card-name :smithy
+    (is (= (move-card {:players [{:hand [{:name :smithy}]}]}
+                      {:player-no 0
+                       :card-name :smithy
                        :from      :hand
                        :to        :trash})
            {:players [{}]
             :trash   [{:name :smithy}]}))
-    (is (= (move-card {:players [{:deck [{:name :copper} {:name :smithy}]}]} 0
-                      {:from          :deck
+    (is (= (move-card {:players [{:deck [{:name :copper} {:name :smithy}]}]}
+                      {:player-no     0
+                       :from          :deck
                        :from-position :top
                        :to            :discard})
            {:players [{:deck    [{:name :smithy}]
                        :discard [{:name :copper}]}]}))
-    (is (= (move-card {:players [{}]} 0
-                      {:from          :deck
+    (is (= (move-card {:players [{}]}
+                      {:player-no     0
+                       :from          :deck
                        :from-position :top
                        :to            :discard})
            {:players [{}]}))
     (is (= (-> {:players [{:discard [{:name :copper} {:name :copper}]}]}
-               (move-card 0 {:from          :deck
-                             :from-position :top
-                             :to            :discard})
+               (move-card {:player-no     0
+                           :from          :deck
+                           :from-position :top
+                           :to            :discard})
                check-stack)
            {:players [{:deck    [{:name :copper}]
                        :discard [{:name :copper}]}]}))
     (is (= (move-card {:players [{:deck                [{:name :copper} {:name :smithy}]
-                                  :approx-discard-size 0}]} 0
-                      {:from          :deck
+                                  :approx-discard-size 0}]}
+                      {:player-no     0
+                       :from          :deck
                        :from-position :top
                        :to            :discard})
            {:players [{:deck                [{:name :smithy}]
@@ -195,8 +210,9 @@
                        :approx-discard-size 1}]}))
     (is (= (move-card {:players [{:hand                [{:name :copper} {:name :smithy}]
                                   :discard             [{:name :copper} {:name :estate}]
-                                  :approx-discard-size 2}]} 0
-                      {:from          :discard
+                                  :approx-discard-size 2}]}
+                      {:player-no     0
+                       :from          :discard
                        :from-position :bottom
                        :to            :hand})
            {:players [{:hand                [{:name :copper} {:name :smithy} {:name :estate}]
@@ -207,23 +223,23 @@
   (testing "Draw"
     (let [game {:players [{:hand [1 2 3] :deck [4 5] :discard [6 7]}]}]
       (is (= (-> game
-                 (draw 0 1)
+                 (draw {:player-no 0 :arg 1})
                  check-stack)
              {:players [{:hand [1 2 3 4] :deck [5] :discard [6 7]}]}))
       (is (= (-> game
-                 (draw 0 2)
+                 (draw {:player-no 0 :arg 2})
                  check-stack)
              {:players [{:hand [1 2 3 4 5] :discard [6 7]}]}))
       (is (= (-> game
-                 (draw 0 3)
+                 (draw {:player-no 0 :arg 3})
                  check-stack)
              {:players [{:hand [1 2 3 4 5 6] :deck [7]}]}))
       (is (= (-> game
-                 (draw 0 4)
+                 (draw {:player-no 0 :arg 4})
                  check-stack)
              {:players [{:hand [1 2 3 4 5 7 6]}]}))
       (is (= (-> game
-                 (draw 0 5)
+                 (draw {:player-no 0 :arg 5})
                  check-stack)
              {:players [{:hand [1 2 3 4 5 6 7]}]})))))
 
@@ -342,9 +358,9 @@
                             (play {:players [{:hand [{:name :estate :types #{:victory}}]}]}
                                   0 :estate))))
     (testing "player has no cards in hand"
-      (is (thrown-with-msg? AssertionError #"Play error: There is no Copper in your Hand."
-                            (play {:players [{}]}
-                                  0 :copper)))))
+      (is (thrown? AssertionError
+                   (play {:players [{}]}
+                         0 :copper)))))
   (testing "Playing treasure"
     (testing "is impossible because"
       (testing "card has no coin-value"
@@ -396,7 +412,7 @@
                            :deck            (repeat 5 {:name :copper})
                            :discard         [{:name :cellar}]
                            :number-of-turns 8}]}
-               (clean-up 0)
+               (clean-up {:player-no 0})
                check-stack)
            {:players [{:hand            (repeat 5 {:name :copper})
                        :discard         [{:name :cellar} {:name :estate} {:name :silver}]
@@ -411,7 +427,7 @@
                            :deck            [{:name :copper}]
                            :discard         [{:name :copper}]
                            :number-of-turns 8}]}
-               (clean-up 0)
+               (clean-up {:player-no 0})
                check-stack)
            {:players [{:hand            (repeat 4 {:name :copper})
                        :actions         0
@@ -425,7 +441,7 @@
                            :deck            (repeat 3 {:name :silver})
                            :discard         [{:name :copper}]
                            :number-of-turns 8}]}
-               (clean-up 0)
+               (clean-up {:player-no 0})
                check-stack)
            {:players [{:hand            (concat (repeat 3 {:name :silver}) (repeat 2 {:name :copper}))
                        :deck            [{:name :copper}]
@@ -437,7 +453,7 @@
                        :phase           :out-of-turn}]}))
     (is (= (-> {:players [{:number-of-turns 8
                            :triggers        [{:some :trigger}]}]}
-               (clean-up 0)
+               (clean-up {:player-no 0})
                check-stack)
            {:players [{:actions         0
                        :coins           0
@@ -447,7 +463,7 @@
                        :phase           :out-of-turn}]}))
     (is (= (-> {:cost-reductions [{:reduction 1}]
                 :players         [{:number-of-turns 8}]}
-               (clean-up 0)
+               (clean-up {:player-no 0})
                check-stack)
            {:players [{:actions         0
                        :coins           0
@@ -463,7 +479,7 @@
                            :number-of-turns 8}
                           {:hand            [{:name :duchy :victory-points 3}]
                            :number-of-turns 9}]}
-               (clean-up 0)
+               (clean-up {:player-no 0})
                check-stack)
            {:supply  [{:card {:name :province} :pile-size 0}]
             :players [{:hand            [{:name :copper} {:name :copper} {:name :copper} {:name :copper} {:name :estate :victory-points 1}
@@ -489,7 +505,7 @@
                            :number-of-turns 9}
                           {:hand            [{:name :duchy :victory-points 3}]
                            :number-of-turns 9}]}
-               (clean-up 0)
+               (clean-up {:player-no 0})
                check-stack)
            {:supply  [{:card {:name :province} :pile-size 0}]
             :players [{:hand            [{:name :copper} {:name :copper} {:name :copper} {:name :copper} {:name :estate :victory-points 1}
@@ -515,7 +531,7 @@
                            :number-of-turns 8}
                           {:hand            [{:name :province :victory-points 6}]
                            :number-of-turns 9}]}
-               (clean-up 0)
+               (clean-up {:player-no 0})
                check-stack)
            {:supply  [{:card {:name :province} :pile-size 0}]
             :players [{:hand            [{:name :copper} {:name :copper} {:name :copper} {:name :copper} {:name :estate :victory-points 1}
@@ -541,7 +557,7 @@
                            :number-of-turns 9}
                           {:hand            [{:name :province :victory-points 6}]
                            :number-of-turns 9}]}
-               (clean-up 0)
+               (clean-up {:player-no 0})
                check-stack)
            {:supply  [{:card {:name :province} :pile-size 0}]
             :players [{:hand            [{:name :copper} {:name :copper} {:name :copper} {:name :copper} {:name :estate :victory-points 1}

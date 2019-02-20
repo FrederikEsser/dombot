@@ -14,7 +14,8 @@
 (use-fixtures :each fixture)
 
 (deftest stash-test
-  (let [caravan (assoc caravan :id 1)]
+  (let [stash (assoc stash :id 1)
+        caravan (assoc caravan :id 2)]
     (testing "Stash"
       (is (= (-> {:players [{:hand  [stash]
                              :coins 0}]}
@@ -37,11 +38,13 @@
                               :min       1
                               :max       1}
                              {:player-no 0
-                              :effect    [:move-card {:from          :deck
+                              :effect    [:move-card {:player-no     0
+                                                      :from          :deck
                                                       :from-position :top
                                                       :to            :hand}]}
                              {:player-no 0
-                              :effect    [:move-card {:from          :deck
+                              :effect    [:move-card {:player-no     0
+                                                      :from          :deck
                                                       :from-position :top
                                                       :to            :hand}]}]}))
       (is (= (-> {:players [{:hand    [moat]
@@ -102,11 +105,13 @@
                                                         :min     1
                                                         :max     1}]}
                              {:player-no 0
-                              :effect    [:move-card {:from          :deck
+                              :effect    [:move-card {:player-no     0
+                                                      :from          :deck
                                                       :from-position :top
                                                       :to            :hand}]}
                              {:player-no 0
-                              :effect    [:move-card {:from          :deck
+                              :effect    [:move-card {:player-no     0
+                                                      :from          :deck
                                                       :from-position :top
                                                       :to            :hand}]}]}))
       (is (= (-> {:players [{:play-area       [copper copper copper copper copper]
@@ -135,23 +140,28 @@
                               :min       1
                               :max       1}
                              {:player-no 0
-                              :effect    [:move-card {:from          :deck
+                              :effect    [:move-card {:player-no     0
+                                                      :from          :deck
                                                       :from-position :top
                                                       :to            :hand}]}
                              {:player-no 0
-                              :effect    [:move-card {:from          :deck
+                              :effect    [:move-card {:player-no     0
+                                                      :from          :deck
                                                       :from-position :top
                                                       :to            :hand}]}
                              {:player-no 0
-                              :effect    [:move-card {:from          :deck
+                              :effect    [:move-card {:player-no     0
+                                                      :from          :deck
                                                       :from-position :top
                                                       :to            :hand}]}
                              {:player-no 0
-                              :effect    [:move-card {:from          :deck
+                              :effect    [:move-card {:player-no     0
+                                                      :from          :deck
                                                       :from-position :top
                                                       :to            :hand}]}
                              {:player-no 0
-                              :effect    [:move-card {:from          :deck
+                              :effect    [:move-card {:player-no     0
+                                                      :from          :deck
                                                       :from-position :top
                                                       :to            :hand}]}
                              {:player-no 1
@@ -189,6 +199,7 @@
                                 :min       1
                                 :max       1}
                                {:player-no 1
-                                :effect    [:move-card {:from          :deck
+                                :effect    [:move-card {:player-no     1
+                                                        :from          :deck
                                                         :from-position :top
                                                         :to            :hand}]}]})))))

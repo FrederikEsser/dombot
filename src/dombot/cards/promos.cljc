@@ -4,10 +4,12 @@
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
-(defn stash-put [game player-no position]
-  (move-card game player-no {:from        :stash
-                             :to          :deck
-                             :to-position position}))
+(defn stash-put [game {:keys [player-no card-id position]}]
+  (move-card game {:player-no   player-no
+                   :card-name   :stash
+                   :from        :stash
+                   :to          :deck
+                   :to-position position}))
 
 (effects/register {::stash-put stash-put})
 

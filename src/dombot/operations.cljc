@@ -9,21 +9,20 @@
     (or (and province-pile-size (zero? province-pile-size))
         (>= (ut/empty-supply-piles game) 3))))
 
-(defn push-effect-stack [game {:keys [player-no card-id effects]}]
-  (update game :effect-stack (partial concat (if (sequential? effects)
-                                               (->> effects
-                                                    (map (fn [effect]
-                                                           (when effect
-                                                             (merge {:player-no player-no
-                                                                     :effect    effect}
-                                                                    (when card-id
-                                                                      {:card-id card-id})))))
-                                                    (remove nil?))
-                                               (when effects
-                                                 [(merge effects
-                                                         {:player-no player-no}
-                                                         (when card-id
-                                                           {:card-id card-id}))])))))
+(defn push-effect-stack [game {:keys [player-no card-id effects choice]}]
+  (update game :effect-stack (partial concat (cond effects (->> effects
+                                                                (map (fn [effect]
+                                                                       (when effect
+                                                                         (merge {:player-no player-no
+                                                                                 :effect    effect}
+                                                                                (when card-id
+                                                                                  {:card-id card-id})))))
+                                                                (remove nil?))
+                                                   choice [(merge choice
+                                                                  {:player-no player-no}
+                                                                  (when card-id
+                                                                    {:card-id card-id}))]
+                                                   :else []))))
 
 (defn pop-effect-stack [{:keys [effect-stack] :as game}]
   (if (= 1 (count effect-stack))
@@ -33,12 +32,12 @@
 (defn do-effect [game {:keys       [player-no card-id]
                        [name args] :effect}]
   (let [effect-fn (effects/get-effect name)
-        args (cond-> args
-                     (and card-id
-                          (or (nil? args) (map? args))) (assoc :card-id card-id))]
-    (if args
-      (effect-fn game player-no args)
-      (effect-fn game player-no))))
+        args (merge {:player-no player-no}
+                    (when card-id
+                      {:card-id card-id})
+                    (cond (map? args) args
+                          args {:arg args}))]
+    (effect-fn game args)))
 
 (defn check-stack [game]
   (let [[{:keys [player-no card-id effect] :as top}] (get game :effect-stack)]
@@ -66,7 +65,7 @@
                  :coins 0
                  :buys 1
                  :phase :action))
-  ([game player-no]
+  ([game {:keys [player-no]}]
    (if (game-ended? game)
      game
      (-> game
@@ -107,8 +106,9 @@
                                       (reset-revealed-number-of-cards player-no to))
             (empty? from-cards) (update-in [:players player-no] dissoc from))))
 
-(defn gain [game player-no card-name & [{:keys [to to-position]
-                                         :or   {to :discard}}]]
+(defn gain [game {:keys [player-no card-name to to-position]
+                  :or   {to :discard}}]
+  (assert card-name "No card-name specified for gain.")
   (let [{:keys [idx card pile-size]} (ut/get-pile-idx game card-name)
         to-path (if (= to :trash)
                   [:trash]
@@ -123,6 +123,8 @@
                                 (update-in to-path add-card-to-coll (ut/give-id! card))
                                 (state-maintenance player-no :supply to)))))
 
+(effects/register {:gain gain})
+
 (defn buy-card [{:keys [effect-stack] :as game} player-no card-name]
   (let [{:keys [buys coins phase]} (get-in game [:players player-no])
         {:keys [card pile-size] :as supply-pile} (ut/get-pile-idx game card-name)
@@ -136,7 +138,8 @@
       (assert (#{:action :pay :buy} phase) (str "You can't buy cards when you're in the " (ut/format-name phase) " phase.")))
     (-> game
         (cond-> phase (assoc-in [:players player-no :phase] :buy))
-        (gain player-no card-name)
+        (gain {:player-no player-no
+               :card-name card-name})
         (update-in [:players player-no :coins] - cost)
         (update-in [:players player-no :buys] - 1)
         check-stack)))
@@ -146,12 +149,12 @@
    (-> player
        (cond-> (not-empty discard) (update :deck concat (shuffle discard)))
        (dissoc :discard)))
-  ([game player-no]
+  ([game {:keys [player-no]}]
    (-> game
        (update-in [:players player-no] do-shuffle)
        (state-maintenance player-no :discard :deck))))
 
-(defn shuffle-discard [game player-no]
+(defn shuffle-discard [game {:keys [player-no]}]
   (let [discard (get-in game [:players player-no :discard])
         before (->> discard
                     (keep (comp :shuffle :before-triggers))
@@ -167,14 +170,15 @@
 (effects/register {:do-shuffle do-shuffle
                    :shuffle    shuffle-discard})
 
-(defn peek-deck [game player-no number-of-cards]
+(defn peek-deck [game {:keys [player-no arg]}]
   (let [{:keys [deck discard]} (get-in game [:players player-no])]
     (cond-> game
-            (and (< (count deck) number-of-cards) (not-empty discard)) (shuffle-discard player-no))))
+            (and (< (count deck) arg) (not-empty discard)) (shuffle-discard {:player-no player-no}))))
 
 (effects/register {:peek-deck peek-deck})
 
-(defn move-card [game player-no {:keys [card-name card-id from from-position to to-position to-player] :as args}]
+(defn move-card [game {:keys [player-no card-id card-name from from-position to to-position to-player] :as args}]
+  (assert (or card-name card-id from-position) (str "Can't move unspecified card: " args))
   (let [{:keys [deck discard] :as player} (get-in game [:players player-no])]
     (if (and (= :deck from) (empty? deck) (not-empty discard))
       (push-effect-stack game {:player-no player-no
@@ -214,15 +218,16 @@
 
 (effects/register {:move-card move-card})
 
-(defn move-cards [game player-no {:keys [card-names number-of-cards from-position] :as args}]
-  (assert (or card-names
-              (and number-of-cards from-position)) "Can't move unspecified cards.")
+(defn move-cards [game {:keys [player-no card-name card-names number-of-cards from-position] :as args}]
+  (assert (or card-name
+              card-names
+              (and number-of-cards from-position)) (str "Can't move unspecified cards: " args))
   (if number-of-cards
     (cond-> game
             (< 0 number-of-cards)
             (push-effect-stack {:player-no player-no
                                 :effects   (repeat number-of-cards [:move-card (dissoc args :number-of-cards)])}))
-    (let [card-names (ut/ensure-coll card-names)]
+    (let [card-names (or card-names [card-name])]
       (cond-> game
               (not-empty card-names)
               (push-effect-stack {:player-no player-no
@@ -232,14 +237,18 @@
                                                                     (assoc :card-name card-name))])
                                                   card-names)})))))
 
-(defn draw [game player-no number-of-cards]
-  (move-cards game player-no {:number-of-cards number-of-cards
-                              :from            :deck
-                              :from-position   :top
-                              :to              :hand}))
+(defn draw [game {:keys [player-no arg]}]
+  (move-cards game {:player-no       player-no
+                    :number-of-cards arg
+                    :from            :deck
+                    :from-position   :top
+                    :to              :hand}))
 
-(defn mark-unaffected [game player-no tag]
-  (update-in game [:players player-no :unaffected] conj tag))
+(effects/register {:draw draw})
+
+(defn mark-unaffected [game {:keys [player-no card-id works]}]
+  (let [tag (if works {:works works} {:card-id card-id})]
+    (update-in game [:players player-no :unaffected] conj tag)))
 
 (defn is-unaffected?
   ([{:keys [unaffected]}]
@@ -248,15 +257,16 @@
    (-> (get-in game [:players player-no])
        is-unaffected?)))
 
-(defn clear-unaffected [game player-no criteria]
-  (-> game
-      (update-in [:players player-no :unaffected] (partial remove (ut/match criteria)))
-      (update-in [:players player-no] ut/dissoc-if-empty :unaffected)))
+(defn clear-unaffected [game {:keys [player-no card-id works]}]
+  (let [criteria (if works {:works works} {:card-id card-id})]
+    (-> game
+        (update-in [:players player-no :unaffected] (partial remove (ut/match criteria)))
+        (update-in [:players player-no] ut/dissoc-if-empty :unaffected))))
 
 (effects/register {:mark-unaffected  mark-unaffected
                    :clear-unaffected clear-unaffected})
 
-(defn affect-other-players [{:keys [players] :as game} player-no {:keys [effects attack all at-once]}]
+(defn affect-other-players [{:keys [players] :as game} {:keys [player-no effects attack all at-once]}]
   (let [player-nos (cond-> (->> (range 1 (count players))
                                 (map (fn [n] (-> n (+ player-no) (mod (count players)))))
                                 (remove (fn [n] (and attack (is-unaffected? game n)))))
@@ -268,11 +278,11 @@
             game
             player-nos)))
 
-(defn attack-other-players [game player-no args]
-  (affect-other-players game player-no (assoc args :attack true)))
+(defn attack-other-players [game args]
+  (affect-other-players game (assoc args :attack true)))
 
-(defn affect-all-players [game player-no args]
-  (affect-other-players game player-no (assoc args :all true)))
+(defn affect-all-players [game args]
+  (affect-other-players game (assoc args :all true)))
 
 (effects/register {:other-players affect-other-players
                    :attack        attack-other-players
@@ -281,8 +291,12 @@
 (defn- choose-single [game valid-choices selection]
   (if (coll? selection)
     (assert (<= (count selection) 1) "Choose error: You can only pick 1 option."))
-  (let [[{:keys [player-no choice min optional?]}] (get game :effect-stack)
+  (let [[{:keys [player-no choice source min optional?]}] (get game :effect-stack)
         choice-fn (effects/get-effect choice)
+        arg-name (case source
+                   :deck-position :position
+                   :special :choice
+                   :card-name)
         single-selection (if (coll? selection)
                            (first selection)
                            selection)]
@@ -293,11 +307,16 @@
 
     (-> game
         pop-effect-stack
-        (choice-fn player-no single-selection))))
+        (choice-fn {:player-no player-no
+                    arg-name   single-selection}))))
 
 (defn- choose-multi [game valid-choices selection]
-  (let [[{:keys [player-no choice min max optional?]}] (get game :effect-stack)
+  (let [[{:keys [player-no choice source min max optional?]}] (get game :effect-stack)
         choice-fn (effects/get-effect choice)
+        arg-name (case source
+                   :deck-position :position
+                   :special :choices
+                   :card-names)
         multi-selection (if (coll? selection)
                           selection
                           (if selection
@@ -314,7 +333,8 @@
 
     (-> game
         pop-effect-stack
-        (choice-fn player-no multi-selection))))
+        (choice-fn {:player-no player-no
+                    arg-name   multi-selection}))))
 
 (defn choose [game selection]
   (let [[{:keys [choice options min max]}] (get game :effect-stack)
@@ -341,16 +361,16 @@
     (cond-> game
             (and (= :discard source) reveal-source) (set-approx-discard-size player-no (count discard)))))
 
-(defn give-choice [{:keys [mode] :as game} player-no {[opt-name & opt-args] :options
-                                                      :keys                 [min max optional? card-id]
-                                                      :as                   choice}]
+(defn give-choice [{:keys [mode] :as game} {:keys                 [player-no card-id min max optional?]
+                                            [opt-name & opt-args] :options
+                                            :as                   choice}]
   (let [opt-fn (effects/get-option opt-name)
         options (apply opt-fn game player-no card-id opt-args)
-        {:keys [min max] :as choice'} (-> choice
-                                          (assoc :options options)
-                                          (merge (get-source choice))
-                                          (cond-> min (update :min clojure.core/min (count options))
-                                                  max (update :max clojure.core/min (count options))))
+        {:keys [min max] :as choice} (-> choice
+                                         (assoc :options options)
+                                         (merge (get-source choice))
+                                         (cond-> min (update :min clojure.core/min (count options))
+                                                 max (update :max clojure.core/min (count options))))
         swiftable (and (= :swift mode)
                        (not-empty options)
                        (apply = options)
@@ -359,10 +379,12 @@
     (-> game
         (cond-> (not-empty options) (push-effect-stack {:player-no player-no
                                                         :card-id   card-id
-                                                        :effects   choice'})
+                                                        :choice    choice})
                 swiftable (choose (take min options)))
-        (?reveal-discard-size player-no choice')
+        (?reveal-discard-size player-no choice)
         check-stack)))
+
+(effects/register {:give-choice give-choice})
 
 (defn remove-trigger [game player-no trigger]
   (-> game
@@ -383,29 +405,33 @@
                                                               :reacts-to :attack}]
                                      :max     1}]])
 
-(defn reveal-reaction [game player-no card-name]
-  (let [{{:keys [reaction]} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})] ; TODO: Handle reactions that are not in hand
-    (cond-> game
-            reaction (push-effect-stack {:player-no player-no
-                                         :effects   (concat reaction reaction-choice)}))))
+(defn reveal-reaction [game {:keys [player-no card-name]}]
+  (if card-name
+    (let [{{:keys [reaction]} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})] ; TODO: Handle reactions that are not in hand
+      (assert reaction (str "Revealed Reaction " card-name " has no reaction effects specified."))
+      (-> game
+          (push-effect-stack {:player-no player-no
+                              :effects   (concat reaction reaction-choice)})))
+    game))
 
-(defn card-effect [game player-no {:keys [id types effects]}]
+(effects/register {:reveal-reaction reveal-reaction})
+
+(defn card-effect [game {:keys                      [player-no]
+                         {:keys [id types effects]} :card}]
   (let [{:keys [actions-played]} (get-in game [:players player-no])]
     (cond-> game
             (and (:action types)
                  actions-played) (update-in [:players player-no :actions-played] inc)
-            (:attack types) (affect-other-players player-no {:effects [[:clear-unaffected {:works :once}]]})
+            (:attack types) (affect-other-players {:player-no player-no
+                                                   :effects   [[:clear-unaffected {:works :once}]]})
             (:action types) (push-effect-stack {:player-no player-no
                                                 :card-id   id
                                                 :effects   effects})
-            (:attack types) (affect-other-players player-no {:effects reaction-choice})
+            (:attack types) (affect-other-players {:player-no player-no
+                                                   :effects   reaction-choice})
             (:duration types) (ut/update-in-vec [:players player-no :play-area] {:id id} assoc :stay-in-play true))))
 
-(effects/register {:gain            gain
-                   :draw            draw
-                   :give-choice     give-choice
-                   :reveal-reaction reveal-reaction
-                   :card-effect     card-effect})
+(effects/register {:card-effect card-effect})
 
 (defn play [{:keys [effect-stack] :as game} player-no card-name]
   (let [{:keys [phase actions triggers]} (get-in game [:players player-no])
@@ -425,10 +451,12 @@
                        (#{:action :pay} phase)))
               (str "You can't play " (ut/format-types types) " cards when you're in the " (ut/format-name phase) " phase.")))
     (-> game
-        (move-card player-no {:card-name card-name
-                              :from      :hand
-                              :to        :play-area})
-        (card-effect player-no card)
+        (move-card {:player-no player-no
+                    :card-name card-name
+                    :from      :hand
+                    :to        :play-area})
+        (card-effect {:player-no player-no
+                      :card      card})
         (cond->
           phase (assoc-in [:players player-no :phase] (cond (:action types) :action
                                                             (:treasure types) :pay))
@@ -492,11 +520,11 @@
                 :phase :out-of-turn)
          (dissoc :triggers)
          (cond-> number-of-turns (update :number-of-turns inc)))))
-  ([game player-no]
+  ([game {:keys [player-no]}]
    (-> game
        (update-in [:players player-no] clean-up)
        (set-approx-discard-size player-no)
-       (draw player-no 5)
+       (draw {:player-no player-no :arg 5})
        (update :players (partial mapv (fn [player] (dissoc player :revealed-cards))))
        (dissoc :cost-reductions)
        check-game-ended

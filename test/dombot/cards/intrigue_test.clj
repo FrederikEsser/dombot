@@ -300,7 +300,7 @@
                        :actions   0}]}))))
 
 (deftest diplomat-test
-  (testing "Diplimat"
+  (testing "Diplomat"
     (testing "Action"
       (is (= (-> {:players [{:hand    [diplomat copper copper copper copper]
                              :deck    [estate estate estate]
