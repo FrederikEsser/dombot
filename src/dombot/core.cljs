@@ -55,7 +55,7 @@
 (defn view-card
   ([card]
    (view-card nil card))
-  ([max {:keys [name name-ui types cost number-of-cards interaction] :as card}]
+  ([max {:keys [name name-ui types cost set-aside number-of-cards interaction] :as card}]
    (if (map? card)
      (let [num-selected (->> (:selection @state) (filter #{name}) count)
            number-of-cards (if (= :choosable interaction)
@@ -76,7 +76,7 @@
                                          :choosable (select! name)
                                          :quick-choosable (swap! state assoc :game (cmd/choose name))
                                          :buyable (swap! state assoc :game (cmd/buy name)))))}
-           (str name-ui (when cost (str " ($" cost ")")) (when number-of-cards (str " x" number-of-cards)))]]))
+           (str name-ui (when cost (str " ($" cost ")")) (when set-aside (str " (" (string/join ", " set-aside) ")")) (when number-of-cards (str " x" number-of-cards)))]]))
      card)))
 
 (defn mapk [f coll]

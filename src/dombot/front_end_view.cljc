@@ -30,13 +30,14 @@
                        (choice-interaction name :supply choice)))))))
 
 (defn view-area [area {{:keys [phase actions] :as player} :player
-                       choice                             :choice}
+                       choice                             :choice
+                       active?                            :active-player?}
                  & [position number-of-cards]]
   (let [take-fn (if (= :bottom position) take-last take)
         cards (cond->> (get player area)
                        number-of-cards (take-fn number-of-cards))]
     (->> cards
-         (map (fn [{:keys [name types stay-in-play]}]
+         (map (fn [{:keys [name types stay-in-play set-aside]}]
                 (merge {:name    name
                         :name-ui (ut/format-name name)
                         :types   types}
@@ -50,16 +51,19 @@
                                       (and (:treasure types)
                                            (#{:action :pay} phase))))
                          {:interaction :playable})
-                       (choice-interaction name area choice))))
+                       (choice-interaction name area choice)
+                       (when set-aside
+                         {:set-aside (map (if active? (comp ut/format-name :name) (constantly "Card")) set-aside)}))))
          frequencies
          (sort-by (comp not :stay-in-play first))
          (map (fn [[card number-of-cards]]
                 (cond-> card
                         (< 1 number-of-cards) (assoc :number-of-cards number-of-cards)))))))
 
-(defn view-hand [active-player? {{:keys [hand revealed-cards phase]} :player
-                                 choice                              :choice
-                                 :as                                 data}]
+(defn view-hand [{active-player?                      :active-player?
+                  {:keys [hand revealed-cards phase]} :player
+                  choice                              :choice
+                  :as                                 data}]
   (let [revealed-cards-in-hand (:hand revealed-cards)]
     (if (or active-player?
             (= revealed-cards-in-hand (count hand))
@@ -119,17 +123,18 @@
                 {:optional? optional?}))
        (s/assert* ::specs/choice)))
 
-(defn view-player [active-player? {{:keys [name
-                                           actions
-                                           coins
-                                           buys
-                                           set-aside
-                                           victory-points
-                                           winner]} :player
-                                   choice           :choice
-                                   :as              data}]
+(defn view-player [{{:keys [name
+                            actions
+                            coins
+                            buys
+                            set-aside
+                            victory-points
+                            winner]} :player
+                    choice           :choice
+                    active-player?   :active-player?
+                    :as              data}]
   (merge {:name-ui   (ut/format-name name)
-          :hand      (view-hand active-player? data)
+          :hand      (view-hand data)
           :play-area (concat (view-area :play-area-duration data)
                              (view-area :play-area data))
           :deck      (view-deck data)
@@ -192,8 +197,8 @@
                                                                   (or (nil? choice)
                                                                       (= idx player-no))
                                                                   (not= phase :end-of-game))]
-                                          (view-player active-player?
-                                                       (merge {:player player}
+                                          (view-player (merge {:active-player? active-player?
+                                                               :player         player}
                                                               (when (= idx player-no)
                                                                 {:choice choice})))))))
           :trash    {:compact (view-trash {:trash trash :choice choice} :compact)

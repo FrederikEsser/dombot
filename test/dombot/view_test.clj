@@ -200,9 +200,9 @@
              :name-ui      "Copper"
              :types        #{:treasure}
              :stay-in-play true}
-            {:name         :copper
-             :name-ui      "Copper"
-             :types        #{:treasure}}]))))
+            {:name    :copper
+             :name-ui "Copper"
+             :types   #{:treasure}}]))))
 
 (deftest discard-test
   (testing "Discard view"
@@ -312,9 +312,10 @@
 
 (deftest hand-test
   (testing "Hand view"
-    (is (= (view-hand true {:player {:hand    [copper copper copper moat estate]
-                                     :actions 1
-                                     :phase   :action}})
+    (is (= (view-hand {:active-player? true
+                       :player         {:hand    [copper copper copper moat estate]
+                                        :actions 1
+                                        :phase   :action}})
            [{:name            :copper
              :name-ui         "Copper"
              :types           #{:treasure}
@@ -327,9 +328,10 @@
             {:name    :estate
              :name-ui "Estate"
              :types   #{:victory}}]))
-    (is (= (view-hand true {:player {:hand    [copper copper copper moat estate]
-                                     :actions 0
-                                     :phase   :action}})
+    (is (= (view-hand {:active-player? true
+                       :player         {:hand    [copper copper copper moat estate]
+                                        :actions 0
+                                        :phase   :action}})
            [{:name            :copper
              :name-ui         "Copper"
              :types           #{:treasure}
@@ -341,9 +343,10 @@
             {:name    :estate
              :name-ui "Estate"
              :types   #{:victory}}]))
-    (is (= (view-hand true {:player {:hand    [copper copper copper moat estate]
-                                     :actions 1
-                                     :phase   :pay}})
+    (is (= (view-hand {:active-player? true
+                       :player         {:hand    [copper copper copper moat estate]
+                                        :actions 1
+                                        :phase   :pay}})
            [{:name            :copper
              :name-ui         "Copper"
              :types           #{:treasure}
@@ -355,9 +358,10 @@
             {:name    :estate
              :name-ui "Estate"
              :types   #{:victory}}]))
-    (is (= (view-hand true {:player {:hand    [copper copper copper moat estate]
-                                     :actions 1
-                                     :phase   :buy}})
+    (is (= (view-hand {:active-player? true
+                       :player         {:hand    [copper copper copper moat estate]
+                                        :actions 1
+                                        :phase   :buy}})
            [{:name            :copper
              :name-ui         "Copper"
              :types           #{:treasure}
@@ -369,11 +373,12 @@
              :name-ui "Estate"
              :types   #{:victory}}]))
     (testing "with choice"
-      (is (= (view-hand true {:player {:hand  [copper copper copper moat estate]
-                                       :phase :buy}
-                              :choice {:source  :hand
-                                       :options [:moat]
-                                       :max     1}})
+      (is (= (view-hand {:active-player? true
+                         :player         {:hand  [copper copper copper moat estate]
+                                          :phase :buy}
+                         :choice         {:source  :hand
+                                          :options [:moat]
+                                          :max     1}})
              [{:name            :copper
                :name-ui         "Copper"
                :types           #{:treasure}
@@ -385,11 +390,12 @@
               {:name    :estate
                :name-ui "Estate"
                :types   #{:victory}}]))
-      (is (= (view-hand true {:player {:hand  [copper copper copper moat estate]
-                                       :phase :buy}
-                              :choice {:source  :hand
-                                       :options [:estate]
-                                       :min     1}})
+      (is (= (view-hand {:active-player? true
+                         :player         {:hand  [copper copper copper moat estate]
+                                          :phase :buy}
+                         :choice         {:source  :hand
+                                          :options [:estate]
+                                          :min     1}})
              [{:name            :copper
                :name-ui         "Copper"
                :types           #{:treasure}
@@ -401,12 +407,13 @@
                :name-ui     "Estate"
                :types       #{:victory}
                :interaction :quick-choosable}]))
-      (is (= (view-hand true {:player {:hand  [copper copper copper moat estate]
-                                       :phase :buy}
-                              :choice {:source  :hand
-                                       :options [:copper :copper :copper :moat :estate]
-                                       :min     1
-                                       :max     1}})
+      (is (= (view-hand {:active-player? true
+                         :player         {:hand  [copper copper copper moat estate]
+                                          :phase :buy}
+                         :choice         {:source  :hand
+                                          :options [:copper :copper :copper :moat :estate]
+                                          :min     1
+                                          :max     1}})
              [{:name            :copper
                :name-ui         "Copper"
                :types           #{:treasure}
@@ -420,11 +427,12 @@
                :name-ui     "Estate"
                :types       #{:victory}
                :interaction :quick-choosable}]))
-      (is (= (view-hand true {:player {:hand  [copper copper copper moat estate]
-                                       :phase :buy}
-                              :choice {:source  :supply
-                                       :options [:estate :copper :silver :moat]
-                                       :max     1}})
+      (is (= (view-hand {:active-player? true
+                         :player         {:hand  [copper copper copper moat estate]
+                                          :phase :buy}
+                         :choice         {:source  :supply
+                                          :options [:estate :copper :silver :moat]
+                                          :max     1}})
              [{:name            :copper
                :name-ui         "Copper"
                :types           #{:treasure}
@@ -487,16 +495,17 @@
 
 (deftest player-view-test
   (testing "Player view"
-    (is (= (view-player true {:player {:name                "John Doe"
-                                       :hand                [copper copper remodel estate moat]
-                                       :play-area           [village]
-                                       :deck                [copper estate]
-                                       :discard             [copper estate silver]
-                                       :approx-discard-size 3
-                                       :actions             2
-                                       :coins               0
-                                       :buys                1
-                                       :phase               :action}})
+    (is (= (view-player {:active-player? true
+                         :player         {:name                "John Doe"
+                                          :hand                [copper copper remodel estate moat]
+                                          :play-area           [village]
+                                          :deck                [copper estate]
+                                          :discard             [copper estate silver]
+                                          :approx-discard-size 3
+                                          :actions             2
+                                          :coins               0
+                                          :buys                1
+                                          :phase               :action}})
            {:name-ui   "John Doe"
             :active?   true
             :hand      [{:name            :copper
@@ -526,19 +535,20 @@
             :actions   2
             :coins     0
             :buys      1}))
-    (is (= (view-player true {:player {:name                "John Doe"
-                                       :hand                [copper copper remodel estate moat]
-                                       :play-area           [village]
-                                       :deck                [copper estate]
-                                       :discard             [copper estate silver]
-                                       :approx-discard-size 3
-                                       :actions             2
-                                       :coins               0
-                                       :buys                1
-                                       :phase               :action}
-                              :choice {:text    "Choice text"
-                                       :source  :hand
-                                       :options [:estate :moat]}})
+    (is (= (view-player {:active-player? true
+                         :player         {:name                "John Doe"
+                                          :hand                [copper copper remodel estate moat]
+                                          :play-area           [village]
+                                          :deck                [copper estate]
+                                          :discard             [copper estate silver]
+                                          :approx-discard-size 3
+                                          :actions             2
+                                          :coins               0
+                                          :buys                1
+                                          :phase               :action}
+                         :choice         {:text    "Choice text"
+                                          :source  :hand
+                                          :options [:estate :moat]}})
            {:name-ui   "John Doe"
             :active?   true
             :hand      [{:name            :copper
@@ -571,21 +581,22 @@
                         :quick-choice? false
                         :min           0
                         :max           2}}))
-    (is (= (view-player true {:player {:name                "John Doe"
-                                       :hand                [copper copper remodel estate moat]
-                                       :play-area           [village]
-                                       :deck                [copper estate]
-                                       :discard             [copper estate silver]
-                                       :approx-discard-size 3
-                                       :actions             2
-                                       :coins               0
-                                       :buys                1
-                                       :phase               :action}
-                              :choice {:text          "Choice text"
-                                       :source        :discard
-                                       :reveal-source true
-                                       :options       [:estate]
-                                       :min           1}})
+    (is (= (view-player {:active-player? true
+                         :player         {:name                "John Doe"
+                                          :hand                [copper copper remodel estate moat]
+                                          :play-area           [village]
+                                          :deck                [copper estate]
+                                          :discard             [copper estate silver]
+                                          :approx-discard-size 3
+                                          :actions             2
+                                          :coins               0
+                                          :buys                1
+                                          :phase               :action}
+                         :choice         {:text          "Choice text"
+                                          :source        :discard
+                                          :reveal-source true
+                                          :options       [:estate]
+                                          :min           1}})
            {:name-ui   "John Doe"
             :active?   true
             :hand      [{:name            :copper
@@ -623,19 +634,20 @@
                         :min           1
                         :max           1
                         :quick-choice? true}}))
-    (is (= (view-player true {:player {:name                "John Doe"
-                                       :hand                [estate copper copper]
-                                       :approx-discard-size 3
-                                       :actions             2
-                                       :coins               0
-                                       :buys                1
-                                       :phase               :action}
-                              :choice {:text      "Choice text"
-                                       :source    :discard
-                                       :options   [:estate :copper :copper]
-                                       :min       1
-                                       :max       1
-                                       :optional? true}})
+    (is (= (view-player {:active-player? true
+                         :player         {:name                "John Doe"
+                                          :hand                [estate copper copper]
+                                          :approx-discard-size 3
+                                          :actions             2
+                                          :coins               0
+                                          :buys                1
+                                          :phase               :action}
+                         :choice         {:text      "Choice text"
+                                          :source    :discard
+                                          :options   [:estate :copper :copper]
+                                          :min       1
+                                          :max       1
+                                          :optional? true}})
            {:name-ui   "John Doe"
             :active?   true
             :hand      [{:name    :estate
@@ -656,15 +668,16 @@
                         :max           1
                         :quick-choice? false
                         :optional?     true}}))
-    (is (= (view-player false {:player {:name                "John Doe"
-                                        :hand                [copper copper remodel estate moat]
-                                        :deck                [copper estate]
-                                        :discard             [copper estate silver]
-                                        :approx-discard-size 3
-                                        :actions             0
-                                        :coins               0
-                                        :buys                0
-                                        :phase               :out-of-turn}})
+    (is (= (view-player {:active-player? false
+                         :player         {:name                "John Doe"
+                                          :hand                [copper copper remodel estate moat]
+                                          :deck                [copper estate]
+                                          :discard             [copper estate silver]
+                                          :approx-discard-size 3
+                                          :actions             0
+                                          :coins               0
+                                          :buys                0
+                                          :phase               :out-of-turn}})
            {:name-ui   "John Doe"
             :active?   false
             :hand      {:number-of-cards 5}
@@ -677,16 +690,17 @@
             :actions   0
             :coins     0
             :buys      0}))
-    (is (= (view-player false {:player {:name                "John Doe"
-                                        :hand                [copper copper remodel estate moat]
-                                        :revealed-cards      {:hand 5}
-                                        :deck                [copper estate]
-                                        :discard             [copper estate silver]
-                                        :approx-discard-size 3
-                                        :actions             0
-                                        :coins               0
-                                        :buys                0
-                                        :phase               :out-of-turn}})
+    (is (= (view-player {:active-player? false
+                         :player         {:name                "John Doe"
+                                          :hand                [copper copper remodel estate moat]
+                                          :revealed-cards      {:hand 5}
+                                          :deck                [copper estate]
+                                          :discard             [copper estate silver]
+                                          :approx-discard-size 3
+                                          :actions             0
+                                          :coins               0
+                                          :buys                0
+                                          :phase               :out-of-turn}})
            {:name-ui   "John Doe"
             :active?   false
             :hand      [{:name            :copper
@@ -711,20 +725,21 @@
             :actions   0
             :coins     0
             :buys      0}))
-    (is (= (view-player false {:player {:name                "John Doe"
-                                        :hand                [copper copper remodel estate moat]
-                                        :deck                [copper estate]
-                                        :discard             [copper estate silver]
-                                        :approx-discard-size 3
-                                        :actions             0
-                                        :coins               0
-                                        :buys                0
-                                        :phase               :action}
-                               :choice {:text    "Discard down to 3 cards in hand."
-                                        :source  :hand
-                                        :min     2
-                                        :max     2
-                                        :options [:copper :copper :remodel :estate :moat]}})
+    (is (= (view-player {:active-player? false
+                         :player         {:name                "John Doe"
+                                          :hand                [copper copper remodel estate moat]
+                                          :deck                [copper estate]
+                                          :discard             [copper estate silver]
+                                          :approx-discard-size 3
+                                          :actions             0
+                                          :coins               0
+                                          :buys                0
+                                          :phase               :action}
+                         :choice         {:text    "Discard down to 3 cards in hand."
+                                          :source  :hand
+                                          :min     2
+                                          :max     2
+                                          :options [:copper :copper :remodel :estate :moat]}})
            {:name-ui   "John Doe"
             :active?   false
             :hand      [{:name            :copper
@@ -757,14 +772,15 @@
                         :quick-choice? false
                         :min           2
                         :max           2}}))
-    (is (= (view-player true {:player {:name                "John Doe"
-                                       :play-area           [library]
-                                       :approx-discard-size 0
-                                       :set-aside           [festival village]
-                                       :actions             0
-                                       :coins               0
-                                       :buys                0
-                                       :phase               :action}})
+    (is (= (view-player {:active-player? true
+                         :player         {:name                "John Doe"
+                                          :play-area           [library]
+                                          :approx-discard-size 0
+                                          :set-aside           [festival village]
+                                          :actions             0
+                                          :coins               0
+                                          :buys                0
+                                          :phase               :action}})
            {:name-ui   "John Doe"
             :active?   true
             :hand      []
@@ -782,14 +798,15 @@
             :actions   0
             :coins     0
             :buys      0}))
-    (is (= (view-player false {:player {:name           "John Doe"
-                                        :hand           [copper copper remodel estate moat]
-                                        :actions        0
-                                        :coins          0
-                                        :buys           0
-                                        :phase          :end-of-game
-                                        :victory-points 21
-                                        :winner         true}})
+    (is (= (view-player {:active-player? false
+                         :player         {:name           "John Doe"
+                                          :hand           [copper copper remodel estate moat]
+                                          :actions        0
+                                          :coins          0
+                                          :buys           0
+                                          :phase          :end-of-game
+                                          :victory-points 21
+                                          :winner         true}})
            {:name-ui        "John Doe"
             :active?        false
             :hand           [{:name            :copper
