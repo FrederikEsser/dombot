@@ -988,7 +988,9 @@
                                {:player-no 1
                                 :effect    [:clear-unaffected {:works :once}]}
                                {:effect    [:card-effect {:card militia}]
-                                :player-no 0}]}))
+                                :player-no 0}
+                               {:player-no 0
+                                :effect    [:check-stay-in-play {:target-id nil}]}]}))
         (is (= (-> {:players [{:hand    [throne-room militia]
                                :actions 1
                                :coins   0}
@@ -1011,7 +1013,9 @@
                                {:player-no 0
                                 :effect    [:attack {:effects [[:discard-down-to 3]]}]}
                                {:player-no 1
-                                :effect    [:clear-unaffected {:works :once}]}]}))
+                                :effect    [:clear-unaffected {:works :once}]}
+                               {:player-no 0
+                                :effect    [:check-stay-in-play {:target-id nil}]}]}))
         (testing "vs Minion"
           (is (= (-> {:players [{:hand    [minion]
                                  :actions 1}
@@ -1467,78 +1471,89 @@
                        :actions   0}]}))))
 
 (deftest throne-room-test
-  (testing "Throne Room"
-    (is (= (play {:players [{:deck    [copper copper copper]
+  (let [throne-room (assoc throne-room :id 0)
+        curse (assoc curse :id 1)]
+    (testing "Throne Room"
+      (is (= (play {:players [{:deck    [copper copper copper]
+                               :hand    [throne-room market copper]
+                               :actions 1}]}
+                   0 :throne-room)
+             {:players      [{:deck      [copper copper copper]
+                              :hand      [market copper]
+                              :play-area [throne-room]
+                              :actions   0}]
+              :effect-stack [{:text      "You may play an Action card from your hand twice."
+                              :player-no 0
+                              :card-id   0
+                              :choice    :play-action-twice
+                              :source    :hand
+                              :options   [:market]
+                              :max       1}]}))
+      (is (= (-> {:players [{:deck    [copper copper copper]
+                             :hand    [throne-room market copper]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :throne-room)
+                 (choose :market))
+             {:players [{:deck      [copper]
+                         :hand      [copper copper copper]
+                         :play-area [throne-room market]
+                         :actions   2
+                         :coins     2
+                         :buys      3}]}))
+      (is (= (-> {:players [{:deck    [copper copper copper]
                              :hand    [throne-room market copper]
                              :actions 1}]}
-                 0 :throne-room)
-           {:players      [{:deck      [copper copper copper]
-                            :hand      [market copper]
-                            :play-area [throne-room]
-                            :actions   0}]
-            :effect-stack [{:text      "You may play an Action card from your hand twice."
-                            :player-no 0
-                            :choice    :play-action-twice
-                            :source    :hand
-                            :options   [:market]
-                            :max       1}]}))
-    (is (= (-> {:players [{:deck    [copper copper copper]
-                           :hand    [throne-room market copper]
-                           :actions 1
-                           :coins   0
-                           :buys    1}]}
-               (play 0 :throne-room)
-               (choose :market))
-           {:players [{:deck      [copper]
-                       :hand      [copper copper copper]
-                       :play-area [throne-room market]
-                       :actions   2
-                       :coins     2
-                       :buys      3}]}))
-    (is (= (-> {:players [{:deck    [copper copper copper]
-                           :hand    [throne-room market copper]
-                           :actions 1}]}
-               (play 0 :throne-room)
-               (choose nil))
-           {:players [{:deck      [copper copper copper]
-                       :hand      [market copper]
-                       :play-area [throne-room]
-                       :actions   0}]}))
-    (is (= (-> {:players [{:deck    [witch copper copper silver]
-                           :hand    [throne-room throne-room merchant]
-                           :actions 1}]}
-               (play 0 :throne-room)
-               (choose :throne-room))
-           {:players      [{:deck      [witch copper copper silver]
-                            :hand      [merchant]
-                            :play-area [throne-room throne-room]
-                            :actions   0}]
-            :effect-stack [{:text      "You may play an Action card from your hand twice."
-                            :player-no 0
-                            :choice    :play-action-twice
-                            :source    :hand
-                            :options   [:merchant]
-                            :max       1}
-                           {:player-no 0
-                            :effect    [:card-effect {:card throne-room}]}]}))
-    (is (= (-> {:players [{:deck    [witch copper copper silver]
-                           :hand    [throne-room throne-room merchant]
-                           :actions 1}]}
-               (play 0 :throne-room)
-               (choose :throne-room)
-               (choose :merchant))
-           {:players      [{:deck      [copper silver]
-                            :hand      [witch copper]
-                            :play-area [throne-room throne-room merchant]
-                            :triggers  [merchant-trigger merchant-trigger]
-                            :actions   2}]
-            :effect-stack [{:text      "You may play an Action card from your hand twice."
-                            :player-no 0
-                            :choice    :play-action-twice
-                            :source    :hand
-                            :options   [:witch]
-                            :max       1}]}))
-    (let [curse (assoc curse :id 1)]
+                 (play 0 :throne-room)
+                 (choose nil))
+             {:players [{:deck      [copper copper copper]
+                         :hand      [market copper]
+                         :play-area [throne-room]
+                         :actions   0}]}))
+      (is (= (-> {:players [{:deck    [witch copper copper silver]
+                             :hand    [throne-room throne-room merchant]
+                             :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :throne-room))
+             {:players      [{:deck      [witch copper copper silver]
+                              :hand      [merchant]
+                              :play-area [throne-room throne-room]
+                              :actions   0}]
+              :effect-stack [{:text      "You may play an Action card from your hand twice."
+                              :player-no 0
+                              :card-id   0
+                              :choice    :play-action-twice
+                              :source    :hand
+                              :options   [:merchant]
+                              :max       1}
+                             {:player-no 0
+                              :card-id   0
+                              :effect    [:card-effect {:card throne-room}]}
+                             {:player-no 0
+                              :card-id   0
+                              :effect    [:check-stay-in-play {:target-id 0}]}]}))
+      (is (= (-> {:players [{:deck    [witch copper copper silver]
+                             :hand    [throne-room throne-room merchant]
+                             :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :throne-room)
+                 (choose :merchant))
+             {:players      [{:deck      [copper silver]
+                              :hand      [witch copper]
+                              :play-area [throne-room throne-room merchant]
+                              :triggers  [merchant-trigger merchant-trigger]
+                              :actions   2}]
+              :effect-stack [{:text      "You may play an Action card from your hand twice."
+                              :player-no 0
+                              :card-id   0
+                              :choice    :play-action-twice
+                              :source    :hand
+                              :options   [:witch]
+                              :max       1}
+                             {:player-no 0
+                              :card-id   0
+                              :effect    [:check-stay-in-play {:target-id 0}]}]}))
       (is (= (-> {:supply  [{:card curse :pile-size 10}]
                   :players [{:deck    [witch copper copper silver]
                              :hand    [throne-room throne-room merchant]

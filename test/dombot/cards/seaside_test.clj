@@ -4,7 +4,7 @@
             [dombot.operations :refer :all]
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
-            [dombot.cards.dominion :as dominion :refer [moat witch]]
+            [dombot.cards.dominion :as dominion :refer [moat throne-room witch]]
             [dombot.cards.seaside :as seaside :refer :all]
             [dombot.utils :as ut]))
 
@@ -102,7 +102,8 @@
                                 :phase          :action}]})))))
 
 (deftest haven-test
-  (let [haven (assoc haven :id 1)]
+  (let [haven (assoc haven :id 1)
+        throne-room (assoc throne-room :id 2)]
     (testing "Haven"
       (is (= (-> {:players [{:hand    [haven estate]
                              :deck    [copper copper]
@@ -143,7 +144,19 @@
                                 :coins          0
                                 :buys           1
                                 :actions-played 0
-                                :phase          :action}]})))))
+                                :phase          :action}]}))
+      (is (= (-> {:players [{:hand    [throne-room haven estate]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :haven)
+                 (choose :copper)
+                 (choose :estate))
+             {:players [{:hand      [copper]
+                         :play-area [(assoc throne-room :stay-in-play true)
+                                     (assoc haven :stay-in-play true
+                                                  :set-aside [copper estate])]
+                         :actions   2}]})))))
 
 (deftest lighthouse-test
   (let [lighthouse-1 (assoc lighthouse :id 1)

@@ -1100,7 +1100,9 @@
                             :options   [{:option :cards :text "+3 Cards"}
                                         {:option :actions :text "+2 Actions"}]
                             :min       1
-                            :max       1}]}))
+                            :max       1}
+                           {:player-no 0
+                            :effect    [:check-stay-in-play {:target-id nil}]}]}))
     (is (= (calc-victory-points {:deck [nobles]})
            2))))
 

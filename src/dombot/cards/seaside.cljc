@@ -26,7 +26,7 @@
         haven-idx (-> game (get-in [:players player-no :play-area]) count dec)]
     (-> game
         (update-in [:players player-no :hand] ut/vec-remove idx)
-        (update-in [:players player-no :play-area haven-idx :set-aside] conj card))))
+        (update-in [:players player-no :play-area haven-idx :set-aside] concat [card]))))
 
 (defn haven-put-in-hand [game {:keys [player-no card-id]}]
   game

@@ -43,16 +43,26 @@
           card-name (move-card (merge args {:from :hand
                                             :to   :play-area}))))
 
+
 (effects/register {:play play-from-hand})
 
-(defn play-action-twice [game {:keys [player-no card-name]}]
+(defn check-stay-in-play [game {:keys [player-no card-id target-id]}]
+  (let [{{:keys [types stay-in-play]} :card} (ut/get-card-idx game [:players player-no :play-area] {:id target-id})]
+    (cond-> game
+            (and (:duration types) stay-in-play) (ut/update-in-vec [:players player-no :play-area] {:id card-id} assoc :stay-in-play true))))
+
+(effects/register {:check-stay-in-play check-stay-in-play})
+
+(defn play-action-twice [game {:keys [player-no card-id card-name] :as args}]
   (if card-name
     (let [{card :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
       (-> game
           (push-effect-stack {:player-no player-no
+                              :card-id   card-id
                               :effects   [[:play {:card-name card-name}]
                                           [:card-effect {:card card}]
-                                          [:card-effect {:card card}]]})))
+                                          [:card-effect {:card card}]
+                                          [:check-stay-in-play {:target-id (:id card)}]]})))
     game))
 
 (effects/register {:play-action-twice play-action-twice})
