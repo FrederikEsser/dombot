@@ -55,27 +55,29 @@
 (defn view-card
   ([card]
    (view-card nil card))
-  ([max {:keys [name name-ui types cost number-of-cards interaction]}]
-   (let [num-selected (->> (:selection @state) (filter #{name}) count)
-         number-of-cards (if (= :choosable interaction)
-                           (let [num (- (or number-of-cards 1) num-selected)]
-                             (if (= 1 num) nil num))
-                           number-of-cards)
-         disabled (or (nil? interaction)
-                      (and (= :choosable interaction)
-                           (= (count (:selection @state)) max)))]
-     (when-not (and (= :choosable interaction)
-                    (= 0 number-of-cards))
-       [:div
-        [:button {:style    (button-style disabled types number-of-cards)
-                  :disabled disabled
-                  :on-click (when interaction
-                              (fn [] (case interaction
-                                       :playable (swap! state assoc :game (cmd/play name))
-                                       :choosable (select! name)
-                                       :quick-choosable (swap! state assoc :game (cmd/choose name))
-                                       :buyable (swap! state assoc :game (cmd/buy name)))))}
-         (str name-ui (when cost (str " ($" cost ")")) (when number-of-cards (str " x" number-of-cards)))]]))))
+  ([max {:keys [name name-ui types cost number-of-cards interaction] :as card}]
+   (if (map? card)
+     (let [num-selected (->> (:selection @state) (filter #{name}) count)
+           number-of-cards (if (= :choosable interaction)
+                             (let [num (- (or number-of-cards 1) num-selected)]
+                               (if (= 1 num) nil num))
+                             number-of-cards)
+           disabled (or (nil? interaction)
+                        (and (= :choosable interaction)
+                             (= (count (:selection @state)) max)))]
+       (when-not (and (= :choosable interaction)
+                      (= 0 number-of-cards))
+         [:div
+          [:button {:style    (button-style disabled types number-of-cards)
+                    :disabled disabled
+                    :on-click (when interaction
+                                (fn [] (case interaction
+                                         :playable (swap! state assoc :game (cmd/play name))
+                                         :choosable (select! name)
+                                         :quick-choosable (swap! state assoc :game (cmd/choose name))
+                                         :buyable (swap! state assoc :game (cmd/buy name)))))}
+           (str name-ui (when cost (str " ($" cost ")")) (when number-of-cards (str " x" number-of-cards)))]]))
+     card)))
 
 (defn mapk [f coll]
   (->> coll
@@ -159,7 +161,12 @@
                     [:td (if (:number-of-cards hand)
                            (view-pile hand max)
                            (mapk (partial view-card max) hand))]
-                    [:td (mapk (partial view-card max) play-area)]
+                    [:td (mapk (partial view-card max) (as-> (group-by (comp boolean :stay-in-play) play-area) grouped-cards
+                                                             (if (< 1 (count grouped-cards))
+                                                               (concat (get grouped-cards true)
+                                                                       [[:hr]]
+                                                                       (get grouped-cards false))
+                                                               (-> grouped-cards vals first))))]
                     [:td (view-pile deck max)]
                     [:td (view-pile discard max)]
                     [:td (if victory-points
