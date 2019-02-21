@@ -177,8 +177,8 @@
 
 (effects/register {:peek-deck peek-deck})
 
-(defn move-card [game {:keys [player-no card-id card-name from from-position to to-position to-player] :as args}]
-  (assert (or card-name card-id from-position) (str "Can't move unspecified card: " args))
+(defn move-card [game {:keys [player-no card-name move-card-id from from-position to to-position to-player] :as args}]
+  (assert (or card-name move-card-id from-position) (str "Can't move unspecified card: " args))
   (let [{:keys [deck discard] :as player} (get-in game [:players player-no])]
     (if (and (= :deck from) (empty? deck) (not-empty discard))
       (push-effect-stack game {:player-no player-no
@@ -192,7 +192,7 @@
                                  :top {:idx 0 :card (first (get player from))}
                                  (cond
                                    card-name (ut/get-card-idx game from-path {:name card-name})
-                                   card-id (ut/get-card-idx game from-path {:id card-id})
+                                   move-card-id (ut/get-card-idx game from-path {:id move-card-id})
                                    :else {:idx 0 :card (first (get player from))}))
             to-path (if (= to :trash)
                       [:trash]
@@ -209,8 +209,8 @@
                                      :else (concat coll [card])))))]
         (when card-name
           (assert card (str "Move error: There is no " (ut/format-name card-name) " in your " (ut/format-name from) ".")))
-        (when card-id
-          (assert card (str "Move error: Card-id " card-id " is not in your " (ut/format-name from) ".")))
+        (when move-card-id
+          (assert card (str "Move error: Card-id " move-card-id " is not in your " (ut/format-name from) ".")))
         (cond-> game
                 card (-> (update-in from-path ut/vec-remove idx)
                          (update-in to-path add-card-to-coll card)
@@ -291,7 +291,7 @@
 (defn- choose-single [game valid-choices selection]
   (if (coll? selection)
     (assert (<= (count selection) 1) "Choose error: You can only pick 1 option."))
-  (let [[{:keys [player-no choice source min optional?]}] (get game :effect-stack)
+  (let [[{:keys [player-no card-id choice source min optional?]}] (get game :effect-stack)
         choice-fn (effects/get-effect choice)
         arg-name (case source
                    :deck-position :position
@@ -308,10 +308,11 @@
     (-> game
         pop-effect-stack
         (choice-fn {:player-no player-no
+                    :card-id   card-id
                     arg-name   single-selection}))))
 
 (defn- choose-multi [game valid-choices selection]
-  (let [[{:keys [player-no choice source min max optional?]}] (get game :effect-stack)
+  (let [[{:keys [player-no card-id choice source min max optional?]}] (get game :effect-stack)
         choice-fn (effects/get-effect choice)
         arg-name (case source
                    :deck-position :position
@@ -334,6 +335,7 @@
     (-> game
         pop-effect-stack
         (choice-fn {:player-no player-no
+                    :card-id   card-id
                     arg-name   multi-selection}))))
 
 (defn choose [game selection]

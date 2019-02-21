@@ -162,12 +162,11 @@
 
 (effects/register {:trash-from-hand trash-from-hand})
 
-(defn trash-last-from-play-area [game args]
-  (move-cards game (merge args {:from          :play-area
-                                :from-position :bottom
-                                :to            :trash})))
+(defn trash-from-play-area [game args]
+  (move-card game (merge args {:from :play-area
+                               :to   :trash})))
 
-(effects/register {:trash-last-from-play-area trash-last-from-play-area})
+(effects/register {:trash-from-play-area trash-from-play-area})
 
 (defn trash-from-revealed [game args]
   (move-cards game (merge args {:from :revealed
