@@ -446,6 +446,56 @@
                                 :actions-played 0
                                 :phase          :action}]})))))
 
+(deftest outpost-test
+  (let [outpost (assoc outpost :id 1)]
+    (testing "Outpost"
+      (is (= (-> {:players [{:hand    [outpost]
+                             :actions 1}]}
+                 (play 0 :outpost))
+             {:players [{:play-area                [(assoc outpost :end-of-turn [[::seaside/outpost-extra-turn]])]
+                         :actions                  0
+                         :previous-turn-was-yours? true}]}))
+      (is (= (-> {:players [{:hand            [outpost]
+                             :deck            (repeat 5 copper)
+                             :actions         1
+                             :number-of-turns 1}
+                            {}]}
+                 (play 0 :outpost)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand                     [copper copper copper]
+                                :play-area                [outpost]
+                                :deck                     [copper copper]
+                                :actions                  1
+                                :coins                    0
+                                :buys                     1
+                                :actions-played           0
+                                :phase                    :action
+                                :previous-turn-was-yours? true
+                                :number-of-turns          1}
+                               {}]}))
+      (is (= (-> {:players [{:hand                     [outpost]
+                             :deck                     (repeat 5 copper)
+                             :actions                  1
+                             :previous-turn-was-yours? true
+                             :number-of-turns          1}
+                            {}]}
+                 (play 0 :outpost)
+                 (end-turn 0))
+             {:current-player 1
+              :players        [{:hand            [copper copper copper copper copper]
+                                :discard         [outpost]
+                                :actions         0
+                                :coins           0
+                                :buys            0
+                                :actions-played  0
+                                :phase           :out-of-turn
+                                :number-of-turns 2}
+                               {:actions 1
+                                :buys    1
+                                :coins   0
+                                :phase   :action}]})))))
+
 (deftest tactician-test
   (let [tactician (assoc tactician :id 1)
         throne-room (assoc throne-room :id 2)]

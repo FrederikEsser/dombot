@@ -1,5 +1,5 @@
 (ns dombot.cards.seaside
-  (:require [dombot.operations :refer [move-cards give-choice]]
+  (:require [dombot.operations :refer [move-cards give-choice push-effect-stack]]
             [dombot.cards.common :refer [reveal-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -113,6 +113,29 @@
                     :effects  [[:give-coins 2]]
                     :duration [[:give-coins 2]]})
 
+(defn outpost-extra-turn [game {:keys [player-no card-id]}]
+  (push-effect-stack game {:player-no player-no
+                           :card-id   card-id
+                           :effects   [[:clean-up {:extra-turn?     true
+                                                   :number-of-cards 3}]
+                                       [:start-turn]]}))
+
+(defn outpost-give-extra-turn [game {:keys [player-no card-id]}]
+  (let [{:keys [previous-turn-was-yours?]} (get-in game [:players player-no])]
+    (cond-> game
+            (not previous-turn-was-yours?) (-> (assoc-in [:players player-no :previous-turn-was-yours?] true)
+                                               (ut/update-in-vec [:players player-no :play-area] {:id card-id}
+                                                                 assoc :end-of-turn [[::outpost-extra-turn]])))))
+
+(effects/register {::outpost-extra-turn      outpost-extra-turn
+                   ::outpost-give-extra-turn outpost-give-extra-turn})
+
+(def outpost {:name    :outpost
+              :set     :seaside
+              :types   #{:action :duration}
+              :cost    5
+              :effects [[::outpost-give-extra-turn]]})
+
 (defn tactician-discard [game {:keys [player-no card-id]}]
   (let [hand (get-in game [:players player-no :hand])]
     (if (< 0 (count hand))
@@ -149,5 +172,6 @@
                     lighthouse
                     lookout
                     merchant-ship
+                    outpost
                     tactician
                     wharf])

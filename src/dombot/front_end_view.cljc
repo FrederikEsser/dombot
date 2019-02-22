@@ -53,7 +53,7 @@
                                            (#{:action :pay} phase))))
                          {:interaction :playable})
                        (choice-interaction name area choice)
-                       (when set-aside
+                       (when (not-empty set-aside)
                          {:set-aside (map (if active? (comp ut/format-name :name) (constantly "Card")) set-aside)}))))
          frequencies
          (map (fn [[card number-of-cards]]

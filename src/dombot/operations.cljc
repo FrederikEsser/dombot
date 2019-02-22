@@ -47,12 +47,13 @@
                                    :effect    effect})
                        check-stack))))
 
-(defn stay-in-play [{:keys [next-turn]}]
-  (not-empty next-turn))
+(defn stay-in-play [{:keys [next-turn end-of-turn]}]
+  (or (not-empty next-turn)
+      (not-empty end-of-turn)))
 
 (defn duration-effects [game player-no]
   (let [duration-cards (->> (get-in game [:players player-no :play-area])
-                            (filter stay-in-play))
+                            (filter (comp not-empty :next-turn)))
         do-duration-effect (fn [game {:keys [id next-turn]}]
                              (-> game
                                  (ut/update-in-vec [:players player-no :play-area] {:id id} dissoc :next-turn)
@@ -509,39 +510,58 @@
                                                          last)]
                                      (update game :players (partial mapv (partial end-game-for-player best-score)))))))
 
-(defn clean-up
-  ([{:keys [play-area hand number-of-turns] :as player}]
-   (let [used-cards (concat hand (remove stay-in-play play-area))]
-     (-> player
-         (cond-> (not-empty used-cards) (update :discard concat used-cards))
-         (dissoc :hand)
-         (update :play-area (partial filter stay-in-play))
-         (ut/dissoc-if-empty :play-area)
-         (assoc :actions 0
-                :coins 0
-                :buys 0
-                :actions-played 0
-                :phase :out-of-turn)
-         (dissoc :triggers)
-         (cond-> number-of-turns (update :number-of-turns inc)))))
-  ([game {:keys [player-no]}]
-   (-> game
-       (update-in [:players player-no] clean-up)
-       (set-approx-discard-size player-no)
-       (draw {:player-no player-no :arg 5})
-       (update :players (partial mapv (fn [player] (dissoc player :revealed-cards))))
-       (dissoc :cost-reductions)
-       check-game-ended
-       check-stack)))
+(defn clean-up [game {:keys [player-no number-of-cards extra-turn?]
+                      :or   {number-of-cards 5}}]
+  (let [clean-up-player (fn [{:keys [play-area hand number-of-turns] :as player}]
+                          (let [used-cards (concat hand (remove stay-in-play play-area))]
+                            (-> player
+                                (cond-> (not-empty used-cards) (update :discard concat used-cards))
+                                (dissoc :hand)
+                                (update :play-area (partial filter stay-in-play))
+                                (ut/dissoc-if-empty :play-area)
+                                (assoc :actions 0
+                                       :coins 0
+                                       :buys 0
+                                       :actions-played 0
+                                       :phase :out-of-turn)
+                                (dissoc :triggers)
+                                (cond-> (and number-of-turns
+                                             (not extra-turn?)) (update :number-of-turns inc))
+                                (cond-> (not extra-turn?) (dissoc :previous-turn-was-yours?)))))]
+    (-> game
+        (update-in [:players player-no] clean-up-player)
+        (set-approx-discard-size player-no)
+        (draw {:player-no player-no :arg number-of-cards})
+        (update :players (partial mapv (fn [player] (dissoc player :revealed-cards))))
+        (dissoc :cost-reductions)
+        check-game-ended
+        check-stack)))
 
 (effects/register {:clean-up clean-up})
 
+(defn clear-end-of-turn-effects [game {:keys [player-no card-id]}]
+  (-> game
+      (ut/update-in-vec [:players player-no :play-area] {:id card-id} dissoc :end-of-turn)))
+
+(effects/register {:clear-end-of-turn-effects clear-end-of-turn-effects})
+
 (defn end-turn [{:keys [effect-stack players] :as game} player-no]
   (assert (empty? effect-stack) "You can't end your turn when you have a choice to make.")
-  (let [next-player (mod (inc player-no) (count players))]
-    (-> game
-        (push-effect-stack {:player-no next-player
-                            :effects   [[:start-turn]]})
-        (push-effect-stack {:player-no player-no
-                            :effects   [[:clean-up]]})
-        check-stack)))
+  (let [end-of-turn-cards (->> (get-in game [:players player-no :play-area])
+                               (filter (comp not-empty :end-of-turn)))]
+    (if (not-empty end-of-turn-cards)
+      (let [do-end-of-turn-effect (fn [game {:keys [id end-of-turn]}]
+                                    (-> game
+                                        (cond-> end-of-turn (push-effect-stack {:player-no player-no
+                                                                                :card-id   id
+                                                                                :effects   (concat end-of-turn
+                                                                                                   [[:clear-end-of-turn-effects]])}))))]
+        (-> (reduce do-end-of-turn-effect game (reverse end-of-turn-cards))
+            check-stack))
+      (let [next-player (mod (inc player-no) (count players))]
+        (-> game
+            (push-effect-stack {:player-no next-player
+                                :effects   [[:start-turn]]})
+            (push-effect-stack {:player-no player-no
+                                :effects   [[:clean-up]]})
+            check-stack)))))
