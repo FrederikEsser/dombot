@@ -309,6 +309,68 @@
                                 :actions-played 0
                                 :phase          :action}]})))))
 
+(deftest lookout-test
+  (testing "Lookout"
+    (is (= (-> {:players [{:hand    [lookout]
+                           :deck    [estate gold province copper]
+                           :actions 1}]}
+               (play 0 :lookout))
+           {:players      [{:play-area [lookout]
+                            :look-at   [estate gold province]
+                            :deck      [copper]
+                            :actions   1}]
+            :effect-stack [{:text      "Trash one of the top 3 cards of your deck."
+                            :player-no 0
+                            :choice    :trash-from-look-at
+                            :source    :look-at
+                            :options   [:estate :gold :province]
+                            :min       1
+                            :max       1}
+                           {:player-no 0
+                            :effect    [:give-choice {:text    "Discard one of the top 3 cards of your deck."
+                                                      :choice  :discard-from-look-at
+                                                      :options [:player :look-at]
+                                                      :min     1
+                                                      :max     1}]}
+                           {:player-no 0
+                            :effect    [:move-card {:from          :look-at
+                                                    :from-position :top
+                                                    :to            :deck
+                                                    :to-position   :top}]}]}))
+    (is (= (-> {:players [{:hand    [lookout]
+                           :deck    [estate gold province copper]
+                           :actions 1}]}
+               (play 0 :lookout)
+               (choose :estate))
+           {:players      [{:play-area [lookout]
+                            :look-at   [gold province]
+                            :deck      [copper]
+                            :actions   1}]
+            :effect-stack [{:text      "Discard one of the top 3 cards of your deck."
+                            :player-no 0
+                            :choice    :discard-from-look-at
+                            :source    :look-at
+                            :options   [:gold :province]
+                            :min       1
+                            :max       1}
+                           {:player-no 0
+                            :effect    [:move-card {:from          :look-at
+                                                    :from-position :top
+                                                    :to            :deck
+                                                    :to-position   :top}]}]
+            :trash        [estate]}))
+    (is (= (-> {:players [{:hand    [lookout]
+                           :deck    [estate gold province copper]
+                           :actions 1}]}
+               (play 0 :lookout)
+               (choose :estate)
+               (choose :province))
+           {:players [{:play-area [lookout]
+                       :deck      [gold copper]
+                       :discard   [province]
+                       :actions   1}]
+            :trash   [estate]}))))
+
 (deftest merchant-ship-test
   (let [merchant-ship (assoc merchant-ship :id 1)]
     (testing "Merchant Ship"

@@ -64,6 +64,27 @@
                  :duration [[:give-coins 1]
                             [:clear-unaffected]]})
 
+(def lookout {:name    :lookout
+              :set     :seaside
+              :types   #{:action}
+              :cost    3
+              :effects [[:give-actions 1]
+                        [:look-at 3]
+                        [:give-choice {:text    "Trash one of the top 3 cards of your deck."
+                                       :choice  :trash-from-look-at
+                                       :options [:player :look-at]
+                                       :min     1
+                                       :max     1}]
+                        [:give-choice {:text    "Discard one of the top 3 cards of your deck."
+                                       :choice  :discard-from-look-at
+                                       :options [:player :look-at]
+                                       :min     1
+                                       :max     1}]
+                        [:move-card {:from          :look-at
+                                     :from-position :top
+                                     :to            :deck
+                                     :to-position   :top}]]})
+
 (def merchant-ship {:name     :merchant-ship
                     :set      :seaside
                     :types    #{:action :duration}
@@ -104,6 +125,7 @@
                     fishing-village
                     haven
                     lighthouse
+                    lookout
                     merchant-ship
                     tactician
                     wharf])
