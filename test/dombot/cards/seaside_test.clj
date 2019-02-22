@@ -143,7 +143,7 @@
                              :actions 1}]}
                  (play 0 :haven))
              {:players      [{:hand      [estate copper]
-                              :play-area [(assoc haven :next-turn [[[::seaside/haven-put-in-hand]]])]
+                              :play-area [haven]
                               :deck      [copper]
                               :actions   1}]
               :effect-stack [{:text      "Set aside a card from your hand."
@@ -160,7 +160,7 @@
                  (play 0 :haven)
                  (choose :copper))
              {:players [{:hand      [estate]
-                         :play-area [(assoc haven :next-turn [[[::seaside/haven-put-in-hand]]]
+                         :play-area [(assoc haven :next-turn [[[::seaside/haven-put-in-hand {:card-name :copper}]]]
                                                   :set-aside [copper])]
                          :deck      [copper]
                          :actions   1}]}))
@@ -172,12 +172,17 @@
                  (end-turn 0))
              {:current-player 0
               :players        [{:hand           [copper estate copper]
-                                :play-area      [haven]
+                                :play-area      [(assoc haven :set-aside [])]
                                 :actions        1
                                 :coins          0
                                 :buys           1
                                 :actions-played 0
                                 :phase          :action}]}))
+      (is (= (-> {:players [{:hand    [haven]
+                             :actions 1}]}
+                 (play 0 :haven))
+             {:players [{:play-area [haven]
+                         :actions   1}]}))
       (is (= (-> {:players [{:hand    [throne-room haven estate]
                              :deck    [copper copper]
                              :actions 1}]}
@@ -187,8 +192,8 @@
                  (choose :estate))
              {:players [{:hand      [copper]
                          :play-area [(assoc throne-room :next-turn [[]])
-                                     (assoc haven :next-turn [[[::seaside/haven-put-in-hand]]
-                                                              [[::seaside/haven-put-in-hand]]]
+                                     (assoc haven :next-turn [[[::seaside/haven-put-in-hand {:card-name :copper}]]
+                                                              [[::seaside/haven-put-in-hand {:card-name :estate}]]]
                                                   :set-aside [copper estate])]
                          :actions   2}]}))
       (is (= (-> {:players [{:hand    [throne-room haven estate]
@@ -202,7 +207,7 @@
              {:current-player 0
               :players        [{:hand           [copper copper estate]
                                 :play-area      [throne-room
-                                                 haven]
+                                                 (assoc haven :set-aside [])]
                                 :actions        1
                                 :coins          0
                                 :buys           1

@@ -433,7 +433,7 @@
                                                 :effects   effects})
             (:attack types) (affect-other-players {:player-no player-no
                                                    :effects   reaction-choice})
-            (:duration types) (ut/update-in-vec [:players player-no :play-area] {:id id} update :next-turn concat [duration]))))
+            duration (ut/update-in-vec [:players player-no :play-area] {:id id} update :next-turn concat [duration]))))
 
 (effects/register {:card-effect card-effect})
 

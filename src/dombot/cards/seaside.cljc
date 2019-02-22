@@ -21,35 +21,38 @@
                       :duration [[:give-actions 1]
                                  [:give-coins 1]]})
 
-(defn haven-set-aside [game {:keys [player-no card-name]}]
-  (let [{:keys [card idx]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        haven-idx (-> game (get-in [:players player-no :play-area]) count dec)]
+(defn haven-put-in-hand [game {:keys [player-no card-id card-name]}]
+  game
+  (let [{haven :card} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})
+        {:keys [idx card]} (ut/get-card-idx haven [:set-aside] {:name card-name})]
+    (-> game
+        (ut/update-in-vec [:players player-no :play-area] {:id card-id} update :set-aside ut/vec-remove idx)
+        (update-in [:players player-no :hand] concat [card]))))
+
+(defn haven-set-aside [game {:keys [player-no card-id card-name]}]
+  (let [{:keys [card idx]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
     (-> game
         (update-in [:players player-no :hand] ut/vec-remove idx)
-        (update-in [:players player-no :play-area haven-idx :set-aside] concat [card]))))
+        (ut/update-in-vec [:players player-no :play-area] {:id card-id}
+                          (fn [haven]
+                            (-> haven
+                                (update :set-aside concat [card])
+                                (update :next-turn concat [[[::haven-put-in-hand {:card-name card-name}]]])))))))
 
-(defn haven-put-in-hand [game {:keys [player-no card-id]}]
-  game
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
-    (-> game
-        (ut/update-in-vec [:players player-no :play-area] {:id card-id} dissoc :set-aside)
-        (update-in [:players player-no :hand] concat (:set-aside card)))))
+(effects/register {::haven-put-in-hand haven-put-in-hand
+                   ::haven-set-aside   haven-set-aside})
 
-(effects/register {::haven-set-aside   haven-set-aside
-                   ::haven-put-in-hand haven-put-in-hand})
-
-(def haven {:name     :haven
-            :set      :seaside
-            :types    #{:action :duration}
-            :cost     2
-            :effects  [[:draw 1]
-                       [:give-actions 1]
-                       [:give-choice {:text    "Set aside a card from your hand."
-                                      :choice  ::haven-set-aside
-                                      :options [:player :hand]
-                                      :min     1
-                                      :max     1}]]
-            :duration [[::haven-put-in-hand]]})
+(def haven {:name    :haven
+            :set     :seaside
+            :types   #{:action :duration}
+            :cost    2
+            :effects [[:draw 1]
+                      [:give-actions 1]
+                      [:give-choice {:text    "Set aside a card from your hand."
+                                     :choice  ::haven-set-aside
+                                     :options [:player :hand]
+                                     :min     1
+                                     :max     1}]]})
 
 (def lighthouse {:name     :lighthouse
                  :set      :seaside
