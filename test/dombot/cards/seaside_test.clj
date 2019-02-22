@@ -110,6 +110,58 @@
                                 :actions-played 0
                                 :phase          :action}]})))))
 
+(deftest cutpurse-test
+  (testing "Cutpurse"
+    (is (= (-> {:players [{:hand    [cutpurse]
+                           :actions 1
+                           :coins   0}
+                          {:hand [copper copper estate estate copper]}]}
+               (play 0 :cutpurse))
+           {:players      [{:play-area [cutpurse]
+                            :actions   0
+                            :coins     2}
+                           {:hand [copper copper estate estate copper]}]
+            :effect-stack [{:text      "Discard a Copper."
+                            :player-no 1
+                            :choice    :discard-from-hand
+                            :source    :hand
+                            :options   [:copper :copper :copper]
+                            :min       1
+                            :max       1}
+                           {:player-no 1
+                            :effect    [:clear-unaffected {:works :once}]}]}))
+    (is (= (-> {:players [{:hand    [cutpurse]
+                           :actions 1
+                           :coins   0}
+                          {:hand [copper copper estate estate copper]}]}
+               (play 0 :cutpurse)
+               (choose :copper))
+           {:players [{:play-area [cutpurse]
+                       :actions   0
+                       :coins     2}
+                      {:hand    [copper estate estate copper]
+                       :discard [copper]}]}))
+    (is (= (-> {:players [{:hand    [cutpurse]
+                           :actions 1
+                           :coins   0}
+                          {:hand [estate estate]}]}
+               (play 0 :cutpurse))
+           {:players [{:play-area [cutpurse]
+                       :actions   0
+                       :coins     2}
+                      {:hand           [estate estate]
+                       :revealed-cards {:hand 2}}]}))
+    (is (= (-> {:players [{:hand    [cutpurse]
+                           :actions 1
+                           :coins   0}
+                          {:hand [copper]}]}
+               (play 0 :cutpurse)
+               (choose :copper))
+           {:players [{:play-area [cutpurse]
+                       :actions   0
+                       :coins     2}
+                      {:discard [copper]}]}))))
+
 (deftest fishing-village-test
   (let [fishing-village (assoc fishing-village :id 1)]
     (testing "Fishing Village"

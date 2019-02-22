@@ -1,6 +1,6 @@
 (ns dombot.cards.seaside
-  (:require [dombot.operations :refer [move-cards]]
-            [dombot.cards.common :refer []]
+  (:require [dombot.operations :refer [move-cards give-choice]]
+            [dombot.cards.common :refer [reveal-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -11,6 +11,27 @@
               :effects  [[:draw 1]
                          [:give-actions 1]]
               :duration [[:draw 1]]})
+
+(defn cutpurse-attack [game {:keys [player-no]}]
+  (let [hand (get-in game [:players player-no :hand])]
+    (if (some (comp #{:copper} :name) hand)
+      (give-choice game {:player-no player-no
+                         :text      "Discard a Copper."
+                         :choice    :discard-from-hand
+                         :options   [:player :hand {:name :copper}]
+                         :min       1
+                         :max       1})
+      (-> game
+          (reveal-hand {:player-no player-no})))))
+
+(effects/register {::cutpurse-attack cutpurse-attack})
+
+(def cutpurse {:name    :cutpurse
+               :set     :seaside
+               :types   #{:action :attack}
+               :cost    4
+               :effects [[:give-coins 2]
+                         [:attack {:effects [[::cutpurse-attack]]}]]})
 
 (def fishing-village {:name     :fishing-village
                       :set      :seaside
@@ -122,6 +143,7 @@
                        [:give-buys 1]]})
 
 (def kingdom-cards [caravan
+                    cutpurse
                     fishing-village
                     haven
                     lighthouse
