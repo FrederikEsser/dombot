@@ -16,3 +16,4 @@ pom.xml.asc
 logs
 public/js/out
 figwheel_server.log
+dombot.iml

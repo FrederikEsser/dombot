@@ -51,4 +51,6 @@
                    :dependencies [[binaryage/devtools "0.9.10"]
                                   [figwheel-sidecar "0.5.16"]
                                   [nrepl "0.4.4"]
-                                  [cider/piggieback "0.3.8"]]}})
+                                  [cider/piggieback "0.3.10" :exclusions [org.clojure/clojurescript]]]
+                   :repl-options {:timeout          1200000
+                                  :nrepl-middleware [cider.piggieback/wrap-cljs-repl]}}})
