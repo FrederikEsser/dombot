@@ -1,5 +1,6 @@
 (ns dombot.front-end-view
   (:require [dombot.utils :as ut]
+            [dombot.operations :refer [stay-in-play]]
             [dombot.specs :as specs]
             [clojure.spec.alpha :as s]))
 
@@ -37,12 +38,12 @@
         cards (cond->> (get player area)
                        number-of-cards (take-fn number-of-cards))]
     (->> cards
-         (map (fn [{:keys [name types stay-in-play set-aside]}]
+         (map (fn [{:keys [name types set-aside] :as card}]
                 (merge {:name    name
                         :name-ui (ut/format-name name)
                         :types   types}
-                       (when stay-in-play
-                         {:stay-in-play stay-in-play})
+                       (when (stay-in-play card)
+                         {:stay-in-play true})
                        (when (and (= :hand area)
                                   (not choice)
                                   (or (and (:action types)
@@ -55,7 +56,6 @@
                        (when set-aside
                          {:set-aside (map (if active? (comp ut/format-name :name) (constantly "Card")) set-aside)}))))
          frequencies
-         (sort-by (comp not :stay-in-play first))
          (map (fn [[card number-of-cards]]
                 (cond-> card
                         (< 1 number-of-cards) (assoc :number-of-cards number-of-cards)))))))

@@ -75,7 +75,7 @@
                         :card-names (map :name hand)
                         :from       :hand
                         :to         :discard})
-      (ut/update-in-vec game [:players player-no :play-area] {:id card-id} dissoc :stay-in-play))))
+      (ut/update-in-vec game [:players player-no :play-area] {:id card-id} update :next-turn drop-last))))
 
 (effects/register {::tactician-discard tactician-discard})
 

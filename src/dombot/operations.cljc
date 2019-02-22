@@ -1,7 +1,6 @@
 (ns dombot.operations
   (:require [dombot.utils :as ut]
             [dombot.effects :as effects]
-            [dombot.front-end-view :as view]
             [clojure.set]))
 
 (defn game-ended? [game]
@@ -48,15 +47,18 @@
                                    :effect    effect})
                        check-stack))))
 
+(defn stay-in-play [{:keys [next-turn]}]
+  (not-empty next-turn))
+
 (defn duration-effects [game player-no]
   (let [duration-cards (->> (get-in game [:players player-no :play-area])
-                            (filter :stay-in-play))
-        do-duration-effect (fn [game {:keys [id duration]}]
+                            (filter stay-in-play))
+        do-duration-effect (fn [game {:keys [id next-turn]}]
                              (-> game
-                                 (ut/update-in-vec [:players player-no :play-area] {:id id} dissoc :stay-in-play)
-                                 (push-effect-stack {:player-no player-no
-                                                     :card-id   id
-                                                     :effects   duration})))]
+                                 (ut/update-in-vec [:players player-no :play-area] {:id id} dissoc :next-turn)
+                                 (cond-> next-turn (push-effect-stack {:player-no player-no
+                                                                       :card-id   id
+                                                                       :effects   (apply concat next-turn)}))))]
     (reduce do-duration-effect game (reverse duration-cards))))
 
 (defn start-turn
@@ -418,8 +420,8 @@
 
 (effects/register {:reveal-reaction reveal-reaction})
 
-(defn card-effect [game {:keys                      [player-no]
-                         {:keys [id types effects]} :card}]
+(defn card-effect [game {:keys                               [player-no]
+                         {:keys [id types effects duration]} :card}]
   (let [{:keys [actions-played]} (get-in game [:players player-no])]
     (cond-> game
             (and (:action types)
@@ -431,7 +433,7 @@
                                                 :effects   effects})
             (:attack types) (affect-other-players {:player-no player-no
                                                    :effects   reaction-choice})
-            (:duration types) (ut/update-in-vec [:players player-no :play-area] {:id id} assoc :stay-in-play true))))
+            (:duration types) (ut/update-in-vec [:players player-no :play-area] {:id id} update :next-turn concat [duration]))))
 
 (effects/register {:card-effect card-effect})
 
@@ -509,11 +511,11 @@
 
 (defn clean-up
   ([{:keys [play-area hand number-of-turns] :as player}]
-   (let [used-cards (concat hand (remove :stay-in-play play-area))]
+   (let [used-cards (concat hand (remove stay-in-play play-area))]
      (-> player
          (cond-> (not-empty used-cards) (update :discard concat used-cards))
          (dissoc :hand)
-         (update :play-area (partial filter :stay-in-play))
+         (update :play-area (partial filter stay-in-play))
          (ut/dissoc-if-empty :play-area)
          (assoc :actions 0
                 :coins 0

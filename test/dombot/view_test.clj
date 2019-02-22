@@ -195,14 +195,14 @@
              :name-ui         "Copper"
              :types           #{:treasure}
              :number-of-cards 2}]))
-    (is (= (view-area :play-area {:player {:play-area [copper (assoc copper :stay-in-play true)]}})
-           [{:name         :copper
+    (is (= (view-area :play-area {:player {:play-area [copper (assoc copper :next-turn [[]])]}})
+           [{:name    :copper
+             :name-ui "Copper"
+             :types   #{:treasure}}
+            {:name         :copper
              :name-ui      "Copper"
              :types        #{:treasure}
-             :stay-in-play true}
-            {:name    :copper
-             :name-ui "Copper"
-             :types   #{:treasure}}]))))
+             :stay-in-play true}]))))
 
 (deftest discard-test
   (testing "Discard view"

@@ -1,5 +1,5 @@
 (ns dombot.cards.common
-  (:require [dombot.operations :refer [gain move-card move-cards give-choice push-effect-stack]]
+  (:require [dombot.operations :refer [gain move-card move-cards give-choice push-effect-stack stay-in-play]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -47,9 +47,9 @@
 (effects/register {:play play-from-hand})
 
 (defn check-stay-in-play [game {:keys [player-no card-id target-id]}]
-  (let [{{:keys [types stay-in-play]} :card} (ut/get-card-idx game [:players player-no :play-area] {:id target-id})]
+  (let [{{:keys [types] :as card} :card} (ut/get-card-idx game [:players player-no :play-area] {:id target-id})]
     (cond-> game
-            (and (:duration types) stay-in-play) (ut/update-in-vec [:players player-no :play-area] {:id card-id} assoc :stay-in-play true))))
+            (and (:duration types) (stay-in-play card)) (ut/update-in-vec [:players player-no :play-area] {:id card-id} update :next-turn concat [[]]))))
 
 (effects/register {:check-stay-in-play check-stay-in-play})
 
