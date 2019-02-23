@@ -166,9 +166,10 @@
 
 (effects/register {:topdeck-from-revealed topdeck-from-revealed})
 
-(defn trash-from-hand [game args]
-  (move-cards game (merge args {:from :hand
-                                :to   :trash})))
+(defn trash-from-hand [game {:keys [card-name card-names] :as args}]
+  (cond-> game
+          (or card-name card-names) (move-cards (merge args {:from :hand
+                                                             :to   :trash}))))
 
 (effects/register {:trash-from-hand trash-from-hand})
 

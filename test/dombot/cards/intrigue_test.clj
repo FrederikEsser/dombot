@@ -771,6 +771,33 @@
     (is (= (-> {:players [{:hand    [masquerade]
                            :deck    [estate estate copper]
                            :actions 1}
+                          {:hand [copper]}]}
+               (play 0 :masquerade)
+               (choose :estate)
+               (choose :copper)
+               (choose :estate))
+           {:players      [{:hand      [ copper]
+                            :play-area [masquerade]
+                            :deck      [copper]
+                            :actions   0}
+                           {:hand [estate]}]
+            :trash [estate]}))
+    (is (= (-> {:players [{:hand    [masquerade]
+                           :deck    [estate estate copper]
+                           :actions 1}
+                          {:hand [copper]}]}
+               (play 0 :masquerade)
+               (choose :estate)
+               (choose :copper)
+               (choose nil))
+           {:players      [{:hand      [estate copper]
+                            :play-area [masquerade]
+                            :deck      [copper]
+                            :actions   0}
+                           {:hand [estate]}]}))
+    (is (= (-> {:players [{:hand    [masquerade]
+                           :deck    [estate estate copper]
+                           :actions 1}
                           {:hand [copper]}
                           {:hand [silver]}]}
                (play 0 :masquerade))
