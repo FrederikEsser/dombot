@@ -47,19 +47,19 @@
                                    :effect    effect})
                        check-stack))))
 
-(defn stay-in-play [{:keys [next-turn end-of-turn]}]
-  (or (not-empty next-turn)
-      (not-empty end-of-turn)))
+(defn stay-in-play [{:keys [at-start-turn at-end-turn]}]
+  (or (not-empty at-start-turn)
+      (not-empty at-end-turn)))
 
 (defn duration-effects [game player-no]
   (let [duration-cards (->> (get-in game [:players player-no :play-area])
-                            (filter (comp not-empty :next-turn)))
-        do-duration-effect (fn [game {:keys [id next-turn]}]
+                            (filter (comp not-empty :at-start-turn)))
+        do-duration-effect (fn [game {:keys [id at-start-turn]}]
                              (-> game
-                                 (ut/update-in-vec [:players player-no :play-area] {:id id} dissoc :next-turn)
-                                 (cond-> next-turn (push-effect-stack {:player-no player-no
-                                                                       :card-id   id
-                                                                       :effects   (apply concat next-turn)}))))]
+                                 (ut/update-in-vec [:players player-no :play-area] {:id id} dissoc :at-start-turn)
+                                 (cond-> at-start-turn (push-effect-stack {:player-no player-no
+                                                                           :card-id   id
+                                                                           :effects   (apply concat at-start-turn)}))))]
     (reduce do-duration-effect game (reverse duration-cards))))
 
 (defn start-turn
@@ -434,7 +434,7 @@
                                                 :effects   effects})
             (:attack types) (affect-other-players {:player-no player-no
                                                    :effects   reaction-choice})
-            duration (ut/update-in-vec [:players player-no :play-area] {:id id} update :next-turn concat [duration]))))
+            duration (ut/update-in-vec [:players player-no :play-area] {:id id} update :at-start-turn concat [duration]))))
 
 (effects/register {:card-effect card-effect})
 
@@ -539,24 +539,24 @@
 
 (effects/register {:clean-up clean-up})
 
-(defn clear-end-of-turn-effects [game {:keys [player-no card-id]}]
+(defn clear-at-end-turn-effects [game {:keys [player-no card-id]}]
   (-> game
-      (ut/update-in-vec [:players player-no :play-area] {:id card-id} dissoc :end-of-turn)))
+      (ut/update-in-vec [:players player-no :play-area] {:id card-id} dissoc :at-end-turn)))
 
-(effects/register {:clear-end-of-turn-effects clear-end-of-turn-effects})
+(effects/register {:clear-at-end-turn-effects clear-at-end-turn-effects})
 
 (defn end-turn [{:keys [effect-stack players] :as game} player-no]
   (assert (empty? effect-stack) "You can't end your turn when you have a choice to make.")
-  (let [end-of-turn-cards (->> (get-in game [:players player-no :play-area])
-                               (filter (comp not-empty :end-of-turn)))]
-    (if (not-empty end-of-turn-cards)
-      (let [do-end-of-turn-effect (fn [game {:keys [id end-of-turn]}]
+  (let [at-end-turn-cards (->> (get-in game [:players player-no :play-area])
+                               (filter (comp not-empty :at-end-turn)))]
+    (if (not-empty at-end-turn-cards)
+      (let [do-at-end-turn-effect (fn [game {:keys [id at-end-turn]}]
                                     (-> game
-                                        (cond-> end-of-turn (push-effect-stack {:player-no player-no
+                                        (cond-> at-end-turn (push-effect-stack {:player-no player-no
                                                                                 :card-id   id
-                                                                                :effects   (concat end-of-turn
-                                                                                                   [[:clear-end-of-turn-effects]])}))))]
-        (-> (reduce do-end-of-turn-effect game (reverse end-of-turn-cards))
+                                                                                :effects   (concat at-end-turn
+                                                                                                   [[:clear-at-end-turn-effects]])}))))]
+        (-> (reduce do-at-end-turn-effect game (reverse at-end-turn-cards))
             check-stack))
       (let [next-player (mod (inc player-no) (count players))]
         (-> game

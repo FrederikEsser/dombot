@@ -117,7 +117,7 @@
       (is (= (-> {:players [{:play-area       [copper copper copper copper copper]
                              :discard         [stash]
                              :number-of-turns 1}
-                            {:play-area       [(assoc caravan :next-turn [[[:draw 1]]])]
+                            {:play-area       [(assoc caravan :at-start-turn [[[:draw 1]]])]
                              :discard         [stash copper]
                              :number-of-turns 1}]}
                  (end-turn 0))
@@ -129,7 +129,7 @@
                               :actions-played  0
                               :phase           :out-of-turn
                               :number-of-turns 2}
-                             {:play-area       [(assoc caravan :next-turn [[[:draw 1]]])]
+                             {:play-area       [(assoc caravan :at-start-turn [[[:draw 1]]])]
                               :discard         [stash copper]
                               :number-of-turns 1}]
               :effect-stack [{:text      "Put the Stash anywhere in your deck."
@@ -169,7 +169,7 @@
       (is (= (-> {:players [{:play-area       [copper copper copper copper copper]
                              :discard         [stash]
                              :number-of-turns 1}
-                            {:play-area       [(assoc caravan :next-turn [[[:draw 1]]])]
+                            {:play-area       [(assoc caravan :at-start-turn [[[:draw 1]]])]
                              :discard         [stash copper]
                              :number-of-turns 1}]}
                  (end-turn 0)

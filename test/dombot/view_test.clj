@@ -195,7 +195,7 @@
              :name-ui         "Copper"
              :types           #{:treasure}
              :number-of-cards 2}]))
-    (is (= (view-area :play-area {:player {:play-area [copper (assoc copper :next-turn [[]])]}})
+    (is (= (view-area :play-area {:player {:play-area [copper (assoc copper :at-start-turn [[]])]}})
            [{:name    :copper
              :name-ui "Copper"
              :types   #{:treasure}}

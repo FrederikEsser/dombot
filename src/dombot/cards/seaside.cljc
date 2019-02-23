@@ -58,7 +58,7 @@
                           (fn [haven]
                             (-> haven
                                 (update :set-aside concat [card])
-                                (update :next-turn concat [[[::haven-put-in-hand {:card-name card-name}]]])))))))
+                                (update :at-start-turn concat [[[::haven-put-in-hand {:card-name card-name}]]])))))))
 
 (effects/register {::haven-put-in-hand haven-put-in-hand
                    ::haven-set-aside   haven-set-aside})
@@ -125,7 +125,7 @@
     (cond-> game
             (not previous-turn-was-yours?) (-> (assoc-in [:players player-no :previous-turn-was-yours?] true)
                                                (ut/update-in-vec [:players player-no :play-area] {:id card-id}
-                                                                 assoc :end-of-turn [[::outpost-extra-turn]])))))
+                                                                 assoc :at-end-turn [[::outpost-extra-turn]])))))
 
 (effects/register {::outpost-extra-turn      outpost-extra-turn
                    ::outpost-give-extra-turn outpost-give-extra-turn})
@@ -143,7 +143,7 @@
                         :card-names (map :name hand)
                         :from       :hand
                         :to         :discard})
-      (ut/update-in-vec game [:players player-no :play-area] {:id card-id} update :next-turn drop-last))))
+      (ut/update-in-vec game [:players player-no :play-area] {:id card-id} update :at-start-turn drop-last))))
 
 (effects/register {::tactician-discard tactician-discard})
 

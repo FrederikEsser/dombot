@@ -49,7 +49,7 @@
 (defn check-stay-in-play [game {:keys [player-no card-id target-id]}]
   (let [{{:keys [types] :as card} :card} (ut/get-card-idx game [:players player-no :play-area] {:id target-id})]
     (cond-> game
-            (and (:duration types) (stay-in-play card)) (ut/update-in-vec [:players player-no :play-area] {:id card-id} update :next-turn concat [[]]))))
+            (and (:duration types) (stay-in-play card)) (ut/update-in-vec [:players player-no :play-area] {:id card-id} update :at-start-turn concat [[]]))))
 
 (effects/register {:check-stay-in-play check-stay-in-play})
 

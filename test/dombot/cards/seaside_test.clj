@@ -18,7 +18,7 @@
                              :actions 1}]}
                  (play 0 :caravan))
              {:players [{:hand      [estate estate estate copper copper]
-                         :play-area [(assoc caravan-1 :next-turn [[[:draw 1]]])]
+                         :play-area [(assoc caravan-1 :at-start-turn [[[:draw 1]]])]
                          :deck      [copper copper copper copper copper silver]
                          :actions   1}]}))
       (is (= (-> {:players [{:hand    [caravan-1 estate estate estate copper]
@@ -27,7 +27,7 @@
                  (play 0 :caravan)
                  (clean-up {:player-no 0}))
              {:players [{:hand           [copper copper copper copper copper]
-                         :play-area      [(assoc caravan-1 :next-turn [[[:draw 1]]])]
+                         :play-area      [(assoc caravan-1 :at-start-turn [[[:draw 1]]])]
                          :deck           [silver]
                          :discard        [estate estate estate copper copper]
                          :actions        0
@@ -56,8 +56,8 @@
                  (play 0 :caravan)
                  (clean-up {:player-no 0}))
              {:players [{:hand           [estate estate copper copper silver]
-                         :play-area      [(assoc caravan-1 :next-turn [[[:draw 1]]])
-                                          (assoc caravan-2 :next-turn [[[:draw 1]]])]
+                         :play-area      [(assoc caravan-1 :at-start-turn [[[:draw 1]]])
+                                          (assoc caravan-2 :at-start-turn [[[:draw 1]]])]
                          :discard        [copper copper copper copper copper]
                          :actions        0
                          :coins          0
@@ -86,8 +86,8 @@
                  (choose :caravan)
                  (clean-up {:player-no 0}))
              {:players [{:hand           [estate estate copper copper silver]
-                         :play-area      [(assoc throne-room :next-turn [[]])
-                                          (assoc caravan-1 :next-turn [[[:draw 1]] [[:draw 1]]])]
+                         :play-area      [(assoc throne-room :at-start-turn [[]])
+                                          (assoc caravan-1 :at-start-turn [[[:draw 1]] [[:draw 1]]])]
                          :discard        [copper copper copper copper copper]
                          :actions        0
                          :coins          0
@@ -169,7 +169,7 @@
                              :actions 1
                              :coins   0}]}
                  (play 0 :fishing-village))
-             {:players [{:play-area [(assoc fishing-village :next-turn [[[:give-actions 1]
+             {:players [{:play-area [(assoc fishing-village :at-start-turn [[[:give-actions 1]
                                                                          [:give-coins 1]]])]
                          :actions   2
                          :coins     1}]}))
@@ -212,7 +212,7 @@
                  (play 0 :haven)
                  (choose :copper))
              {:players [{:hand      [estate]
-                         :play-area [(assoc haven :next-turn [[[::seaside/haven-put-in-hand {:card-name :copper}]]]
+                         :play-area [(assoc haven :at-start-turn [[[::seaside/haven-put-in-hand {:card-name :copper}]]]
                                                   :set-aside [copper])]
                          :deck      [copper]
                          :actions   1}]}))
@@ -243,8 +243,8 @@
                  (choose :copper)
                  (choose :estate))
              {:players [{:hand      [copper]
-                         :play-area [(assoc throne-room :next-turn [[]])
-                                     (assoc haven :next-turn [[[::seaside/haven-put-in-hand {:card-name :copper}]]
+                         :play-area [(assoc throne-room :at-start-turn [[]])
+                                     (assoc haven :at-start-turn [[[::seaside/haven-put-in-hand {:card-name :copper}]]
                                                               [[::seaside/haven-put-in-hand {:card-name :estate}]]]
                                                   :set-aside [copper estate])]
                          :actions   2}]}))
@@ -274,7 +274,7 @@
                              :actions 1
                              :coins   0}]}
                  (play 0 :lighthouse))
-             {:players [{:play-area  [(assoc lighthouse-1 :next-turn [[[:give-coins 1]
+             {:players [{:play-area  [(assoc lighthouse-1 :at-start-turn [[[:give-coins 1]
                                                                        [:clear-unaffected]]])]
                          :actions    1
                          :coins      1
@@ -286,7 +286,7 @@
                  (play 0 :lighthouse)
                  (end-turn 0))
              {:current-player 1
-              :players        [{:play-area      [(assoc lighthouse-1 :next-turn [[[:give-coins 1]
+              :players        [{:play-area      [(assoc lighthouse-1 :at-start-turn [[[:give-coins 1]
                                                                                   [:clear-unaffected]]])]
                                 :actions        0
                                 :coins          0
@@ -314,7 +314,7 @@
                {:current-player 2
                 :supply         [{:card curse :pile-size 18}]
                 :players        [{:hand           [moat]
-                                  :play-area      [(assoc lighthouse-1 :next-turn [[[:give-coins 1]
+                                  :play-area      [(assoc lighthouse-1 :at-start-turn [[[:give-coins 1]
                                                                                     [:clear-unaffected]]])]
                                   :actions        0
                                   :coins          0
@@ -430,7 +430,7 @@
                              :actions 1
                              :coins   0}]}
                  (play 0 :merchant-ship))
-             {:players [{:play-area [(assoc merchant-ship :next-turn [[[:give-coins 2]]])]
+             {:players [{:play-area [(assoc merchant-ship :at-start-turn [[[:give-coins 2]]])]
                          :actions   0
                          :coins     2}]}))
       (is (= (-> {:players [{:hand    [merchant-ship]
@@ -452,7 +452,7 @@
       (is (= (-> {:players [{:hand    [outpost]
                              :actions 1}]}
                  (play 0 :outpost))
-             {:players [{:play-area                [(assoc outpost :end-of-turn [[::seaside/outpost-extra-turn]])]
+             {:players [{:play-area                [(assoc outpost :at-end-turn [[::seaside/outpost-extra-turn]])]
                          :actions                  0
                          :previous-turn-was-yours? true}]}))
       (is (= (-> {:players [{:hand            [outpost]
@@ -503,7 +503,7 @@
       (is (= (-> {:players [{:hand    [tactician estate]
                              :actions 1}]}
                  (play 0 :tactician))
-             {:players [{:play-area [(assoc tactician :next-turn [[[:draw 5]
+             {:players [{:play-area [(assoc tactician :at-start-turn [[[:draw 5]
                                                                    [:give-actions 1]
                                                                    [:give-buys 1]]])]
                          :discard   [estate]
@@ -511,7 +511,7 @@
       (is (= (-> {:players [{:hand    [tactician]
                              :actions 1}]}
                  (play 0 :tactician))
-             {:players [{:play-area [(assoc tactician :next-turn [])]
+             {:players [{:play-area [(assoc tactician :at-start-turn [])]
                          :actions   0}]}))
       (is (= (-> {:players [{:hand    [tactician estate]
                              :deck    (repeat 10 copper)
@@ -537,7 +537,7 @@
              {:current-player 0
               :players        [{:hand           (repeat 5 copper)
                                 :deck           (repeat 5 copper)
-                                :discard        [(assoc tactician :next-turn [])]
+                                :discard        [(assoc tactician :at-start-turn [])]
                                 :actions        1
                                 :coins          0
                                 :buys           1
@@ -547,8 +547,8 @@
                              :actions 1}]}
                  (play 0 :throne-room)
                  (choose :tactician))
-             {:players [{:play-area [(assoc throne-room :next-turn [[]])
-                                     (assoc tactician :next-turn [[[:draw 5]
+             {:players [{:play-area [(assoc throne-room :at-start-turn [[]])
+                                     (assoc tactician :at-start-turn [[[:draw 5]
                                                                    [:give-actions 1]
                                                                    [:give-buys 1]]])]
                          :discard   [estate]
@@ -563,7 +563,7 @@
                              :buys    1}]}
                  (play 0 :wharf))
              {:players [{:hand      [estate estate estate copper copper copper]
-                         :play-area [(assoc wharf :next-turn [[[:draw 2]
+                         :play-area [(assoc wharf :at-start-turn [[[:draw 2]
                                                                [:give-buys 1]]])]
                          :deck      [copper copper copper copper silver]
                          :actions   0
