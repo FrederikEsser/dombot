@@ -199,6 +199,67 @@
                                 :actions-played 0
                                 :phase          :action}]})))))
 
+(deftest ghost-ship-test
+  (testing "Ghost Ship"
+    (is (= (play {:players [{:hand    [ghost-ship]
+                             :deck    [copper copper copper]
+                             :actions 1}
+                            {:hand (repeat 5 copper)}]}
+                 0 :ghost-ship)
+           {:players      [{:hand      [copper copper]
+                            :play-area [ghost-ship]
+                            :deck      [copper]
+                            :actions   0}
+                           {:hand (repeat 5 copper)}]
+            :effect-stack [{:text      "Put cards from your hand onto your deck until you have 3 cards in hand."
+                            :player-no 1
+                            :choice    :topdeck-from-hand
+                            :source    :hand
+                            :options   (repeat 5 :copper)
+                            :min       2
+                            :max       2}
+                           {:player-no 1
+                            :effect    [:clear-unaffected {:works :once}]}]}))
+    (is (= (-> {:players [{:hand    [ghost-ship]
+                           :deck    [copper copper copper]
+                           :actions 1}
+                          {:hand (repeat 5 copper)
+                           :deck [estate]}]}
+               (play 0 :ghost-ship)
+               (choose [:copper :copper]))
+           {:players [{:hand      [copper copper]
+                       :play-area [ghost-ship]
+                       :deck      [copper]
+                       :actions   0}
+                      {:hand (repeat 3 copper)
+                       :deck [copper copper estate]}]}))
+    (is (= (-> {:players [{:hand    [ghost-ship]
+                           :deck    [copper copper copper]
+                           :actions 1}
+                          {:hand (repeat 4 copper)
+                           :deck [estate]}]}
+               (play 0 :ghost-ship)
+               (choose :copper))
+           {:players [{:hand      [copper copper]
+                       :play-area [ghost-ship]
+                       :deck      [copper]
+                       :actions   0}
+                      {:hand (repeat 3 copper)
+                       :deck [copper estate]}]}))
+    (is (= (-> {:players [{:hand    [ghost-ship]
+                           :deck    [copper copper copper]
+                           :actions 1}
+                          {:hand (repeat 6 copper)
+                           :deck [estate]}]}
+               (play 0 :ghost-ship)
+               (choose [:copper :copper :copper]))
+           {:players [{:hand      [copper copper]
+                       :play-area [ghost-ship]
+                       :deck      [copper]
+                       :actions   0}
+                      {:hand (repeat 3 copper)
+                       :deck [copper copper copper estate]}]}))))
+
 (deftest haven-test
   (let [haven (assoc haven :id 1)
         throne-room (assoc throne-room :id 2)]

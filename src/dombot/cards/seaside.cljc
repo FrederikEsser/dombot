@@ -50,6 +50,13 @@
                       :duration [[:give-actions 1]
                                  [:give-coins 1]]})
 
+(def ghost-ship {:name    :ghost-ship
+                 :set     :seaside
+                 :types   #{:action :attack}
+                 :cost    5
+                 :effects [[:draw 2]
+                           [:attack {:effects [[:topdeck-down-to 3]]}]]})
+
 (defn haven-put-in-hand [game {:keys [player-no card-id card-name]}]
   game
   (let [{haven :card} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})
@@ -211,6 +218,7 @@
                     caravan
                     cutpurse
                     fishing-village
+                    ghost-ship
                     haven
                     island
                     lighthouse

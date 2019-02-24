@@ -144,6 +144,18 @@
 
 (effects/register {:topdeck-from-hand topdeck-from-hand})
 
+(defn topdeck-down-to [game {:keys [player-no arg]}]
+  (let [hand (get-in game [:players player-no :hand])]
+    (cond-> game
+            (> (count hand) arg) (give-choice {:player-no player-no
+                                               :text      (str "Put cards from your hand onto your deck until you have " arg " cards in hand.")
+                                               :choice    :topdeck-from-hand
+                                               :options   [:player :hand]
+                                               :min       (- (count hand) arg)
+                                               :max       (- (count hand) arg)}))))
+
+(effects/register {:topdeck-down-to topdeck-down-to})
+
 (defn topdeck-from-discard [game {:keys [card-name] :as args}]
   (cond-> game
           card-name (move-card (merge args {:from        :discard
