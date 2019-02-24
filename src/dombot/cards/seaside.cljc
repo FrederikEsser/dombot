@@ -1,6 +1,6 @@
 (ns dombot.cards.seaside
   (:require [dombot.operations :refer [move-card move-cards give-choice push-effect-stack]]
-            [dombot.cards.common :refer [reveal-hand gain-to-hand]]
+            [dombot.cards.common :refer [reveal-hand gain-to-hand discard-all-look-at]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -183,6 +183,40 @@
                     :effects  [[:give-coins 2]]
                     :duration [[:give-coins 2]]})
 
+(defn navigator-choice [game {:keys [player-no choice]}]
+  (assert choice "No choice specified for Navigator.")
+  (let [look-at (get-in game [:players player-no :look-at])]
+    (case choice
+      :discard (discard-all-look-at game {:player-no player-no})
+      :topdeck-same-order (move-cards game {:player-no   player-no
+                                            :card-names  (->> look-at (map :name) reverse)
+                                            :from        :look-at
+                                            :to          :deck
+                                            :to-position :top})
+      :topdeck (give-choice game {:player-no player-no
+                                  :text      "Put them back on your deck in any order."
+                                  :choice    :topdeck-from-look-at
+                                  :options   [:player :look-at]
+                                  :min       5
+                                  :max       5}))))
+
+(effects/register {::navigator-choice navigator-choice})
+
+(def navigator {:name    :navigator
+                :set     :seaside
+                :types   #{:action}
+                :cost    4
+                :effects [[:give-coins 2]
+                          [:look-at 5]
+                          [:give-choice {:text    "Look at the top 5 cards of your deck."
+                                         :choice  ::navigator-choice
+                                         :options [:special
+                                                   {:option :discard :text "Discard them all."}
+                                                   {:option :topdeck-same-order :text "Put them back on your deck in the same order."}
+                                                   {:option :topdeck :text "Put them back on your deck in any order."}]
+                                         :min     1
+                                         :max     1}]]})
+
 (defn outpost-extra-turn [game {:keys [player-no card-id]}]
   (push-effect-stack game {:player-no player-no
                            :card-id   card-id
@@ -285,6 +319,7 @@
                     lighthouse
                     lookout
                     merchant-ship
+                    navigator
                     outpost
                     salvager
                     sea-hag

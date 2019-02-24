@@ -108,6 +108,15 @@
 
 (effects/register {:discard-from-look-at discard-from-look-at})
 
+(defn discard-all-look-at [game {:keys [player-no]}]
+  (let [look-at (get-in game [:players player-no :look-at])]
+    (move-cards game {:player-no  player-no
+                      :card-names (map :name look-at)
+                      :from       :look-at
+                      :to         :discard})))
+
+(effects/register {:discard-all-look-at discard-all-look-at})
+
 (defn discard-from-topdeck [game {:keys [player-no arg]}]
   (move-card game {:player-no       player-no
                    :number-of-cards arg

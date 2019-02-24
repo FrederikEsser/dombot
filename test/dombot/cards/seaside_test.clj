@@ -626,6 +626,78 @@
                                 :actions-played 0
                                 :phase          :action}]})))))
 
+(deftest navigator-test
+  (testing "Navigator"
+    (is (= (-> {:players [{:hand    [navigator]
+                           :deck    [copper copper estate estate silver estate]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :navigator))
+           {:players      [{:play-area [navigator]
+                            :deck      [estate]
+                            :look-at   [copper copper estate estate silver]
+                            :actions   0
+                            :coins     2}]
+            :effect-stack [{:text      "Look at the top 5 cards of your deck."
+                            :player-no 0
+                            :choice    ::seaside/navigator-choice
+                            :source    :special
+                            :options   [{:option :discard :text "Discard them all."}
+                                        {:option :topdeck-same-order :text "Put them back on your deck in the same order."}
+                                        {:option :topdeck :text "Put them back on your deck in any order."}]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand    [navigator]
+                           :deck    [copper copper estate estate silver estate]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :navigator)
+               (choose :discard))
+           {:players [{:play-area [navigator]
+                       :deck      [estate]
+                       :discard   [copper copper estate estate silver]
+                       :actions   0
+                       :coins     2}]}))
+    (is (= (-> {:players [{:hand    [navigator]
+                           :deck    [copper copper estate estate silver estate]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :navigator)
+               (choose :topdeck-same-order))
+           {:players [{:play-area [navigator]
+                       :deck      [copper copper estate estate silver estate]
+                       :actions   0
+                       :coins     2}]}))
+    (is (= (-> {:players [{:hand    [navigator]
+                           :deck    [copper copper estate estate silver estate]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :navigator)
+               (choose :topdeck))
+           {:players      [{:play-area [navigator]
+                            :deck      [estate]
+                            :look-at   [copper copper estate estate silver]
+                            :actions   0
+                            :coins     2}]
+            :effect-stack [{:text      "Put them back on your deck in any order."
+                            :player-no 0
+                            :choice    :topdeck-from-look-at
+                            :source    :look-at
+                            :options   [:copper :copper :estate :estate :silver]
+                            :min       5
+                            :max       5}]}))
+    (is (= (-> {:players [{:hand    [navigator]
+                           :deck    [copper copper estate estate silver estate]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :navigator)
+               (choose :topdeck)
+               (choose [:estate :estate :copper :copper :silver]))
+           {:players [{:play-area [navigator]
+                       :deck      [silver copper copper estate estate estate]
+                       :actions   0
+                       :coins     2}]}))))
+
 (deftest outpost-test
   (let [outpost (assoc outpost :id 1)]
     (testing "Outpost"
