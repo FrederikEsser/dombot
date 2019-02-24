@@ -171,6 +171,13 @@
               :cost    5
               :effects [[::outpost-give-extra-turn]]})
 
+(def sea-hag {:name    :sea-hag
+              :set     :seaside
+              :types   #{:action :attack}
+              :cost    4
+              :effects [[:attack {:effects [[:discard-from-topdeck 1]
+                                            [:gain-to-topdeck {:card-name :curse}]]}]]})
+
 (defn tactician-discard [game {:keys [player-no card-id]}]
   (let [hand (get-in game [:players player-no :hand])]
     (if (< 0 (count hand))
@@ -210,5 +217,6 @@
                     lookout
                     merchant-ship
                     outpost
+                    sea-hag
                     tactician
                     wharf])

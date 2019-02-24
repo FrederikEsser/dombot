@@ -549,6 +549,32 @@
                                 :coins   0
                                 :phase   :action}]})))))
 
+(deftest sea-hag-test
+  (let [curse (assoc curse :id 1)]
+    (testing "Sea Hag"
+      (is (= (play {:supply  [{:card curse :pile-size 20}]
+                    :players [{:hand    [sea-hag]
+                               :actions 1}
+                              {:deck [copper copper]}
+                              {}]}
+                   0 :sea-hag)
+             {:supply  [{:card curse :pile-size 18}]
+              :players [{:play-area [sea-hag]
+                         :actions   0}
+                        {:deck    [curse copper]
+                         :discard [copper]}
+                        {:deck [curse]}]}))
+      (is (= (play {:supply  [{:card curse :pile-size 0}]
+                    :players [{:hand    [sea-hag]
+                               :actions 1}
+                              {:deck [copper copper]}]}
+                   0 :sea-hag)
+             {:supply  [{:card curse :pile-size 0}]
+              :players [{:play-area [sea-hag]
+                         :actions   0}
+                        {:deck    [copper]
+                         :discard [copper]}]})))))
+
 (deftest tactician-test
   (let [tactician (assoc tactician :id 1)
         throne-room (assoc throne-room :id 2)]
