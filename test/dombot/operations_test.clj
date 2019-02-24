@@ -2,7 +2,9 @@
   (:require [clojure.test :refer :all]
             [dombot.test-utils :refer :all]
             [dombot.utils :as ut]
-            [dombot.operations :refer :all]))
+            [dombot.operations :refer :all]
+            [dombot.cards.base-cards :refer :all]
+            [dombot.cards.seaside :refer :all]))
 
 (defn fixture [f]
   (ut/reset-ids!)
@@ -584,3 +586,14 @@
     (is (not (game-ended? {:supply (concat [{:card {:name :province} :pile-size 1}] (repeat 2 {:pile-size 0}))})))
     (is (game-ended? {:supply (concat [{:card {:name :province} :pile-size 1}] (repeat 3 {:pile-size 0}))}))
     (is (game-ended? {:supply (concat [{:card {:name :province} :pile-size 1}] (repeat 4 {:pile-size 0}))}))))
+
+(deftest calc-victory-points-test
+  (testing "Calculate Victory Points"
+    (is (= (calc-victory-points {:hand       (repeat 1 estate)
+                                 :play-area  (repeat 2 estate)
+                                 :deck       (repeat 4 estate)
+                                 :discard    (repeat 8 estate)
+                                 :island-mat (repeat 16 estate)})
+           31))
+    (is (= (calc-victory-points {:play-area [(assoc haven :set-aside [estate])]})
+           1))))

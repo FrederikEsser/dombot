@@ -128,6 +128,7 @@
                             coins
                             buys
                             set-aside
+                            island-mat
                             victory-points
                             winner]} :player
                     choice           :choice
@@ -145,6 +146,8 @@
           :active?   active-player?}
          (when (not-empty set-aside)
            {:set-aside (view-area :set-aside data)})
+         (when (not-empty island-mat)
+           {:island-mat (view-area :island-mat data)})
          (when choice
            {:choice (view-choice choice)})
          (when victory-points

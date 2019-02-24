@@ -53,6 +53,8 @@
 
 (s/def ::set-aside ::cards)
 
+(s/def ::island-mat ::cards)
+
 (s/def ::text string?)
 
 (s/def ::min nat-int?)
@@ -99,6 +101,7 @@
                                  ::coins
                                  ::buys]
                         :opt-un [::set-aside
+                                 ::island-mat
                                  ::choice
                                  ::victory-points
                                  ::winner?]))

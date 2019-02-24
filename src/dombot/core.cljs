@@ -145,7 +145,7 @@
       [:tr (map-tag :th ["Name" "Hand" "Play area" "Deck" "Discard"])]
       (->> (get-in @state [:game :players])
            (mapk (fn [{:keys               [name-ui hand play-area deck discard
-                                            actions coins buys set-aside
+                                            actions coins buys set-aside island-mat
                                             active? victory-points winner?]
                        {:keys [text
                                options
@@ -221,21 +221,27 @@
                                                               :game (cmd/choose (:selection @state))
                                                               :selection []))}
                              "Done"])])]
-                      (when active?
-                        [:td (let [disabled (-> @state :game :commands :can-play-treasures? not)]
-                               [:button {:style    (button-style disabled)
-                                         :disabled disabled
-                                         :on-click (fn [] (swap! state assoc :game (cmd/play-treasures)))}
-                                "Play Treasures"])
-                         (let [disabled (-> @state :game :commands :can-end-turn? not)]
-                           [:button {:style    (button-style disabled)
-                                     :disabled disabled
-                                     :on-click (fn [] (swap! state assoc :game (cmd/end-turn)))}
-                            "End Turn"])]))
+                      [:td
+                       (when active?
+                         [:div
+                          [:div (let [disabled (-> @state :game :commands :can-play-treasures? not)]
+                                  [:button {:style    (button-style disabled)
+                                            :disabled disabled
+                                            :on-click (fn [] (swap! state assoc :game (cmd/play-treasures)))}
+                                   "Play Treasures"])]
+                          [:div (let [disabled (-> @state :game :commands :can-end-turn? not)]
+                                  [:button {:style    (button-style disabled)
+                                            :disabled disabled
+                                            :on-click (fn [] (swap! state assoc :game (cmd/end-turn)))}
+                                   "End Turn"])]])])
                     (when set-aside
                       [:td
                        [:div "Set aside"]
-                       [:div (mapk (partial view-card max) set-aside)]])])))]]]
+                       [:div (mapk (partial view-card max) set-aside)]])
+                    (when island-mat
+                      [:td
+                       [:div "Island Mat"]
+                       [:div (mapk (partial view-card max) island-mat)]])])))]]]
    (let [{:keys [compact full]} (get-in @state [:game :trash])]
      [:div "Trash " [:button {:on-click (fn [] (swap! state update :trash-unfolded? not))}
                      (if (:trash-unfolded? @state) "Hide" "Show")]

@@ -3,7 +3,8 @@
             [dombot.test-utils :refer :all]
             [dombot.front-end-view :refer :all]
             [dombot.cards.base-cards :refer :all]
-            [dombot.cards.dominion :refer :all]))
+            [dombot.cards.dominion :refer :all]
+            [dombot.cards.seaside :refer [island]]))
 
 (defn fixture [f]
   (with-rand-seed 123 (f)))
@@ -798,6 +799,45 @@
             :actions   0
             :coins     0
             :buys      0}))
+    (is (= (view-player {:active-player? false
+                         :player         {:name           "John Doe"
+                                          :hand           [copper copper remodel estate moat]
+                                          :island-mat     [island estate]
+                                          :actions        0
+                                          :coins          0
+                                          :buys           0
+                                          :phase          :end-of-game
+                                          :victory-points 21
+                                          :winner         true}})
+           {:name-ui        "John Doe"
+            :active?        false
+            :hand           [{:name            :copper
+                              :name-ui         "Copper"
+                              :types           #{:treasure}
+                              :number-of-cards 2}
+                             {:name    :remodel
+                              :name-ui "Remodel"
+                              :types   #{:action}}
+                             {:name    :estate
+                              :name-ui "Estate"
+                              :types   #{:victory}}
+                             {:name    :moat
+                              :name-ui "Moat"
+                              :types   #{:action :reaction}}]
+            :play-area      []
+            :deck           {}
+            :discard        {}
+            :island-mat     [{:name    :island
+                              :name-ui "Island"
+                              :types   #{:action :victory}}
+                             {:name    :estate
+                              :name-ui "Estate"
+                              :types   #{:victory}}]
+            :actions        0
+            :coins          0
+            :buys           0
+            :victory-points 21
+            :winner?        true}))
     (is (= (view-player {:active-player? false
                          :player         {:name           "John Doe"
                                           :hand           [copper copper remodel estate moat]

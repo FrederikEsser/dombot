@@ -1,5 +1,5 @@
 (ns dombot.cards.seaside
-  (:require [dombot.operations :refer [move-cards give-choice push-effect-stack]]
+  (:require [dombot.operations :refer [move-card move-cards give-choice push-effect-stack]]
             [dombot.cards.common :refer [reveal-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -74,6 +74,33 @@
                                      :options [:player :hand]
                                      :min     1
                                      :max     1}]]})
+
+(defn island-put-island [game {:keys [player-no card-id]}]
+  (let [island (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
+    (cond-> game
+            island (move-card {:player-no    player-no
+                               :move-card-id card-id
+                               :from         :play-area
+                               :to           :island-mat}))))
+
+(defn island-put [game args]
+  (move-card game (merge args {:from :hand
+                               :to   :island-mat})))
+
+(effects/register {::island-put-island island-put-island
+                   ::island-put        island-put})
+
+(def island {:name           :island
+             :set            :seaside
+             :types          #{:action :victory}
+             :cost           4
+             :effects        [[::island-put-island]
+                              [:give-choice {:text    "Put a card from your hand on the Island Mat."
+                                             :choice  ::island-put
+                                             :options [:player :hand]
+                                             :min     1
+                                             :max     1}]]
+             :victory-points 2})
 
 (def lighthouse {:name     :lighthouse
                  :set      :seaside
@@ -169,6 +196,7 @@
                     cutpurse
                     fishing-village
                     haven
+                    island
                     lighthouse
                     lookout
                     merchant-ship

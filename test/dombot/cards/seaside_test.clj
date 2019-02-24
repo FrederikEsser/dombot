@@ -170,7 +170,7 @@
                              :coins   0}]}
                  (play 0 :fishing-village))
              {:players [{:play-area [(assoc fishing-village :at-start-turn [[[:give-actions 1]
-                                                                         [:give-coins 1]]])]
+                                                                             [:give-coins 1]]])]
                          :actions   2
                          :coins     1}]}))
       (is (= (-> {:players [{:hand    [fishing-village]
@@ -245,7 +245,7 @@
              {:players [{:hand      [copper]
                          :play-area [(assoc throne-room :at-start-turn [[]])
                                      (assoc haven :at-start-turn [[[::seaside/haven-put-in-hand {:card-name :copper}]]
-                                                              [[::seaside/haven-put-in-hand {:card-name :estate}]]]
+                                                                  [[::seaside/haven-put-in-hand {:card-name :estate}]]]
                                                   :set-aside [copper estate])]
                          :actions   2}]}))
       (is (= (-> {:players [{:hand    [throne-room haven estate]
@@ -266,6 +266,46 @@
                                 :actions-played 0
                                 :phase          :action}]})))))
 
+(deftest island-test
+  (let [island (assoc island :id 1)]
+    (testing "Island"
+      (is (= (-> {:players [{:hand    [island estate copper]
+                             :actions 1}]}
+                 (play 0 :island))
+             {:players      [{:hand       [estate copper]
+                              :island-mat [island]
+                              :actions    0}]
+              :effect-stack [{:text      "Put a card from your hand on the Island Mat."
+                              :player-no 0
+                              :card-id   1
+                              :choice    ::seaside/island-put
+                              :source    :hand
+                              :options   [:estate :copper]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:players [{:hand    [island estate copper]
+                             :actions 1}]}
+                 (play 0 :island)
+                 (choose :estate))
+             {:players [{:hand       [copper]
+                         :island-mat [island estate]
+                         :actions    0}]}))
+      (is (= (-> {:players [{:hand    [island]
+                             :actions 1}]}
+                 (play 0 :island))
+             {:players [{:island-mat [island]
+                         :actions    0}]}))
+      (is (= (-> {:players [{:hand    [throne-room island estate copper]
+                             :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :island)
+                 (choose :estate)
+                 (choose :copper))
+             {:players [{:play-area  [throne-room]
+                         :island-mat [island estate copper]
+                         :actions    0}]}))
+      (is (= (calc-victory-points {:deck [island]}) 2)))))
+
 (deftest lighthouse-test
   (let [lighthouse-1 (assoc lighthouse :id 1)
         lighthouse-2 (assoc lighthouse :id 2)]
@@ -275,7 +315,7 @@
                              :coins   0}]}
                  (play 0 :lighthouse))
              {:players [{:play-area  [(assoc lighthouse-1 :at-start-turn [[[:give-coins 1]
-                                                                       [:clear-unaffected]]])]
+                                                                           [:clear-unaffected]]])]
                          :actions    1
                          :coins      1
                          :unaffected [{:card-id 1}]}]}))
@@ -287,7 +327,7 @@
                  (end-turn 0))
              {:current-player 1
               :players        [{:play-area      [(assoc lighthouse-1 :at-start-turn [[[:give-coins 1]
-                                                                                  [:clear-unaffected]]])]
+                                                                                      [:clear-unaffected]]])]
                                 :actions        0
                                 :coins          0
                                 :buys           0
@@ -315,7 +355,7 @@
                 :supply         [{:card curse :pile-size 18}]
                 :players        [{:hand           [moat]
                                   :play-area      [(assoc lighthouse-1 :at-start-turn [[[:give-coins 1]
-                                                                                    [:clear-unaffected]]])]
+                                                                                        [:clear-unaffected]]])]
                                   :actions        0
                                   :coins          0
                                   :buys           0
@@ -504,8 +544,8 @@
                              :actions 1}]}
                  (play 0 :tactician))
              {:players [{:play-area [(assoc tactician :at-start-turn [[[:draw 5]
-                                                                   [:give-actions 1]
-                                                                   [:give-buys 1]]])]
+                                                                       [:give-actions 1]
+                                                                       [:give-buys 1]]])]
                          :discard   [estate]
                          :actions   0}]}))
       (is (= (-> {:players [{:hand    [tactician]
@@ -549,8 +589,8 @@
                  (choose :tactician))
              {:players [{:play-area [(assoc throne-room :at-start-turn [[]])
                                      (assoc tactician :at-start-turn [[[:draw 5]
-                                                                   [:give-actions 1]
-                                                                   [:give-buys 1]]])]
+                                                                       [:give-actions 1]
+                                                                       [:give-buys 1]]])]
                          :discard   [estate]
                          :actions   0}]})))))
 
@@ -564,7 +604,7 @@
                  (play 0 :wharf))
              {:players [{:hand      [estate estate estate copper copper copper]
                          :play-area [(assoc wharf :at-start-turn [[[:draw 2]
-                                                               [:give-buys 1]]])]
+                                                                   [:give-buys 1]]])]
                          :deck      [copper copper copper copper silver]
                          :actions   0
                          :buys      2}]}))

@@ -483,11 +483,13 @@
       (vp-fn cards))
     victory-points))
 
-(defn calc-victory-points [{:keys [deck discard hand play-area]}]
-  (let [cards (concat deck discard hand play-area)]
-    (->> cards
+(defn calc-victory-points [{:keys [deck discard hand play-area island-mat]}]
+  (let [cards (concat deck discard hand play-area island-mat)
+        set-aside-cards (mapcat :set-aside cards)
+        all-cards (concat cards set-aside-cards)]
+    (->> all-cards
          (filter :victory-points)
-         (map (partial get-victory-points cards))
+         (map (partial get-victory-points all-cards))
          (apply + 0))))
 
 (def calc-score (juxt calc-victory-points (comp - :number-of-turns)))
