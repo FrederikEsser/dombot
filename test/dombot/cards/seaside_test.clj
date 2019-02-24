@@ -175,6 +175,72 @@
                        :coins     2}
                       {:discard [copper]}]}))))
 
+(deftest explorer-test
+  (let [silver (assoc silver :id 1)
+        gold (assoc gold :id 2)]
+    (testing "Explorer"
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card gold :pile-size 30}]
+                  :players [{:hand    [explorer]
+                             :actions 1}]}
+                 (play 0 :explorer))
+             {:supply  [{:card silver :pile-size 39}
+                        {:card gold :pile-size 30}]
+              :players [{:hand      [silver]
+                         :play-area [explorer]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card gold :pile-size 30}]
+                  :players [{:hand    [explorer province]
+                             :actions 1}]}
+                 (play 0 :explorer))
+             {:supply       [{:card silver :pile-size 40}
+                             {:card gold :pile-size 30}]
+              :players      [{:hand      [province]
+                              :play-area [explorer]
+                              :actions   0}]
+              :effect-stack [{:text      "You may reveal a Province from your hand."
+                              :player-no 0
+                              :choice    ::seaside/explorer-choice
+                              :source    :hand
+                              :options   [:province]
+                              :max       1}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card gold :pile-size 30}]
+                  :players [{:hand    [explorer province]
+                             :actions 1}]}
+                 (play 0 :explorer)
+                 (choose :province))
+             {:supply  [{:card silver :pile-size 40}
+                        {:card gold :pile-size 29}]
+              :players [{:hand           [province gold]
+                         :play-area      [explorer]
+                         :actions        0
+                         :revealed-cards {:hand 1}}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card gold :pile-size 30}]
+                  :players [{:hand    [explorer province]
+                             :actions 1}]}
+                 (play 0 :explorer)
+                 (choose nil))
+             {:supply  [{:card silver :pile-size 39}
+                        {:card gold :pile-size 30}]
+              :players [{:hand      [province silver]
+                         :play-area [explorer]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card gold :pile-size 0}]
+                  :players [{:hand    [explorer province]
+                             :actions 1}]}
+                 (play 0 :explorer)
+                 (choose :province))
+             {:supply  [{:card silver :pile-size 40}
+                        {:card gold :pile-size 0}]
+              :players [{:hand           [province]
+                         :play-area      [explorer]
+                         :actions        0
+                         :revealed-cards {:hand 1}}]})))))
+
 (deftest fishing-village-test
   (let [fishing-village (assoc fishing-village :id 1)]
     (testing "Fishing Village"

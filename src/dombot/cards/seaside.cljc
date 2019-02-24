@@ -1,6 +1,6 @@
 (ns dombot.cards.seaside
   (:require [dombot.operations :refer [move-card move-cards give-choice push-effect-stack]]
-            [dombot.cards.common :refer [reveal-hand]]
+            [dombot.cards.common :refer [reveal-hand gain-to-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -40,6 +40,34 @@
                :cost    4
                :effects [[:give-coins 2]
                          [:attack {:effects [[::cutpurse-attack]]}]]})
+
+(defn explorer-choice [game {:keys [player-no card-name] :as args}]
+  (if (= :province card-name)
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:gain-to-hand {:card-name :gold}]
+                                         [:reveal {:card-name :province}]]}) ; hack to make revealed card show af gain to hand
+    (gain-to-hand game {:player-no player-no
+                        :card-name :silver})))
+
+(defn explorer-reveal-province [game {:keys [player-no]}]
+  (let [hand (get-in game [:players player-no :hand])]
+    (if (some (comp #{:province} :name) hand)
+      (give-choice game {:player-no player-no
+                         :text      "You may reveal a Province from your hand."
+                         :choice    ::explorer-choice
+                         :options   [:player :hand {:name :province}]
+                         :max       1})
+      (gain-to-hand game {:player-no player-no
+                          :card-name :silver}))))
+
+(effects/register {::explorer-reveal-province explorer-reveal-province
+                   ::explorer-choice          explorer-choice})
+
+(def explorer {:name    :explorer
+               :set     :seaside
+               :types   #{:action}
+               :cost    5
+               :effects [[::explorer-reveal-province]]})
 
 (def fishing-village {:name     :fishing-village
                       :set      :seaside
@@ -249,6 +277,7 @@
 (def kingdom-cards [bazaar
                     caravan
                     cutpurse
+                    explorer
                     fishing-village
                     ghost-ship
                     haven
