@@ -205,6 +205,18 @@
                            [:give-actions 1]
                            [:give-buys 1]]})
 
+(def warehouse {:name    :warehouse
+                :set     :seaside
+                :types   #{:action}
+                :cost    3
+                :effects [[:give-actions 1]
+                          [:draw 3]
+                          [:give-choice {:text    "Discard 3 cards."
+                                         :choice  :discard-from-hand
+                                         :options [:player :hand]
+                                         :min     3
+                                         :max     3}]]})
+
 (def wharf {:name     :wharf
             :set      :seaside
             :types    #{:action :duration}
@@ -227,4 +239,5 @@
                     outpost
                     sea-hag
                     tactician
+                    warehouse
                     wharf])

@@ -694,6 +694,50 @@
                          :discard   [estate]
                          :actions   0}]})))))
 
+(deftest warehouse-test
+  (testing "Warehouse"
+    (is (= (play {:players [{:hand    [warehouse estate copper copper copper]
+                             :deck    [estate copper estate copper]
+                             :actions 1}]}
+                 0 :warehouse)
+           {:players      [{:hand      [estate copper copper copper estate copper estate]
+                            :play-area [warehouse]
+                            :deck      [copper]
+                            :actions   1}]
+            :effect-stack [{:text      "Discard 3 cards."
+                            :player-no 0
+                            :choice    :discard-from-hand
+                            :source    :hand
+                            :options   [:estate :copper :copper :copper :estate :copper :estate]
+                            :min       3
+                            :max       3}]}))
+    (is (= (-> {:players [{:hand    [warehouse estate copper copper copper]
+                           :deck    [estate copper estate copper]
+                           :actions 1}]}
+               (play 0 :warehouse)
+               (choose [:estate :estate :estate]))
+           {:players [{:hand      [copper copper copper copper]
+                       :play-area [warehouse]
+                       :deck      [copper]
+                       :discard   [estate estate estate]
+                       :actions   1}]}))
+    (is (= (-> {:players [{:hand    [warehouse estate copper copper copper]
+                           :deck    [estate]
+                           :actions 1}]}
+               (play 0 :warehouse)
+               (choose [:estate :estate :copper]))
+           {:players [{:hand      [copper copper]
+                       :play-area [warehouse]
+                       :discard   [estate estate copper]
+                       :actions   1}]}))
+    (is (= (-> {:players [{:hand    [warehouse copper copper]
+                           :actions 1}]}
+               (play 0 :warehouse)
+               (choose [:copper :copper]))
+           {:players [{:play-area [warehouse]
+                       :discard   [copper copper]
+                       :actions   1}]}))))
+
 (deftest wharf-test
   (let [wharf (assoc wharf :id 1)]
     (testing "Wharf"
