@@ -178,6 +178,26 @@
               :cost    5
               :effects [[::outpost-give-extra-turn]]})
 
+(defn salvager-trash [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        cost (ut/get-cost game card)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:trash-from-hand {:card-name card-name}]
+                                         [:give-coins cost]]})))
+
+(effects/register {::salvager-trash salvager-trash})
+
+(def salvager {:name    :salvager
+               :set     :seaside
+               :types   #{:action}
+               :cost    4
+               :effects [[:give-buys 1]
+                         [:give-choice {:text    "Trash a card from your hand."
+                                        :choice  ::salvager-trash
+                                        :options [:player :hand]
+                                        :min     1
+                                        :max     1}]]})
+
 (def sea-hag {:name    :sea-hag
               :set     :seaside
               :types   #{:action :attack}
@@ -237,6 +257,7 @@
                     lookout
                     merchant-ship
                     outpost
+                    salvager
                     sea-hag
                     tactician
                     warehouse

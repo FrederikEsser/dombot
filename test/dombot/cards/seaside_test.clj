@@ -610,6 +610,64 @@
                                 :coins   0
                                 :phase   :action}]})))))
 
+(deftest salvager-test
+  (testing "Salvager"
+    (is (= (-> {:players [{:hand    [salvager copper estate]
+                           :actions 1
+                           :coins   0
+                           :buys    1}]}
+               (play 0 :salvager))
+           {:players      [{:hand      [copper estate]
+                            :play-area [salvager]
+                            :actions   0
+                            :coins     0
+                            :buys      2}]
+            :effect-stack [{:text      "Trash a card from your hand."
+                            :player-no 0
+                            :choice    ::seaside/salvager-trash
+                            :source    :hand
+                            :options   [:copper :estate]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand    [salvager copper estate]
+                           :actions 1
+                           :coins   0
+                           :buys    1}]}
+               (play 0 :salvager)
+               (choose :copper))
+           {:players [{:hand      [estate]
+                       :play-area [salvager]
+                       :actions   0
+                       :coins     0
+                       :buys      2}]
+            :trash   [copper]}))
+    (is (= (-> {:players [{:hand    [salvager copper estate]
+                           :actions 1
+                           :coins   0
+                           :buys    1}]}
+               (play 0 :salvager)
+               (choose :estate))
+           {:players [{:hand      [copper]
+                       :play-area [salvager]
+                       :actions   0
+                       :coins     2
+                       :buys      2}]
+            :trash   [estate]}))
+    (is (= (-> {:cost-reductions [{:reduction 1}]
+                :players         [{:hand    [salvager copper estate]
+                                   :actions 1
+                                   :coins   0
+                                   :buys    1}]}
+               (play 0 :salvager)
+               (choose :estate))
+           {:cost-reductions [{:reduction 1}]
+            :players         [{:hand      [copper]
+                               :play-area [salvager]
+                               :actions   0
+                               :coins     1
+                               :buys      2}]
+            :trash           [estate]}))))
+
 (deftest sea-hag-test
   (let [curse (assoc curse :id 1)]
     (testing "Sea Hag"
