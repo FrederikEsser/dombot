@@ -4,6 +4,14 @@
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
+(def bazaar {:name    :bazaar
+             :set     :seaside
+             :types   #{:action}
+             :cost    5
+             :effects [[:draw 1]
+                       [:give-actions 2]
+                       [:give-coins 1]]})
+
 (def caravan {:name     :caravan
               :set      :seaside
               :types    #{:action :duration}
@@ -192,7 +200,8 @@
             :duration [[:draw 2]
                        [:give-buys 1]]})
 
-(def kingdom-cards [caravan
+(def kingdom-cards [bazaar
+                    caravan
                     cutpurse
                     fishing-village
                     haven

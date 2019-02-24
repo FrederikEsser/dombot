@@ -8,6 +8,19 @@
             [dombot.cards.seaside :as seaside :refer :all]
             [dombot.utils :as ut]))
 
+(deftest bazaar-test
+  (testing "Bazaar"
+    (is (= (play {:players [{:deck    [copper copper copper]
+                             :hand    [bazaar]
+                             :actions 1
+                             :coins   0}]}
+                 0 :bazaar)
+           {:players [{:deck      [copper copper]
+                       :hand      [copper]
+                       :play-area [bazaar]
+                       :actions   2
+                       :coins     1}]}))))
+
 (deftest caravan-test
   (let [caravan-1 (assoc caravan :id 1)
         caravan-2 (assoc caravan :id 2)
