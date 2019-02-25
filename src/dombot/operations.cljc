@@ -64,10 +64,12 @@
 
 (defn start-turn
   ([player]
-   (assoc player :actions 1
+   (-> player
+       (assoc :actions 1
                  :coins 0
                  :buys 1
-                 :phase :action))
+              :phase :action)
+       (dissoc :gained-cards)))
   ([game {:keys [player-no]}]
    (if (game-ended? game)
      game
@@ -109,7 +111,7 @@
                                       (reset-revealed-number-of-cards player-no to))
             (empty? from-cards) (update-in [:players player-no] dissoc from))))
 
-(defn gain [game {:keys [player-no card-name to to-position]
+(defn gain [{:keys [track-gained-cards?] :as game} {:keys [player-no card-name to to-position]
                   :or   {to :discard}}]
   (assert card-name "No card-name specified for gain.")
   (let [{:keys [idx card pile-size]} (ut/get-pile-idx game card-name)
@@ -124,6 +126,7 @@
     (cond-> game
             (< 0 pile-size) (-> (update-in [:supply idx :pile-size] dec)
                                 (update-in to-path add-card-to-coll (ut/give-id! card))
+                                (cond-> track-gained-cards? (update-in [:players player-no :gained-cards] add-card-to-coll (select-keys card [:name :types :cost])))
                                 (state-maintenance player-no :supply to)))))
 
 (effects/register {:gain gain})

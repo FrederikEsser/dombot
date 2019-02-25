@@ -267,6 +267,29 @@
               :effects [[:attack {:effects [[:discard-from-topdeck 1]
                                             [:gain-to-topdeck {:card-name :curse}]]}]]})
 
+(defn smugglers-give-choice [{:keys [players] :as game} {:keys [player-no] :as args}]
+  (let [prev-player (mod (dec player-no) (count players))
+        valid-card-names (->> (get-in game [:players prev-player :gained-cards])
+                              (keep (fn [{:keys [name] :as card}]
+                                      (when (<= (ut/get-cost game card) 6)
+                                        name)))
+                              set)]
+    (give-choice game (merge args
+                             {:text    "Gain a card costing up to $6 that the player to the right gained on their last turn."
+                              :choice  :gain
+                              :options [:supply {:names valid-card-names
+                                                 :all   true}]
+                              :min     1
+                              :max     1}))))
+
+(effects/register {::smugglers-give-choice smugglers-give-choice})
+
+(def smugglers {:name    :smugglers
+               :set     :seaside
+               :types   #{:action}
+               :cost    3
+               :effects [[::smugglers-give-choice]]})
+
 (defn tactician-discard [game {:keys [player-no card-id]}]
   (let [hand (get-in game [:players player-no :hand])]
     (if (< 0 (count hand))
@@ -323,6 +346,7 @@
                     outpost
                     salvager
                     sea-hag
+                    smugglers
                     tactician
                     warehouse
                     wharf])

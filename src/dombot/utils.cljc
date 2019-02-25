@@ -128,11 +128,12 @@
 
 (effects/register-options {:player options-from-player})
 
-(defn options-from-supply [{:keys [supply] :as game} player-no card-id & [{:keys [max-cost cost type all]}]]
+(defn options-from-supply [{:keys [supply] :as game} player-no card-id & [{:keys [max-cost cost type names all]}]]
   (cond->> supply
            max-cost (filter (comp (partial >= max-cost) (partial get-cost game) :card))
            cost (filter (comp #{cost} (partial get-cost game) :card))
            type (filter (comp type :types :card))
+           names (filter (comp names :name :card))
            (not all) (filter (comp pos? :pile-size))
            :always (map (comp :name :card))))
 

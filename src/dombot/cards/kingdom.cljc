@@ -52,10 +52,11 @@
                             4 12)
         starting-player (rand-int number-of-players)]
     (ut/reset-ids!)
-    (as-> {:mode            mode
-           :supply          (vec (concat (base/supply number-of-players victory-pile-size)
-                                         (create-kingdom sets victory-pile-size)))
-           :players         (vec (map create-player player-names))
-           :current-player  starting-player
-           :starting-player starting-player} game
+    (as-> {:mode                mode
+           :supply              (vec (concat (base/supply number-of-players victory-pile-size)
+                                             (create-kingdom sets victory-pile-size)))
+           :players             (vec (map create-player player-names))
+           :track-gained-cards? true
+           :current-player      starting-player
+           :starting-player     starting-player} game
           (reduce prepare-cards game (range number-of-players)))))

@@ -809,12 +809,12 @@
 (deftest sea-hag-test
   (let [curse (assoc curse :id 1)]
     (testing "Sea Hag"
-      (is (= (play {:supply  [{:card curse :pile-size 20}]
+      (is (= (-> {:supply  [{:card curse :pile-size 20}]
                     :players [{:hand    [sea-hag]
                                :actions 1}
                               {:deck [copper copper]}
                               {}]}
-                   0 :sea-hag)
+                 (play 0 :sea-hag))
              {:supply  [{:card curse :pile-size 18}]
               :players [{:play-area [sea-hag]
                          :actions   0}
@@ -831,6 +831,140 @@
                          :actions   0}
                         {:deck    [copper]
                          :discard [copper]}]})))))
+
+(deftest smugglers-test
+  (let [gold (assoc gold :id 1)]
+    (testing "smugglers"
+      (is (= (-> {:track-gained-cards? true
+                  :supply              [{:card gold :pile-size 30}]
+                  :players             [{:coins 6
+                                         :buys  1}
+                                        {:hand         [smugglers]
+                                         :gained-cards [{:name  :silver
+                                                         :types #{:treasure}
+                                                         :cost  3}]}]}
+                 (buy-card 0 :gold)
+                 (end-turn 0))
+             {:track-gained-cards? true
+              :current-player      1
+              :supply              [{:card gold :pile-size 29}]
+              :players             [{:hand           [gold]
+                                     :actions        0
+                                     :coins          0
+                                     :buys           0
+                                     :phase          :out-of-turn
+                                     :actions-played 0
+                                     :gained-cards   [{:name  :gold
+                                                       :types #{:treasure}
+                                                       :cost  6}]}
+                                    {:hand    [smugglers]
+                                     :actions 1
+                                     :coins   0
+                                     :buys    1
+                                     :phase   :action}]}))
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:gained-cards [{:name  :duchy
+                                             :types #{:victory}
+                                             :cost  5}
+                                            {:name  :gold
+                                             :types #{:treasure}
+                                             :cost  6}
+                                            {:name  :province
+                                             :types #{:victory}
+                                             :cost  8}]}
+                            {:hand    [smugglers]
+                             :actions 1}]}
+                 (play 1 :smugglers))
+             {:supply       (base/supply 2 8)
+              :players      [{:gained-cards [{:name  :duchy
+                                              :types #{:victory}
+                                              :cost  5}
+                                             {:name  :gold
+                                              :types #{:treasure}
+                                              :cost  6}
+                                             {:name  :province
+                                              :types #{:victory}
+                                              :cost  8}]}
+                             {:play-area [smugglers]
+                              :actions   0}]
+              :effect-stack [{:text      "Gain a card costing up to $6 that the player to the right gained on their last turn."
+                              :player-no 1
+                              :choice    :gain
+                              :source    :supply
+                              :options   [:duchy :gold]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 29}]
+                  :players [{:gained-cards [{:name  :gold
+                                             :types #{:treasure}
+                                             :cost  6}]}
+                            {:hand    [smugglers]
+                             :actions 1}]}
+                 (play 1 :smugglers)
+                 (choose :gold))
+             {:supply  [{:card gold :pile-size 28}]
+              :players [{:gained-cards [{:name  :gold
+                                         :types #{:treasure}
+                                         :cost  6}]}
+                        {:play-area [smugglers]
+                         :discard   [gold]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 0}]
+                  :players [{:gained-cards [{:name  :gold
+                                             :types #{:treasure}
+                                             :cost  6}]}
+                            {:hand    [smugglers]
+                             :actions 1}]}
+                 (play 1 :smugglers))
+             {:supply       [{:card gold :pile-size 0}]
+              :players      [{:gained-cards [{:name  :gold
+                                              :types #{:treasure}
+                                              :cost  6}]}
+                             {:play-area [smugglers]
+                              :actions   0}]
+              :effect-stack [{:text      "Gain a card costing up to $6 that the player to the right gained on their last turn."
+                              :player-no 1
+                              :choice    :gain
+                              :source    :supply
+                              :options   [:gold]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 0}]
+                  :players [{:gained-cards [{:name  :gold
+                                             :types #{:treasure}
+                                             :cost  6}]}
+                            {:hand    [smugglers]
+                             :actions 1}]}
+                 (play 1 :smugglers)
+                 (choose :gold))
+             {:supply  [{:card gold :pile-size 0}]
+              :players [{:gained-cards [{:name  :gold
+                                         :types #{:treasure}
+                                         :cost  6}]}
+                        {:play-area [smugglers]
+                         :actions   0}]}))
+      (is (= (-> {:cost-reductions [{:reduction 2}]
+                  :supply          (base/supply 2 8)
+                  :players         [{:gained-cards [{:name  :province
+                                                     :types #{:victory}
+                                                     :cost  8}]}
+                                    {:hand    [smugglers]
+                                     :actions 1}]}
+                 (play 1 :smugglers))
+             {:cost-reductions [{:reduction 2}]
+              :supply          (base/supply 2 8)
+              :players         [{:gained-cards [{:name  :province
+                                                 :types #{:victory}
+                                                 :cost  8}]}
+                                {:play-area [smugglers]
+                                 :actions   0}]
+              :effect-stack    [{:text      "Gain a card costing up to $6 that the player to the right gained on their last turn."
+                                 :player-no 1
+                                 :choice    :gain
+                                 :source    :supply
+                                 :options   [:province]
+                                 :min       1
+                                 :max       1}]})))))
 
 (deftest tactician-test
   (let [tactician (assoc tactician :id 1)
