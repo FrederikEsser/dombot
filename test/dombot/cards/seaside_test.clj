@@ -810,10 +810,10 @@
   (let [curse (assoc curse :id 1)]
     (testing "Sea Hag"
       (is (= (-> {:supply  [{:card curse :pile-size 20}]
-                    :players [{:hand    [sea-hag]
-                               :actions 1}
-                              {:deck [copper copper]}
-                              {}]}
+                  :players [{:hand    [sea-hag]
+                             :actions 1}
+                            {:deck [copper copper]}
+                            {}]}
                  (play 0 :sea-hag))
              {:supply  [{:card curse :pile-size 18}]
               :players [{:play-area [sea-hag]
@@ -843,7 +843,7 @@
                                          :gained-cards [{:name  :silver
                                                          :types #{:treasure}
                                                          :cost  3}]}]}
-                 (buy-card 0 :gold)
+                 (gain {:player-no 0 :card-name :gold})
                  (end-turn 0))
              {:track-gained-cards? true
               :current-player      1
@@ -1023,6 +1023,184 @@
                                                                        [:give-buys 1]]])]
                          :discard   [estate]
                          :actions   0}]})))))
+
+(deftest treasury-test
+  (let [treasury-1 (assoc treasury :id 1)
+        treasury-2 (assoc treasury :id 2)
+        province (assoc province :id 3)]
+    (is (= (-> {:track-gained-cards? true
+                :supply              [{:card province :pile-size 8}]
+                :players             [{:coins 8
+                                       :buys  1}]}
+               (buy-card 0 :province))
+           {:track-gained-cards? true
+            :supply              [{:card province :pile-size 7}]
+            :players             [{:discard      [province]
+                                   :coins        0
+                                   :buys         0
+                                   :gained-cards [{:name   :province
+                                                   :types  #{:victory}
+                                                   :cost   8
+                                                   :bought true}]}]}))
+    (testing "Treasury"
+      (is (= (-> {:players [{:deck    [copper copper copper]
+                             :hand    [treasury-1]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :treasury))
+             {:players [{:deck        [copper copper]
+                         :hand        [copper]
+                         :play-area   [treasury-1]
+                         :actions     1
+                         :coins       1
+                         :at-clean-up [[::seaside/treasury-topdeck-choice {:card-id 1}]]}]}))
+      (is (= (-> {:players [{:deck         [copper copper copper]
+                             :hand         [treasury-1]
+                             :gained-cards [{:types #{:treasure} :bought true}
+                                            {:types #{:victory}}]
+                             :actions      1
+                             :coins        0}]}
+                 (play 0 :treasury)
+                 (clean-up {:player-no 0}))
+             {:players      [{:deck         [copper copper]
+                              :hand         [copper]
+                              :play-area    [treasury-1]
+                              :gained-cards [{:types #{:treasure} :bought true}
+                                             {:types #{:victory}}]
+                              :actions      1
+                              :coins        1}]
+              :effect-stack [{:text      "You may put Treasury onto your deck."
+                              :player-no 0
+                              :card-id   1
+                              :choice    :topdeck-this-from-play-area
+                              :source    :play-area
+                              :options   [:treasury]
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:do-clean-up {:player-no 0}]}]}))
+      (is (= (-> {:players [{:deck         (repeat 7 copper)
+                             :hand         [treasury-1]
+                             :gained-cards [{:types #{:victory} :bought true}]
+                             :actions      1
+                             :coins        0}]}
+                 (play 0 :treasury)
+                 (clean-up {:player-no 0}))
+             {:players [{:hand           [copper copper copper copper copper]
+                         :deck           [copper]
+                         :discard        [copper treasury-1]
+                         :gained-cards   [{:types #{:victory} :bought true}]
+                         :actions        0
+                         :coins          0
+                         :buys           0
+                         :actions-played 0
+                         :phase          :out-of-turn}]}))
+      (is (= (-> {:players [{:deck    (repeat 7 copper)
+                             :hand    [treasury-1]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :treasury)
+                 (clean-up {:player-no 0})
+                 (choose :treasury))
+             {:players [{:hand           [treasury-1 copper copper copper copper]
+                         :deck           [copper copper]
+                         :discard        [copper]
+                         :actions        0
+                         :coins          0
+                         :buys           0
+                         :actions-played 0
+                         :phase          :out-of-turn}]}))
+      (is (= (-> {:players [{:deck    (repeat 7 copper)
+                             :hand    [treasury-1]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :treasury)
+                 (clean-up {:player-no 0})
+                 (choose nil))
+             {:players [{:hand           [copper copper copper copper copper]
+                         :deck           [copper]
+                         :discard        [copper treasury-1]
+                         :actions        0
+                         :coins          0
+                         :buys           0
+                         :actions-played 0
+                         :phase          :out-of-turn}]}))
+      (is (= (-> {:players [{:deck    (repeat 7 copper)
+                             :hand    [treasury-1 treasury-2]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :treasury)
+                 (play 0 :treasury)
+                 (clean-up {:player-no 0})
+                 (choose :treasury))
+             {:players      [{:deck      (concat [treasury-1] (repeat 5 copper))
+                              :hand      [copper copper]
+                              :play-area [treasury-2]
+                              :actions   1
+                              :coins     2}]
+              :effect-stack [{:text      "You may put Treasury onto your deck."
+                              :player-no 0
+                              :card-id   2
+                              :choice    :topdeck-this-from-play-area
+                              :source    :play-area
+                              :options   [:treasury]
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:do-clean-up {:player-no 0}]}]}))
+      (is (= (-> {:players [{:deck    (repeat 7 copper)
+                             :hand    [treasury-1 treasury-2]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :treasury)
+                 (play 0 :treasury)
+                 (clean-up {:player-no 0})
+                 (choose nil))
+             {:players      [{:deck      (repeat 5 copper)
+                              :hand      [copper copper]
+                              :play-area [treasury-1 treasury-2]
+                              :actions   1
+                              :coins     2}]
+              :effect-stack [{:text      "You may put Treasury onto your deck."
+                              :player-no 0
+                              :card-id   2
+                              :choice    :topdeck-this-from-play-area
+                              :source    :play-area
+                              :options   [:treasury]
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:do-clean-up {:player-no 0}]}]}))
+      (is (= (-> {:players [{:deck    (repeat 7 copper)
+                             :hand    [treasury-1 treasury-2]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :treasury)
+                 (play 0 :treasury)
+                 (clean-up {:player-no 0})
+                 (choose nil)
+                 (choose :treasury))
+             {:players [{:deck           [copper]
+                         :hand           [treasury-2 copper copper copper copper]
+                         :discard        [copper copper treasury-1]
+                         :actions        0
+                         :coins          0
+                         :buys           0
+                         :actions-played 0
+                         :phase          :out-of-turn}]}))
+      (is (= (-> {:players [{:deck    (repeat 7 copper)
+                             :hand    [treasury-1 throne-room]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :throne-room)
+                 (choose :treasury)
+                 (clean-up {:player-no 0})
+                 (choose :treasury))
+             {:players [{:hand           [treasury-1 copper copper copper copper]
+                         :deck           [copper]
+                         :discard        [copper copper throne-room]
+                         :actions        0
+                         :coins          0
+                         :buys           0
+                         :actions-played 0
+                         :phase          :out-of-turn}]})))))
 
 (deftest warehouse-test
   (testing "Warehouse"

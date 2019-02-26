@@ -66,8 +66,8 @@
   ([player]
    (-> player
        (assoc :actions 1
-                 :coins 0
-                 :buys 1
+              :coins 0
+              :buys 1
               :phase :action)
        (dissoc :gained-cards)))
   ([game {:keys [player-no]}]
@@ -111,8 +111,8 @@
                                       (reset-revealed-number-of-cards player-no to))
             (empty? from-cards) (update-in [:players player-no] dissoc from))))
 
-(defn gain [{:keys [track-gained-cards?] :as game} {:keys [player-no card-name to to-position]
-                  :or   {to :discard}}]
+(defn gain [{:keys [track-gained-cards?] :as game} {:keys [player-no card-name to to-position bought]
+                                                    :or   {to :discard}}]
   (assert card-name "No card-name specified for gain.")
   (let [{:keys [idx card pile-size]} (ut/get-pile-idx game card-name)
         to-path (if (= to :trash)
@@ -126,7 +126,8 @@
     (cond-> game
             (< 0 pile-size) (-> (update-in [:supply idx :pile-size] dec)
                                 (update-in to-path add-card-to-coll (ut/give-id! card))
-                                (cond-> track-gained-cards? (update-in [:players player-no :gained-cards] add-card-to-coll (select-keys card [:name :types :cost])))
+                                (cond-> track-gained-cards? (update-in [:players player-no :gained-cards] add-card-to-coll (merge (select-keys card [:name :types :cost])
+                                                                                                                                  (when bought {:bought true}))))
                                 (state-maintenance player-no :supply to)))))
 
 (effects/register {:gain gain})
@@ -145,7 +146,8 @@
     (-> game
         (cond-> phase (assoc-in [:players player-no :phase] :buy))
         (gain {:player-no player-no
-               :card-name card-name})
+               :card-name card-name
+               :bought    true})
         (update-in [:players player-no :coins] - cost)
         (update-in [:players player-no :buys] - 1)
         check-stack)))
@@ -197,8 +199,8 @@
                                  :bottom {:idx (dec (count (get player from))) :card (last (get player from))}
                                  :top {:idx 0 :card (first (get player from))}
                                  (cond
-                                   card-name (ut/get-card-idx game from-path {:name card-name})
                                    move-card-id (ut/get-card-idx game from-path {:id move-card-id})
+                                   card-name (ut/get-card-idx game from-path {:name card-name})
                                    :else {:idx 0 :card (first (get player from))}))
             to-path (if (= to :trash)
                       [:trash]
@@ -515,8 +517,8 @@
                                                          last)]
                                      (update game :players (partial mapv (partial end-game-for-player best-score)))))))
 
-(defn clean-up [game {:keys [player-no number-of-cards extra-turn?]
-                      :or   {number-of-cards 5}}]
+(defn do-clean-up [game {:keys [player-no number-of-cards extra-turn?]
+                         :or   {number-of-cards 5}}]
   (let [clean-up-player (fn [{:keys [play-area hand number-of-turns] :as player}]
                           (let [used-cards (concat hand (remove stay-in-play play-area))]
                             (-> player
@@ -539,10 +541,19 @@
         (draw {:player-no player-no :arg number-of-cards})
         (update :players (partial mapv (fn [player] (dissoc player :revealed-cards))))
         (dissoc :cost-reductions)
-        check-game-ended
+        check-game-ended)))
+
+(defn clean-up [game {:keys [player-no] :as args}]
+  (let [at-clean-up (get-in game [:players player-no :at-clean-up])]
+    (-> game
+        (update-in [:players player-no] dissoc :at-clean-up)
+        (push-effect-stack (merge args
+                                  {:effects (concat at-clean-up
+                                                    [[:do-clean-up args]])}))
         check-stack)))
 
-(effects/register {:clean-up clean-up})
+(effects/register {:do-clean-up do-clean-up
+                   :clean-up    clean-up})
 
 (defn clear-at-end-turn-effects [game {:keys [player-no card-id]}]
   (-> game

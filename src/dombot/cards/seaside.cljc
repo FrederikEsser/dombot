@@ -285,10 +285,10 @@
 (effects/register {::smugglers-give-choice smugglers-give-choice})
 
 (def smugglers {:name    :smugglers
-               :set     :seaside
-               :types   #{:action}
-               :cost    3
-               :effects [[::smugglers-give-choice]]})
+                :set     :seaside
+                :types   #{:action}
+                :cost    3
+                :effects [[::smugglers-give-choice]]})
 
 (defn tactician-discard [game {:keys [player-no card-id]}]
   (let [hand (get-in game [:players player-no :hand])]
@@ -309,6 +309,31 @@
                 :duration [[:draw 5]
                            [:give-actions 1]
                            [:give-buys 1]]})
+
+(defn treasury-topdeck-choice [game {:keys [player-no] :as args}]
+  (let [bought-victory-cards (->> (get-in game [:players player-no :gained-cards])
+                                  (filter :bought)
+                                  (filter (comp :victory :types)))]
+    (cond-> game
+            (empty? bought-victory-cards) (give-choice (merge args {:text    "You may put Treasury onto your deck."
+                                                                    :choice  :topdeck-this-from-play-area
+                                                                    :options [:player :play-area {:this true}]
+                                                                    :max     1})))))
+
+(defn treasury-at-clean-up [game {:keys [player-no card-id] :as args}]
+  (update-in game [:players player-no :at-clean-up] concat [[::treasury-topdeck-choice {:card-id card-id}]]))
+
+(effects/register {::treasury-topdeck-choice treasury-topdeck-choice
+                   ::treasury-at-clean-up    treasury-at-clean-up})
+
+(def treasury {:name    :treasury
+               :set     :seaside
+               :types   #{:action}
+               :cost    5
+               :effects [[:draw 1]
+                         [:give-actions 1]
+                         [:give-coins 1]
+                         [::treasury-at-clean-up]]})
 
 (def warehouse {:name    :warehouse
                 :set     :seaside
@@ -348,5 +373,6 @@
                     sea-hag
                     smugglers
                     tactician
+                    treasury
                     warehouse
                     wharf])
