@@ -1050,10 +1050,9 @@
                  (play 0 :treasury))
              {:players [{:deck        [copper copper]
                          :hand        [copper]
-                         :play-area   [treasury-1]
+                         :play-area [(assoc treasury-1 :at-clean-up [[:topdeck-this-from-play-area]])]
                          :actions     1
-                         :coins       1
-                         :at-clean-up [[::seaside/treasury-topdeck-choice {:card-id 1}]]}]}))
+                         :coins     1}]}))
       (is (= (-> {:players [{:deck         [copper copper copper]
                              :hand         [treasury-1]
                              :gained-cards [{:types #{:treasure} :bought true}
@@ -1064,15 +1063,14 @@
                  (clean-up {:player-no 0}))
              {:players      [{:deck         [copper copper]
                               :hand         [copper]
-                              :play-area    [treasury-1]
+                              :play-area    [(assoc treasury-1 :at-clean-up [[:topdeck-this-from-play-area]])]
                               :gained-cards [{:types #{:treasure} :bought true}
                                              {:types #{:victory}}]
                               :actions      1
                               :coins        1}]
-              :effect-stack [{:text      "You may put Treasury onto your deck."
+              :effect-stack [{:text      "You may activate cards, that do something when you discard them from play."
                               :player-no 0
-                              :card-id   1
-                              :choice    :topdeck-this-from-play-area
+                              :choice    :at-clean-up-choice
                               :source    :play-area
                               :options   [:treasury]
                               :max       1}
@@ -1134,13 +1132,12 @@
                  (choose :treasury))
              {:players      [{:deck      (concat [treasury-1] (repeat 5 copper))
                               :hand      [copper copper]
-                              :play-area [treasury-2]
+                              :play-area [(assoc treasury-2 :at-clean-up [[:topdeck-this-from-play-area]])]
                               :actions   1
                               :coins     2}]
-              :effect-stack [{:text      "You may put Treasury onto your deck."
+              :effect-stack [{:text      "You may activate cards, that do something when you discard them from play."
                               :player-no 0
-                              :card-id   2
-                              :choice    :topdeck-this-from-play-area
+                              :choice    :at-clean-up-choice
                               :source    :play-area
                               :options   [:treasury]
                               :max       1}
@@ -1154,32 +1151,8 @@
                  (play 0 :treasury)
                  (clean-up {:player-no 0})
                  (choose nil))
-             {:players      [{:deck      (repeat 5 copper)
-                              :hand      [copper copper]
-                              :play-area [treasury-1 treasury-2]
-                              :actions   1
-                              :coins     2}]
-              :effect-stack [{:text      "You may put Treasury onto your deck."
-                              :player-no 0
-                              :card-id   2
-                              :choice    :topdeck-this-from-play-area
-                              :source    :play-area
-                              :options   [:treasury]
-                              :max       1}
-                             {:player-no 0
-                              :effect    [:do-clean-up {:player-no 0}]}]}))
-      (is (= (-> {:players [{:deck    (repeat 7 copper)
-                             :hand    [treasury-1 treasury-2]
-                             :actions 1
-                             :coins   0}]}
-                 (play 0 :treasury)
-                 (play 0 :treasury)
-                 (clean-up {:player-no 0})
-                 (choose nil)
-                 (choose :treasury))
-             {:players [{:deck           [copper]
-                         :hand           [treasury-2 copper copper copper copper]
-                         :discard        [copper copper treasury-1]
+             {:players [{:hand           (repeat 5 copper)
+                         :discard        [copper copper treasury-1 treasury-2]
                          :actions        0
                          :coins          0
                          :buys           0

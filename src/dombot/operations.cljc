@@ -543,14 +543,47 @@
         (dissoc :cost-reductions)
         check-game-ended)))
 
-(defn clean-up [game {:keys [player-no] :as args}]
-  (let [at-clean-up (get-in game [:players player-no :at-clean-up])]
+(defn at-clean-up-choice [game {:keys [player-no card-name]}]
+  (let [{{:keys [at-clean-up id]} :card} (ut/get-card-idx game [:players player-no :play-area] {:name card-name})]
+    (if card-name
+      (-> game
+          (ut/update-in-vec [:players player-no :play-area] {:name card-name} dissoc :at-clean-up)
+          (push-effect-stack {:player-no player-no
+                              :card-id   id
+                              :effects   (concat at-clean-up
+                                                 [[:at-clean-up]])}))
+      (update-in game [:players player-no :play-area] (partial map #(dissoc % :at-clean-up))))))
+
+(defn at-clean-up [game {:keys [player-no]}]
+  (let [check-clean-up-effects (fn [{:keys [clean-up-pred] :as card}]
+                                 (if clean-up-pred
+                                   (let [pred-fn (effects/get-effect clean-up-pred)]
+                                     (cond-> card
+                                             (not (pred-fn game player-no)) (dissoc :at-clean-up)))
+                                   card))]
     (-> game
-        (update-in [:players player-no] dissoc :at-clean-up)
+        (update-in [:players player-no :play-area] (partial map check-clean-up-effects))
+        (as-> game
+              (let [card-names (->> (get-in game [:players player-no :play-area])
+                                    (filter :at-clean-up)
+                                    (map :name)
+                                    set)]
+
+                (give-choice game {:player-no player-no
+                                   :text      "You may activate cards, that do something when you discard them from play."
+                                   :choice    :at-clean-up-choice
+                                   :options   [:player :play-area {:names card-names}]
+                                   :max       1}))))))
+
+(effects/register {:at-clean-up-choice at-clean-up-choice
+                   :at-clean-up        at-clean-up})
+
+(defn clean-up [game {:keys [player-no] :as args}]
+    (-> game
         (push-effect-stack (merge args
-                                  {:effects (concat at-clean-up
-                                                    [[:do-clean-up args]])}))
-        check-stack)))
+                                {:effects [[:at-clean-up]
+                                           [:do-clean-up args]]}))
+      check-stack))
 
 (effects/register {:do-clean-up do-clean-up
                    :clean-up    clean-up})
