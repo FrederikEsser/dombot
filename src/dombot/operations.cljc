@@ -185,6 +185,20 @@
 
 (effects/register {:peek-deck peek-deck})
 
+(defn return-to-supply [game {:keys [player-no card-name card-names] :as args}]
+  (if card-name
+    (let [{hand-idx :idx} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+          {supply-idx :idx} (ut/get-pile-idx game card-name)]
+      (-> game
+          (update-in [:players player-no :hand] ut/vec-remove hand-idx)
+          (update-in [:supply supply-idx :pile-size] inc)))
+    (push-effect-stack game {:player-no player-no
+                             :effects   (->> card-names
+                                             (map (fn [name]
+                                                    [:return-to-supply {:card-name name}])))})))
+
+(effects/register {:return-to-supply return-to-supply})
+
 (defn move-card [game {:keys [player-no card-name move-card-id from from-position to to-position to-player] :as args}]
   (assert (or card-name move-card-id from-position) (str "Can't move unspecified card: " args))
   (let [{:keys [deck discard] :as player} (get-in game [:players player-no])]
@@ -579,8 +593,8 @@
                    :at-clean-up        at-clean-up})
 
 (defn clean-up [game {:keys [player-no] :as args}]
-    (-> game
-        (push-effect-stack (merge args
+  (-> game
+      (push-effect-stack (merge args
                                 {:effects [[:at-clean-up]
                                            [:do-clean-up args]]}))
       check-stack))

@@ -8,13 +8,94 @@
             [dombot.cards.seaside :as seaside :refer :all]
             [dombot.utils :as ut]))
 
+(deftest ambassador-test
+  (let [copper (assoc copper :id 1)
+        estate (assoc estate :id 2)]
+    (testing "Ambassador"
+      (is (= (-> {:players [{:hand    [ambassador copper copper copper estate]
+                             :actions 1}]}
+                 (play 0 :ambassador))
+             {:players      [{:hand      [copper copper copper estate]
+                              :play-area [ambassador]
+                              :actions   0}]
+              :effect-stack [{:text      "Reveal a card from your hand."
+                              :player-no 0
+                              :choice    ::seaside/ambassador-reveal
+                              :source    :hand
+                              :options   [:copper :copper :copper :estate]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:players [{:hand    [ambassador copper copper copper estate]
+                             :actions 1}]}
+                 (play 0 :ambassador)
+                 (choose :copper))
+             {:players      [{:hand      [copper copper copper estate]
+                              :play-area [ambassador]
+                              :actions   0}]
+              :effect-stack [{:text      "Return up to 2 copies of it to the Supply."
+                              :player-no 0
+                              :choice    :return-to-supply
+                              :source    :hand
+                              :options   [:copper :copper :copper]
+                              :max       2}
+                             {:player-no 0
+                              :effect    [:attack {:effects [[:gain {:card-name :copper}]]}]}]}))
+      (is (= (-> {:supply  [{:card copper :pile-size 46}]
+                  :players [{:hand    [ambassador copper copper copper estate]
+                             :actions 1}
+                            {}]}
+                 (play 0 :ambassador)
+                 (choose :copper)
+                 (choose [:copper :copper]))
+             {:supply  [{:card copper :pile-size 47}]
+              :players [{:hand      [copper estate]
+                         :play-area [ambassador]
+                         :actions   0}
+                        {:discard [copper]}]}))
+      (is (= (-> {:supply  [{:card copper :pile-size 46}]
+                  :players [{:hand    [ambassador copper copper copper estate]
+                             :actions 1}
+                            {}]}
+                 (play 0 :ambassador)
+                 (choose :copper)
+                 (choose :copper))
+             {:supply  [{:card copper :pile-size 46}]
+              :players [{:hand      [copper copper estate]
+                         :play-area [ambassador]
+                         :actions   0}
+                        {:discard [copper]}]}))
+      (is (= (-> {:supply  [{:card copper :pile-size 46}]
+                  :players [{:hand    [ambassador copper copper copper estate]
+                             :actions 1}
+                            {}]}
+                 (play 0 :ambassador)
+                 (choose :copper)
+                 (choose nil))
+             {:supply  [{:card copper :pile-size 45}]
+              :players [{:hand      [copper copper copper estate]
+                         :play-area [ambassador]
+                         :actions   0}
+                        {:discard [copper]}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}]
+                  :players [{:hand    [ambassador copper copper copper estate]
+                             :actions 1}
+                            {}]}
+                 (play 0 :ambassador)
+                 (choose :estate)
+                 (choose :estate))
+             {:supply  [{:card estate :pile-size 8}]
+              :players [{:hand      [copper copper copper]
+                         :play-area [ambassador]
+                         :actions   0}
+                        {:discard [estate]}]})))))
+
 (deftest bazaar-test
   (testing "Bazaar"
-    (is (= (play {:players [{:deck    [copper copper copper]
-                             :hand    [bazaar]
-                             :actions 1
-                             :coins   0}]}
-                 0 :bazaar)
+    (is (= (-> {:players [{:deck    [copper copper copper]
+                           :hand    [bazaar]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :bazaar))
            {:players [{:deck      [copper copper]
                        :hand      [copper]
                        :play-area [bazaar]
@@ -1048,10 +1129,10 @@
                              :actions 1
                              :coins   0}]}
                  (play 0 :treasury))
-             {:players [{:deck        [copper copper]
-                         :hand        [copper]
+             {:players [{:deck      [copper copper]
+                         :hand      [copper]
                          :play-area [(assoc treasury-1 :at-clean-up [[:topdeck-this-from-play-area]])]
-                         :actions     1
+                         :actions   1
                          :coins     1}]}))
       (is (= (-> {:players [{:deck         [copper copper copper]
                              :hand         [treasury-1]
