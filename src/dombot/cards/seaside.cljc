@@ -4,6 +4,27 @@
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
+(defn ambassador-reveal [game {:keys [card-name] :as args}]
+  (push-effect-stack game (merge args
+                                 {:effects [[:reveal {:card-name card-name}]
+                                            [:give-choice {:text    "Return up to 2 copies of it to the Supply."
+                                                           :choice  :return-to-supply
+                                                           :options [:player :hand {:name card-name}]
+                                                           :max     2}]
+                                            [:attack {:effects [[:gain {:card-name card-name}]]}]]})))
+
+(effects/register {::ambassador-reveal ambassador-reveal})
+
+(def ambassador {:name    :ambassador
+                 :set     :seaside
+                 :types   #{:action :attack}
+                 :cost    3
+                 :effects [[:give-choice {:text    "Reveal a card from your hand."
+                                          :choice  ::ambassador-reveal
+                                          :options [:player :hand]
+                                          :min     1
+                                          :max     1}]]})
+
 (def bazaar {:name    :bazaar
              :set     :seaside
              :types   #{:action}
@@ -323,13 +344,13 @@
 (effects/register {::treasury-can-topdeck? treasury-can-topdeck?
                    ::treasury-clean-up     treasury-clean-up})
 
-(def treasury {:name    :treasury
-               :set     :seaside
-               :types   #{:action}
-               :cost    5
-               :effects [[:draw 1]
-                         [:give-actions 1]
-                         [:give-coins 1]
+(def treasury {:name          :treasury
+               :set           :seaside
+               :types         #{:action}
+               :cost          5
+               :effects       [[:draw 1]
+                               [:give-actions 1]
+                               [:give-coins 1]
                                [::treasury-clean-up]]
                :clean-up-pred ::treasury-can-topdeck?})
 
@@ -354,7 +375,8 @@
             :duration [[:draw 2]
                        [:give-buys 1]]})
 
-(def kingdom-cards [bazaar
+(def kingdom-cards [ambassador
+                    bazaar
                     caravan
                     cutpurse
                     explorer
