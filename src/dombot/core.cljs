@@ -7,7 +7,7 @@
 
 ;; -------------------------
 ;; Views
-
+Tror du at det compiler nu?
 (defonce state (r/atom {:sets            #{:dominion :intrigue :seaside :promos}
                         :selection       []
                         :trash-unfolded? false
