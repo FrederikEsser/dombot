@@ -129,6 +129,7 @@
                             buys
                             set-aside
                             island-mat
+                            pirate-ship-coins
                             victory-points
                             winner]} :player
                     choice           :choice
@@ -148,6 +149,8 @@
            {:set-aside (view-area :set-aside data)})
          (when (not-empty island-mat)
            {:island-mat (view-area :island-mat data)})
+         (when pirate-ship-coins
+           {:pirate-ship-coins pirate-ship-coins})
          (when choice
            {:choice (view-choice choice)})
          (when victory-points

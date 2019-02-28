@@ -55,6 +55,8 @@
 
 (s/def ::island-mat ::cards)
 
+(s/def ::pirate-ship-coins nat-int?)
+
 (s/def ::text string?)
 
 (s/def ::min nat-int?)
@@ -102,6 +104,7 @@
                                  ::buys]
                         :opt-un [::set-aside
                                  ::island-mat
+                                 ::pirate-ship-coins
                                  ::choice
                                  ::victory-points
                                  ::winner?]))

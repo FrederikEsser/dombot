@@ -155,7 +155,7 @@
           [:tr (map-tag :th ["Name" "Hand" "Play area" "Deck" "Discard"])]
           (->> (get-in @state [:game :players])
                (mapk (fn [{:keys               [name-ui hand play-area deck discard
-                                                actions coins buys set-aside island-mat
+                                                actions coins buys set-aside island-mat pirate-ship-coins
                                                 active? victory-points winner?]
                            {:keys [text
                                    options
@@ -186,7 +186,9 @@
                                [:div
                                 [:div "Actions: " actions]
                                 [:div "Coins: " coins]
-                                [:div "Buys: " buys]])]
+                                [:div "Buys: " buys]
+                                (when pirate-ship-coins
+                                  [:div "Pirate Ship: " pirate-ship-coins])])]
                         (if text
                           [:td text
                            [:div (mapk (fn [{:keys [option text]}]

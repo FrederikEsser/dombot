@@ -314,7 +314,7 @@
 (defn- choose-single [game valid-choices selection]
   (if (coll? selection)
     (assert (<= (count selection) 1) "Choose error: You can only pick 1 option."))
-  (let [[{:keys [player-no card-id choice source min optional?]}] (get game :effect-stack)
+  (let [[{:keys [player-no attacker card-id choice source min optional?]}] (get game :effect-stack)
         choice-fn (effects/get-effect choice)
         arg-name (case source
                    :deck-position :position
@@ -330,12 +330,14 @@
 
     (-> game
         pop-effect-stack
-        (choice-fn {:player-no player-no
-                    :card-id   card-id
-                    arg-name   single-selection}))))
+        (choice-fn (merge {:player-no player-no
+                           :card-id   card-id
+                           arg-name   single-selection}
+                          (when attacker
+                            {:attacker attacker}))))))
 
 (defn- choose-multi [game valid-choices selection]
-  (let [[{:keys [player-no card-id choice source min max optional?]}] (get game :effect-stack)
+  (let [[{:keys [player-no attacker card-id choice source min max optional?]}] (get game :effect-stack)
         choice-fn (effects/get-effect choice)
         arg-name (case source
                    :deck-position :position
@@ -357,9 +359,11 @@
 
     (-> game
         pop-effect-stack
-        (choice-fn {:player-no player-no
-                    :card-id   card-id
-                    arg-name   multi-selection}))))
+        (choice-fn (merge {:player-no player-no
+                           :card-id   card-id
+                           arg-name   multi-selection}
+                          (when attacker
+                            {:attacker attacker}))))))
 
 (defn choose [game selection]
   (let [[{:keys [choice options min max]}] (get game :effect-stack)

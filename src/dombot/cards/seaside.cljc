@@ -1,6 +1,6 @@
 (ns dombot.cards.seaside
   (:require [dombot.operations :refer [move-card move-cards give-choice push-effect-stack]]
-            [dombot.cards.common :refer [reveal-hand gain-to-hand discard-all-look-at]]
+            [dombot.cards.common :refer [reveal-hand gain-to-hand discard-all-look-at trash-from-revealed]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -261,6 +261,53 @@
               :cost    5
               :effects [[::outpost-give-extra-turn]]})
 
+(defn pirate-ship-trash [game {:keys [attacker] :as args}]
+  (-> game
+      (assoc-in [:players attacker :pirate-ship-trashed?] true)
+      (trash-from-revealed args)))
+
+(defn pirate-ship-add-coin [game {:keys [player-no]}]
+  (let [pirate-ship-trashed? (get-in game [:players player-no :pirate-ship-trashed?])]
+    (-> game
+        (update-in [:players player-no] dissoc :pirate-ship-trashed?)
+        (cond-> pirate-ship-trashed? (update-in [:players player-no :pirate-ship-coins] ut/inc-or-1)))))
+
+(defn pirate-ship-choice [game {:keys [player-no choice]}]
+  (let [pirate-ship-coins (or (get-in game [:players player-no :pirate-ship-coins]) 0)]
+    (case choice
+      :coins (update-in game [:players player-no :coins] + pirate-ship-coins)
+      :attack (push-effect-stack game {:player-no player-no
+                                       :effects   [[:attack {:effects [[:reveal-from-deck 2]
+                                                                       [:give-choice {:text     "Trash a revealed Treasure (attacker chooses)."
+                                                                                      :choice   ::pirate-ship-trash
+                                                                                      :options  [:player :revealed {:type :treasure}]
+                                                                                      :min      1
+                                                                                      :max      1
+                                                                                      :attacker player-no}]
+                                                                       [:discard-all-revealed]]}]
+                                                   [::pirate-ship-add-coin]]}))))
+
+(defn pirate-ship-give-choice [game {:keys [player-no] :as args}]
+  (let [pirate-ship-coins (or (get-in game [:players player-no :pirate-ship-coins]) 0)]
+    (give-choice game (merge args {:text    "Choose one:"
+                                   :choice  ::pirate-ship-choice
+                                   :options [:special
+                                             {:option :coins :text (str "+$" pirate-ship-coins)}
+                                             {:option :attack :text "Attack other players."}]
+                                   :min     1
+                                   :max     1}))))
+
+(effects/register {::pirate-ship-trash       pirate-ship-trash
+                   ::pirate-ship-add-coin    pirate-ship-add-coin
+                   ::pirate-ship-choice      pirate-ship-choice
+                   ::pirate-ship-give-choice pirate-ship-give-choice})
+
+(def pirate-ship {:name    :pirate-ship
+                  :set     :seaside
+                  :types   #{:action :attack}
+                  :cost    4
+                  :effects [[::pirate-ship-give-choice]]})
+
 (defn salvager-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         cost (ut/get-cost game card)]
@@ -389,6 +436,7 @@
                     merchant-ship
                     navigator
                     outpost
+                    pirate-ship
                     salvager
                     sea-hag
                     smugglers
