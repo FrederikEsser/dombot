@@ -261,11 +261,11 @@
 
 (effects/register {:reveal-from-deck reveal-from-deck})
 
-(defn look-at [game {:keys [player-no arg]}]
+(defn look-at [game {:keys [player-no arg from-position]}]
   (move-cards game {:player-no       player-no
                     :number-of-cards arg
                     :from            :deck
-                    :from-position   :top
+                    :from-position   (or from-position :top)
                     :to              :look-at}))
 
 (effects/register {:look-at look-at})

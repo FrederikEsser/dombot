@@ -834,6 +834,51 @@
                                 :coins   0
                                 :phase   :action}]})))))
 
+(deftest pearl-diver-test
+  (testing "Pearl Diver"
+    (is (= (-> {:players [{:hand    [pearl-diver]
+                           :deck    [copper estate silver]
+                           :actions 1}]}
+               (play 0 :pearl-diver))
+           {:players      [{:hand      [copper]
+                            :play-area [pearl-diver]
+                            :deck      [estate]
+                            :look-at   [silver]
+                            :actions   1}]
+            :effect-stack [{:text      "Choose where to put the Silver:"
+                            :player-no 0
+                            :choice    ::seaside/pearl-diver-choice
+                            :source    :special
+                            :options   [{:option :top :text "Put it on top of your deck."}
+                                        {:option :bottom :text "Leave it at the bottom of your deck."}]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand    [pearl-diver]
+                           :deck    [copper estate silver]
+                           :actions 1}]}
+               (play 0 :pearl-diver)
+               (choose :top))
+           {:players [{:hand      [copper]
+                       :play-area [pearl-diver]
+                       :deck      [silver estate]
+                       :actions   1}]}))
+    (is (= (-> {:players [{:hand    [pearl-diver]
+                           :deck    [copper estate silver]
+                           :actions 1}]}
+               (play 0 :pearl-diver)
+               (choose :bottom))
+           {:players [{:hand      [copper]
+                       :play-area [pearl-diver]
+                       :deck      [estate silver]
+                       :actions   1}]}))
+    (is (= (-> {:players [{:hand    [pearl-diver]
+                           :deck    [copper]
+                           :actions 1}]}
+               (play 0 :pearl-diver))
+           {:players [{:hand      [copper]
+                       :play-area [pearl-diver]
+                       :actions   1}]}))))
+
 (deftest pirate-ship-test
   (testing "Pirate Ship"
     (is (= (-> {:players [{:hand    [pirate-ship]

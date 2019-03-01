@@ -261,6 +261,38 @@
               :cost    5
               :effects [[::outpost-give-extra-turn]]})
 
+(defn pearl-diver-choice [game {:keys [player-no choice]}]
+  (let [[{:keys [name]}] (get-in game [:players player-no :look-at])]
+    (move-card game {:player-no   player-no
+                     :card-name   name
+                     :from        :look-at
+                     :to          :deck
+                     :to-position choice})))
+
+(defn pearl-diver-give-choice [game {:keys [player-no]}]
+  (let [[{:keys [name]}] (get-in game [:players player-no :look-at])]
+    (cond-> game
+            name (give-choice {:player-no player-no
+                               :text      (str "Choose where to put the " (ut/format-name name) ":")
+                               :choice    ::pearl-diver-choice
+                               :options   [:special
+                                           {:option :top :text "Put it on top of your deck."}
+                                           {:option :bottom :text "Leave it at the bottom of your deck."}]
+                               :min       1
+                               :max       1}))))
+
+(effects/register {::pearl-diver-choice      pearl-diver-choice
+                   ::pearl-diver-give-choice pearl-diver-give-choice})
+
+(def pearl-diver {:name    :pearl-diver
+                  :set     :seaside
+                  :types   #{:action}
+                  :cost    2
+                  :effects [[:draw 1]
+                            [:give-actions 1]
+                            [:look-at {:arg 1 :from-position :bottom}]
+                            [::pearl-diver-give-choice]]})
+
 (defn pirate-ship-trash [game {:keys [attacker] :as args}]
   (-> game
       (assoc-in [:players attacker :pirate-ship-trashed?] true)
@@ -455,6 +487,7 @@
                     merchant-ship
                     navigator
                     outpost
+                    pearl-diver
                     pirate-ship
                     salvager
                     sea-hag
