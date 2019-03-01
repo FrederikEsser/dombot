@@ -378,6 +378,25 @@
                            [:give-actions 1]
                            [:give-buys 1]]})
 
+(defn treasure-map-trash [game {:keys [player-no card-id]}]
+  (let [{another-treasure-map :card} (ut/get-card-idx game [:players player-no :hand] {:name :treasure-map})]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (concat [[:trash-from-play-area {:move-card-id card-id}]]
+                                                (when another-treasure-map
+                                                  [[:trash-from-hand {:card-name :treasure-map}]
+                                                   [:gain-to-topdeck {:card-name :gold}]
+                                                   [:gain-to-topdeck {:card-name :gold}]
+                                                   [:gain-to-topdeck {:card-name :gold}]
+                                                   [:gain-to-topdeck {:card-name :gold}]]))})))
+
+(effects/register {::treasure-map-trash treasure-map-trash})
+
+(def treasure-map {:name    :treasure-map
+                   :set     :seaside
+                   :types   #{:action}
+                   :cost    4
+                   :effects [[::treasure-map-trash]]})
+
 (defn treasury-can-topdeck? [game player-no]
   (let [bought-victory-cards (->> (get-in game [:players player-no :gained-cards])
                                   (filter :bought)
@@ -441,6 +460,7 @@
                     sea-hag
                     smugglers
                     tactician
+                    treasure-map
                     treasury
                     warehouse
                     wharf])

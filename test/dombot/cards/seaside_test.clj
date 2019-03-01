@@ -29,10 +29,10 @@
                              :actions 1}]}
                  (play 0 :ambassador)
                  (choose :copper))
-             {:players      [{:hand      [copper copper copper estate]
-                              :play-area [ambassador]
+             {:players      [{:hand           [copper copper copper estate]
+                              :play-area      [ambassador]
                               :revealed-cards {:hand 1}
-                              :actions   0}]
+                              :actions        0}]
               :effect-stack [{:text      "Return up to 2 copies of it to the Supply."
                               :player-no 0
                               :choice    :return-to-supply
@@ -49,10 +49,10 @@
                  (choose :copper)
                  (choose [:copper :copper]))
              {:supply  [{:card copper :pile-size 47}]
-              :players [{:hand      [copper estate]
-                         :play-area [ambassador]
+              :players [{:hand           [copper estate]
+                         :play-area      [ambassador]
                          :revealed-cards {}
-                         :actions   0}
+                         :actions        0}
                         {:discard [copper]}]}))
       (is (= (-> {:supply  [{:card copper :pile-size 46}]
                   :players [{:hand    [ambassador copper copper copper estate]
@@ -62,10 +62,10 @@
                  (choose :copper)
                  (choose :copper))
              {:supply  [{:card copper :pile-size 46}]
-              :players [{:hand      [copper copper estate]
-                         :play-area [ambassador]
+              :players [{:hand           [copper copper estate]
+                         :play-area      [ambassador]
                          :revealed-cards {}
-                         :actions   0}
+                         :actions        0}
                         {:discard [copper]}]}))
       (is (= (-> {:supply  [{:card copper :pile-size 46}]
                   :players [{:hand    [ambassador copper copper copper estate]
@@ -75,10 +75,10 @@
                  (choose :copper)
                  (choose nil))
              {:supply  [{:card copper :pile-size 45}]
-              :players [{:hand      [copper copper copper estate]
-                         :play-area [ambassador]
+              :players [{:hand           [copper copper copper estate]
+                         :play-area      [ambassador]
                          :revealed-cards {:hand 1}
-                         :actions   0}
+                         :actions        0}
                         {:discard [copper]}]}))
       (is (= (-> {:supply  [{:card estate :pile-size 8}]
                   :players [{:hand    [ambassador copper copper copper estate]
@@ -88,10 +88,10 @@
                  (choose :estate)
                  (choose :estate))
              {:supply  [{:card estate :pile-size 8}]
-              :players [{:hand      [copper copper copper]
-                         :play-area [ambassador]
+              :players [{:hand           [copper copper copper]
+                         :play-area      [ambassador]
                          :revealed-cards {}
-                         :actions   0}
+                         :actions        0}
                         {:discard [estate]}]})))))
 
 (deftest bazaar-test
@@ -834,6 +834,112 @@
                                 :coins   0
                                 :phase   :action}]})))))
 
+(deftest pirate-ship-test
+  (testing "Pirate Ship"
+    (is (= (-> {:players [{:hand    [pirate-ship]
+                           :actions 1}]}
+               (play 0 :pirate-ship))
+           {:players      [{:play-area [pirate-ship]
+                            :actions   0}]
+            :effect-stack [{:text      "Choose one:"
+                            :player-no 0
+                            :choice    ::seaside/pirate-ship-choice
+                            :source    :special
+                            :options   [{:option :coins :text "+$0"}
+                                        {:option :attack :text "Attack other players."}]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand              [pirate-ship]
+                           :actions           1
+                           :pirate-ship-coins 4}]}
+               (play 0 :pirate-ship))
+           {:players      [{:play-area         [pirate-ship]
+                            :actions           0
+                            :pirate-ship-coins 4}]
+            :effect-stack [{:text      "Choose one:"
+                            :player-no 0
+                            :choice    ::seaside/pirate-ship-choice
+                            :source    :special
+                            :options   [{:option :coins :text "+$4"}
+                                        {:option :attack :text "Attack other players."}]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand              [pirate-ship]
+                           :actions           1
+                           :coins             0
+                           :pirate-ship-coins 4}]}
+               (play 0 :pirate-ship)
+               (choose :coins))
+           {:players [{:play-area         [pirate-ship]
+                       :actions           0
+                       :coins             4
+                       :pirate-ship-coins 4}]}))
+    (is (= (-> {:players [{:hand    [pirate-ship]
+                           :actions 1}
+                          {:deck [estate copper copper]}]}
+               (play 0 :pirate-ship)
+               (choose :attack))
+           {:players      [{:play-area [pirate-ship]
+                            :actions   0}
+                           {:deck     [copper]
+                            :revealed [estate copper]}]
+            :effect-stack [{:text      "Trash a revealed Treasure (attacker chooses)."
+                            :player-no 1
+                            :attacker  0
+                            :choice    ::seaside/pirate-ship-trash
+                            :source    :revealed
+                            :options   [:copper]
+                            :min       1
+                            :max       1}
+                           {:player-no 1
+                            :effect    [:discard-all-revealed]}
+                           {:player-no 0
+                            :effect    [::seaside/pirate-ship-add-coin]}
+                           {:player-no 1
+                            :effect    [:clear-unaffected {:works :once}]}]}))
+    (is (= (-> {:players [{:hand    [pirate-ship]
+                           :actions 1}
+                          {:deck [estate copper copper]}]}
+               (play 0 :pirate-ship)
+               (choose :attack)
+               (choose :copper))
+           {:players [{:play-area         [pirate-ship]
+                       :actions           0
+                       :pirate-ship-coins 1}
+                      {:deck           [copper]
+                       :discard        [estate]
+                       :revealed-cards {:discard 1}}]
+            :trash   [copper]}))
+    (is (= (-> {:players [{:hand              [pirate-ship]
+                           :actions           1
+                           :pirate-ship-coins 1}
+                          {:deck [estate copper copper]}
+                          {:deck [gold copper copper]}]}
+               (play 0 :pirate-ship)
+               (choose :attack)
+               (choose :copper)
+               (choose :gold))
+           {:players [{:play-area         [pirate-ship]
+                       :actions           0
+                       :pirate-ship-coins 2}
+                      {:deck           [copper]
+                       :discard        [estate]
+                       :revealed-cards {:discard 1}}
+                      {:deck           [copper]
+                       :discard        [copper]
+                       :revealed-cards {:discard 1}}]
+            :trash   [copper gold]}))
+    (is (= (-> {:players [{:hand    [pirate-ship]
+                           :actions 1}
+                          {:deck [estate estate copper]}]}
+               (play 0 :pirate-ship)
+               (choose :attack))
+           {:players [{:play-area [pirate-ship]
+                       :actions   0}
+                      {:deck           [copper]
+                       :discard        [estate estate]
+                       :revealed-cards {:discard 2}}]}))))
+
 (deftest salvager-test
   (testing "Salvager"
     (is (= (-> {:players [{:hand    [salvager copper estate]
@@ -1109,6 +1215,36 @@
                                                                        [:give-buys 1]]])]
                          :discard   [estate]
                          :actions   0}]})))))
+
+(deftest treasure-map-test
+  (let [treasure-map (assoc treasure-map :id 1)
+        gold (assoc gold :id 2)]
+    (testing "Treasure Map"
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [treasure-map]
+                             :actions 1}]}
+                 (play 0 :treasure-map))
+             {:supply  [{:card gold :pile-size 30}]
+              :players [{:actions 0}]
+              :trash   [treasure-map]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [treasure-map treasure-map]
+                             :deck    [copper]
+                             :actions 1}]}
+                 (play 0 :treasure-map))
+             {:supply  [{:card gold :pile-size 26}]
+              :players [{:deck    [gold gold gold gold copper]
+                         :actions 0}]
+              :trash   [treasure-map treasure-map]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 3}]
+                  :players [{:hand    [treasure-map treasure-map]
+                             :deck    [copper]
+                             :actions 1}]}
+                 (play 0 :treasure-map))
+             {:supply  [{:card gold :pile-size 0}]
+              :players [{:deck    [gold gold gold copper]
+                         :actions 0}]
+              :trash   [treasure-map treasure-map]})))))
 
 (deftest treasury-test
   (let [treasury-1 (assoc treasury :id 1)
