@@ -129,6 +129,7 @@
                             buys
                             set-aside
                             island-mat
+                            native-village-mat
                             pirate-ship-coins
                             victory-points
                             winner]} :player
@@ -149,6 +150,10 @@
            {:set-aside (view-area :set-aside data)})
          (when (not-empty island-mat)
            {:island-mat (view-area :island-mat data)})
+         (when (not-empty native-village-mat)
+           {:native-village-mat (if active-player?
+                                  (view-area :native-village-mat data)
+                                  {:number-of-cards (count native-village-mat)})})
          (when pirate-ship-coins
            {:pirate-ship-coins pirate-ship-coins})
          (when choice

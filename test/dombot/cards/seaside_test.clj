@@ -712,6 +712,63 @@
                                 :actions-played 0
                                 :phase          :action}]})))))
 
+(deftest native-village-test
+  (testing "Native Village"
+    (is (= (-> {:players [{:hand    [native-village]
+                           :actions 1}]}
+               (play 0 :native-village))
+           {:players      [{:play-area [native-village]
+                            :actions   2}]
+            :effect-stack [{:text      "Choose one:"
+                            :player-no 0
+                            :choice    ::seaside/native-village-choice
+                            :source    :special
+                            :options   [{:option :put :text "Put the top card of your deck face down on your Native Village mat."}
+                                        {:option :take :text "Put all the cards from your mat into your hand."}]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand    [native-village]
+                           :deck    [copper copper]
+                           :actions 1}]}
+               (play 0 :native-village)
+               (choose :put))
+           {:players [{:play-area          [native-village]
+                       :deck               [copper]
+                       :native-village-mat [copper]
+                       :actions            2}]}))
+    (is (= (-> {:players [{:hand               [native-village]
+                           :deck               [copper copper]
+                           :native-village-mat [estate]
+                           :actions            1}]}
+               (play 0 :native-village)
+               (choose :put))
+           {:players [{:play-area          [native-village]
+                       :deck               [copper]
+                       :native-village-mat [estate copper]
+                       :actions            2}]}))
+    (is (= (-> {:players [{:hand               [native-village]
+                           :native-village-mat [copper copper]
+                           :actions            1}]}
+               (play 0 :native-village)
+               (choose :take))
+           {:players [{:hand      [copper copper]
+                       :play-area [native-village]
+                       :actions   2}]}))
+    (is (= (-> {:players [{:hand               [native-village]
+                           :native-village-mat [copper copper]
+                           :actions            1}]}
+               (play 0 :native-village)
+               (choose :put))
+           {:players [{:play-area          [native-village]
+                       :native-village-mat [copper copper]
+                       :actions            2}]}))
+    (is (= (-> {:players [{:hand    [native-village]
+                           :actions 1}]}
+               (play 0 :native-village)
+               (choose :take))
+           {:players [{:play-area [native-village]
+                       :actions   2}]}))))
+
 (deftest navigator-test
   (testing "Navigator"
     (is (= (-> {:players [{:hand    [navigator]

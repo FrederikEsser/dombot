@@ -155,7 +155,8 @@
           [:tr (map-tag :th ["Name" "Hand" "Play area" "Deck" "Discard"])]
           (->> (get-in @state [:game :players])
                (mapk (fn [{:keys               [name-ui hand play-area deck discard
-                                                actions coins buys set-aside island-mat pirate-ship-coins
+                                                actions coins buys set-aside
+                                                island-mat native-village-mat pirate-ship-coins
                                                 active? victory-points winner?]
                            {:keys [text
                                    options
@@ -253,7 +254,13 @@
                         (when island-mat
                           [:td
                            [:div "Island Mat"]
-                           [:div (mapk (partial view-card max) island-mat)]])])))]]]
+                           [:div (mapk (partial view-card max) island-mat)]])
+                        (when native-village-mat
+                          [:td
+                           [:div "Native Village Mat"]
+                           [:div (if (:number-of-cards native-village-mat)
+                                   (view-pile native-village-mat max)
+                                   (mapk view-card native-village-mat))]])])))]]]
        (let [{:keys [compact full]} (get-in @state [:game :trash])]
          [:div "Trash " [:button {:on-click (fn [] (swap! state update :trash-unfolded? not))}
                          (if trash-unfolded? "Hide" "Show")]

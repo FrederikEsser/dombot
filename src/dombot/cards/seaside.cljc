@@ -204,6 +204,34 @@
                     :effects  [[:give-coins 2]]
                     :duration [[:give-coins 2]]})
 
+(defn native-village-choice [game {:keys [player-no choice]}]
+  (let [native-village-cards (->> (get-in game [:players player-no :native-village-mat])
+                                  (map :name))]
+    (case choice
+      :put (move-card game {:player-no     player-no
+                            :from          :deck
+                            :from-position :top
+                            :to            :native-village-mat})
+      :take (move-cards game {:player-no  player-no
+                              :card-names native-village-cards
+                              :from       :native-village-mat
+                              :to         :hand}))))
+
+(effects/register {::native-village-choice native-village-choice})
+
+(def native-village {:name    :native-village
+                     :set     :seaside
+                     :types   #{:action}
+                     :cost    2
+                     :effects [[:give-actions 2]
+                               [:give-choice {:text    "Choose one:"
+                                              :choice  ::native-village-choice
+                                              :options [:special
+                                                        {:option :put :text "Put the top card of your deck face down on your Native Village mat."}
+                                                        {:option :take :text "Put all the cards from your mat into your hand."}]
+                                              :min     1
+                                              :max     1}]]})
+
 (defn navigator-choice [game {:keys [player-no choice]}]
   (assert choice "No choice specified for Navigator.")
   (let [look-at (get-in game [:players player-no :look-at])]
@@ -485,6 +513,7 @@
                     lighthouse
                     lookout
                     merchant-ship
+                    native-village
                     navigator
                     outpost
                     pearl-diver

@@ -55,6 +55,9 @@
 
 (s/def ::island-mat ::cards)
 
+(s/def ::native-village-mat (s/or :shown ::cards
+                                  :hidden ::pile))
+
 (s/def ::pirate-ship-coins nat-int?)
 
 (s/def ::text string?)
@@ -104,6 +107,7 @@
                                  ::buys]
                         :opt-un [::set-aside
                                  ::island-mat
+                                 ::native-village-mat
                                  ::pirate-ship-coins
                                  ::choice
                                  ::victory-points
