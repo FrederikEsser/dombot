@@ -62,6 +62,36 @@
                :effects [[:give-coins 2]
                          [:attack {:effects [[::cutpurse-attack]]}]]})
 
+(defn embargo-trash [game {:keys [player-no card-id] :as args}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
+    (cond-> game
+            card (move-card (merge args
+                                   {:move-card-id card-id
+                                    :from         :play-area
+                                    :to           :trash})))))
+
+(defn embargo-place-token [game {:keys [card-name]}]
+  (let [{:keys [idx]} (ut/get-pile-idx game card-name)]
+    (-> game
+        (update-in [:supply idx :tokens] concat [{:token-type :embargo}])
+        (update-in [:supply idx :triggers] concat [{:trigger :on-buy
+                                                    :effects [[:gain {:card-name :curse}]]}]))))
+
+(effects/register {::embargo-trash       embargo-trash
+                   ::embargo-place-token embargo-place-token})
+
+(def embargo {:name    :embargo
+              :set     :seaside
+              :types   #{:action}
+              :cost    2
+              :effects [[:give-coins 2]
+                        [::embargo-trash]
+                        [:give-choice {:text    "Add an Embargo token to a Supply pile."
+                                       :choice  ::embargo-place-token
+                                       :options [:supply]
+                                       :min     1
+                                       :max     1}]]})
+
 (defn explorer-choice [game {:keys [player-no card-name] :as args}]
   (if (= :province card-name)
     (push-effect-stack game {:player-no player-no
@@ -505,6 +535,7 @@
                     bazaar
                     caravan
                     cutpurse
+                    embargo
                     explorer
                     fishing-village
                     ghost-ship

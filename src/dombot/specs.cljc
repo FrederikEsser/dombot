@@ -17,13 +17,20 @@
 
 (s/def ::stay-in-play boolean?)
 
+(s/def ::token-type #{:embargo})
+
+(s/def ::token (s/keys :req-un [::token-type]))
+
+(s/def ::tokens (s/coll-of ::token))
+
 (s/def ::card (s/keys :req-un [::name
                                ::name-ui
                                ::types]
                       :opt-un [::cost
                                ::number-of-cards
                                ::interaction
-                               ::stay-in-play]))
+                               ::stay-in-play
+                               ::tokens]))
 
 (s/def ::cards (s/coll-of ::card))
 

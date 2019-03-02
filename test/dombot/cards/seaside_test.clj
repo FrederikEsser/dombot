@@ -261,6 +261,96 @@
                        :coins     2}
                       {:discard [copper]}]}))))
 
+(deftest embargo-test
+  (let [embargo (assoc embargo :id 1)
+        silver (assoc silver :id 2)
+        curse (assoc curse :id 3)]
+    (testing "Embargo"
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand    [embargo]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :embargo))
+             {:supply       (base/supply 2 8)
+              :players      [{:actions 0
+                              :coins   2}]
+              :trash        [embargo]
+              :effect-stack [{:text      "Add an Embargo token to a Supply pile."
+                              :player-no 0
+                              :card-id   1
+                              :choice    ::seaside/embargo-place-token
+                              :source    :supply
+                              :options   [:curse :estate :duchy :province :copper :silver :gold]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [embargo]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :embargo)
+                 (choose :silver))
+             {:supply  [{:card     silver :pile-size 40
+                         :tokens   [{:token-type :embargo}]
+                         :triggers [{:trigger :on-buy
+                                     :effects [[:gain {:card-name :curse}]]}]}]
+              :players [{:actions 0
+                         :coins   2}]
+              :trash   [embargo]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}
+                            {:card     silver :pile-size 40
+                             :tokens   [{:token-type :embargo}]
+                             :triggers [{:trigger :on-buy
+                                         :effects [[:gain {:card-name :curse}]]}]}]
+                  :players [{:coins 3
+                             :buys  1}]}
+                 (buy-card 0 :silver))
+             {:supply  [{:card curse :pile-size 9}
+                        {:card     silver :pile-size 39
+                         :tokens   [{:token-type :embargo}]
+                         :triggers [{:trigger :on-buy
+                                     :effects [[:gain {:card-name :curse}]]}]}]
+              :players [{:coins   0
+                         :buys    0
+                         :discard [curse silver]}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [throne-room embargo]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :throne-room)
+                 (choose :embargo)
+                 (choose :silver)
+                 (choose :silver))
+             {:supply  [{:card     silver :pile-size 40
+                         :tokens   [{:token-type :embargo} {:token-type :embargo}]
+                         :triggers [{:trigger :on-buy
+                                     :effects [[:gain {:card-name :curse}]]}
+                                    {:trigger :on-buy
+                                     :effects [[:gain {:card-name :curse}]]}]}]
+              :players [{:play-area [throne-room]
+                         :actions   0
+                         :coins     4}]
+              :trash   [embargo]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}
+                            {:card     silver :pile-size 40
+                             :tokens   [{:token-type :embargo}]
+                             :triggers [{:trigger :on-buy
+                                         :effects [[:gain {:card-name :curse}]]}
+                                        {:trigger :on-buy
+                                         :effects [[:gain {:card-name :curse}]]}]}]
+                  :players [{:coins 3
+                             :buys  1}]}
+                 (buy-card 0 :silver))
+             {:supply  [{:card curse :pile-size 8}
+                        {:card     silver :pile-size 39
+                         :tokens   [{:token-type :embargo}]
+                         :triggers [{:trigger :on-buy
+                                     :effects [[:gain {:card-name :curse}]]}
+                                    {:trigger :on-buy
+                                     :effects [[:gain {:card-name :curse}]]}]}]
+              :players [{:coins   0
+                         :buys    0
+                         :discard [curse curse silver]}]})))))
+
 (deftest explorer-test
   (let [silver (assoc silver :id 1)
         gold (assoc gold :id 2)]

@@ -16,7 +16,8 @@
                     :as                  game}]
   (->> supply
        (map (fn [{{:keys [name types] :as card} :card
-                  number-of-cards               :pile-size}]
+                  number-of-cards               :pile-size
+                  :keys                         [tokens]}]
               (let [cost (ut/get-cost game card)]
                 (merge {:name            name
                         :name-ui         (ut/format-name name)
@@ -28,7 +29,9 @@
                                   buys (< 0 buys)
                                   coins (<= cost coins))
                          {:interaction :buyable})
-                       (choice-interaction name :supply choice)))))))
+                       (choice-interaction name :supply choice)
+                       (when tokens
+                         {:tokens tokens})))))))
 
 (defn view-area [area {{:keys [phase actions] :as player} :player
                        choice                             :choice

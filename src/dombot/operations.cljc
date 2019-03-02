@@ -134,8 +134,11 @@
 
 (defn buy-card [{:keys [effect-stack] :as game} player-no card-name]
   (let [{:keys [buys coins phase]} (get-in game [:players player-no])
-        {:keys [card pile-size] :as supply-pile} (ut/get-pile-idx game card-name)
-        cost (ut/get-cost game card)]
+        {:keys [card pile-size triggers] :as supply-pile} (ut/get-pile-idx game card-name)
+        cost (ut/get-cost game card)
+        trigger-effects (->> triggers
+                             (filter (comp #{:on-buy} :trigger))
+                             (mapcat :effects))]
     (assert (empty? effect-stack) "You can't buy cards when you have a choice to make.")
     (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
     (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))
@@ -145,9 +148,10 @@
       (assert (#{:action :pay :buy} phase) (str "You can't buy cards when you're in the " (ut/format-name phase) " phase.")))
     (-> game
         (cond-> phase (assoc-in [:players player-no :phase] :buy))
-        (gain {:player-no player-no
-               :card-name card-name
-               :bought    true})
+        (push-effect-stack {:player-no player-no
+                            :effects   (concat trigger-effects
+                                               [[:gain {:card-name card-name
+                                                        :bought    true}]])})
         (update-in [:players player-no :coins] - cost)
         (update-in [:players player-no :buys] - 1)
         check-stack)))
