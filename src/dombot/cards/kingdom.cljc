@@ -4,6 +4,7 @@
             [dombot.cards.dominion :as dominion]
             [dombot.cards.intrigue :as intrigue]
             [dombot.cards.seaside :as seaside]
+            [dombot.cards.renaissance :as renaissance]
             [dombot.cards.promos :as promos]
             [dombot.utils :as ut]))
 
@@ -11,6 +12,7 @@
                      dominion/kingdom-cards
                      intrigue/kingdom-cards
                      seaside/kingdom-cards
+                     renaissance/kingdom-cards
                      promos/kingdom-cards))
 
 (defn create-kingdom [sets victory-pile-size]

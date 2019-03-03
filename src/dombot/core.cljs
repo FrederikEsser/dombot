@@ -8,7 +8,7 @@
 ;; -------------------------
 ;; Views
 
-(defonce state (r/atom {:sets            #{:dominion :intrigue :seaside :promos}
+(defonce state (r/atom {:sets            #{:dominion :intrigue :seaside :renaissance :promos}
                         :selection       []
                         :trash-unfolded? false
                         :num-players     2
@@ -132,6 +132,7 @@
        [set-selector sets :dominion]
        [set-selector sets :intrigue]
        [set-selector sets :seaside]
+       [set-selector sets :renaissance]
        [:div [:button {:style    (button-style)
                        :on-click (fn [] (swap! state assoc :game (cmd/start-game (take num-players players)
                                                                                  :sets sets)))}
