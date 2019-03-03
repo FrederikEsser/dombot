@@ -116,7 +116,7 @@
     true))
 
 (defn options-from-player
-  ([game player-no card-id area & [{:keys [last this name names not-name type reacts-to]}]]
+  ([game player-no card-id area & [{:keys [last this name names not-name type reacts-to min-cost]}]]
    (when this
      (assert card-id (str "Card has no id, but is referring to :this in " area ".")))
    (cond->> (get-in game [:players player-no area])
@@ -128,6 +128,7 @@
             type (filter (comp type :types))
             reacts-to (filter (every-pred (comp #{reacts-to} :reacts-to)
                                           (partial can-react? game player-no)))
+            min-cost (filter (comp (partial <= min-cost) (partial get-cost game)))
             :always (map :name))))
 
 (effects/register-options {:player options-from-player})

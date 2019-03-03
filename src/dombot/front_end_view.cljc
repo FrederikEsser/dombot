@@ -135,6 +135,7 @@
                             island-mat
                             native-village-mat
                             pirate-ship-coins
+                            coffers
                             villagers
                             victory-points
                             winner]} :player
@@ -161,10 +162,15 @@
                                   {:number-of-cards (count native-village-mat)})})
          (when pirate-ship-coins
            {:pirate-ship-coins pirate-ship-coins})
+         (when (and coffers (< 0 coffers))
+           {:coffers (merge {:number coffers}
+                            (when (and (not choice)
+                                       (#{:action :pay} phase))
+                              {:interaction :spendable}))})
          (when (and villagers (< 0 villagers))
            {:villagers (merge {:number villagers}
                               (when (and (not choice)
-                                         (#{:action :pay} phase))
+                                         (#{:action} phase))
                                 {:interaction :spendable}))})
          (when choice
            {:choice (view-choice choice)})

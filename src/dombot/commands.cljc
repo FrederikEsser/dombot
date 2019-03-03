@@ -28,7 +28,7 @@
 
 (defn undo []
   (let [{:keys [can-undo?]} (-> @game-state :game first)]
-    (assert can-undo? "Unable to undo last move.")
+    #_(assert can-undo? "Unable to undo last move.")
     (swap! game-state update :game (partial drop 1))
     (view)))
 
@@ -61,6 +61,12 @@
   (let [{:keys [current-player] :as game} (get-game)]
     (swap! game-state update :game conj (-> game
                                             (op/buy-card current-player card-name)))
+    (view)))
+
+(defn spend-coffer []
+  (let [{:keys [current-player] :as game} (get-game)]
+    (swap! game-state update :game conj (-> game
+                                            (op/spend-coffer current-player)))
     (view)))
 
 (defn spend-villager []

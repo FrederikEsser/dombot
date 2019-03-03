@@ -81,8 +81,22 @@
 
 (effects/register {:start-turn start-turn})
 
+(defn spend-coffer [game player-no]
+  (let [{:keys [phase coffers]} (get-in game [:players player-no])]
+    (when phase
+      (assert (#{:action :pay} phase)
+              (str "You can't spend Coffers when you're in the " (ut/format-name phase) " phase.")))
+    (assert (and coffers (< 0 coffers)) "You have no Coffers to spend.")
+    (-> game
+        (cond-> phase (assoc-in [:players player-no :phase] :pay))
+        (update-in [:players player-no :coffers] dec)
+        (update-in [:players player-no :coins] inc))))
+
 (defn spend-villager [game player-no]
-  (let [villagers (get-in game [:players player-no :villagers])]
+  (let [{:keys [phase villagers]} (get-in game [:players player-no])]
+    (when phase
+      (assert (#{:action} phase)
+              (str "You can't spend Villagers when you're in the " (ut/format-name phase) " phase.")))
     (assert (and villagers (< 0 villagers)) "You have no Villagers to spend.")
     (-> game
         (update-in [:players player-no :villagers] dec)

@@ -76,3 +76,50 @@
                        :play-area [scholar]
                        :discard   [estate estate estate]
                        :actions   0}]}))))
+
+(deftest villain-test
+  (testing "Villain"
+    (is (= (-> {:players [{:hand    [villain]
+                           :actions 1}
+                          {:hand [copper copper copper copper silver]}]}
+               (play 0 :villain))
+           {:players      [{:play-area [villain]
+                            :actions   0
+                            :coffers   2}
+                           {:hand [copper copper copper copper silver]}]
+            :effect-stack [{:text      "Discard a card costing $2 or more."
+                            :player-no 1
+                            :choice    :discard-from-hand
+                            :source    :hand
+                            :options   [:silver]
+                            :min       1
+                            :max       1}
+                           {:player-no 1
+                            :effect    [:clear-unaffected {:works :once}]}]}))
+    (is (= (-> {:players [{:hand    [villain]
+                           :actions 1}
+                          {:hand [copper copper copper copper silver]}]}
+               (play 0 :villain)
+               (choose :silver))
+           {:players [{:play-area [villain]
+                       :actions   0
+                       :coffers   2}
+                      {:hand    [copper copper copper copper]
+                       :discard [silver]}]}))
+    (is (= (-> {:players [{:hand    [villain]
+                           :actions 1}
+                          {:hand [copper copper copper silver]}]}
+               (play 0 :villain))
+           {:players [{:play-area [villain]
+                       :actions   0
+                       :coffers   2}
+                      {:hand [copper copper copper silver]}]}))
+    (is (= (-> {:players [{:hand    [villain]
+                           :actions 1}
+                          {:hand [copper copper copper copper copper]}]}
+               (play 0 :villain))
+           {:players [{:play-area [villain]
+                       :actions   0
+                       :coffers   2}
+                      {:hand           [copper copper copper copper copper]
+                       :revealed-cards {:hand 5}}]}))))

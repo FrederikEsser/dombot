@@ -1,6 +1,6 @@
 (ns dombot.cards.renaissance
-  (:require [dombot.operations :refer [push-effect-stack]]
-            [dombot.cards.common :refer []]
+  (:require [dombot.operations :refer [push-effect-stack give-choice]]
+            [dombot.cards.common :refer [reveal-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -31,5 +31,27 @@
               :effects [[:discard-all-hand]
                         [:draw 7]]})
 
+(defn villain-attack [game {:keys [player-no]}]
+  (let [hand (get-in game [:players player-no :hand])
+        has-eligible-card? (some (comp (partial <= 2) (partial ut/get-cost game)) hand)]
+    (cond (< (count hand) 5) game
+          has-eligible-card? (give-choice game {:player-no player-no
+                                                :text    "Discard a card costing $2 or more."
+                                                :choice  :discard-from-hand
+                                                :options [:player :hand {:min-cost 2}]
+                                                :min     1
+                                                :max     1})
+          :else (reveal-hand game {:player-no player-no}))))
+
+(effects/register {::villain-attack villain-attack})
+
+(def villain {:name    :villain
+              :set     :renaissance
+              :types   #{:action :attack}
+              :cost    5
+              :effects [[:give-coffers 2]
+                        [:attack {:effects [[::villain-attack]]}]]})
+
 (def kingdom-cards [recruiter
-                    scholar])
+                    scholar
+                    villain])

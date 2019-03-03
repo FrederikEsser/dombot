@@ -72,6 +72,8 @@
 (s/def ::resource (s/keys :req-un [::number]
                           :opt-un [::interaction]))
 
+(s/def ::coffers ::resource)
+
 (s/def ::villagers ::resource)
 
 (s/def ::text string?)
@@ -123,6 +125,7 @@
                                  ::island-mat
                                  ::native-village-mat
                                  ::pirate-ship-coins
+                                 ::coffers
                                  ::villagers
                                  ::choice
                                  ::victory-points

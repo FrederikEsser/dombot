@@ -21,6 +21,12 @@
 
 (effects/register {:give-buys give-buys})
 
+(defn give-coffers [game {:keys [player-no arg]}]
+  (cond-> game
+          (< 0 arg) (update-in [:players player-no :coffers] ut/plus arg)))
+
+(effects/register {:give-coffers give-coffers})
+
 (defn give-villagers [game {:keys [player-no arg]}]
   (cond-> game
           (< 0 arg) (update-in [:players player-no :villagers] ut/plus arg)))
