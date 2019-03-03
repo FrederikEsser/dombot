@@ -360,7 +360,7 @@
   (let [pirate-ship-trashed? (get-in game [:players player-no :pirate-ship-trashed?])]
     (-> game
         (update-in [:players player-no] dissoc :pirate-ship-trashed?)
-        (cond-> pirate-ship-trashed? (update-in [:players player-no :pirate-ship-coins] ut/inc-or-1)))))
+        (cond-> pirate-ship-trashed? (update-in [:players player-no :pirate-ship-coins] ut/plus 1)))))
 
 (defn pirate-ship-choice [game {:keys [player-no choice]}]
   (let [pirate-ship-coins (or (get-in game [:players player-no :pirate-ship-coins]) 0)]

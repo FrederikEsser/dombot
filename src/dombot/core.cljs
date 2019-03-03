@@ -161,6 +161,7 @@
           (->> (get-in @state [:game :players])
                (mapk (fn [{:keys               [name-ui hand play-area deck discard
                                                 actions coins buys set-aside
+                                                villagers
                                                 island-mat native-village-mat pirate-ship-coins
                                                 active? victory-points winner?]
                            {:keys [text
@@ -191,6 +192,15 @@
                                 [:div "Victory Points: " victory-points]]
                                [:div
                                 [:div "Actions: " actions]
+                                (when villagers
+                                  (let [{:keys [number interaction]} villagers
+                                        disabled (nil? interaction)]
+                                    [:div [:button {:style    (button-style disabled #{:action} nil)
+                                                    :disabled disabled
+                                                    :on-click (when interaction
+                                                                (fn [] (case interaction
+                                                                         :spendable (swap! state assoc :game (cmd/spend-villager)))))}
+                                           (str number " Villager" (when (< 1 number) "s"))]]))
                                 [:div "Coins: " coins]
                                 [:div "Buys: " buys]
                                 (when pirate-ship-coins

@@ -81,6 +81,13 @@
 
 (effects/register {:start-turn start-turn})
 
+(defn spend-villager [game player-no]
+  (let [villagers (get-in game [:players player-no :villagers])]
+    (assert (and villagers (< 0 villagers)) "You have no Villagers to spend.")
+    (-> game
+        (update-in [:players player-no :villagers] dec)
+        (update-in [:players player-no :actions] inc))))
+
 (defn set-approx-discard-size [game player-no & [n]]
   (let [{:keys [discard approx-discard-size]} (get-in game [:players player-no])
         size (count discard)

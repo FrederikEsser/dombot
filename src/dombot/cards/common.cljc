@@ -21,6 +21,12 @@
 
 (effects/register {:give-buys give-buys})
 
+(defn give-villagers [game {:keys [player-no arg]}]
+  (cond-> game
+          (< 0 arg) (update-in [:players player-no :villagers] ut/plus arg)))
+
+(effects/register {:give-villagers give-villagers})
+
 (defn gain-to-hand [game args]
   (gain game (merge args {:to :hand})))
 

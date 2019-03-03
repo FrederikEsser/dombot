@@ -13,7 +13,7 @@
 
 (s/def ::number-of-cards nat-int?)
 
-(s/def ::interaction #{:buyable :playable :choosable :quick-choosable})
+(s/def ::interaction #{:buyable :playable :choosable :quick-choosable :spendable})
 
 (s/def ::stay-in-play boolean?)
 
@@ -67,6 +67,13 @@
 
 (s/def ::pirate-ship-coins nat-int?)
 
+(s/def ::number pos-int?)
+
+(s/def ::resource (s/keys :req-un [::number]
+                          :opt-un [::interaction]))
+
+(s/def ::villagers ::resource)
+
 (s/def ::text string?)
 
 (s/def ::min nat-int?)
@@ -116,6 +123,7 @@
                                  ::island-mat
                                  ::native-village-mat
                                  ::pirate-ship-coins
+                                 ::villagers
                                  ::choice
                                  ::victory-points
                                  ::winner?]))

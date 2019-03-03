@@ -63,6 +63,12 @@
                                             (op/buy-card current-player card-name)))
     (view)))
 
+(defn spend-villager []
+  (let [{:keys [current-player] :as game} (get-game)]
+    (swap! game-state update :game conj (-> game
+                                            (op/spend-villager current-player)))
+    (view)))
+
 (defn end-turn []
   (let [{:keys [current-player] :as game} (get-game)]
     (swap! game-state update :game conj (-> game

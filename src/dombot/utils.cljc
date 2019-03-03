@@ -92,8 +92,8 @@
         (update-in path vec)
         (as-> game (apply update-in game (concat path [idx]) f args)))))
 
-(defn inc-or-1 [n]
-  (if n (inc n) 1))
+(defn plus [n m]
+  (if n (+ n m) m))
 
 (defn- minus-cost [cost reduction]
   (if (< cost reduction) 0 (- cost reduction)))
