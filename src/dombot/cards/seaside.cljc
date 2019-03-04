@@ -62,14 +62,6 @@
                :effects [[:give-coins 2]
                          [:attack {:effects [[::cutpurse-attack]]}]]})
 
-(defn embargo-trash [game {:keys [player-no card-id] :as args}]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
-    (cond-> game
-            card (move-card (merge args
-                                   {:move-card-id card-id
-                                    :from         :play-area
-                                    :to           :trash})))))
-
 (defn embargo-place-token [game {:keys [card-name]}]
   (let [{:keys [idx]} (ut/get-pile-idx game card-name)]
     (-> game
@@ -77,15 +69,14 @@
         (update-in [:supply idx :triggers] concat [{:trigger :on-buy
                                                     :effects [[:gain {:card-name :curse}]]}]))))
 
-(effects/register {::embargo-trash       embargo-trash
-                   ::embargo-place-token embargo-place-token})
+(effects/register {::embargo-place-token embargo-place-token})
 
 (def embargo {:name    :embargo
               :set     :seaside
               :types   #{:action}
               :cost    2
               :effects [[:give-coins 2]
-                        [::embargo-trash]
+                        [:trash-this]
                         [:give-choice {:text    "Add an Embargo token to a Supply pile."
                                        :choice  ::embargo-place-token
                                        :options [:supply]
@@ -468,12 +459,15 @@
                            [:give-actions 1]
                            [:give-buys 1]]})
 
-(defn treasure-map-trash [game {:keys [player-no] :as args}]
-  (let [{another-treasure-map :card} (ut/get-card-idx game [:players player-no :hand] {:name :treasure-map})]
-    (push-effect-stack game (merge args {:effects (concat [[:trash-this]]
+(defn treasure-map-trash [game {:keys [player-no card-id] :as args}]
+  (let [{this-treasure-map :card} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})
+        {another-treasure-map :card} (ut/get-card-idx game [:players player-no :hand] {:name :treasure-map})]
+    (push-effect-stack game (merge args {:effects (concat [(when this-treasure-map
+                                                             [:trash-this])]
                                                           (when another-treasure-map
-                                                            [[:trash-from-hand {:card-name :treasure-map}]
-                                                             [:gain-to-topdeck {:card-name :gold}]
+                                                            [[:trash-from-hand {:card-name :treasure-map}]])
+                                                          (when (and this-treasure-map another-treasure-map)
+                                                            [[:gain-to-topdeck {:card-name :gold}]
                                                              [:gain-to-topdeck {:card-name :gold}]
                                                              [:gain-to-topdeck {:card-name :gold}]
                                                              [:gain-to-topdeck {:card-name :gold}]]))}))))

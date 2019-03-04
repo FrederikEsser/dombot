@@ -1436,7 +1436,29 @@
              {:supply  [{:card gold :pile-size 0}]
               :players [{:deck    [gold gold gold copper]
                          :actions 0}]
-              :trash   [treasure-map treasure-map]})))))
+              :trash   [treasure-map treasure-map]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [throne-room treasure-map treasure-map]
+                             :deck    [copper]
+                             :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :treasure-map))
+             {:supply  [{:card gold :pile-size 26}]
+              :players [{:play-area [throne-room]
+                         :deck      [gold gold gold gold copper]
+                         :actions   0}]
+              :trash   [treasure-map treasure-map]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [throne-room treasure-map treasure-map treasure-map]
+                             :deck    [copper]
+                             :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :treasure-map))
+             {:supply  [{:card gold :pile-size 26}]
+              :players [{:play-area [throne-room]
+                         :deck      [gold gold gold gold copper]
+                         :actions   0}]
+              :trash   [treasure-map treasure-map treasure-map]})))))
 
 (deftest treasury-test
   (let [treasury-1 (assoc treasury :id 1)
