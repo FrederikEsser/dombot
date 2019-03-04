@@ -132,8 +132,18 @@
                                       (reset-revealed-number-of-cards player-no to))
             (empty? from-cards) (update-in [:players player-no] dissoc from))))
 
-(defn gain [{:keys [track-gained-cards?] :as game} {:keys [player-no card-name to to-position bought]
-                                                    :or   {to :discard}}]
+(defn handle-on-gain [{:keys [track-gained-cards?] :as game} {:keys [player-no card-name bought] :as args}]
+  (let [{{:keys [on-gain] :as card} :card} (ut/get-pile-idx game card-name)]
+    (cond-> game
+            on-gain (push-effect-stack (merge args {:effects on-gain}))
+            track-gained-cards? (update-in [:players player-no :gained-cards]
+                                           concat [(merge (select-keys card [:name :types :cost])
+                                                          (when bought {:bought true}))]))))
+
+(effects/register {:on-gain handle-on-gain})
+
+(defn do-gain [game {:keys [player-no card-name to to-position]
+                     :or   {to :discard}}]
   (assert card-name "No card-name specified for gain.")
   (let [{:keys [idx card pile-size]} (ut/get-pile-idx game card-name)
         to-path (if (= to :trash)
@@ -147,11 +157,16 @@
     (cond-> game
             (< 0 pile-size) (-> (update-in [:supply idx :pile-size] dec)
                                 (update-in to-path add-card-to-coll (ut/give-id! card))
-                                (cond-> track-gained-cards? (update-in [:players player-no :gained-cards] add-card-to-coll (merge (select-keys card [:name :types :cost])
-                                                                                                                                  (when bought {:bought true}))))
                                 (state-maintenance player-no :supply to)))))
 
-(effects/register {:gain gain})
+(defn gain [game args]
+  (-> game
+      (push-effect-stack (merge args {:effects [[:on-gain args]
+                                                [:do-gain args]]}))
+      check-stack))
+
+(effects/register {:do-gain do-gain
+                   :gain    gain})
 
 (defn buy-card [{:keys [effect-stack] :as game} player-no card-name]
   (let [{:keys [buys coins phase]} (get-in game [:players player-no])

@@ -4,7 +4,8 @@
             [dombot.operations :refer :all]
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
-            [dombot.cards.dominion :as dominion :refer [throne-room]]
+            [dombot.cards.dominion :refer [throne-room]]
+            [dombot.cards.intrigue :refer [lurker]]
             [dombot.cards.renaissance :as renaissance :refer :all]
             [dombot.utils :as ut]))
 
@@ -67,6 +68,48 @@
                          :discard   [curse]
                          :actions   2}]
               :trash   [estate]})))))
+
+(deftest lackeys-test
+  (let [lackeys (assoc lackeys :id 1)]
+    (testing "Lackeys"
+      (is (= (-> {:players [{:hand    [lackeys]
+                             :deck    [copper copper gold]
+                             :actions 1}]}
+                 (play 0 :lackeys))
+             {:players [{:hand      [copper copper]
+                         :play-area [lackeys]
+                         :deck      [gold]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card lackeys :pile-size 10}]
+                  :players [{}]}
+                 (gain {:player-no 0
+                        :card-name :lackeys}))
+             {:supply  [{:card lackeys :pile-size 9}]
+              :players [{:discard   [lackeys]
+                         :villagers 2}]}))
+      (is (= (-> {:supply  [{:card lackeys :pile-size 10}]
+                  :players [{:hand    [lurker]
+                             :actions 1}]}
+                 (play 0 :lurker)
+                 (choose :trash)
+                 (choose :lackeys))
+             {:supply  [{:card lackeys :pile-size 9}]
+              :players [{:play-area [lurker]
+                         :actions   1}]
+              :trash   [lackeys]}))
+      (is (= (-> {:supply  [{:card lackeys :pile-size 9}]
+                  :players [{:hand    [lurker]
+                             :actions 1}]
+                  :trash   [lackeys]}
+                 (play 0 :lurker)
+                 (choose :gain)
+                 (choose :lackeys))
+             {:supply  [{:card lackeys :pile-size 9}]
+              :players [{:play-area [lurker]
+                         :discard   [lackeys]
+                         :actions   1
+                         :villagers 2}]
+              :trash   []})))))
 
 (deftest mountain-village-test
   (testing "Mountain Village"

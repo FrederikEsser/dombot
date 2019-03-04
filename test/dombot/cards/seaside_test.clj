@@ -4,7 +4,7 @@
             [dombot.operations :refer :all]
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
-            [dombot.cards.dominion :as dominion :refer [moat throne-room witch]]
+            [dombot.cards.dominion :refer [moat throne-room witch]]
             [dombot.cards.seaside :as seaside :refer :all]
             [dombot.utils :as ut]))
 

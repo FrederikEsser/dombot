@@ -45,8 +45,9 @@
 (effects/register {:gain-to-topdeck gain-to-topdeck})
 
 (defn gain-from-trash [game args]
-  (move-card game (merge args {:from :trash
-                               :to   :discard})))
+  (push-effect-stack game (merge args {:effects [[:on-gain args]
+                                                 [:move-card (merge args {:from :trash
+                                                                          :to   :discard})]]})))
 
 (effects/register {:gain-from-trash gain-from-trash})
 
@@ -236,8 +237,13 @@
 
 (effects/register {:trash-from-look-at trash-from-look-at})
 
-(defn trash-from-supply [game args]
-  (gain game (merge args {:to :trash})))
+(defn trash-from-supply [game {:keys [card-name] :as args}]
+  (assert card-name (str "Can't trash unspecified card: " args))
+  (let [{:keys [idx card pile-size]} (ut/get-pile-idx game card-name)]
+    (assert pile-size (str "Trash error: The supply doesn't have a " (ut/format-name card-name) " pile."))
+    (cond-> game
+            (< 0 pile-size) (-> (update-in [:supply idx :pile-size] dec)
+                                (update :trash concat [(ut/give-id! card)])))))
 
 (effects/register {:trash-from-supply trash-from-supply})
 

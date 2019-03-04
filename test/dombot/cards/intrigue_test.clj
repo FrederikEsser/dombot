@@ -681,16 +681,23 @@
                               :options   [:upgrade]
                               :min       1
                               :max       1}]}))
-      (is (= (-> {:players [{:hand    [lurker]
-                             :actions 1}]
-                  :trash   [upgrade copper estate]}
+      (is (= (-> {:track-gained-cards? true
+                  :supply              [{:card upgrade}]
+                  :players             [{:hand    [lurker]
+                                         :actions 1}]
+                  :trash               [upgrade copper estate]}
                  (play 0 :lurker)
                  (choose :gain)
                  (choose :upgrade))
-             {:players [{:play-area [lurker]
-                         :discard   [upgrade]
-                         :actions   1}]
-              :trash   [copper estate]})))))
+             {:track-gained-cards? true
+              :supply              [{:card upgrade}]
+              :players             [{:play-area    [lurker]
+                                     :discard      [upgrade]
+                                     :actions      1
+                                     :gained-cards [{:name  :upgrade
+                                                     :types #{:action}
+                                                     :cost  5}]}]
+              :trash               [copper estate]})))))
 
 (deftest masquerade-test
   (testing "Masquerade"

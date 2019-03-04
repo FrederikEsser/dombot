@@ -31,6 +31,13 @@
                                        :min     1
                                        :max     1}]]})
 
+(def lackeys {:name    :lackeys
+              :set     :renaissance
+              :types   #{:action}
+              :cost    2
+              :effects [[:draw 2]]
+              :on-gain [[:give-villagers 2]]})
+
 (defn mountain-village-draw [game {:keys [player-no]}]
   (let [discard (get-in game [:players player-no :discard])]
     (if (empty? discard)
@@ -102,6 +109,7 @@
 
 (def kingdom-cards [acting-troupe
                     hideout
+                    lackeys
                     mountain-village
                     recruiter
                     scholar
