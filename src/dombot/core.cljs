@@ -137,6 +137,9 @@
                        :on-click (fn [] (swap! state assoc :game (cmd/start-game (take num-players players)
                                                                                  :sets sets)))}
               "Start Game"]
+        [:button {:style    (button-style false)
+                  :on-click (fn [] (swap! state assoc :game (cmd/restart) :selection []))}
+         "Restart"]
         (let [disabled (-> @state :game :commands :can-undo? not)]
           [:button {:style    (button-style disabled)
                     :disabled disabled
@@ -205,7 +208,7 @@
                                 (when coffers
                                   (let [{:keys [number interaction]} coffers
                                         disabled (nil? interaction)]
-                                    [:div [:button {:style    (button-style disabled #{:action} nil)
+                                    [:div [:button {:style    (button-style disabled #{:treasure} nil)
                                                     :disabled disabled
                                                     :on-click (when interaction
                                                                 (fn [] (case interaction
@@ -277,11 +280,11 @@
                            [:div (mapk (partial view-card max) set-aside)]])
                         (when island-mat
                           [:td
-                           [:div "Island Mat"]
+                           [:div "Island"]
                            [:div (mapk (partial view-card max) island-mat)]])
                         (when native-village-mat
                           [:td
-                           [:div "Native Village Mat"]
+                           [:div "Native Village"]
                            [:div (if (:number-of-cards native-village-mat)
                                    (view-pile native-village-mat max)
                                    (mapk view-card native-village-mat))]])])))]]]

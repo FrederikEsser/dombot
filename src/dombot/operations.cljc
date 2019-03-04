@@ -526,28 +526,31 @@
                        (map :name))]
     (reduce (fn [game card-name] (play game player-no card-name)) game treasures))) ; TODO: Stack treasures separately
 
+(defn- all-cards [{:keys [deck discard hand play-area island-mat native-village-mat]}]
+  (let [cards (concat deck discard hand play-area island-mat native-village-mat)
+        set-aside-cards (mapcat :set-aside cards)]
+    (concat cards set-aside-cards)))
+
 (defn- get-victory-points [cards {:keys [victory-points]}]
   (if (keyword? victory-points)
     (let [vp-fn (effects/get-effect victory-points)]
       (vp-fn cards))
     victory-points))
 
-(defn calc-victory-points [{:keys [deck discard hand play-area island-mat]}]
-  (let [cards (concat deck discard hand play-area island-mat)
-        set-aside-cards (mapcat :set-aside cards)
-        all-cards (concat cards set-aside-cards)]
-    (->> all-cards
+(defn calc-victory-points [player]
+  (let [cards (all-cards player)]
+    (->> cards
          (filter :victory-points)
-         (map (partial get-victory-points all-cards))
+         (map (partial get-victory-points cards))
          (apply + 0))))
 
 (def calc-score (juxt calc-victory-points (comp - :number-of-turns)))
 
-(defn end-game-for-player [best-score {:keys [deck discard play-area] :as player}]
+(defn end-game-for-player [best-score player]
   (let [victory-points (calc-victory-points player)]
     (-> player
-        (update :hand concat deck discard play-area)
-        (dissoc :deck :discard)
+        (assoc :hand (all-cards player))
+        (dissoc :deck :discard :play-area :island-mat :native-village-mat)
         (assoc :phase :end-of-game
                :victory-points victory-points
                :winner (= best-score (calc-score player))))))
@@ -622,7 +625,7 @@
 (effects/register {:at-clean-up-choice at-clean-up-choice
                    :at-clean-up        at-clean-up})
 
-(defn clean-up [game {:keys [player-no] :as args}]
+(defn clean-up [game args]
   (-> game
       (push-effect-stack (merge args
                                 {:effects [[:at-clean-up]

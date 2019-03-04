@@ -28,9 +28,13 @@
 
 (defn undo []
   (let [{:keys [can-undo?]} (-> @game-state :game first)]
-    #_(assert can-undo? "Unable to undo last move.")
+    (assert can-undo? "Unable to undo last move.")
     (swap! game-state update :game (partial drop 1))
     (view)))
+
+(defn restart []
+  (swap! game-state update :game (partial take-last 1))
+  (view))
 
 (defn start-game [player-names & {:keys [mode sets]}]
   (let [{:keys [current-player] :as game} (kingdom/create-game player-names (or mode :swift) (or sets #{:intrigue}))]
