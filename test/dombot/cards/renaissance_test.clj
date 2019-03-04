@@ -26,6 +26,48 @@
                          :villagers 8}]
               :trash   [acting-troupe]})))))
 
+(deftest hideout-test
+  (let [curse (assoc curse :id 1)]
+    (testing "Hideout"
+      (is (= (-> {:players [{:hand    [hideout estate]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :hideout))
+             {:players      [{:hand      [estate copper]
+                              :play-area [hideout]
+                              :deck      [copper]
+                              :actions   2}]
+              :effect-stack [{:text      "Trash a card from your hand."
+                              :player-no 0
+                              :choice    ::renaissance/hideout-trash
+                              :source    :hand
+                              :options   [:estate :copper]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:players [{:hand    [hideout estate]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :hideout)
+                 (choose :copper))
+             {:players [{:hand      [estate]
+                         :play-area [hideout]
+                         :deck      [copper]
+                         :actions   2}]
+              :trash   [copper]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:hand    [hideout estate]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :hideout)
+                 (choose :estate))
+             {:supply  [{:card curse :pile-size 9}]
+              :players [{:hand      [copper]
+                         :play-area [hideout]
+                         :deck      [copper]
+                         :discard   [curse]
+                         :actions   2}]
+              :trash   [estate]})))))
+
 (deftest recruiter-test
   (testing "Recruiter"
     (is (= (-> {:players [{:hand    [recruiter estate estate]

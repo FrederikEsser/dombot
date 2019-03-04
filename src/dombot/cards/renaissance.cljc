@@ -11,6 +11,26 @@
                     :effects [[:give-villagers 4]
                               [:trash-this]]})
 
+(defn hideout-trash [game {:keys [player-no card-name] :as args}]
+  (let [{{:keys [types]} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
+    (push-effect-stack game (merge args {:effects (concat [[:trash-from-hand {:card-name card-name}]]
+                                                          (when (:victory types)
+                                                            [[:gain {:card-name :curse}]]))}))))
+
+(effects/register {::hideout-trash hideout-trash})
+
+(def hideout {:name    :hideout
+              :set     :renaissance
+              :types   #{:action}
+              :cost    4
+              :effects [[:draw 1]
+                        [:give-actions 2]
+                        [:give-choice {:text    "Trash a card from your hand."
+                                       :choice  ::hideout-trash
+                                       :options [:player :hand]
+                                       :min     1
+                                       :max     1}]]})
+
 (defn recruiter-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         cost (ut/get-cost game card)]
@@ -60,6 +80,7 @@
                         [:attack {:effects [[::villain-attack]]}]]})
 
 (def kingdom-cards [acting-troupe
+                    hideout
                     recruiter
                     scholar
                     villain])
