@@ -302,6 +302,13 @@
 
 (effects/register {:put-revealed-types-into-hand put-revealed-types-into-hand})
 
+(defn take-from-discard [game {:keys [card-name] :as args}]
+  (cond-> game
+          card-name (move-card (merge args {:from :discard
+                                            :to   :hand}))))
+
+(effects/register {:take-from-discard take-from-discard})
+
 (defn add-trigger [game {:keys [player-no trigger]}]
   (update-in game [:players player-no :triggers] concat [trigger]))
 

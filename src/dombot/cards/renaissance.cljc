@@ -1,5 +1,5 @@
 (ns dombot.cards.renaissance
-  (:require [dombot.operations :refer [push-effect-stack give-choice]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice draw]]
             [dombot.cards.common :refer [reveal-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -30,6 +30,27 @@
                                        :options [:player :hand]
                                        :min     1
                                        :max     1}]]})
+
+(defn mountain-village-draw [game {:keys [player-no]}]
+  (let [discard (get-in game [:players player-no :discard])]
+    (if (empty? discard)
+      (draw game {:player-no player-no
+                  :arg       1})
+      (give-choice game {:player-no player-no
+                         :text      "Look through your discard pile and put a card from it into your hand."
+                         :choice    :take-from-discard
+                         :options   [:player :discard]
+                         :min       1
+                         :max       1}))))
+
+(effects/register {::mountain-village-draw mountain-village-draw})
+
+(def mountain-village {:name    :mountain-village
+                       :set     :renaissance
+                       :types   #{:action}
+                       :cost    4
+                       :effects [[:give-actions 2]
+                                 [::mountain-village-draw]]})
 
 (defn recruiter-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
@@ -81,6 +102,7 @@
 
 (def kingdom-cards [acting-troupe
                     hideout
+                    mountain-village
                     recruiter
                     scholar
                     villain])

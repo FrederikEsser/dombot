@@ -68,6 +68,41 @@
                          :actions   2}]
               :trash   [estate]})))))
 
+(deftest mountain-village-test
+  (testing "Mountain Village"
+    (is (= (-> {:players [{:hand    [mountain-village]
+                           :discard [copper gold]
+                           :actions 1}]}
+               (play 0 :mountain-village))
+           {:players      [{:play-area [mountain-village]
+                            :discard   [copper gold]
+                            :actions   2}]
+            :effect-stack [{:text          "Look through your discard pile and put a card from it into your hand."
+                            :player-no     0
+                            :choice        :take-from-discard
+                            :source        :discard
+                            :reveal-source true
+                            :options       [:copper :gold]
+                            :min           1
+                            :max           1}]}))
+    (is (= (-> {:players [{:hand    [mountain-village]
+                           :discard [copper gold]
+                           :actions 1}]}
+               (play 0 :mountain-village)
+               (choose :gold))
+           {:players [{:hand      [gold]
+                       :play-area [mountain-village]
+                       :discard   [copper]
+                       :actions   2}]}))
+    (is (= (-> {:players [{:hand    [mountain-village]
+                           :deck    [copper gold]
+                           :actions 1}]}
+               (play 0 :mountain-village))
+           {:players [{:hand      [copper]
+                       :play-area [mountain-village]
+                       :deck      [gold]
+                       :actions   2}]}))))
+
 (deftest recruiter-test
   (testing "Recruiter"
     (is (= (-> {:players [{:hand    [recruiter estate estate]
