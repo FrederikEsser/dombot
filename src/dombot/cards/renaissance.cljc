@@ -4,6 +4,13 @@
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
+(def acting-troupe {:name    :acting-troupe
+                    :set     :renaissance
+                    :types   #{:action}
+                    :cost    3
+                    :effects [[:give-villagers 4]
+                              [:trash-this]]})
+
 (defn recruiter-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         cost (ut/get-cost game card)]
@@ -36,11 +43,11 @@
         has-eligible-card? (some (comp (partial <= 2) (partial ut/get-cost game)) hand)]
     (cond (< (count hand) 5) game
           has-eligible-card? (give-choice game {:player-no player-no
-                                                :text    "Discard a card costing $2 or more."
-                                                :choice  :discard-from-hand
-                                                :options [:player :hand {:min-cost 2}]
-                                                :min     1
-                                                :max     1})
+                                                :text      "Discard a card costing $2 or more."
+                                                :choice    :discard-from-hand
+                                                :options   [:player :hand {:min-cost 2}]
+                                                :min       1
+                                                :max       1})
           :else (reveal-hand game {:player-no player-no}))))
 
 (effects/register {::villain-attack villain-attack})
@@ -52,6 +59,7 @@
               :effects [[:give-coffers 2]
                         [:attack {:effects [[::villain-attack]]}]]})
 
-(def kingdom-cards [recruiter
+(def kingdom-cards [acting-troupe
+                    recruiter
                     scholar
                     villain])

@@ -215,11 +215,14 @@
 
 (effects/register {:trash-from-hand trash-from-hand})
 
-(defn trash-from-play-area [game args]
-  (move-card game (merge args {:from :play-area
-                               :to   :trash})))
+(defn trash-this [game {:keys [player-no card-id] :as args}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
+    (cond-> game
+            card (move-card (merge args {:move-card-id card-id
+                                         :from         :play-area
+                                         :to           :trash})))))
 
-(effects/register {:trash-from-play-area trash-from-play-area})
+(effects/register {:trash-this trash-this})
 
 (defn trash-from-revealed [game args]
   (move-cards game (merge args {:from :revealed

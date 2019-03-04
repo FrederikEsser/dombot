@@ -468,16 +468,15 @@
                            [:give-actions 1]
                            [:give-buys 1]]})
 
-(defn treasure-map-trash [game {:keys [player-no card-id]}]
+(defn treasure-map-trash [game {:keys [player-no] :as args}]
   (let [{another-treasure-map :card} (ut/get-card-idx game [:players player-no :hand] {:name :treasure-map})]
-    (push-effect-stack game {:player-no player-no
-                             :effects   (concat [[:trash-from-play-area {:move-card-id card-id}]]
-                                                (when another-treasure-map
-                                                  [[:trash-from-hand {:card-name :treasure-map}]
-                                                   [:gain-to-topdeck {:card-name :gold}]
-                                                   [:gain-to-topdeck {:card-name :gold}]
-                                                   [:gain-to-topdeck {:card-name :gold}]
-                                                   [:gain-to-topdeck {:card-name :gold}]]))})))
+    (push-effect-stack game (merge args {:effects (concat [[:trash-this]]
+                                                          (when another-treasure-map
+                                                            [[:trash-from-hand {:card-name :treasure-map}]
+                                                             [:gain-to-topdeck {:card-name :gold}]
+                                                             [:gain-to-topdeck {:card-name :gold}]
+                                                             [:gain-to-topdeck {:card-name :gold}]
+                                                             [:gain-to-topdeck {:card-name :gold}]]))}))))
 
 (effects/register {::treasure-map-trash treasure-map-trash})
 

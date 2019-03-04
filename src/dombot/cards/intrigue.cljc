@@ -266,11 +266,10 @@
                                            :optional? true}]]
            :victory-points 1})
 
-(defn mining-village-trash [game {:keys [player-no card-id card-name]}]
+(defn mining-village-trash [game {:keys [card-name] :as args}]
   (cond-> game
-          (= :mining-village card-name) (push-effect-stack {:player-no player-no
-                                                            :effects   [[:trash-from-play-area {:move-card-id card-id}]
-                                                                        [:give-coins 2]]})))
+          (= :mining-village card-name) (push-effect-stack (merge args {:effects [[:trash-this]
+                                                                                  [:give-coins 2]]}))))
 
 (effects/register {::mining-village-trash mining-village-trash})
 

@@ -4,9 +4,27 @@
             [dombot.operations :refer :all]
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
-            [dombot.cards.dominion :as dominion :refer []]
+            [dombot.cards.dominion :as dominion :refer [throne-room]]
             [dombot.cards.renaissance :as renaissance :refer :all]
             [dombot.utils :as ut]))
+
+(deftest acting-troupe-test
+  (let [acting-troupe (assoc acting-troupe :id 1)]
+    (testing "Acting Troupe"
+      (is (= (-> {:players [{:hand    [acting-troupe]
+                             :actions 1}]}
+                 (play 0 :acting-troupe))
+             {:players [{:actions   0
+                         :villagers 4}]
+              :trash   [acting-troupe]}))
+      (is (= (-> {:players [{:hand    [acting-troupe throne-room]
+                             :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :acting-troupe))
+             {:players [{:play-area [throne-room]
+                         :actions   0
+                         :villagers 8}]
+              :trash   [acting-troupe]})))))
 
 (deftest recruiter-test
   (testing "Recruiter"
