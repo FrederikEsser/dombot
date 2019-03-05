@@ -27,6 +27,53 @@
                          :villagers 8}]
               :trash   [acting-troupe]})))))
 
+(deftest experiment-test
+  (let [experiment (assoc experiment :id 1)]
+    (testing "Experiment"
+      (is (= (-> {:supply  [{:card experiment :pile-size 9}]
+                  :players [{:deck    [copper copper copper]
+                             :hand    [experiment]
+                             :actions 1}]}
+                 (play 0 :experiment))
+             {:supply  [{:card experiment :pile-size 10}]
+              :players [{:deck    [copper]
+                         :hand    [copper copper]
+                         :actions 1}]}))
+      (is (= (-> {:supply  [{:card experiment :pile-size 9}]
+                  :players [{:deck    [copper copper copper]
+                             :hand    [experiment throne-room]
+                             :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :experiment))
+             {:supply  [{:card experiment :pile-size 10}]
+              :players [{:hand      [copper copper copper]
+                         :play-area [throne-room]
+                         :actions   2}]}))
+      (is (= (-> {:supply  [{:card experiment :pile-size 10}]
+                  :players [{}]}
+                 (gain {:player-no 0
+                        :card-name :experiment}))
+             {:supply  [{:card experiment :pile-size 8}]
+              :players [{:discard [experiment experiment]}]}))
+      (is (= (-> {:supply  [{:card experiment :pile-size 1}]
+                  :players [{}]}
+                 (gain {:player-no 0
+                        :card-name :experiment}))
+             {:supply  [{:card experiment :pile-size 0}]
+              :players [{:discard [experiment]}]}))
+      (is (= (-> {:supply  [{:card experiment :pile-size 9}]
+                  :players [{:hand    [lurker]
+                             :actions 1}]
+                  :trash   [experiment]}
+                 (play 0 :lurker)
+                 (choose :gain)
+                 (choose :experiment))
+             {:supply  [{:card experiment :pile-size 8}]
+              :players [{:play-area [lurker]
+                         :discard   [experiment experiment]
+                         :actions   1}]
+              :trash   []})))))
+
 (deftest hideout-test
   (let [curse (assoc curse :id 1)]
     (testing "Hideout"

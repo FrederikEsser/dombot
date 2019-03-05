@@ -11,6 +11,15 @@
                     :effects [[:give-villagers 4]
                               [:trash-this]]})
 
+(def experiment {:name    :experiment
+                 :set     :renaissance
+                 :types   #{:action}
+                 :cost    3
+                 :effects [[:draw 2]
+                           [:give-actions 1]
+                           [:return-this-to-supply]]
+                 :on-gain [[:do-gain {:card-name :experiment}]]}) ; todo: Handle on-gain effects
+
 (defn hideout-trash [game {:keys [player-no card-name] :as args}]
   (let [{{:keys [types]} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
     (push-effect-stack game (merge args {:effects (concat [[:trash-from-hand {:card-name card-name}]]
@@ -108,6 +117,7 @@
                         [:attack {:effects [[::villain-attack]]}]]})
 
 (def kingdom-cards [acting-troupe
+                    experiment
                     hideout
                     lackeys
                     mountain-village

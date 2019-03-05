@@ -227,7 +227,7 @@
 
 (effects/register {:peek-deck peek-deck})
 
-(defn return-to-supply [game {:keys [player-no card-name card-names] :as args}]
+(defn return-to-supply [game {:keys [player-no card-name card-names]}]
   (if card-name
     (let [{hand-idx :idx} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
           {supply-idx :idx} (ut/get-pile-idx game card-name)]
@@ -240,7 +240,17 @@
                                              (map (fn [name]
                                                     [:return-to-supply {:card-name name}])))})))
 
-(effects/register {:return-to-supply return-to-supply})
+(defn return-this-to-supply [game {:keys [player-no card-id]}]
+  (let [{play-area-idx     :idx
+         {card-name :name} :card} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})
+        {supply-idx :idx} (ut/get-pile-idx game card-name)]
+    (cond-> game
+            card-name (-> (update-in [:players player-no :play-area] ut/vec-remove play-area-idx)
+                          (update-in [:supply supply-idx :pile-size] inc)
+                          (state-maintenance player-no :play-area :supply)))))
+
+(effects/register {:return-this-to-supply return-this-to-supply
+                   :return-to-supply      return-to-supply})
 
 (defn move-card [game {:keys [player-no card-name move-card-id from from-position to to-position to-player] :as args}]
   (assert (or card-name move-card-id from-position) (str "Can't move unspecified card: " args))
