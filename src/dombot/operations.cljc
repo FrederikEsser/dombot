@@ -81,7 +81,8 @@
 
 (effects/register {:start-turn start-turn})
 
-(defn spend-coffer [game player-no]
+(defn spend-coffer [{:keys [effect-stack] :as game} player-no]
+  (assert (empty? effect-stack) "You can't spend Coffers when you have a choice to make.")
   (let [{:keys [phase coffers]} (get-in game [:players player-no])]
     (when phase
       (assert (#{:action :pay} phase)
@@ -92,7 +93,8 @@
         (update-in [:players player-no :coffers] dec)
         (update-in [:players player-no :coins] inc))))
 
-(defn spend-villager [game player-no]
+(defn spend-villager [{:keys [effect-stack] :as game} player-no]
+  (assert (empty? effect-stack) "You can't spend Villagers when you have a choice to make.")
   (let [{:keys [phase villagers]} (get-in game [:players player-no])]
     (when phase
       (assert (#{:action} phase)
