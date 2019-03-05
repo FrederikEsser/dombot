@@ -127,14 +127,6 @@
                  :effects [[:draw 2]
                            [:attack {:effects [[:topdeck-down-to 3]]}]]})
 
-(defn haven-put-in-hand [game {:keys [player-no card-id card-name]}]
-  game
-  (let [{haven :card} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})
-        {:keys [idx card]} (ut/get-card-idx haven [:set-aside] {:name card-name})]
-    (-> game
-        (ut/update-in-vec [:players player-no :play-area] {:id card-id} update :set-aside ut/vec-remove idx)
-        (update-in [:players player-no :hand] concat [card]))))
-
 (defn haven-set-aside [game {:keys [player-no card-id card-name]}]
   (let [{:keys [card idx]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
     (-> game
@@ -143,10 +135,9 @@
                           (fn [haven]
                             (-> haven
                                 (update :set-aside concat [card])
-                                (update :at-start-turn concat [[[::haven-put-in-hand {:card-name card-name}]]])))))))
+                                (update :at-start-turn concat [[[:put-set-aside-into-hand {:card-name card-name}]]])))))))
 
-(effects/register {::haven-put-in-hand haven-put-in-hand
-                   ::haven-set-aside   haven-set-aside})
+(effects/register {::haven-set-aside haven-set-aside})
 
 (def haven {:name    :haven
             :set     :seaside

@@ -1,5 +1,5 @@
 (ns dombot.cards.renaissance
-  (:require [dombot.operations :refer [push-effect-stack give-choice draw]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards]]
             [dombot.cards.common :refer [reveal-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -74,10 +74,10 @@
                 :cost    5
                 :effects [[:draw 3]
                           [:attack {:effects [[:gain {:card-name :curse}]
-                                              [:give-choice {:text      "You may trash a Curse from your hand."
-                                                             :choice    :trash-from-hand
-                                                             :options   [:player :hand {:name :curse}]
-                                                             :max       1}]]}]]})
+                                              [:give-choice {:text    "You may trash a Curse from your hand."
+                                                             :choice  :trash-from-hand
+                                                             :options [:player :hand {:name :curse}]
+                                                             :max     1}]]}]]})
 
 (defn recruiter-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
@@ -98,6 +98,38 @@
                                          :options [:player :hand]
                                          :min     1
                                          :max     1}]]})
+
+(defn researcher-set-aside [game {:keys [player-no card-id]}]
+  (let [set-aside (get-in game [:players player-no :set-aside])]
+    (-> game
+        (cond-> (not-empty set-aside) (ut/update-in-vec [:players player-no :play-area] {:id card-id}
+                                                        (fn [researcher]
+                                                          (-> researcher
+                                                              (update :set-aside concat set-aside)
+                                                              (update :at-start-turn concat [(for [card-name (map :name set-aside)]
+                                                                                               [:put-set-aside-into-hand {:card-name card-name}])])))))
+        (update-in [:players player-no] dissoc :set-aside))))
+
+(defn researcher-trash [game {:keys [player-no card-name] :as args}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        cost (ut/get-cost game card)]
+    (push-effect-stack game (merge args {:effects [[:trash-from-hand {:card-name card-name}]
+                                                   [:set-aside {:number-of-cards cost}]
+                                                   [::researcher-set-aside]]}))))
+
+(effects/register {::researcher-set-aside researcher-set-aside
+                   ::researcher-trash     researcher-trash})
+
+(def researcher {:name    :researcher
+                 :set     :renaissance
+                 :types   #{:action :duration}
+                 :cost    4
+                 :effects [[:give-actions 1]
+                           [:give-choice {:text    "Trash a card from your hand."
+                                          :choice  ::researcher-trash
+                                          :options [:player :hand]
+                                          :min     1
+                                          :max     1}]]})
 
 (def scholar {:name    :scholar
               :set     :renaissance
@@ -134,5 +166,6 @@
                     mountain-village
                     old-witch
                     recruiter
+                    researcher
                     scholar
                     villain])

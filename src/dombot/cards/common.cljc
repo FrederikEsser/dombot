@@ -66,7 +66,7 @@
 
 (effects/register {:check-stay-in-play check-stay-in-play})
 
-(defn play-action-twice [game {:keys [player-no card-id card-name] :as args}]
+(defn play-action-twice [game {:keys [player-no card-id card-name]}]
   (if card-name
     (let [{card :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
       (-> game
@@ -156,6 +156,13 @@
                       :to         :discard})))
 
 (effects/register {:discard-all-hand discard-all-hand})
+
+(defn set-aside [game args]
+  (move-cards game (merge args {:from          :deck
+                                :from-position :top
+                                :to            :set-aside})))
+
+(effects/register {:set-aside set-aside})
 
 (defn topdeck-from-hand [game {:keys [card-name card-names] :as args}]
   (cond-> game
@@ -307,6 +314,16 @@
                       :to         :hand})))
 
 (effects/register {:put-revealed-types-into-hand put-revealed-types-into-hand})
+
+(defn put-set-aside-into-hand [game {:keys [player-no card-id card-name]}]
+  game
+  (let [{duration-card :card} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})
+        {:keys [idx card]} (ut/get-card-idx duration-card [:set-aside] {:name card-name})]
+    (-> game
+        (ut/update-in-vec [:players player-no :play-area] {:id card-id} update :set-aside ut/vec-remove idx)
+        (update-in [:players player-no :hand] concat [card]))))
+
+(effects/register {:put-set-aside-into-hand put-set-aside-into-hand})
 
 (defn take-from-discard [game {:keys [card-name] :as args}]
   (cond-> game

@@ -528,7 +528,7 @@
                  (play 0 :haven)
                  (choose :copper))
              {:players [{:hand      [estate]
-                         :play-area [(assoc haven :at-start-turn [[[::seaside/haven-put-in-hand {:card-name :copper}]]]
+                         :play-area [(assoc haven :at-start-turn [[[:put-set-aside-into-hand {:card-name :copper}]]]
                                                   :set-aside [copper])]
                          :deck      [copper]
                          :actions   1}]}))
@@ -560,8 +560,8 @@
                  (choose :estate))
              {:players [{:hand      [copper]
                          :play-area [(assoc throne-room :at-start-turn [[]])
-                                     (assoc haven :at-start-turn [[[::seaside/haven-put-in-hand {:card-name :copper}]]
-                                                                  [[::seaside/haven-put-in-hand {:card-name :estate}]]]
+                                     (assoc haven :at-start-turn [[[:put-set-aside-into-hand {:card-name :copper}]]
+                                                                  [[:put-set-aside-into-hand {:card-name :estate}]]]
                                                   :set-aside [copper estate])]
                          :actions   2}]}))
       (is (= (-> {:players [{:hand    [throne-room haven estate]

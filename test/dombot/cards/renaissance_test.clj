@@ -305,6 +305,82 @@
                               (choose :copper)
                               (spend-villager 0))))))
 
+(deftest researcher-test
+  (let [researcher (assoc researcher :id 1)
+        throne-room (assoc throne-room :id 2)]
+    (testing "Researcher"
+      (is (= (-> {:players [{:hand    [researcher estate copper copper]
+                             :deck    [silver silver copper]
+                             :actions 1}]}
+                 (play 0 :researcher))
+             {:players      [{:hand      [estate copper copper]
+                              :play-area [researcher]
+                              :deck      [silver silver copper]
+                              :actions   1}]
+              :effect-stack [{:text      "Trash a card from your hand."
+                              :player-no 0
+                              :card-id   1
+                              :choice    ::renaissance/researcher-trash
+                              :source    :hand
+                              :options   [:estate :copper :copper]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:players [{:hand    [researcher estate copper copper]
+                             :deck    [silver silver copper]
+                             :actions 1}]}
+                 (play 0 :researcher)
+                 (choose :copper))
+             {:players [{:hand      [estate copper]
+                         :play-area [researcher]
+                         :deck      [silver silver copper]
+                         :actions   1}]
+              :trash   [copper]}))
+      (is (= (-> {:players [{:hand    [researcher estate copper copper]
+                             :deck    [silver silver copper]
+                             :actions 1}]}
+                 (play 0 :researcher)
+                 (choose :estate))
+             {:players [{:hand      [copper copper]
+                         :play-area [(assoc researcher :at-start-turn [[[:put-set-aside-into-hand {:card-name :silver}]
+                                                                        [:put-set-aside-into-hand {:card-name :silver}]]]
+                                                       :set-aside [silver silver])]
+                         :deck      [copper]
+                         :actions   1}]
+              :trash   [estate]}))
+      (is (= (-> {:players [{:hand    [researcher estate copper copper]
+                             :deck    [silver silver copper]
+                             :actions 1}]}
+                 (play 0 :researcher)
+                 (choose :estate)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand           [copper copper copper silver silver]
+                                :play-area      [(assoc researcher :set-aside [])]
+                                :actions        1
+                                :coins          0
+                                :buys           1
+                                :actions-played 0
+                                :phase          :action}]
+              :trash          [estate]}))
+      (is (= (-> {:players [{:hand    [researcher estate silver copper throne-room]
+                             :deck    [silver silver gold estate copper copper]
+                             :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :researcher)
+                 (choose :estate)
+                 (choose :silver)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand           [copper copper silver silver gold estate copper]
+                                :play-area      [throne-room
+                                                 (assoc researcher :set-aside [])]
+                                :actions        1
+                                :coins          0
+                                :buys           1
+                                :actions-played 0
+                                :phase          :action}]
+              :trash          [estate silver]})))))
+
 (deftest scholar-test
   (testing "Scholar"
     (is (= (-> {:players [{:hand    [scholar estate estate estate]
