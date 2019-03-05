@@ -193,6 +193,60 @@
                        :deck      [gold]
                        :actions   2}]}))))
 
+(deftest old-witch-test
+  (let [curse (assoc curse :id 1)]
+    (testing "Old Witch"
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:deck    (repeat 4 copper)
+                             :hand    [old-witch]
+                             :actions 1}
+                            {:discard [copper copper]}]}
+                 (play 0 :old-witch))
+             {:supply  [{:card curse :pile-size 9}]
+              :players [{:deck      [copper]
+                         :hand      [copper copper copper]
+                         :play-area [old-witch]
+                         :actions   0}
+                        {:discard [copper copper curse]}]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 9}]
+                  :players [{:deck    (repeat 4 copper)
+                             :hand    [old-witch]
+                             :actions 1}
+                            {:hand    [curse copper copper estate copper]
+                             :discard [copper copper]}]}
+                 (play 0 :old-witch))
+             {:supply       [{:card curse :pile-size 8}]
+              :players      [{:deck      [copper]
+                              :hand      [copper copper copper]
+                              :play-area [old-witch]
+                              :actions   0}
+                             {:hand    [curse copper copper estate copper]
+                              :discard [copper copper curse]}]
+              :effect-stack [{:text      "You may trash a Curse from your hand."
+                              :player-no 1
+                              :choice    :trash-from-hand
+                              :source    :hand
+                              :options   [:curse]
+                              :max       1}
+                             {:player-no 1
+                              :effect    [:clear-unaffected {:works :once}]}]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 9}]
+                  :players [{:deck    (repeat 4 copper)
+                             :hand    [old-witch]
+                             :actions 1}
+                            {:hand    [curse copper copper estate copper]
+                             :discard [copper copper]}]}
+                 (play 0 :old-witch)
+                 (choose :curse))
+             {:supply  [{:card curse :pile-size 8}]
+              :players [{:deck      [copper]
+                         :hand      [copper copper copper]
+                         :play-area [old-witch]
+                         :actions   0}
+                        {:hand    [copper copper estate copper]
+                         :discard [copper copper curse]}]
+              :trash   [curse]})))))
+
 (deftest recruiter-test
   (testing "Recruiter"
     (is (= (-> {:players [{:hand    [recruiter estate estate]

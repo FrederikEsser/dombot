@@ -68,6 +68,17 @@
                        :effects [[:give-actions 2]
                                  [::mountain-village-draw]]})
 
+(def old-witch {:name    :old-witch
+                :set     :renaissance
+                :types   #{:action :attack}
+                :cost    5
+                :effects [[:draw 3]
+                          [:attack {:effects [[:gain {:card-name :curse}]
+                                              [:give-choice {:text      "You may trash a Curse from your hand."
+                                                             :choice    :trash-from-hand
+                                                             :options   [:player :hand {:name :curse}]
+                                                             :max       1}]]}]]})
+
 (defn recruiter-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         cost (ut/get-cost game card)]
@@ -121,6 +132,7 @@
                     hideout
                     lackeys
                     mountain-village
+                    old-witch
                     recruiter
                     scholar
                     villain])

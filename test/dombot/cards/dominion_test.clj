@@ -1661,13 +1661,13 @@
 (deftest witch-test
   (let [curse (assoc curse :id 1)]
     (testing "Witch"
-      (is (= (play {:supply  [{:card curse :pile-size 20}]
-                    :players [{:deck    (repeat 3 copper)
-                               :hand    [witch]
-                               :actions 1}
-                              {:discard [copper copper]}
-                              {:discard []}]}
-                   0 :witch)
+      (is (= (-> {:supply  [{:card curse :pile-size 20}]
+                  :players [{:deck    (repeat 3 copper)
+                             :hand    [witch]
+                             :actions 1}
+                            {:discard [copper copper]}
+                            {:discard []}]}
+                 (play 0 :witch))
              {:supply  [{:card curse :pile-size 18}]
               :players [{:deck      [copper]
                          :hand      [copper copper]
@@ -1675,13 +1675,13 @@
                          :actions   0}
                         {:discard [copper copper curse]}
                         {:discard [curse]}]}))
-      (is (= (play {:supply  [{:card curse :pile-size 1}]
-                    :players [{:deck    (repeat 3 copper)
-                               :hand    [witch]
-                               :actions 1}
-                              {:discard [copper copper]}
-                              {:discard []}]}
-                   0 :witch)
+      (is (= (-> {:supply  [{:card curse :pile-size 1}]
+                  :players [{:deck    (repeat 3 copper)
+                             :hand    [witch]
+                             :actions 1}
+                            {:discard [copper copper]}
+                            {:discard []}]}
+                 (play 0 :witch))
              {:supply  [{:card curse :pile-size 0}]
               :players [{:deck      [copper]
                          :hand      [copper copper]
@@ -1689,13 +1689,13 @@
                          :actions   0}
                         {:discard [copper copper curse]}
                         {:discard []}]}))
-      (is (= (play {:supply  [{:card curse :pile-size 1}]
-                    :players [{:discard [copper copper]}
-                              {:deck    (repeat 3 copper)
-                               :hand    [witch]
-                               :actions 1}
-                              {:discard []}]}
-                   1 :witch)
+      (is (= (-> {:supply  [{:card curse :pile-size 1}]
+                  :players [{:discard [copper copper]}
+                            {:deck    (repeat 3 copper)
+                             :hand    [witch]
+                             :actions 1}
+                            {:discard []}]}
+                 (play 1 :witch))
              {:supply  [{:card curse :pile-size 0}]
               :players [{:discard [copper copper]}
                         {:deck      [copper]
