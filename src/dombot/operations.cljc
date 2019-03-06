@@ -252,46 +252,71 @@
 (effects/register {:return-this-to-supply return-this-to-supply
                    :return-to-supply      return-to-supply})
 
-(defn move-card [game {:keys [player-no card-name move-card-id from from-position to to-position to-player] :as args}]
+(defn- get-card [game {:keys [player-no card-name move-card-id from from-position]}]
+  (let [player (get-in game [:players player-no])
+        from-path (if (= from :trash)
+                    [:trash]
+                    [:players player-no from])]
+    (case from-position
+      :bottom {:idx (dec (count (get player from))) :card (last (get player from))}
+      :top {:idx 0 :card (first (get player from))}
+      (cond
+        move-card-id (ut/get-card-idx game from-path {:id move-card-id})
+        card-name (ut/get-card-idx game from-path {:name card-name})
+        :else {:idx 0 :card (first (get player from))}))))
+
+(defn handle-on-trash [game {:keys [card-name from] :as args}]
+  (let [{{:keys [on-trash]} :card} (if (= from :supply)
+                                     (ut/get-pile-idx game card-name)
+                                     (get-card game args))]
+    (cond-> game
+            on-trash (push-effect-stack (merge args {:effects on-trash})))))
+
+(effects/register {:on-trash handle-on-trash})
+
+(defn do-move-card [game {:keys [player-no card-name move-card-id from to to-position to-player] :as args}]
+  (let [from-path (if (= from :trash)
+                    [:trash]
+                    [:players player-no from])
+        {:keys [idx card]} (get-card game args)
+        to-path (if (= to :trash)
+                  [:trash]
+                  [:players (or to-player player-no) to])
+        add-card-to-coll (fn [coll card]
+                           (let [coll (vec coll)]
+                             (if (empty? coll)
+                               [card]
+                               (cond
+                                 (= :top to-position) (concat [card] coll)
+                                 (integer? to-position) (concat (subvec coll 0 to-position)
+                                                                [card]
+                                                                (subvec coll to-position (count coll)))
+                                 :else (concat coll [card])))))]
+    (when card-name
+      (assert card (str "Move error: There is no " (ut/format-name card-name) " in your " (ut/format-name from) ".")))
+    (when move-card-id
+      (assert card (str "Move error: Card-id " move-card-id " is not in your " (ut/format-name from) ".")))
+    (cond-> game
+            card (-> (update-in from-path ut/vec-remove idx)
+                     (update-in to-path add-card-to-coll card)
+                     (state-maintenance player-no from to)))))
+
+(defn move-card [game {:keys [player-no card-name move-card-id from from-position to] :as args}]
   (assert (or card-name move-card-id from-position) (str "Can't move unspecified card: " args))
-  (let [{:keys [deck discard] :as player} (get-in game [:players player-no])]
+  (let [{:keys [deck discard]} (get-in game [:players player-no])]
     (if (and (= :deck from) (empty? deck) (not-empty discard))
       (push-effect-stack game {:player-no player-no
                                :effects   [[:shuffle]
                                            [:move-card args]]})
-      (let [from-path (if (= from :trash)
-                        [:trash]
-                        [:players player-no from])
-            {:keys [idx card]} (case from-position
-                                 :bottom {:idx (dec (count (get player from))) :card (last (get player from))}
-                                 :top {:idx 0 :card (first (get player from))}
-                                 (cond
-                                   move-card-id (ut/get-card-idx game from-path {:id move-card-id})
-                                   card-name (ut/get-card-idx game from-path {:name card-name})
-                                   :else {:idx 0 :card (first (get player from))}))
-            to-path (if (= to :trash)
-                      [:trash]
-                      [:players (or to-player player-no) to])
-            add-card-to-coll (fn [coll card]
-                               (let [coll (vec coll)]
-                                 (if (empty? coll)
-                                   [card]
-                                   (cond
-                                     (= :top to-position) (concat [card] coll)
-                                     (integer? to-position) (concat (subvec coll 0 to-position)
-                                                                    [card]
-                                                                    (subvec coll to-position (count coll)))
-                                     :else (concat coll [card])))))]
-        (when card-name
-          (assert card (str "Move error: There is no " (ut/format-name card-name) " in your " (ut/format-name from) ".")))
-        (when move-card-id
-          (assert card (str "Move error: Card-id " move-card-id " is not in your " (ut/format-name from) ".")))
-        (cond-> game
-                card (-> (update-in from-path ut/vec-remove idx)
-                         (update-in to-path add-card-to-coll card)
-                         (state-maintenance player-no from to)))))))
+      (-> game
+          (push-effect-stack {:player-no player-no
+                              :effects   [(when (= to :trash)
+                                            [:on-trash args])
+                                          [:do-move-card args]]})
+          check-stack))))
 
-(effects/register {:move-card move-card})
+(effects/register {:do-move-card do-move-card
+                   :move-card    move-card})
 
 (defn move-cards [game {:keys [player-no card-name card-names number-of-cards from-position] :as args}]
   (assert (or card-name

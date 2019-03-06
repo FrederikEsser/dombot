@@ -138,6 +138,17 @@
               :effects [[:discard-all-hand]
                         [:draw 7]]})
 
+(def silk-merchant {:name     :silk-merchant
+                    :set      :renaissance
+                    :types    #{:action}
+                    :cost     4
+                    :effects  [[:draw 2]
+                               [:give-buys 1]]
+                    :on-gain  [[:give-coffers 1]
+                               [:give-villagers 1]]
+                    :on-trash [[:give-coffers 1]
+                               [:give-villagers 1]]})
+
 (defn villain-attack [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])
         has-eligible-card? (some (comp (partial <= 2) (partial ut/get-cost game)) hand)]
@@ -168,4 +179,5 @@
                     recruiter
                     researcher
                     scholar
+                    silk-merchant
                     villain])

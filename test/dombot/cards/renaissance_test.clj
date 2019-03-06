@@ -4,7 +4,7 @@
             [dombot.operations :refer :all]
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
-            [dombot.cards.dominion :refer [throne-room]]
+            [dombot.cards.dominion :refer [throne-room chapel]]
             [dombot.cards.intrigue :refer [lurker]]
             [dombot.cards.renaissance :as renaissance :refer :all]
             [dombot.utils :as ut]))
@@ -391,6 +391,63 @@
                        :play-area [scholar]
                        :discard   [estate estate estate]
                        :actions   0}]}))))
+
+(deftest silk-merchant-test
+  (let [silk-merchant (assoc silk-merchant :id 1)]
+    (testing "Silk Merchant"
+      (is (= (-> {:players [{:hand    [silk-merchant]
+                             :deck    [copper copper copper]
+                             :actions 1
+                             :buys    1}]}
+                 (play 0 :silk-merchant))
+             {:players [{:hand      [copper copper]
+                         :play-area [silk-merchant]
+                         :deck      [copper]
+                         :actions   0
+                         :buys      2}]}))
+      (is (= (-> {:supply  [{:card silk-merchant :pile-size 10}]
+                  :players [{}]}
+                 (gain {:player-no 0
+                        :card-name :silk-merchant}))
+             {:supply  [{:card silk-merchant :pile-size 9}]
+              :players [{:discard   [silk-merchant]
+                         :coffers   1
+                         :villagers 1}]}))
+      (is (= (-> {:players [{:hand    [chapel silk-merchant]
+                             :actions 1}]}
+                 (play 0 :chapel)
+                 (choose :silk-merchant))
+             {:players [{:play-area [chapel]
+                         :actions   0
+                         :coffers   1
+                         :villagers 1}]
+              :trash   [silk-merchant]}))
+      (is (= (-> {:supply  [{:card silk-merchant :pile-size 10}]
+                  :players [{:hand    [lurker]
+                             :actions 1}]}
+                 (play 0 :lurker)
+                 (choose :trash)
+                 (choose :silk-merchant))
+             {:supply  [{:card silk-merchant :pile-size 9}]
+              :players [{:play-area [lurker]
+                         :actions   1
+                         :coffers   1
+                         :villagers 1}]
+              :trash   [silk-merchant]}))
+      (is (= (-> {:supply  [{:card silk-merchant :pile-size 9}]
+                  :players [{:hand    [lurker]
+                             :actions 1}]
+                  :trash   [silk-merchant]}
+                 (play 0 :lurker)
+                 (choose :gain)
+                 (choose :silk-merchant))
+             {:supply  [{:card silk-merchant :pile-size 9}]
+              :players [{:play-area [lurker]
+                         :discard   [silk-merchant]
+                         :actions   1
+                         :coffers   1
+                         :villagers 1}]
+              :trash   []})))))
 
 (deftest villain-test
   (testing "Villain"
