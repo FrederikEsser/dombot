@@ -11,6 +11,18 @@
                     :effects [[:give-villagers 4]
                               [:trash-this]]})
 
+(def ducat {:name       :ducat
+            :set        :renaissance
+            :types      #{:treasure}
+            :cost       2
+            :coin-value 0
+            :effects    [[:give-coffers 1]
+                         [:give-buys 1]]
+            :on-gain    [[:give-choice {:text    "You may trash a Copper from your hand."
+                                        :choice  :trash-from-hand
+                                        :options [:player :hand {:name :copper}]
+                                        :max     1}]]})
+
 (def experiment {:name    :experiment
                  :set     :renaissance
                  :types   #{:action}
@@ -171,6 +183,7 @@
                         [:attack {:effects [[::villain-attack]]}]]})
 
 (def kingdom-cards [acting-troupe
+                    ducat
                     experiment
                     hideout
                     lackeys

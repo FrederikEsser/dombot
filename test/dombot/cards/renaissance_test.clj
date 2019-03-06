@@ -27,6 +27,50 @@
                          :villagers 8}]
               :trash   [acting-troupe]})))))
 
+(deftest ducat-test
+  (let [ducat (assoc ducat :id 1)]
+    (testing "Ducat"
+      (is (= (-> {:players [{:hand  [ducat]
+                             :coins 0
+                             :buys  1}]}
+                 (play 0 :ducat))
+             {:players [{:play-area [ducat]
+                         :coins     0
+                         :buys      2
+                         :coffers   1}]}))
+      (is (= (-> {:supply  [{:card ducat :pile-size 10}]
+                  :players [{:hand [copper copper]}]}
+                 (gain {:player-no 0
+                        :card-name :ducat}))
+             {:supply       [{:card ducat :pile-size 10}]
+              :players      [{:hand [copper copper]}]
+              :effect-stack [{:text      "You may trash a Copper from your hand."
+                              :player-no 0
+                              :choice    :trash-from-hand
+                              :source    :hand
+                              :options   [:copper :copper]
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:do-gain {:player-no 0
+                                                    :card-name :ducat}]}]}))
+      (is (= (-> {:supply  [{:card ducat :pile-size 10}]
+                  :players [{:hand [copper copper]}]}
+                 (gain {:player-no 0
+                        :card-name :ducat})
+                 (choose nil))
+             {:supply  [{:card ducat :pile-size 9}]
+              :players [{:hand    [copper copper]
+                         :discard [ducat]}]}))
+      (is (= (-> {:supply  [{:card ducat :pile-size 10}]
+                  :players [{:hand [copper copper]}]}
+                 (gain {:player-no 0
+                        :card-name :ducat})
+                 (choose :copper))
+             {:supply  [{:card ducat :pile-size 9}]
+              :players [{:hand    [copper]
+                         :discard [ducat]}]
+              :trash   [copper]})))))
+
 (deftest experiment-test
   (let [experiment (assoc experiment :id 1)]
     (testing "Experiment"

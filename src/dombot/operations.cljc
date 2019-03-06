@@ -522,17 +522,19 @@
 
 (effects/register {:reveal-reaction reveal-reaction})
 
-(defn card-effect [game {:keys                               [player-no]
-                         {:keys [id types effects duration]} :card}]
+(defn card-effect [game {:keys                                          [player-no]
+                         {:keys [id types effects coin-value duration]} :card}]
   (let [{:keys [actions-played]} (get-in game [:players player-no])]
     (cond-> game
             (and (:action types)
                  actions-played) (update-in [:players player-no :actions-played] inc)
             (:attack types) (affect-other-players {:player-no player-no
                                                    :effects   [[:clear-unaffected {:works :once}]]})
-            (:action types) (push-effect-stack {:player-no player-no
-                                                :card-id   id
-                                                :effects   effects})
+            :always (push-effect-stack {:player-no player-no
+                                        :card-id   id
+                                        :effects   (concat effects
+                                                           (when coin-value
+                                                             [[:give-coins coin-value]]))})
             (:attack types) (affect-other-players {:player-no player-no
                                                    :effects   reaction-choice})
             duration (ut/update-in-vec [:players player-no :play-area] {:id id} update :at-start-turn concat [duration]))))
@@ -567,7 +569,6 @@
           phase (assoc-in [:players player-no :phase] (cond (:action types) :action
                                                             (:treasure types) :pay))
           (:action types) (update-in [:players player-no :actions] - 1)
-          coin-value (update-in [:players player-no :coins] + coin-value) ; todo: put treasures on the stack
           (not-empty triggers) (apply-triggers player-no [:play card-name]))
         check-stack)))
 
