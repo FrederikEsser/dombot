@@ -52,6 +52,17 @@
                                        :min     1
                                        :max     1}]]})
 
+(def inventor {:name    :inventor
+               :set     :renaissance
+               :types   #{:action}
+               :cost    4
+               :effects [[:give-choice {:text    "Gain a card costing up to $4."
+                                        :choice  :gain
+                                        :options [:supply {:max-cost 4}]
+                                        :min     1
+                                        :max     1}]
+                         [:add-cost-reduction 1]]})
+
 (def lackeys {:name    :lackeys
               :set     :renaissance
               :types   #{:action}
@@ -186,6 +197,7 @@
                     ducat
                     experiment
                     hideout
+                    inventor
                     lackeys
                     mountain-village
                     old-witch

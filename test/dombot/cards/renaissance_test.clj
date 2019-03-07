@@ -42,17 +42,15 @@
                   :players [{:hand [copper copper]}]}
                  (gain {:player-no 0
                         :card-name :ducat}))
-             {:supply       [{:card ducat :pile-size 10}]
-              :players      [{:hand [copper copper]}]
+             {:supply       [{:card ducat :pile-size 9}]
+              :players      [{:hand    [copper copper]
+                              :discard [ducat]}]
               :effect-stack [{:text      "You may trash a Copper from your hand."
                               :player-no 0
                               :choice    :trash-from-hand
                               :source    :hand
                               :options   [:copper :copper]
-                              :max       1}
-                             {:player-no 0
-                              :effect    [:do-gain {:player-no 0
-                                                    :card-name :ducat}]}]}))
+                              :max       1}]}))
       (is (= (-> {:supply  [{:card ducat :pile-size 10}]
                   :players [{:hand [copper copper]}]}
                  (gain {:player-no 0
@@ -159,6 +157,51 @@
                          :discard   [curse]
                          :actions   2}]
               :trash   [estate]})))))
+
+(deftest inventor-test
+  (let [silver (assoc silver :id 1)
+        duchy (assoc duchy :id 2)]
+    (testing "Inventor"
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand    [inventor]
+                             :actions 1}]}
+                 (play 0 :inventor))
+             {:supply       (base/supply 2 8)
+              :players      [{:play-area [inventor]
+                              :actions   0}]
+              :effect-stack [{:text      "Gain a card costing up to $4."
+                              :player-no 0
+                              :choice    :gain
+                              :source    :supply
+                              :options   [:curse :estate :copper :silver]
+                              :min       1
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:add-cost-reduction 1]}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [inventor]
+                             :actions 1}]}
+                 (play 0 :inventor)
+                 (choose :silver))
+             {:cost-reductions [{:reduction 1}]
+              :supply          [{:card silver :pile-size 39}]
+              :players         [{:play-area [inventor]
+                                 :discard   [silver]
+                                 :actions   0}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card duchy :pile-size 8}]
+                  :players [{:hand    [inventor throne-room]
+                             :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :inventor)
+                 (choose :silver)
+                 (choose :duchy))
+             {:cost-reductions [{:reduction 1} {:reduction 1}]
+              :supply          [{:card silver :pile-size 39}
+                                {:card duchy :pile-size 7}]
+              :players         [{:play-area [throne-room inventor]
+                                 :discard   [silver duchy]
+                                 :actions   0}]})))))
 
 (deftest lackeys-test
   (let [lackeys (assoc lackeys :id 1)]

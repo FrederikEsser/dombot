@@ -134,16 +134,6 @@
                                       (reset-revealed-number-of-cards player-no to))
             (empty? from-cards) (update-in [:players player-no] dissoc from))))
 
-(defn handle-on-gain [{:keys [track-gained-cards?] :as game} {:keys [player-no card-name bought] :as args}]
-  (let [{{:keys [on-gain] :as card} :card} (ut/get-pile-idx game card-name)]
-    (cond-> game
-            on-gain (push-effect-stack (merge args {:effects on-gain}))
-            track-gained-cards? (update-in [:players player-no :gained-cards]
-                                           concat [(merge (select-keys card [:name :types :cost])
-                                                          (when bought {:bought true}))]))))
-
-(effects/register {:on-gain handle-on-gain})
-
 (defn do-gain [game {:keys [player-no card-name to to-position]
                      :or   {to :discard}}]
   (assert card-name "No card-name specified for gain.")
@@ -161,13 +151,22 @@
                                 (update-in to-path add-card-to-coll (ut/give-id! card))
                                 (state-maintenance player-no :supply to)))))
 
+(defn handle-on-gain [{:keys [track-gained-cards?] :as game} {:keys [player-no bought] :as args}]
+  (let [{:keys [on-gain] :as card} (->> (get-in game [:players player-no :discard]) last)]
+    (cond-> game
+            on-gain (push-effect-stack (merge args {:effects on-gain}))
+            track-gained-cards? (update-in [:players player-no :gained-cards]
+                                           concat [(merge (select-keys card [:name :types :cost])
+                                                          (when bought {:bought true}))]))))
+
 (defn gain [game args]
   (-> game
-      (push-effect-stack (merge args {:effects [[:on-gain args]
-                                                [:do-gain args]]}))
+      (push-effect-stack (merge args {:effects [[:do-gain args]
+                                                [:on-gain args]]}))
       check-stack))
 
 (effects/register {:do-gain do-gain
+                   :on-gain handle-on-gain
                    :gain    gain})
 
 (defn buy-card [{:keys [effect-stack] :as game} player-no card-name]
@@ -252,33 +251,18 @@
 (effects/register {:return-this-to-supply return-this-to-supply
                    :return-to-supply      return-to-supply})
 
-(defn- get-card [game {:keys [player-no card-name move-card-id from from-position]}]
+(defn do-move-card [game {:keys [player-no card-name move-card-id from from-position to to-position to-player]}]
   (let [player (get-in game [:players player-no])
         from-path (if (= from :trash)
                     [:trash]
-                    [:players player-no from])]
-    (case from-position
-      :bottom {:idx (dec (count (get player from))) :card (last (get player from))}
-      :top {:idx 0 :card (first (get player from))}
-      (cond
-        move-card-id (ut/get-card-idx game from-path {:id move-card-id})
-        card-name (ut/get-card-idx game from-path {:name card-name})
-        :else {:idx 0 :card (first (get player from))}))))
-
-(defn handle-on-trash [game {:keys [card-name from] :as args}]
-  (let [{{:keys [on-trash]} :card} (if (= from :supply)
-                                     (ut/get-pile-idx game card-name)
-                                     (get-card game args))]
-    (cond-> game
-            on-trash (push-effect-stack (merge args {:effects on-trash})))))
-
-(effects/register {:on-trash handle-on-trash})
-
-(defn do-move-card [game {:keys [player-no card-name move-card-id from to to-position to-player] :as args}]
-  (let [from-path (if (= from :trash)
-                    [:trash]
                     [:players player-no from])
-        {:keys [idx card]} (get-card game args)
+        {:keys [idx card]} (case from-position
+                             :bottom {:idx (dec (count (get player from))) :card (last (get player from))}
+                             :top {:idx 0 :card (first (get player from))}
+                             (cond
+                               move-card-id (ut/get-card-idx game from-path {:id move-card-id})
+                               card-name (ut/get-card-idx game from-path {:name card-name})
+                               :else {:idx 0 :card (first (get player from))}))
         to-path (if (= to :trash)
                   [:trash]
                   [:players (or to-player player-no) to])
@@ -301,6 +285,11 @@
                      (update-in to-path add-card-to-coll card)
                      (state-maintenance player-no from to)))))
 
+(defn handle-on-trash [game {:keys [card-name] :as args}]
+  (let [{{:keys [on-trash]} :card} (ut/get-card-idx game [:trash] {:name card-name})]
+    (cond-> game
+            on-trash (push-effect-stack (merge args {:effects on-trash})))))
+
 (defn move-card [game {:keys [player-no card-name move-card-id from from-position to] :as args}]
   (assert (or card-name move-card-id from-position) (str "Can't move unspecified card: " args))
   (let [{:keys [deck discard]} (get-in game [:players player-no])]
@@ -310,12 +299,13 @@
                                            [:move-card args]]})
       (-> game
           (push-effect-stack {:player-no player-no
-                              :effects   [(when (= to :trash)
-                                            [:on-trash args])
-                                          [:do-move-card args]]})
+                              :effects   [[:do-move-card args]
+                                          (when (= to :trash)
+                                            [:on-trash args])]})
           check-stack))))
 
 (effects/register {:do-move-card do-move-card
+                   :on-trash     handle-on-trash
                    :move-card    move-card})
 
 (defn move-cards [game {:keys [player-no card-name card-names number-of-cards from-position] :as args}]

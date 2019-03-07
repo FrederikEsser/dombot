@@ -45,9 +45,9 @@
 (effects/register {:gain-to-topdeck gain-to-topdeck})
 
 (defn gain-from-trash [game args]
-  (push-effect-stack game (merge args {:effects [[:on-gain args]
-                                                 [:move-card (merge args {:from :trash
-                                                                          :to   :discard})]]})))
+  (push-effect-stack game (merge args {:effects [[:move-card (merge args {:from :trash
+                                                                          :to   :discard})]
+                                                 [:on-gain args]]})))
 
 (effects/register {:gain-from-trash gain-from-trash})
 
@@ -253,8 +253,8 @@
                                 (update :trash concat [(ut/give-id! card)])))))
 
 (defn trash-from-supply [game args]
-  (push-effect-stack game (merge args {:effects [[:on-trash (merge args {:from :supply})]
-                                                 [:do-trash-from-supply args]]})))
+  (push-effect-stack game (merge args {:effects [[:do-trash-from-supply args]
+                                                 [:on-trash args]]})))
 
 (effects/register {:do-trash-from-supply do-trash-from-supply
                    :trash-from-supply    trash-from-supply})
