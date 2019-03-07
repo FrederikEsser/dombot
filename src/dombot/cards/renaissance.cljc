@@ -172,6 +172,14 @@
                     :on-trash [[:give-coffers 1]
                                [:give-villagers 1]]})
 
+(def spices {:name       :spices
+             :set        :renaissance
+             :types      #{:treasure}
+             :cost       5
+             :coin-value 2
+             :effects    [[:give-buys 1]]
+             :on-gain    [[:give-coffers 2]]})
+
 (defn villain-attack [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])
         has-eligible-card? (some (comp (partial <= 2) (partial ut/get-cost game)) hand)]
@@ -205,4 +213,5 @@
                     researcher
                     scholar
                     silk-merchant
+                    spices
                     villain])

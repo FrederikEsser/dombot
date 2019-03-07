@@ -536,6 +536,25 @@
                          :villagers 1}]
               :trash   []})))))
 
+(deftest spices-test
+  (let [spices (assoc spices :id 1)]
+    (testing "Spices"
+      (is (= (-> {:players [{:hand  [spices]
+                             :coins 0
+                             :buys  1}]}
+                 (play 0 :spices))
+             {:players [{:play-area [spices]
+                         :coins     2
+                         :buys      2}]}))
+      (is (= (-> {:supply  [{:card spices :pile-size 10}]
+                  :players [{:hand [copper copper]}]}
+                 (gain {:player-no 0
+                        :card-name :spices}))
+             {:supply  [{:card spices :pile-size 9}]
+              :players [{:hand    [copper copper]
+                         :discard [spices]
+                         :coffers 2}]})))))
+
 (deftest villain-test
   (testing "Villain"
     (is (= (-> {:players [{:hand    [villain]
