@@ -479,6 +479,60 @@
                        :discard   [estate estate estate]
                        :actions   0}]}))))
 
+(deftest sculptor-test
+  (let [estate (assoc estate :id 1)
+        silver (assoc silver :id 2)
+        inventor (assoc inventor :id 3)]
+    (testing "Sculptor"
+      (is (= (-> {:supply  [{:card estate :pile-size 8}
+                            {:card duchy :pile-size 8}
+                            {:card silver :pile-size 40}
+                            {:card inventor :pile-size 10}]
+                  :players [{:hand    [sculptor]
+                             :actions 1}]}
+                 (play 0 :sculptor))
+             {:supply       [{:card estate :pile-size 8}
+                             {:card duchy :pile-size 8}
+                             {:card silver :pile-size 40}
+                             {:card inventor :pile-size 10}]
+              :players      [{:play-area [sculptor]
+                              :actions   0}]
+              :effect-stack [{:text      "Gain a card to your hand costing up to $4."
+                              :player-no 0
+                              :choice    ::renaissance/sculptor-gain
+                              :source    :supply
+                              :options   [:estate :silver :inventor]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}]
+                  :players [{:hand    [sculptor]
+                             :actions 1}]}
+                 (play 0 :sculptor)
+                 (choose :estate))
+             {:supply  [{:card estate :pile-size 7}]
+              :players [{:hand      [estate]
+                         :play-area [sculptor]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [sculptor]
+                             :actions 1}]}
+                 (play 0 :sculptor)
+                 (choose :silver))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:hand      [silver]
+                         :play-area [sculptor]
+                         :actions   0
+                         :villagers 1}]}))
+      (is (= (-> {:supply  [{:card inventor :pile-size 10}]
+                  :players [{:hand    [sculptor]
+                             :actions 1}]}
+                 (play 0 :sculptor)
+                 (choose :inventor))
+             {:supply  [{:card inventor :pile-size 9}]
+              :players [{:hand      [inventor]
+                         :play-area [sculptor]
+                         :actions   0}]})))))
+
 (deftest silk-merchant-test
   (let [silk-merchant (assoc silk-merchant :id 1)]
     (testing "Silk Merchant"

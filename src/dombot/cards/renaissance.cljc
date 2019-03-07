@@ -161,6 +161,24 @@
               :effects [[:discard-all-hand]
                         [:draw 7]]})
 
+(defn sculptor-gain [game {:keys [player-no card-name]}]
+  (let [{{:keys [types]} :card} (ut/get-pile-idx game card-name)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:gain-to-hand {:card-name card-name}]
+                                         (when (:treasure types) [:give-villagers 1])]})))
+
+(effects/register {::sculptor-gain sculptor-gain})
+
+(def sculptor {:name    :sculptor
+               :set     :renaissance
+               :types   #{:action}
+               :cost    5
+               :effects [[:give-choice {:text    "Gain a card to your hand costing up to $4."
+                                        :choice  ::sculptor-gain
+                                        :options [:supply {:max-cost 4}]
+                                        :min     1
+                                        :max     1}]]})
+
 (def silk-merchant {:name     :silk-merchant
                     :set      :renaissance
                     :types    #{:action}
@@ -212,6 +230,7 @@
                     recruiter
                     researcher
                     scholar
+                    sculptor
                     silk-merchant
                     spices
                     villain])
