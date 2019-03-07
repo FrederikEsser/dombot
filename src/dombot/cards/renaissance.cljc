@@ -179,6 +179,31 @@
                                         :min     1
                                         :max     1}]]})
 
+(defn seer-put-in-hand [game {:keys [player-no] :as args}]
+  (let [card-names (->> (get-in game [:players player-no :revealed])
+                        (filter (comp #{2 3 4} (partial ut/get-cost game)))
+                        (map :name))]
+    (move-cards game {:player-no  player-no
+                      :card-names card-names
+                      :from       :revealed
+                      :to         :hand})))
+
+(effects/register {::seer-put-in-hand seer-put-in-hand})
+
+(def seer {:name    :seer
+           :set     :renaissance
+           :types   #{:action}
+           :cost    5
+           :effects [[:draw 1]
+                     [:give-actions 1]
+                     [:reveal-from-deck 3]
+                     [::seer-put-in-hand]
+                     [:give-choice {:text    "Put the revealed cards back onto your deck in any order."
+                                    :choice  :topdeck-from-revealed
+                                    :options [:player :revealed]
+                                    :min     3
+                                    :max     3}]]})
+
 (def silk-merchant {:name     :silk-merchant
                     :set      :renaissance
                     :types    #{:action}
@@ -231,6 +256,7 @@
                     researcher
                     scholar
                     sculptor
+                    seer
                     silk-merchant
                     spices
                     villain])

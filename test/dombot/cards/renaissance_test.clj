@@ -533,6 +533,59 @@
                          :play-area [sculptor]
                          :actions   0}]})))))
 
+(deftest seer-test
+  (testing "Seer"
+    (is (= (-> {:players [{:hand    [seer]
+                           :deck    [copper estate silver silk-merchant duchy]
+                           :actions 1}]}
+               (play 0 :seer))
+           {:players [{:hand           [copper estate silver silk-merchant]
+                       :play-area      [seer]
+                       :deck           [duchy]
+                       :actions        1
+                       :revealed-cards {:hand 3}}]}))
+    (is (= (-> {:players [{:hand    [seer]
+                           :deck    [estate copper silver duchy silk-merchant]
+                           :actions 1}]}
+               (play 0 :seer))
+           {:players      [{:hand           [estate silver]
+                            :play-area      [seer]
+                            :deck           [silk-merchant]
+                            :revealed       [copper duchy]
+                            :actions        1
+                            :revealed-cards {:hand 1}}]
+            :effect-stack [{:text      "Put the revealed cards back onto your deck in any order."
+                            :player-no 0
+                            :choice    :topdeck-from-revealed
+                            :source    :revealed
+                            :options   [:copper :duchy]
+                            :min       2
+                            :max       2}]}))
+    (is (= (-> {:players [{:hand    [seer]
+                           :deck    [estate copper silver duchy silk-merchant]
+                           :actions 1}]}
+               (play 0 :seer)
+               (choose [:copper :duchy]))
+           {:players [{:hand           [estate silver]
+                       :play-area      [seer]
+                       :deck           [duchy copper silk-merchant]
+                       :actions        1
+                       :revealed-cards {:deck 2
+                                        :hand 1}}]}))
+    (is (= (-> {:cost-reductions [{:reduction 2}]
+                :players         [{:hand    [seer]
+                                   :deck    [copper gold silver silk-merchant estate]
+                                   :actions 1}]}
+               (play 0 :seer)
+               (choose :silver))
+           {:cost-reductions [{:reduction 2}]
+            :players         [{:hand           [copper gold silk-merchant]
+                               :play-area      [seer]
+                               :deck           [silver estate]
+                               :actions        1
+                               :revealed-cards {:deck 1
+                                                :hand 2}}]}))))
+
 (deftest silk-merchant-test
   (let [silk-merchant (assoc silk-merchant :id 1)]
     (testing "Silk Merchant"

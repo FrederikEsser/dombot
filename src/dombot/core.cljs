@@ -133,6 +133,7 @@
        [set-selector sets :intrigue]
        [set-selector sets :seaside]
        [set-selector sets :renaissance]
+       [set-selector sets :promos]
        [:div [:button {:style    (button-style)
                        :on-click (fn [] (swap! state assoc :game (cmd/start-game (take num-players players)
                                                                                  :sets sets)))}
