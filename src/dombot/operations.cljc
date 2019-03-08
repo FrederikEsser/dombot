@@ -251,18 +251,25 @@
 (effects/register {:return-this-to-supply return-this-to-supply
                    :return-to-supply      return-to-supply})
 
-(defn do-move-card [game {:keys [player-no card-name move-card-id from from-position to to-position to-player]}]
+(defn- get-card [game {:keys [player-no card-name move-card-id from from-position] :as args}]
+  (assert (or card-name move-card-id from-position) (str "Can't move unspecified card: " args))
   (let [player (get-in game [:players player-no])
         from-path (if (= from :trash)
                     [:trash]
+                    [:players player-no from])]
+    (case from-position
+      :bottom {:idx (dec (count (get player from))) :card (last (get player from))}
+      :top {:idx 0 :card (first (get player from))}
+      (cond
+        move-card-id (ut/get-card-idx game from-path {:id move-card-id})
+        card-name (ut/get-card-idx game from-path {:name card-name})
+        :else {:idx 0 :card (first (get player from))}))))
+
+(defn do-move-card [game {:keys [player-no card-name move-card-id from to to-position to-player] :as args}]
+  (let [from-path (if (= from :trash)
+                    [:trash]
                     [:players player-no from])
-        {:keys [idx card]} (case from-position
-                             :bottom {:idx (dec (count (get player from))) :card (last (get player from))}
-                             :top {:idx 0 :card (first (get player from))}
-                             (cond
-                               move-card-id (ut/get-card-idx game from-path {:id move-card-id})
-                               card-name (ut/get-card-idx game from-path {:name card-name})
-                               :else {:idx 0 :card (first (get player from))}))
+        {:keys [idx card]} (get-card game args)
         to-path (if (= to :trash)
                   [:trash]
                   [:players (or to-player player-no) to])
@@ -290,9 +297,14 @@
     (cond-> game
             on-trash (push-effect-stack (merge args {:effects on-trash})))))
 
-(defn move-card [game {:keys [player-no card-name move-card-id from from-position to] :as args}]
-  (assert (or card-name move-card-id from-position) (str "Can't move unspecified card: " args))
-  (let [{:keys [deck discard]} (get-in game [:players player-no])]
+(defn handle-on-reveal [game {:keys [player-no card-name] :as args}]
+  (let [{{:keys [on-reveal]} :card} (ut/get-card-idx game [:players player-no :revealed] {:name card-name})]
+    (cond-> game
+            on-reveal (push-effect-stack (merge args {:effects on-reveal})))))
+
+(defn move-card [game {:keys [player-no from to] :as args}]
+  (let [{:keys [deck discard]} (get-in game [:players player-no])
+        {{card-name :name} :card} (get-card game args)]
     (if (and (= :deck from) (empty? deck) (not-empty discard))
       (push-effect-stack game {:player-no player-no
                                :effects   [[:shuffle]
@@ -301,12 +313,10 @@
           (push-effect-stack {:player-no player-no
                               :effects   [[:do-move-card args]
                                           (when (= to :trash)
-                                            [:on-trash args])]})
+                                            [:on-trash {:card-name card-name}])
+                                          (when (= to :revealed)
+                                            [:on-reveal {:card-name card-name}])]})
           check-stack))))
-
-(effects/register {:do-move-card do-move-card
-                   :on-trash     handle-on-trash
-                   :move-card    move-card})
 
 (defn move-cards [game {:keys [player-no card-name card-names number-of-cards from-position] :as args}]
   (assert (or card-name
@@ -326,6 +336,12 @@
                                                                     (dissoc :card-names)
                                                                     (assoc :card-name card-name))])
                                                   card-names)})))))
+
+(effects/register {:do-move-card do-move-card
+                   :on-trash     handle-on-trash
+                   :on-reveal    handle-on-reveal
+                   :move-card    move-card
+                   :move-cards   move-cards})
 
 (defn draw [game {:keys [player-no arg]}]
   (move-cards game {:player-no       player-no

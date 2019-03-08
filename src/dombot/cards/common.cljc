@@ -267,8 +267,14 @@
 
 (effects/register {:trash-from-topdeck trash-from-topdeck})
 
-(defn reveal [game {:keys [player-no card-name card-names]}]
-  (assoc-in game [:players player-no :revealed-cards :hand] (if card-name 1 (ut/count-as-coll card-names))))
+(defn reveal [game args]
+  (push-effect-stack game (merge args
+                                 {:effects [[:move-cards (merge args
+                                                                {:from :hand
+                                                                 :to   :revealed})]
+                                            [:move-cards (merge args
+                                                                {:from :revealed
+                                                                 :to   :hand})]]})))
 
 (effects/register {:reveal reveal})
 

@@ -102,6 +102,14 @@
                                                              :options [:player :hand {:name :curse}]
                                                              :max     1}]]}]]})
 
+(def patron {:name      :patron
+             :set       :renaissance
+             :types     #{:action :reaction}
+             :cost      4
+             :effects   [[:give-villagers 1]
+                         [:give-coins 2]]
+             :on-reveal [[:give-coffers 1]]})
+
 (defn recruiter-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         cost (ut/get-cost game card)]
@@ -252,6 +260,7 @@
                     lackeys
                     mountain-village
                     old-witch
+                    patron
                     recruiter
                     researcher
                     scholar

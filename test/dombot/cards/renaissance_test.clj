@@ -334,6 +334,38 @@
                          :discard [copper copper curse]}]
               :trash   [curse]})))))
 
+(deftest patron-test
+  (testing "Patron"
+    (is (= (-> {:players [{:hand    [patron]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :patron))
+           {:players [{:play-area [patron]
+                       :actions   0
+                       :coins     2
+                       :villagers 1}]}))
+    (is (= (-> {:players [{:hand    [seer]
+                           :deck    [estate estate estate patron]
+                           :actions 1}]}
+               (play 0 :seer))
+           {:players [{:hand           [estate estate estate patron]
+                       :play-area      [seer]
+                       :actions        1
+                       :coffers        1
+                       :revealed-cards {:hand 3}}]}))
+    (is (= (-> {:cost-reductions [{:reduction 3}]
+                :players         [{:hand    [villain]
+                                   :actions 1}
+                                  {:hand [copper copper copper patron patron]}]}
+               (play 0 :villain))
+           {:cost-reductions [{:reduction 3}]
+            :players         [{:play-area [villain]
+                               :actions   0
+                               :coffers   2}
+                              {:hand           [copper copper copper patron patron]
+                               :coffers        2
+                               :revealed-cards {:hand 5}}]}))))
+
 (deftest recruiter-test
   (testing "Recruiter"
     (is (= (-> {:players [{:hand    [recruiter estate estate]

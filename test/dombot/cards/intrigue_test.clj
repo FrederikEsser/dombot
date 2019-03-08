@@ -178,7 +178,7 @@
                              :actions 1}]}
                  (play 0 :courtier)
                  (choose :copper))
-             {:players      [{:hand           [copper nobles]
+             {:players      [{:hand           [nobles copper]
                               :play-area      [courtier]
                               :revealed-cards {:hand 1}
                               :actions        0}]
@@ -197,7 +197,7 @@
                  (play 0 :courtier)
                  (choose :copper)
                  (choose [:action]))
-             {:players [{:hand           [copper nobles]
+             {:players [{:hand           [nobles copper]
                          :play-area      [courtier]
                          :revealed-cards {:hand 1}
                          :actions        1}]}))
@@ -207,7 +207,7 @@
                  (play 0 :courtier)
                  (choose :copper)
                  (choose :buy))
-             {:players [{:hand           [copper nobles]
+             {:players [{:hand           [nobles copper]
                          :play-area      [courtier]
                          :revealed-cards {:hand 1}
                          :actions        0
@@ -218,7 +218,7 @@
                  (play 0 :courtier)
                  (choose :copper)
                  (choose :coins))
-             {:players [{:hand           [copper nobles]
+             {:players [{:hand           [nobles copper]
                          :play-area      [courtier]
                          :revealed-cards {:hand 1}
                          :actions        0
@@ -230,7 +230,7 @@
                  (choose :copper)
                  (choose :gold))
              {:supply  [{:card gold :pile-size 29}]
-              :players [{:hand           [copper nobles]
+              :players [{:hand           [nobles copper]
                          :play-area      [courtier]
                          :discard        [gold]
                          :revealed-cards {:hand 1}

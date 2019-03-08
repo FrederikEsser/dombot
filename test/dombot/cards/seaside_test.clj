@@ -29,7 +29,7 @@
                              :actions 1}]}
                  (play 0 :ambassador)
                  (choose :copper))
-             {:players      [{:hand           [copper copper copper estate]
+             {:players      [{:hand           [copper copper estate copper]
                               :play-area      [ambassador]
                               :revealed-cards {:hand 1}
                               :actions        0}]
@@ -49,7 +49,7 @@
                  (choose :copper)
                  (choose [:copper :copper]))
              {:supply  [{:card copper :pile-size 47}]
-              :players [{:hand           [copper estate]
+              :players [{:hand           [estate copper]
                          :play-area      [ambassador]
                          :revealed-cards {}
                          :actions        0}
@@ -62,7 +62,7 @@
                  (choose :copper)
                  (choose :copper))
              {:supply  [{:card copper :pile-size 46}]
-              :players [{:hand           [copper copper estate]
+              :players [{:hand           [copper estate copper]
                          :play-area      [ambassador]
                          :revealed-cards {}
                          :actions        0}
@@ -75,7 +75,7 @@
                  (choose :copper)
                  (choose nil))
              {:supply  [{:card copper :pile-size 45}]
-              :players [{:hand           [copper copper copper estate]
+              :players [{:hand           [copper copper estate copper]
                          :play-area      [ambassador]
                          :revealed-cards {:hand 1}
                          :actions        0}
@@ -389,7 +389,7 @@
                  (choose :province))
              {:supply  [{:card silver :pile-size 40}
                         {:card gold :pile-size 29}]
-              :players [{:hand           [province gold]
+              :players [{:hand           [gold province]
                          :play-area      [explorer]
                          :actions        0
                          :revealed-cards {:hand 1}}]}))
