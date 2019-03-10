@@ -454,7 +454,7 @@
                        :number-of-turns 9
                        :phase           :out-of-turn}]}))
     (is (= (-> {:players [{:number-of-turns 8
-                           :triggers        [{:some :trigger}]}]}
+                           :triggers        [{:duration :turn}]}]}
                (clean-up {:player-no 0})
                check-stack)
            {:players [{:actions         0
@@ -484,8 +484,8 @@
                (clean-up {:player-no 0})
                check-stack)
            {:supply  [{:card {:name :province} :pile-size 0}]
-            :players [{:hand            [{:name :copper} {:name :copper} {:name :copper} {:name :copper} {:name :estate :victory-points 1}
-                                         {:name :cellar} {:name :estate :victory-points 1} {:name :duchy :victory-points 3} {:name :estate :victory-points 1} {:name :silver}]
+            :players [{:hand            [{:name :cellar} {:name :estate :victory-points 1} {:name :duchy :victory-points 3} {:name :estate :victory-points 1} {:name :silver}
+                                         {:name :copper} {:name :copper} {:name :copper} {:name :copper} {:name :estate :victory-points 1}]
                        :actions         0
                        :coins           0
                        :buys            0
@@ -510,8 +510,8 @@
                (clean-up {:player-no 0})
                check-stack)
            {:supply  [{:card {:name :province} :pile-size 0}]
-            :players [{:hand            [{:name :copper} {:name :copper} {:name :copper} {:name :copper} {:name :estate :victory-points 1}
-                                         {:name :cellar} {:name :estate :victory-points 1} {:name :duchy :victory-points 3} {:name :estate :victory-points 1} {:name :silver}]
+            :players [{:hand            [{:name :cellar} {:name :estate :victory-points 1} {:name :duchy :victory-points 3} {:name :estate :victory-points 1} {:name :silver}
+                                         {:name :copper} {:name :copper} {:name :copper} {:name :copper} {:name :estate :victory-points 1}]
                        :actions         0
                        :coins           0
                        :buys            0
@@ -536,8 +536,8 @@
                (clean-up {:player-no 0})
                check-stack)
            {:supply  [{:card {:name :province} :pile-size 0}]
-            :players [{:hand            [{:name :copper} {:name :copper} {:name :copper} {:name :copper} {:name :estate :victory-points 1}
-                                         {:name :cellar} {:name :estate :victory-points 1} {:name :duchy :victory-points 3} {:name :estate :victory-points 1} {:name :silver}]
+            :players [{:hand            [{:name :cellar} {:name :estate :victory-points 1} {:name :duchy :victory-points 3} {:name :estate :victory-points 1} {:name :silver}
+                                         {:name :copper} {:name :copper} {:name :copper} {:name :copper} {:name :estate :victory-points 1}]
                        :actions         0
                        :coins           0
                        :buys            0
@@ -562,8 +562,8 @@
                (clean-up {:player-no 0})
                check-stack)
            {:supply  [{:card {:name :province} :pile-size 0}]
-            :players [{:hand            [{:name :copper} {:name :copper} {:name :copper} {:name :copper} {:name :estate :victory-points 1}
-                                         {:name :cellar} {:name :estate :victory-points 1} {:name :duchy :victory-points 3} {:name :estate :victory-points 1} {:name :silver}]
+            :players [{:hand            [{:name :cellar} {:name :estate :victory-points 1} {:name :duchy :victory-points 3} {:name :estate :victory-points 1} {:name :silver}
+                                         {:name :copper} {:name :copper} {:name :copper} {:name :copper} {:name :estate :victory-points 1}]
                        :actions         0
                        :coins           0
                        :buys            0

@@ -5,7 +5,7 @@
 
 (s/def ::name-ui string?)
 
-(s/def ::type #{:curse :victory :treasure :action :attack :reaction :duration})
+(s/def ::type #{:curse :victory :treasure :action :attack :reaction :duration :artifact})
 
 (s/def ::types (s/coll-of ::type :distinct true))
 
@@ -76,6 +76,8 @@
 
 (s/def ::villagers ::resource)
 
+(s/def ::artifacts ::cards)
+
 (s/def ::text string?)
 
 (s/def ::min nat-int?)
@@ -127,6 +129,7 @@
                                  ::pirate-ship-coins
                                  ::coffers
                                  ::villagers
+                                 ::artifacts
                                  ::choice
                                  ::victory-points
                                  ::winner?]))

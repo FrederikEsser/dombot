@@ -30,7 +30,20 @@
                  :effects [[:draw 2]
                            [:give-actions 1]
                            [:return-this-to-supply]]
-                 :on-gain [[:do-gain {:card-name :experiment}]]}) ; todo: Handle on-gain effects
+                 :on-gain [[:do-gain {:card-name :experiment}]]}) ; todo: Handle other on-gain effects
+
+(def flag {:name    :flag
+           :trigger {:trigger :at-draw-hand
+                     :effects [[:draw 1]]}})
+
+(def flag-bearer {:name     :flag-bearer
+                  :set      :renaissance
+                  :types    #{:action}
+                  :cost     4
+                  :effects  [[:give-coins 2]]
+                  :on-gain  [[::take-artifact {:artifact-name :flag}]]
+                  :on-trash [[::take-artifact {:artifact-name :flag}]]
+                  :setup    [[::add-artifact {:artifact-name :flag}]]})
 
 (defn hideout-trash [game {:keys [player-no card-name] :as args}]
   (let [{{:keys [types]} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
@@ -255,6 +268,7 @@
 (def kingdom-cards [acting-troupe
                     ducat
                     experiment
+                    flag-bearer
                     hideout
                     inventor
                     lackeys
@@ -269,3 +283,20 @@
                     silk-merchant
                     spices
                     villain])
+
+(def artifacts {:flag flag})
+
+(defn add-artifact [game {:keys [artifact-name]}]
+  (assoc-in game [:artifacts artifact-name] (get artifacts artifact-name)))
+
+(defn take-artifact [game {:keys [player-no artifact-name]}]
+  (let [{:keys [owner trigger]} (get-in game [:artifacts artifact-name])]
+    (cond-> game
+            (not= player-no owner) (-> (assoc-in [:artifacts artifact-name :owner] player-no)
+                                       (update-in [:players player-no :triggers] concat [(assoc trigger :duration artifact-name)])
+                                       (cond-> owner (-> (update-in [:players owner :triggers] (partial remove (comp #{artifact-name} :duration)))
+                                                         (update-in [:players owner] ut/dissoc-if-empty :triggers)))))))
+
+(effects/register {::add-artifact  add-artifact
+                   ::take-artifact take-artifact})
+

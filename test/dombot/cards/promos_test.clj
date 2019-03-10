@@ -164,6 +164,8 @@
                                                       :from          :deck
                                                       :from-position :top
                                                       :to            :hand}]}
+                             {:player-no 0
+                              :effect    [:check-game-ended]}
                              {:player-no 1
                               :effect    [:start-turn]}]}))
       (is (= (-> {:players [{:play-area       [copper copper copper copper copper]

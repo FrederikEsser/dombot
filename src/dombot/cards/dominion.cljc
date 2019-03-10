@@ -175,8 +175,9 @@
                        [:give-coins 1]
                        [:give-buys 1]]})
 
-(def merchant-trigger {:trigger [:play :silver]
-                       :effects [[:give-coins 1]]})
+(def merchant-trigger {:trigger  [:play :silver]
+                       :duration :once
+                       :effects  [[:give-coins 1]]})
 
 (def merchant {:name    :merchant
                :set     :dominion

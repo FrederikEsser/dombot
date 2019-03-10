@@ -116,6 +116,83 @@
                          :actions   1}]
               :trash   []})))))
 
+(deftest flag-bearer-test
+  (let [flag-bearer (assoc flag-bearer :id 1)]
+    (testing "Flag Bearer"
+      (is (= (-> {:players [{:hand    [flag-bearer]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :flag-bearer))
+             {:players [{:play-area [flag-bearer]
+                         :actions   0
+                         :coins     2}]}))
+      (is (= (-> {:supply    [{:card flag-bearer :pile-size 10}]
+                  :artifacts {:flag flag}
+                  :players   [{}]}
+                 (gain {:player-no 0
+                        :card-name :flag-bearer}))
+             {:supply    [{:card flag-bearer :pile-size 9}]
+              :artifacts {:flag (assoc flag :owner 0)}
+              :players   [{:discard  [flag-bearer]
+                           :triggers [{:trigger  :at-draw-hand
+                                       :duration :flag
+                                       :effects  [[:draw 1]]}]}]}))
+      (is (= (-> {:supply    [{:card flag-bearer :pile-size 9}]
+                  :artifacts {:flag (assoc flag :owner 0)}
+                  :players   [{:triggers [{:trigger  :at-draw-hand
+                                           :duration :flag
+                                           :effects  [[:draw 1]]}]}]}
+                 (gain {:player-no 0
+                        :card-name :flag-bearer}))
+             {:supply    [{:card flag-bearer :pile-size 8}]
+              :artifacts {:flag (assoc flag :owner 0)}
+              :players   [{:discard  [flag-bearer]
+                           :triggers [{:trigger  :at-draw-hand
+                                       :duration :flag
+                                       :effects  [[:draw 1]]}]}]}))
+      (is (= (-> {:supply    [{:card flag-bearer :pile-size 9}]
+                  :artifacts {:flag (assoc flag :owner 0)}
+                  :players   [{:triggers [{:trigger  :at-draw-hand
+                                           :duration :flag
+                                           :effects  [[:draw 1]]}]}
+                              {}]}
+                 (gain {:player-no 1
+                        :card-name :flag-bearer}))
+             {:supply    [{:card flag-bearer :pile-size 8}]
+              :artifacts {:flag (assoc flag :owner 1)}
+              :players   [{}
+                          {:discard  [flag-bearer]
+                           :triggers [{:trigger  :at-draw-hand
+                                       :duration :flag
+                                       :effects  [[:draw 1]]}]}]}))
+      (is (= (-> {:artifacts {:flag flag}
+                  :players   [{:hand    [chapel flag-bearer]
+                               :actions 1}]}
+                 (play 0 :chapel)
+                 (choose :flag-bearer))
+             {:artifacts {:flag (assoc flag :owner 0)}
+              :players   [{:play-area [chapel]
+                           :actions   0
+                           :triggers  [{:trigger  :at-draw-hand
+                                        :duration :flag
+                                        :effects  [[:draw 1]]}]}]
+              :trash     [flag-bearer]}))
+      (is (= (-> {:players [{:deck     (repeat 7 copper)
+                             :triggers [{:trigger  :at-draw-hand
+                                         :duration :flag
+                                         :effects  [[:draw 1]]}]}]}
+                 (clean-up {:player-no 0}))
+             {:players [{:hand           (repeat 6 copper)
+                         :deck           [copper]
+                         :triggers       [{:trigger  :at-draw-hand
+                                           :duration :flag
+                                           :effects  [[:draw 1]]}]
+                         :actions        0
+                         :coins          0
+                         :buys           0
+                         :actions-played 0
+                         :phase          :out-of-turn}]})))))
+
 (deftest hideout-test
   (let [curse (assoc curse :id 1)]
     (testing "Hideout"
@@ -514,26 +591,26 @@
 (deftest sculptor-test
   (let [estate (assoc estate :id 1)
         silver (assoc silver :id 2)
-        inventor (assoc inventor :id 3)]
+        silk-merchant (assoc silk-merchant :id 3)]
     (testing "Sculptor"
       (is (= (-> {:supply  [{:card estate :pile-size 8}
                             {:card duchy :pile-size 8}
                             {:card silver :pile-size 40}
-                            {:card inventor :pile-size 10}]
+                            {:card silk-merchant :pile-size 10}]
                   :players [{:hand    [sculptor]
                              :actions 1}]}
                  (play 0 :sculptor))
              {:supply       [{:card estate :pile-size 8}
                              {:card duchy :pile-size 8}
                              {:card silver :pile-size 40}
-                             {:card inventor :pile-size 10}]
+                             {:card silk-merchant :pile-size 10}]
               :players      [{:play-area [sculptor]
                               :actions   0}]
               :effect-stack [{:text      "Gain a card to your hand costing up to $4."
                               :player-no 0
                               :choice    ::renaissance/sculptor-gain
                               :source    :supply
-                              :options   [:estate :silver :inventor]
+                              :options   [:estate :silver :silk-merchant]
                               :min       1
                               :max       1}]}))
       (is (= (-> {:supply  [{:card estate :pile-size 8}]
@@ -545,25 +622,32 @@
               :players [{:hand      [estate]
                          :play-area [sculptor]
                          :actions   0}]}))
-      (is (= (-> {:supply  [{:card silver :pile-size 40}]
-                  :players [{:hand    [sculptor]
-                             :actions 1}]}
+      (is (= (-> {:track-gained-cards? true
+                  :supply              [{:card silver :pile-size 40}]
+                  :players             [{:hand    [sculptor]
+                                         :discard [copper]
+                                         :actions 1}]}
                  (play 0 :sculptor)
                  (choose :silver))
-             {:supply  [{:card silver :pile-size 39}]
-              :players [{:hand      [silver]
-                         :play-area [sculptor]
-                         :actions   0
-                         :villagers 1}]}))
-      (is (= (-> {:supply  [{:card inventor :pile-size 10}]
+             {:track-gained-cards? true
+              :supply              [{:card silver :pile-size 39}]
+              :players             [{:hand         [silver]
+                                     :play-area    [sculptor]
+                                     :discard      [copper]
+                                     :actions      0
+                                     :villagers    1
+                                     :gained-cards [{:name :silver :types #{:treasure} :cost 3}]}]}))
+      (is (= (-> {:supply  [{:card silk-merchant :pile-size 10}]
                   :players [{:hand    [sculptor]
                              :actions 1}]}
                  (play 0 :sculptor)
-                 (choose :inventor))
-             {:supply  [{:card inventor :pile-size 9}]
-              :players [{:hand      [inventor]
+                 (choose :silk-merchant))
+             {:supply  [{:card silk-merchant :pile-size 9}]
+              :players [{:hand      [silk-merchant]
                          :play-area [sculptor]
-                         :actions   0}]})))))
+                         :actions   0
+                         :coffers   1
+                         :villagers 1}]})))))
 
 (deftest seer-test
   (testing "Seer"

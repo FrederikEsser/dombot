@@ -41,6 +41,7 @@
         cards (cond->> (get player area)
                        number-of-cards (take-fn number-of-cards))]
     (->> cards
+         (sort-by (juxt (comp first :types) :name))
          (map (fn [{:keys [name types set-aside] :as card}]
                 (merge {:name    name
                         :name-ui (ut/format-name name)
@@ -141,6 +142,7 @@
                             winner]} :player
                     choice           :choice
                     active-player?   :active-player?
+                    artifacts        :artifacts
                     :as              data}]
   (merge {:name-ui   (ut/format-name name)
           :hand      (view-hand data)
@@ -172,6 +174,10 @@
                               (when (and (not choice)
                                          (#{:action} phase))
                                 {:interaction :spendable}))})
+         (when (not-empty artifacts)
+           {:artifacts (->> artifacts (map (fn [{:keys [name]}] {:name    name
+                                                                 :name-ui (ut/format-name name)
+                                                                 :types   #{:artifact}})))})
          (when choice
            {:choice (view-choice choice)})
          (when victory-points
@@ -211,7 +217,7 @@
      :can-end-turn?       (and (not choice)
                                (not= phase :end-of-game))}))
 
-(defn view-game [{:keys [supply cost-reductions players trash effect-stack current-player] :as game}]
+(defn view-game [{:keys [supply artifacts cost-reductions players trash effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
     (->> {:supply   (view-supply {:supply          supply
@@ -225,7 +231,8 @@
                                                                       (= idx player-no))
                                                                   (not= phase :end-of-game))]
                                           (view-player (merge {:active-player? active-player?
-                                                               :player         player}
+                                                               :player         player
+                                                               :artifacts      (->> artifacts vals (filter (comp #{idx} :owner)))}
                                                               (when (= idx player-no)
                                                                 {:choice choice})))))))
           :trash    {:compact (view-trash {:trash trash :choice choice} :compact)

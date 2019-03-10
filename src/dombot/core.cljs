@@ -8,7 +8,7 @@
 ;; -------------------------
 ;; Views
 
-(defonce state (r/atom {:sets            #{:dominion :intrigue :seaside :renaissance :promos}
+(defonce state (r/atom {:sets            #{}
                         :selection       []
                         :trash-unfolded? false
                         :num-players     2
@@ -37,7 +37,8 @@
                                   (:action types) "#F3EEDF"
                                   (:treasure types) "#FFE64F"
                                   (:victory types) "#9FD688"
-                                  (:curse types) "#B890D7")
+                                  (:curse types) "#B890D7"
+                                  (:artifact types) "#F9CD88")
           :border-color     (cond
                               (zero? number-of-cards) :red
                               (:curse types) "#9F76B8"
@@ -47,6 +48,7 @@
                               (:duration types) "#F1820E"
                               (:attack types) "#940000"
                               (:action types) "#DED7C4"
+                              (:artifacts types) "#B4763B"
                               :else :grey)
           :border-width     2}
          (when (:attack types)
@@ -165,7 +167,7 @@
           (->> (get-in @state [:game :players])
                (mapk (fn [{:keys               [name-ui hand play-area deck discard
                                                 actions coins buys set-aside
-                                                coffers villagers
+                                                coffers villagers artifacts
                                                 island-mat native-village-mat pirate-ship-coins
                                                 active? victory-points winner?]
                            {:keys [text
@@ -217,7 +219,9 @@
                                            (str number " Coffer" (when (< 1 number) "s"))]]))
                                 [:div "Buys: " buys]
                                 (when pirate-ship-coins
-                                  [:div "Pirate Ship: " pirate-ship-coins])])]
+                                  [:div "Pirate Ship: " pirate-ship-coins])
+                                (when artifacts
+                                  (view-pile artifacts max))])]
                         (if text
                           [:td text
                            [:div (mapk (fn [{:keys [option text]}]

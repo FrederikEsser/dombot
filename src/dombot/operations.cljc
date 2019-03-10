@@ -151,8 +151,8 @@
                                 (update-in to-path add-card-to-coll (ut/give-id! card))
                                 (state-maintenance player-no :supply to)))))
 
-(defn handle-on-gain [{:keys [track-gained-cards?] :as game} {:keys [player-no bought] :as args}]
-  (let [{:keys [on-gain] :as card} (->> (get-in game [:players player-no :discard]) last)]
+(defn handle-on-gain [{:keys [track-gained-cards?] :as game} {:keys [player-no card-name bought] :as args}]
+  (let [{{:keys [on-gain] :as card} :card} (ut/get-pile-idx game card-name)]
     (cond-> game
             on-gain (push-effect-stack (merge args {:effects on-gain}))
             track-gained-cards? (update-in [:players player-no :gained-cards]
@@ -500,7 +500,8 @@
 
 (defn remove-trigger [game player-no trigger]
   (-> game
-      (update-in [:players player-no :triggers] (partial remove (ut/match {:trigger trigger})))
+      (update-in [:players player-no :triggers] (partial remove (every-pred (ut/match {:trigger trigger})
+                                                                            (comp #{:once} :duration))))
       (update-in [:players player-no] ut/dissoc-if-empty :triggers)))
 
 (defn- apply-triggers [game player-no trigger]
@@ -614,7 +615,7 @@
                :victory-points victory-points
                :winner (= best-score (calc-score player))))))
 
-(defn check-game-ended [{:keys [players] :as game}]
+(defn check-game-ended [{:keys [players] :as game} args]
   (cond-> game
           (game-ended? game) (as-> game
                                    (let [best-score (->> players
@@ -623,8 +624,9 @@
                                                          last)]
                                      (update game :players (partial mapv (partial end-game-for-player best-score)))))))
 
-(defn do-clean-up [game {:keys [player-no number-of-cards extra-turn?]
-                         :or   {number-of-cards 5}}]
+(effects/register {:check-game-ended check-game-ended})
+
+(defn do-clean-up [game {:keys [player-no extra-turn?]}]
   (let [clean-up-player (fn [{:keys [play-area hand number-of-turns] :as player}]
                           (let [used-cards (concat hand (remove stay-in-play play-area))]
                             (-> player
@@ -637,17 +639,16 @@
                                        :buys 0
                                        :actions-played 0
                                        :phase :out-of-turn)
-                                (dissoc :triggers)
+                                (update :triggers (partial remove (comp #{:once :turn} :duration)))
+                                (ut/dissoc-if-empty :triggers)
                                 (cond-> (and number-of-turns
                                              (not extra-turn?)) (update :number-of-turns inc))
                                 (cond-> (not extra-turn?) (dissoc :previous-turn-was-yours?)))))]
     (-> game
         (update-in [:players player-no] clean-up-player)
         (set-approx-discard-size player-no)
-        (draw {:player-no player-no :arg number-of-cards})
         (update :players (partial mapv (fn [player] (dissoc player :revealed-cards))))
-        (dissoc :cost-reductions)
-        check-game-ended)))
+        (dissoc :cost-reductions))))
 
 (defn at-clean-up-choice [game {:keys [player-no card-name]}]
   (let [{{:keys [at-clean-up id]} :card} (ut/get-card-idx game [:players player-no :play-area] {:name card-name})]
@@ -684,12 +685,20 @@
 (effects/register {:at-clean-up-choice at-clean-up-choice
                    :at-clean-up        at-clean-up})
 
-(defn clean-up [game args]
-  (-> game
-      (push-effect-stack (merge args
-                                {:effects [[:at-clean-up]
-                                           [:do-clean-up args]]}))
-      check-stack))
+(defn clean-up [game {:keys [player-no number-of-cards]
+                      :or   {number-of-cards 5}
+                      :as   args}]
+  (let [at-draw-hand (->> (get-in game [:players player-no :triggers])
+                          (filter (comp #{:at-draw-hand} :trigger))
+                          (mapcat :effects))]
+    (-> game
+        (push-effect-stack (merge args
+                                  {:effects (concat [[:at-clean-up]
+                                                     [:do-clean-up args]
+                                                     [:draw number-of-cards]]
+                                                    at-draw-hand
+                                                    [[:check-game-ended]])}))
+        check-stack)))
 
 (effects/register {:do-clean-up do-clean-up
                    :clean-up    clean-up})

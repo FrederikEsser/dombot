@@ -46,6 +46,13 @@
                               :card-name :estate})
       (op/draw {:player-no player-no :arg 5})))
 
+(defn setup-game [{:keys [supply] :as game}]
+  (let [setup-effects (->> supply
+                           (mapcat (comp :setup :card)))]
+    (-> game
+        (op/push-effect-stack {:effects setup-effects})
+        op/check-stack)))
+
 (defn create-game [player-names mode sets]
   (let [number-of-players (count player-names)
         victory-pile-size (case number-of-players
@@ -61,4 +68,5 @@
            :track-gained-cards? true
            :current-player      starting-player
            :starting-player     starting-player} game
-          (reduce prepare-cards game (range number-of-players)))))
+          (-> (reduce prepare-cards game (range number-of-players))
+              setup-game))))

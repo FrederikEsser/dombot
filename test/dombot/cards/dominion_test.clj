@@ -697,7 +697,14 @@
            {:players [{:hand      [copper]
                        :play-area [merchant merchant silver]
                        :actions   1
-                       :coins     4}]}))))
+                       :coins     4}]}))
+    (is (= (-> {:players [{:triggers [merchant-trigger]}]}
+               (clean-up {:player-no 0}))
+           {:players [{:actions        0
+                       :coins          0
+                       :buys           0
+                       :actions-played 0
+                       :phase          :out-of-turn}]}))))
 
 (deftest militia-test
   (testing "Militia"
