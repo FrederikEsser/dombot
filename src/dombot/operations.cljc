@@ -51,16 +51,21 @@
   (or (not-empty at-start-turn)
       (not-empty at-end-turn)))
 
-(defn duration-effects [game player-no]
+(defn at-start-turn-effects [game player-no]
   (let [duration-cards (->> (get-in game [:players player-no :play-area])
                             (filter (comp not-empty :at-start-turn)))
+        start-turn-effects (->> (get-in game [:players player-no :triggers])
+                                (filter (comp #{:at-start-turn} :trigger))
+                                (mapcat :effects))
         do-duration-effect (fn [game {:keys [id at-start-turn]}]
                              (-> game
                                  (ut/update-in-vec [:players player-no :play-area] {:id id} dissoc :at-start-turn)
                                  (cond-> at-start-turn (push-effect-stack {:player-no player-no
                                                                            :card-id   id
                                                                            :effects   (apply concat at-start-turn)}))))]
-    (reduce do-duration-effect game (reverse duration-cards))))
+    (-> (reduce do-duration-effect game (reverse duration-cards))
+        (push-effect-stack {:player-no player-no
+                            :effects   start-turn-effects}))))
 
 (defn start-turn
   ([player]
@@ -76,7 +81,7 @@
      (-> game
          (assoc :current-player player-no)
          (update-in [:players player-no] start-turn)
-         (duration-effects player-no)
+         (at-start-turn-effects player-no)
          check-stack))))
 
 (effects/register {:start-turn start-turn})

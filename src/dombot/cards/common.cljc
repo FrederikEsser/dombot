@@ -51,6 +51,13 @@
 
 (effects/register {:gain-from-trash gain-from-trash})
 
+(defn gain-from-trash-to-hand [game args]
+  (push-effect-stack game (merge args {:effects [[:move-card (merge args {:from :trash
+                                                                          :to   :hand})]
+                                                 [:on-gain args]]})))
+
+(effects/register {:gain-from-trash-to-hand gain-from-trash-to-hand})
+
 (defn play-from-hand [game {:keys [card-name] :as args}]
   (cond-> game
           card-name (move-card (merge args {:from :hand

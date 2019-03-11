@@ -221,7 +221,7 @@
                                 (when pirate-ship-coins
                                   [:div "Pirate Ship: " pirate-ship-coins])
                                 (when artifacts
-                                  (view-pile artifacts max))])]
+                                  (mapk view-card artifacts))])]
                         (if text
                           [:td text
                            [:div (mapk (fn [{:keys [option text]}]

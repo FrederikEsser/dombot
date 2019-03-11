@@ -2,7 +2,20 @@
   (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards]]
             [dombot.cards.common :refer [reveal-hand]]
             [dombot.utils :as ut]
-            [dombot.effects :as effects]))
+            [dombot.effects :as effects])
+  (:refer-clojure :exclude [key]))
+
+(defn take-artifact [game {:keys [player-no artifact-name]}]
+  (let [{:keys [owner trigger]} (get-in game [:artifacts artifact-name])]
+    (cond-> game
+            (not= player-no owner) (-> (assoc-in [:artifacts artifact-name :owner] player-no)
+                                       (update-in [:players player-no :triggers] concat [(assoc trigger :duration artifact-name)])
+                                       (cond-> owner (-> (update-in [:players owner :triggers] (partial remove (comp #{artifact-name} :duration)))
+                                                         (update-in [:players owner] ut/dissoc-if-empty :triggers)))))))
+
+(effects/register {::take-artifact take-artifact})
+
+
 
 (def acting-troupe {:name    :acting-troupe
                     :set     :renaissance
@@ -244,6 +257,43 @@
              :effects    [[:give-buys 1]]
              :on-gain    [[:give-coffers 2]]})
 
+(def key {:name    :key
+          :trigger {:trigger :at-start-turn
+                    :effects [[:give-coins 1]]}})
+
+(defn treasurer-choice [game {:keys [player-no choice]}]
+  (case choice
+    :trash (give-choice game {:player-no player-no
+                              :text      "Trash a Treasure from your hand."
+                              :choice    :trash-from-hand
+                              :options   [:player :hand {:type :treasure}]
+                              :min       1
+                              :max       1})
+    :gain (give-choice game {:player-no player-no
+                             :text      "Gain a Treasure from the trash to your hand."
+                             :choice    :gain-from-trash-to-hand
+                             :options   [:trash {:type :treasure}]
+                             :min       1
+                             :max       1})
+    :key (take-artifact game {:player-no player-no :artifact-name :key})))
+
+(effects/register {::treasurer-choice treasurer-choice})
+
+(def treasurer {:name    :treasurer
+                :set     :renaissance
+                :types   #{:action}
+                :cost    5
+                :effects [[:give-coins 3]
+                          [:give-choice {:text    "Choose one:"
+                                         :choice  ::treasurer-choice
+                                         :options [:special
+                                                   {:option :trash :text "Trash a Treasure from your hand."}
+                                                   {:option :gain :text "Gain a Treasure from the trash to your hand."}
+                                                   {:option :key :text "Take the Key."}]
+                                         :min     1
+                                         :max     1}]]
+                :setup   [[::add-artifact {:artifact-name :key}]]})
+
 (defn villain-attack [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])
         has-eligible-card? (some (comp (partial <= 2) (partial ut/get-cost game)) hand)]
@@ -282,21 +332,14 @@
                     seer
                     silk-merchant
                     spices
+                    treasurer
                     villain])
 
-(def artifacts {:flag flag})
+(def artifacts {:flag flag
+                :key  key})
 
 (defn add-artifact [game {:keys [artifact-name]}]
   (assoc-in game [:artifacts artifact-name] (get artifacts artifact-name)))
 
-(defn take-artifact [game {:keys [player-no artifact-name]}]
-  (let [{:keys [owner trigger]} (get-in game [:artifacts artifact-name])]
-    (cond-> game
-            (not= player-no owner) (-> (assoc-in [:artifacts artifact-name :owner] player-no)
-                                       (update-in [:players player-no :triggers] concat [(assoc trigger :duration artifact-name)])
-                                       (cond-> owner (-> (update-in [:players owner :triggers] (partial remove (comp #{artifact-name} :duration)))
-                                                         (update-in [:players owner] ut/dissoc-if-empty :triggers)))))))
-
-(effects/register {::add-artifact  add-artifact
-                   ::take-artifact take-artifact})
+(effects/register {::add-artifact add-artifact})
 

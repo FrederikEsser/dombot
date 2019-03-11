@@ -6,8 +6,10 @@
             [dombot.cards.common :refer :all]
             [dombot.cards.dominion :refer [throne-room chapel]]
             [dombot.cards.intrigue :refer [lurker]]
+            [dombot.cards.seaside :refer [merchant-ship]]
             [dombot.cards.renaissance :as renaissance :refer :all]
-            [dombot.utils :as ut]))
+            [dombot.utils :as ut])
+  (:refer-clojure :exclude [key]))
 
 (deftest acting-troupe-test
   (let [acting-troupe (assoc acting-troupe :id 1)]
@@ -777,6 +779,120 @@
               :players [{:hand    [copper copper]
                          :discard [spices]
                          :coffers 2}]})))))
+
+(deftest treasurer-test
+  (testing "Treasurer"
+    (is (= (-> {:players [{:hand    [treasurer]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :treasurer))
+           {:players      [{:play-area [treasurer]
+                            :actions   0
+                            :coins     3}]
+            :effect-stack [{:text      "Choose one:"
+                            :player-no 0
+                            :choice    ::renaissance/treasurer-choice
+                            :source    :special
+                            :options   [{:option :trash :text "Trash a Treasure from your hand."}
+                                        {:option :gain :text "Gain a Treasure from the trash to your hand."}
+                                        {:option :key :text "Take the Key."}]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand    [treasurer copper estate silver]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :treasurer)
+               (choose :trash))
+           {:players      [{:hand      [copper estate silver]
+                            :play-area [treasurer]
+                            :actions   0
+                            :coins     3}]
+            :effect-stack [{:text      "Trash a Treasure from your hand."
+                            :player-no 0
+                            :choice    :trash-from-hand
+                            :source    :hand
+                            :options   [:copper :silver]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand    [treasurer]
+                           :actions 1
+                           :coins   0}]
+                :trash   [copper estate gold]}
+               (play 0 :treasurer)
+               (choose :gain))
+           {:players      [{:play-area [treasurer]
+                            :actions   0
+                            :coins     3}]
+            :trash        [copper estate gold]
+            :effect-stack [{:text      "Gain a Treasure from the trash to your hand."
+                            :player-no 0
+                            :choice    :gain-from-trash-to-hand
+                            :source    :trash
+                            :options   [:copper :gold]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:supply  [{:card ducat :pile-size 9}]
+                :players [{:hand    [treasurer copper]
+                           :actions 1
+                           :coins   0}]
+                :trash   [copper estate ducat]}
+               (play 0 :treasurer)
+               (choose :gain)
+               (choose :ducat)
+               (choose :copper))
+           {:supply  [{:card ducat :pile-size 9}]
+            :players [{:hand      [ducat]
+                       :play-area [treasurer]
+                       :actions   0
+                       :coins     3}]
+            :trash   [copper estate copper]}))
+    (is (= (-> {:artifacts {:key key}
+                :players   [{:hand    [treasurer]
+                             :actions 1
+                             :coins   0}]}
+               (play 0 :treasurer)
+               (choose :key))
+           {:artifacts {:key (assoc key :owner 0)}
+            :players   [{:play-area [treasurer]
+                         :actions   0
+                         :coins     3
+                         :triggers  [{:trigger  :at-start-turn
+                                      :duration :key
+                                      :effects  [[:give-coins 1]]}]}]}))
+    (is (= (-> {:artifacts {:key (assoc key :owner 0)}
+                :players   [{:triggers [{:trigger  :at-start-turn
+                                         :duration :key
+                                         :effects  [[:give-coins 1]]}]}]}
+               (end-turn 0))
+           {:current-player 0
+            :artifacts      {:key (assoc key :owner 0)}
+            :players        [{:actions        1
+                              :coins          1
+                              :buys           1
+                              :actions-played 0
+                              :phase          :action
+                              :triggers       [{:trigger  :at-start-turn
+                                                :duration :key
+                                                :effects  [[:give-coins 1]]}]}]}))
+    (let [merchant-ship (assoc merchant-ship :id 1)]
+      (is (= (-> {:players [{:hand     [merchant-ship]
+                             :actions  1
+                             :coins    0
+                             :triggers [{:trigger  :at-start-turn
+                                         :duration :key
+                                         :effects  [[:give-coins 1]]}]}]}
+                 (play 0 :merchant-ship)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:play-area      [merchant-ship]
+                                :actions        1
+                                :coins          3
+                                :buys           1
+                                :actions-played 0
+                                :phase          :action
+                                :triggers       [{:trigger  :at-start-turn
+                                                  :duration :key
+                                                  :effects  [[:give-coins 1]]}]}]})))))
 
 (deftest villain-test
   (testing "Villain"
