@@ -693,15 +693,19 @@
 (defn clean-up [game {:keys [player-no number-of-cards]
                       :or   {number-of-cards 5}
                       :as   args}]
-  (let [at-draw-hand (->> (get-in game [:players player-no :triggers])
-                          (filter (comp #{:at-draw-hand} :trigger))
-                          (mapcat :effects))]
+  (let [at-clean-up-triggers (->> (get-in game [:players player-no :triggers])
+                                  (filter (comp #{:at-clean-up} :trigger))
+                                  (mapcat :effects))
+        at-draw-hand-triggers (->> (get-in game [:players player-no :triggers])
+                                   (filter (comp #{:at-draw-hand} :trigger))
+                                   (mapcat :effects))]
     (-> game
         (push-effect-stack (merge args
-                                  {:effects (concat [[:at-clean-up]
+                                  {:effects (concat at-clean-up-triggers
+                                                    [[:at-clean-up]
                                                      [:do-clean-up args]
                                                      [:draw number-of-cards]]
-                                                    at-draw-hand
+                                                    at-draw-hand-triggers
                                                     [[:check-game-ended]])}))
         check-stack)))
 

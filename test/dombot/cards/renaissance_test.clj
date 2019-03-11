@@ -29,6 +29,254 @@
                          :villagers 8}]
               :trash   [acting-troupe]})))))
 
+(deftest border-guard-test
+  (let [border-guard (assoc border-guard :id 1)]
+    (testing "Border Guard"
+      (is (= (-> {:players [{:hand    [border-guard]
+                             :deck    [lackeys gold copper]
+                             :actions 1}]}
+                 (play 0 :border-guard))
+             {:players      [{:play-area [border-guard]
+                              :deck      [copper]
+                              :revealed  [lackeys gold]
+                              :actions   1}]
+              :effect-stack [{:text      "Put one of the revealed cards into your hand."
+                              :player-no 0
+                              :card-id   1
+                              :choice    ::renaissance/border-guard-take-revealed
+                              :source    :revealed
+                              :options   [:lackeys :gold]
+                              :min       1
+                              :max       1}
+                             {:player-no 0
+                              :card-id   1
+                              :effect    [:discard-all-revealed]}]}))
+      (is (= (-> {:players [{:hand    [border-guard]
+                             :deck    [lackeys gold copper]
+                             :actions 1}]}
+                 (play 0 :border-guard)
+                 (choose :gold))
+             {:players [{:hand           [gold]
+                         :play-area      [border-guard]
+                         :deck           [copper]
+                         :discard        [lackeys]
+                         :actions        1
+                         :revealed-cards {:hand    1
+                                          :discard 1}}]}))
+      (is (= (-> {:players [{:hand    [border-guard]
+                             :deck    [lackeys lackeys copper]
+                             :actions 1}]}
+                 (play 0 :border-guard)
+                 (choose :lackeys))
+             {:players      [{:hand           [lackeys]
+                              :play-area      [border-guard]
+                              :deck           [copper]
+                              :revealed       [lackeys]
+                              :actions        1
+                              :revealed-cards {:hand 1}}]
+              :effect-stack [{:text      "Choose one:"
+                              :player-no 0
+                              :choice    ::renaissance/border-guard-choice
+                              :source    :special
+                              :options   [{:option :lantern :text "Take the Lantern."}
+                                          {:option :horn :text "Take the Horn."}]
+                              :min       1
+                              :max       1}
+                             {:player-no 0
+                              :card-id   1
+                              :effect    [:discard-all-revealed]}]}))
+      (is (= (-> {:artifacts {:horn    horn
+                              :lantern lantern}
+                  :players   [{:hand    [border-guard]
+                               :deck    [lackeys lackeys copper]
+                               :actions 1}]}
+                 (play 0 :border-guard)
+                 (choose :lackeys)
+                 (choose :horn))
+             {:artifacts {:horn    (assoc horn :owner 0)
+                          :lantern lantern}
+              :players   [{:hand           [lackeys]
+                           :play-area      [border-guard]
+                           :deck           [copper]
+                           :discard        [lackeys]
+                           :actions        1
+                           :revealed-cards {:hand    1
+                                            :discard 1}
+                           :triggers       [{:trigger  :at-clean-up
+                                             :duration :horn
+                                             :effects  [[::renaissance/horn-at-clean-up]]}]}]}))
+      (is (= (-> {:artifacts {:horn    horn
+                              :lantern lantern}
+                  :players   [{:hand    [border-guard]
+                               :deck    [lackeys lackeys copper]
+                               :actions 1}]}
+                 (play 0 :border-guard)
+                 (choose :lackeys)
+                 (choose :horn)
+                 (clean-up {:player-no 0}))
+             {:artifacts    {:horn    (assoc horn :owner 0)
+                             :lantern lantern}
+              :players      [{:hand           [lackeys]
+                              :play-area      [(assoc border-guard :at-clean-up [[:topdeck-this-from-play-area]])]
+                              :deck           [copper]
+                              :discard        [lackeys]
+                              :actions        1
+                              :revealed-cards {:hand    1
+                                               :discard 1}
+                              :triggers       [{:trigger  :at-clean-up
+                                                :duration :horn
+                                                :effects  [[::renaissance/horn-at-clean-up]]}]}]
+              :effect-stack [{:text      "You may activate cards, that do something when you discard them from play."
+                              :player-no 0
+                              :choice    :at-clean-up-choice
+                              :source    :play-area
+                              :options   [:border-guard]
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:do-clean-up {:player-no 0}]}
+                             {:player-no 0
+                              :effect    [:draw 5]}
+                             {:player-no 0
+                              :effect    [:check-game-ended]}]}))
+      (is (= (-> {:artifacts {:horn    horn
+                              :lantern lantern}
+                  :players   [{:hand    [border-guard]
+                               :deck    (concat [lackeys lackeys] (repeat 7 copper))
+                               :actions 1}]}
+                 (play 0 :border-guard)
+                 (choose :lackeys)
+                 (choose :horn)
+                 (clean-up {:player-no 0})
+                 (choose nil))
+             {:artifacts {:horn    (assoc horn :owner 0)
+                          :lantern lantern}
+              :players   [{:hand           (repeat 5 copper)
+                           :deck           (repeat 2 copper)
+                           :discard        [lackeys lackeys border-guard]
+                           :actions        0
+                           :coins          0
+                           :buys           0
+                           :actions-played 0
+                           :phase          :out-of-turn
+                           :triggers       [{:trigger  :at-clean-up
+                                             :duration :horn
+                                             :effects  [[::renaissance/horn-at-clean-up]]}]}]}))
+      (is (= (-> {:artifacts {:horn    horn
+                              :lantern lantern}
+                  :players   [{:hand    [border-guard]
+                               :play-area [border-guard]
+                               :deck    (concat [lackeys lackeys] (repeat 7 copper))
+                               :actions 1}]}
+                 (play 0 :border-guard)
+                 (choose :lackeys)
+                 (choose :horn)
+                 (clean-up {:player-no 0})
+                 (choose :border-guard))
+             {:artifacts {:horn    (assoc horn :owner 0)
+                          :lantern lantern}
+              :players   [{:hand           [border-guard copper copper copper copper]
+                           :deck           (repeat 3 copper)
+                           :discard        [lackeys lackeys border-guard]
+                           :actions        0
+                           :coins          0
+                           :buys           0
+                           :actions-played 0
+                           :phase          :out-of-turn
+                           :triggers       [{:trigger  :at-clean-up
+                                             :duration :horn
+                                             :effects  [[::renaissance/horn-at-clean-up]]}]}]}))))
+  (is (= (-> {:artifacts {:horn    horn
+                          :lantern lantern}
+              :players   [{:hand    [border-guard]
+                           :deck    [lackeys lackeys copper]
+                           :actions 1}]}
+             (play 0 :border-guard)
+             (choose :lackeys)
+             (choose :lantern))
+         {:artifacts {:horn    horn
+                      :lantern (assoc lantern :owner 0)}
+          :players   [{:hand           [lackeys]
+                       :play-area      [border-guard]
+                       :deck           [copper]
+                       :discard        [lackeys]
+                       :actions        1
+                       :revealed-cards {:hand    1
+                                        :discard 1}}]}))
+  (is (= (-> {:artifacts {:horn    horn
+                          :lantern (assoc lantern :owner 0)}
+              :players   [{:hand    [border-guard]
+                           :deck    [lackeys gold copper]
+                           :actions 1}]}
+             (play 0 :border-guard))
+         {:artifacts    {:horn    horn
+                         :lantern (assoc lantern :owner 0)}
+          :players      [{:play-area [border-guard]
+                          :revealed  [lackeys gold copper]
+                          :actions   1}]
+          :effect-stack [{:text      "Put one of the revealed cards into your hand."
+                          :player-no 0
+                          :choice    ::renaissance/border-guard-take-revealed
+                          :source    :revealed
+                          :options   [:lackeys :gold :copper]
+                          :min       1
+                          :max       1}
+                         {:player-no 0
+                          :effect    [:discard-all-revealed]}]}))
+  (is (= (-> {:artifacts {:horn    horn
+                          :lantern (assoc lantern :owner 0)}
+              :players   [{:hand    [border-guard]
+                           :deck    [lackeys gold border-guard]
+                           :actions 1}]}
+             (play 0 :border-guard)
+             (choose :gold))
+         {:artifacts {:horn    horn
+                      :lantern (assoc lantern :owner 0)}
+          :players   [{:hand           [gold]
+                       :play-area      [border-guard]
+                       :discard        [lackeys border-guard]
+                       :actions        1
+                       :revealed-cards {:hand    1
+                                        :discard 2}}]}))
+  (is (= (-> {:artifacts {:horn    horn
+                          :lantern (assoc lantern :owner 0)}
+              :players   [{:hand    [border-guard]
+                           :deck    [lackeys lackeys border-guard]
+                           :actions 1}]}
+             (play 0 :border-guard)
+             (choose :lackeys))
+         {:artifacts    {:horn    horn
+                         :lantern (assoc lantern :owner 0)}
+          :players      [{:hand           [lackeys]
+                          :play-area      [border-guard]
+                          :revealed       [lackeys border-guard]
+                          :actions        1
+                          :revealed-cards {:hand 1}}]
+          :effect-stack [{:text      "Choose one:"
+                          :player-no 0
+                          :choice    ::renaissance/border-guard-choice
+                          :source    :special
+                          :options   [{:option :lantern :text "Take the Lantern."}
+                                      {:option :horn :text "Take the Horn."}]
+                          :min       1
+                          :max       1}
+                         {:player-no 0
+                          :effect    [:discard-all-revealed]}]}))
+  (is (= (-> {:artifacts {:horn    horn
+                          :lantern (assoc lantern :owner 0)}
+              :players   [{:hand    [border-guard]
+                           :deck    [lackeys lackeys]
+                           :actions 1}]}
+             (play 0 :border-guard)
+             (choose :lackeys))
+         {:artifacts {:horn    horn
+                      :lantern (assoc lantern :owner 0)}
+          :players   [{:hand           [lackeys]
+                       :play-area      [border-guard]
+                       :discard        [lackeys]
+                       :actions        1
+                       :revealed-cards {:hand    1
+                                        :discard 1}}]})))
+
 (deftest ducat-test
   (let [ducat (assoc ducat :id 1)]
     (testing "Ducat"

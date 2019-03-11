@@ -1,6 +1,6 @@
 (ns dombot.cards.renaissance
   (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards]]
-            [dombot.cards.common :refer [reveal-hand]]
+            [dombot.cards.common :refer [reveal-hand reveal-from-deck]]
             [dombot.utils :as ut]
             [dombot.effects :as effects])
   (:refer-clojure :exclude [key]))
@@ -9,9 +9,10 @@
   (let [{:keys [owner trigger]} (get-in game [:artifacts artifact-name])]
     (cond-> game
             (not= player-no owner) (-> (assoc-in [:artifacts artifact-name :owner] player-no)
-                                       (update-in [:players player-no :triggers] concat [(assoc trigger :duration artifact-name)])
-                                       (cond-> owner (-> (update-in [:players owner :triggers] (partial remove (comp #{artifact-name} :duration)))
-                                                         (update-in [:players owner] ut/dissoc-if-empty :triggers)))))))
+                                       (cond->
+                                         trigger (update-in [:players player-no :triggers] concat [(assoc trigger :duration artifact-name)])
+                                         owner (-> (update-in [:players owner :triggers] (partial remove (comp #{artifact-name} :duration)))
+                                                   (update-in [:players owner] ut/dissoc-if-empty :triggers)))))))
 
 (effects/register {::take-artifact take-artifact})
 
@@ -23,6 +24,65 @@
                     :cost    3
                     :effects [[:give-villagers 4]
                               [:trash-this]]})
+
+(defn horn-at-clean-up [game {:keys [player-no]}]
+  (ut/update-in-vec game [:players player-no :play-area] {:name :border-guard}
+                    assoc :at-clean-up [[:topdeck-this-from-play-area]]))
+
+(effects/register {::horn-at-clean-up horn-at-clean-up})
+
+(def horn {:name    :horn
+           :trigger {:trigger :at-clean-up
+                     :effects [[::horn-at-clean-up]]}})
+
+(def lantern {:name :lantern})
+
+(defn border-guard-choice [game {:keys [player-no choice]}]
+  (case choice
+    :horn (take-artifact game {:player-no player-no :artifact-name :horn})
+    :lantern (take-artifact game {:player-no player-no :artifact-name :lantern})))
+
+(defn- border-guard-number-of-revealed-cards [game player-no]
+  (if (= player-no (get-in game [:artifacts :lantern :owner])) 3 2))
+
+(defn border-guard-take-revealed [game {:keys [player-no] :as args}]
+  (let [revealed (get-in game [:players player-no :revealed])
+        may-take-artifact? (and (= (border-guard-number-of-revealed-cards game player-no)
+                                   (count revealed))
+                                (every? :action (map :types revealed)))]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (concat [[:put-revealed-into-hand args]]
+                                                (when may-take-artifact?
+                                                  [[:give-choice {:text    "Choose one:"
+                                                                  :choice  ::border-guard-choice
+                                                                  :options [:special
+                                                                            {:option :lantern :text "Take the Lantern."}
+                                                                            {:option :horn :text "Take the Horn."}]
+                                                                  :min     1
+                                                                  :max     1}]]))})))
+
+(defn border-guard-reveal [game {:keys [player-no]}]
+  (reveal-from-deck game {:player-no player-no
+                          :arg       (border-guard-number-of-revealed-cards game player-no)}))
+
+(effects/register {::border-guard-choice        border-guard-choice
+                   ::border-guard-take-revealed border-guard-take-revealed
+                   ::border-guard-reveal        border-guard-reveal})
+
+(def border-guard {:name    :border-guard
+                   :set     :renaissance
+                   :types   #{:action}
+                   :cost    2
+                   :effects [[:give-actions 1]
+                             [::border-guard-reveal]
+                             [:give-choice {:text    "Put one of the revealed cards into your hand."
+                                            :choice  ::border-guard-take-revealed
+                                            :options [:player :revealed]
+                                            :min     1
+                                            :max     1}]
+                             [:discard-all-revealed]]
+                   :setup   [[::add-artifact {:artifact-name :horn}]
+                             [::add-artifact {:artifact-name :lantern}]]})
 
 (def ducat {:name       :ducat
             :set        :renaissance
@@ -316,6 +376,7 @@
                         [:attack {:effects [[::villain-attack]]}]]})
 
 (def kingdom-cards [acting-troupe
+                    border-guard
                     ducat
                     experiment
                     flag-bearer
@@ -335,8 +396,10 @@
                     treasurer
                     villain])
 
-(def artifacts {:flag flag
-                :key  key})
+(def artifacts {:flag    flag
+                :horn    horn
+                :key     key
+                :lantern lantern})
 
 (defn add-artifact [game {:keys [artifact-name]}]
   (assoc-in game [:artifacts artifact-name] (get artifacts artifact-name)))
