@@ -40,29 +40,31 @@
   (let [take-fn (if (= :bottom position) take-last take)
         cards (cond->> (get player area)
                        number-of-cards (take-fn number-of-cards))]
-    (->> cards
-         (sort-by (juxt (comp first :types) :name))
-         (map (fn [{:keys [name types set-aside] :as card}]
-                (merge {:name    name
-                        :name-ui (ut/format-name name)
-                        :types   types}
-                       (when (stay-in-play card)
-                         {:stay-in-play true})
-                       (when (and (= :hand area)
-                                  (not choice)
-                                  (or (and (:action types)
-                                           (#{:action} phase)
-                                           (< 0 actions))
-                                      (and (:treasure types)
-                                           (#{:action :pay} phase))))
-                         {:interaction :playable})
-                       (choice-interaction name area choice)
-                       (when (not-empty set-aside)
-                         {:set-aside (map (if active? (comp ut/format-name :name) (constantly "Card")) set-aside)}))))
-         frequencies
-         (map (fn [[card number-of-cards]]
-                (cond-> card
-                        (< 1 number-of-cards) (assoc :number-of-cards number-of-cards)))))))
+    (-> cards
+        (cond->> (not number-of-cards) (sort-by (juxt (comp first (partial remove nil?) (juxt :action :treasure :curse :victory) :types)
+                                                      :name)))
+        (->>
+          (map (fn [{:keys [name types set-aside] :as card}]
+                 (merge {:name    name
+                         :name-ui (ut/format-name name)
+                         :types   types}
+                        (when (stay-in-play card)
+                          {:stay-in-play true})
+                        (when (and (= :hand area)
+                                   (not choice)
+                                   (or (and (:action types)
+                                            (#{:action} phase)
+                                            (< 0 actions))
+                                       (and (:treasure types)
+                                            (#{:action :pay} phase))))
+                          {:interaction :playable})
+                        (choice-interaction name area choice)
+                        (when (not-empty set-aside)
+                          {:set-aside (map (if active? (comp ut/format-name :name) (constantly "Card")) set-aside)}))))
+          frequencies
+          (map (fn [[card number-of-cards]]
+                 (cond-> card
+                         (< 1 number-of-cards) (assoc :number-of-cards number-of-cards))))))))
 
 (defn view-hand [{active-player?                      :active-player?
                   {:keys [hand revealed-cards phase]} :player

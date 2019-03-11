@@ -162,13 +162,13 @@
                                :number-of-cards 2}]
             :number-of-cards 5}))
     (is (= (view-deck {:player {:deck     [copper copper copper]
-                                :revealed [estate gold]}})
-           {:visible-cards   [{:name    :estate
-                               :name-ui "Estate"
-                               :types   #{:victory}}
-                              {:name    :gold
+                                :revealed [gold estate]}})
+           {:visible-cards   [{:name    :gold
                                :name-ui "Gold"
-                               :types   #{:treasure}}]
+                               :types   #{:treasure}}
+                              {:name    :estate
+                               :name-ui "Estate"
+                               :types   #{:victory}}]
             :number-of-cards 5}))
     (testing "revealed cards"
       (is (= (view-deck {:player {:deck           [estate copper estate silver]
@@ -317,15 +317,15 @@
                        :player         {:hand    [copper copper copper moat estate]
                                         :actions 1
                                         :phase   :action}})
-           [{:name            :copper
+           [{:name        :moat
+             :name-ui     "Moat"
+             :types       #{:action :reaction}
+             :interaction :playable}
+            {:name            :copper
              :name-ui         "Copper"
              :types           #{:treasure}
              :number-of-cards 3
              :interaction     :playable}
-            {:name        :moat
-             :name-ui     "Moat"
-             :types       #{:action :reaction}
-             :interaction :playable}
             {:name    :estate
              :name-ui "Estate"
              :types   #{:victory}}]))
@@ -333,14 +333,14 @@
                        :player         {:hand    [copper copper copper moat estate]
                                         :actions 0
                                         :phase   :action}})
-           [{:name            :copper
+           [{:name    :moat
+             :name-ui "Moat"
+             :types   #{:action :reaction}}
+            {:name            :copper
              :name-ui         "Copper"
              :types           #{:treasure}
              :number-of-cards 3
              :interaction     :playable}
-            {:name    :moat
-             :name-ui "Moat"
-             :types   #{:action :reaction}}
             {:name    :estate
              :name-ui "Estate"
              :types   #{:victory}}]))
@@ -348,14 +348,14 @@
                        :player         {:hand    [copper copper copper moat estate]
                                         :actions 1
                                         :phase   :pay}})
-           [{:name            :copper
+           [{:name    :moat
+             :name-ui "Moat"
+             :types   #{:action :reaction}}
+            {:name            :copper
              :name-ui         "Copper"
              :types           #{:treasure}
              :number-of-cards 3
              :interaction     :playable}
-            {:name    :moat
-             :name-ui "Moat"
-             :types   #{:action :reaction}}
             {:name    :estate
              :name-ui "Estate"
              :types   #{:victory}}]))
@@ -363,13 +363,13 @@
                        :player         {:hand    [copper copper copper moat estate]
                                         :actions 1
                                         :phase   :buy}})
-           [{:name            :copper
+           [{:name    :moat
+             :name-ui "Moat"
+             :types   #{:action :reaction}}
+            {:name            :copper
              :name-ui         "Copper"
              :types           #{:treasure}
              :number-of-cards 3}
-            {:name    :moat
-             :name-ui "Moat"
-             :types   #{:action :reaction}}
             {:name    :estate
              :name-ui "Estate"
              :types   #{:victory}}]))
@@ -380,14 +380,14 @@
                          :choice         {:source  :hand
                                           :options [:moat]
                                           :max     1}})
-             [{:name            :copper
-               :name-ui         "Copper"
-               :types           #{:treasure}
-               :number-of-cards 3}
-              {:name        :moat
+             [{:name        :moat
                :name-ui     "Moat"
                :types       #{:action :reaction}
                :interaction :quick-choosable}
+              {:name            :copper
+               :name-ui         "Copper"
+               :types           #{:treasure}
+               :number-of-cards 3}
               {:name    :estate
                :name-ui "Estate"
                :types   #{:victory}}]))
@@ -397,13 +397,13 @@
                          :choice         {:source  :hand
                                           :options [:estate]
                                           :min     1}})
-             [{:name            :copper
+             [{:name    :moat
+               :name-ui "Moat"
+               :types   #{:action :reaction}}
+              {:name            :copper
                :name-ui         "Copper"
                :types           #{:treasure}
                :number-of-cards 3}
-              {:name    :moat
-               :name-ui "Moat"
-               :types   #{:action :reaction}}
               {:name        :estate
                :name-ui     "Estate"
                :types       #{:victory}
@@ -415,15 +415,15 @@
                                           :options [:copper :copper :copper :moat :estate]
                                           :min     1
                                           :max     1}})
-             [{:name            :copper
+             [{:name        :moat
+               :name-ui     "Moat"
+               :types       #{:action :reaction}
+               :interaction :quick-choosable}
+              {:name            :copper
                :name-ui         "Copper"
                :types           #{:treasure}
                :number-of-cards 3
                :interaction     :quick-choosable}
-              {:name        :moat
-               :name-ui     "Moat"
-               :types       #{:action :reaction}
-               :interaction :quick-choosable}
               {:name        :estate
                :name-ui     "Estate"
                :types       #{:victory}
@@ -434,13 +434,13 @@
                          :choice         {:source  :supply
                                           :options [:estate :copper :silver :moat]
                                           :max     1}})
-             [{:name            :copper
+             [{:name    :moat
+               :name-ui "Moat"
+               :types   #{:action :reaction}}
+              {:name            :copper
                :name-ui         "Copper"
                :types           #{:treasure}
                :number-of-cards 3}
-              {:name    :moat
-               :name-ui "Moat"
-               :types   #{:action :reaction}}
               {:name    :estate
                :name-ui "Estate"
                :types   #{:victory}}])))))
@@ -509,22 +509,22 @@
                                           :phase               :action}})
            {:name-ui   "John Doe"
             :active?   true
-            :hand      [{:name            :copper
-                         :name-ui         "Copper"
-                         :types           #{:treasure}
-                         :number-of-cards 2
-                         :interaction     :playable}
+            :hand      [{:name        :moat
+                         :name-ui     "Moat"
+                         :types       #{:action :reaction}
+                         :interaction :playable}
                         {:name        :remodel
                          :name-ui     "Remodel"
                          :types       #{:action}
                          :interaction :playable}
+                        {:name            :copper
+                         :name-ui         "Copper"
+                         :types           #{:treasure}
+                         :number-of-cards 2
+                         :interaction     :playable}
                         {:name    :estate
                          :name-ui "Estate"
-                         :types   #{:victory}}
-                        {:name        :moat
-                         :name-ui     "Moat"
-                         :types       #{:action :reaction}
-                         :interaction :playable}]
+                         :types   #{:victory}}]
             :play-area [{:name    :village
                          :name-ui "Village"
                          :types   #{:action}}]
@@ -552,20 +552,20 @@
                                           :options [:estate :moat]}})
            {:name-ui   "John Doe"
             :active?   true
-            :hand      [{:name            :copper
-                         :name-ui         "Copper"
-                         :types           #{:treasure}
-                         :number-of-cards 2}
+            :hand      [{:name        :moat
+                         :name-ui     "Moat"
+                         :types       #{:action :reaction}
+                         :interaction :choosable}
                         {:name    :remodel
                          :name-ui "Remodel"
                          :types   #{:action}}
+                        {:name            :copper
+                         :name-ui         "Copper"
+                         :types           #{:treasure}
+                         :number-of-cards 2}
                         {:name        :estate
                          :name-ui     "Estate"
                          :types       #{:victory}
-                         :interaction :choosable}
-                        {:name        :moat
-                         :name-ui     "Moat"
-                         :types       #{:action :reaction}
                          :interaction :choosable}]
             :play-area [{:name    :village
                          :name-ui "Village"
@@ -600,19 +600,19 @@
                                           :min           1}})
            {:name-ui   "John Doe"
             :active?   true
-            :hand      [{:name            :copper
-                         :name-ui         "Copper"
-                         :types           #{:treasure}
-                         :number-of-cards 2}
+            :hand      [{:name    :moat
+                         :name-ui "Moat"
+                         :types   #{:action :reaction}}
                         {:name    :remodel
                          :name-ui "Remodel"
                          :types   #{:action}}
+                        {:name            :copper
+                         :name-ui         "Copper"
+                         :types           #{:treasure}
+                         :number-of-cards 2}
                         {:name    :estate
                          :name-ui "Estate"
-                         :types   #{:victory}}
-                        {:name    :moat
-                         :name-ui "Moat"
-                         :types   #{:action :reaction}}]
+                         :types   #{:victory}}]
             :play-area [{:name    :village
                          :name-ui "Village"
                          :types   #{:action}}]
@@ -651,13 +651,13 @@
                                           :optional? true}})
            {:name-ui   "John Doe"
             :active?   true
-            :hand      [{:name    :estate
-                         :name-ui "Estate"
-                         :types   #{:victory}}
-                        {:name            :copper
+            :hand      [{:name            :copper
                          :name-ui         "Copper"
                          :types           #{:treasure}
-                         :number-of-cards 2}]
+                         :number-of-cards 2}
+                        {:name    :estate
+                         :name-ui "Estate"
+                         :types   #{:victory}}]
             :play-area []
             :deck      {}
             :discard   {}
@@ -704,19 +704,19 @@
                                           :phase               :out-of-turn}})
            {:name-ui   "John Doe"
             :active?   false
-            :hand      [{:name            :copper
-                         :name-ui         "Copper"
-                         :types           #{:treasure}
-                         :number-of-cards 2}
+            :hand      [{:name    :moat
+                         :name-ui "Moat"
+                         :types   #{:action :reaction}}
                         {:name    :remodel
                          :name-ui "Remodel"
                          :types   #{:action}}
+                        {:name            :copper
+                         :name-ui         "Copper"
+                         :types           #{:treasure}
+                         :number-of-cards 2}
                         {:name    :estate
                          :name-ui "Estate"
-                         :types   #{:victory}}
-                        {:name    :moat
-                         :name-ui "Moat"
-                         :types   #{:action :reaction}}]
+                         :types   #{:victory}}]
             :play-area []
             :deck      {:number-of-cards 2}
             :discard   {:visible-cards   [{:name    :silver
@@ -743,22 +743,22 @@
                                           :options [:copper :copper :remodel :estate :moat]}})
            {:name-ui   "John Doe"
             :active?   false
-            :hand      [{:name            :copper
-                         :name-ui         "Copper"
-                         :types           #{:treasure}
-                         :number-of-cards 2
-                         :interaction     :choosable}
+            :hand      [{:name        :moat
+                         :name-ui     "Moat"
+                         :types       #{:action :reaction}
+                         :interaction :choosable}
                         {:name        :remodel
                          :name-ui     "Remodel"
                          :types       #{:action}
                          :interaction :choosable}
+                        {:name            :copper
+                         :name-ui         "Copper"
+                         :types           #{:treasure}
+                         :number-of-cards 2
+                         :interaction     :choosable}
                         {:name        :estate
                          :name-ui     "Estate"
                          :types       #{:victory}
-                         :interaction :choosable}
-                        {:name        :moat
-                         :name-ui     "Moat"
-                         :types       #{:action :reaction}
                          :interaction :choosable}]
             :play-area []
             :deck      {:number-of-cards 2}
@@ -811,19 +811,19 @@
                                           :winner         true}})
            {:name-ui        "John Doe"
             :active?        false
-            :hand           [{:name            :copper
-                              :name-ui         "Copper"
-                              :types           #{:treasure}
-                              :number-of-cards 2}
+            :hand           [{:name    :moat
+                              :name-ui "Moat"
+                              :types   #{:action :reaction}}
                              {:name    :remodel
                               :name-ui "Remodel"
                               :types   #{:action}}
+                             {:name            :copper
+                              :name-ui         "Copper"
+                              :types           #{:treasure}
+                              :number-of-cards 2}
                              {:name    :estate
                               :name-ui "Estate"
-                              :types   #{:victory}}
-                             {:name    :moat
-                              :name-ui "Moat"
-                              :types   #{:action :reaction}}]
+                              :types   #{:victory}}]
             :play-area      []
             :deck           {}
             :discard        {}
@@ -849,19 +849,19 @@
                                           :winner         true}})
            {:name-ui        "John Doe"
             :active?        false
-            :hand           [{:name            :copper
-                              :name-ui         "Copper"
-                              :types           #{:treasure}
-                              :number-of-cards 2}
+            :hand           [{:name    :moat
+                              :name-ui "Moat"
+                              :types   #{:action :reaction}}
                              {:name    :remodel
                               :name-ui "Remodel"
                               :types   #{:action}}
+                             {:name            :copper
+                              :name-ui         "Copper"
+                              :types           #{:treasure}
+                              :number-of-cards 2}
                              {:name    :estate
                               :name-ui "Estate"
-                              :types   #{:victory}}
-                             {:name    :moat
-                              :name-ui "Moat"
-                              :types   #{:action :reaction}}]
+                              :types   #{:victory}}]
             :play-area      []
             :deck           {}
             :discard        {}
