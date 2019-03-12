@@ -9,19 +9,20 @@
         (>= (ut/empty-supply-piles game) 3))))
 
 (defn push-effect-stack [game {:keys [player-no card-id effects choice]}]
-  (update game :effect-stack (partial concat (cond effects (->> effects
-                                                                (map (fn [effect]
-                                                                       (when effect
-                                                                         (merge {:player-no player-no
-                                                                                 :effect    effect}
-                                                                                (when card-id
-                                                                                  {:card-id card-id})))))
-                                                                (remove nil?))
-                                                   choice [(merge choice
-                                                                  {:player-no player-no}
-                                                                  (when card-id
-                                                                    {:card-id card-id}))]
-                                                   :else []))))
+  (cond-> game
+          (or (not-empty effects)
+              choice) (update :effect-stack (partial concat (cond effects (->> effects
+                                                                               (map (fn [effect]
+                                                                                      (when effect
+                                                                                        (merge {:player-no player-no
+                                                                                                :effect    effect}
+                                                                                               (when card-id
+                                                                                                 {:card-id card-id})))))
+                                                                               (remove nil?))
+                                                                  choice [(merge choice
+                                                                                 {:player-no player-no}
+                                                                                 (when card-id
+                                                                                   {:card-id card-id}))])))))
 
 (defn pop-effect-stack [{:keys [effect-stack] :as game}]
   (if (= 1 (count effect-stack))
