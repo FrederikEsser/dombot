@@ -1,6 +1,5 @@
 (ns dombot.front-end-view
   (:require [dombot.utils :as ut]
-            [dombot.operations :refer [stay-in-play]]
             [dombot.specs :as specs]
             [clojure.spec.alpha :as s]))
 
@@ -48,7 +47,7 @@
                  (merge {:name    name
                          :name-ui (ut/format-name name)
                          :types   types}
-                        (when (stay-in-play card)
+                        (when (ut/stay-in-play card)
                           {:stay-in-play true})
                         (when (and (= :hand area)
                                    (not choice)

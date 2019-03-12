@@ -47,10 +47,6 @@
                                    :effect    effect})
                        check-stack))))
 
-(defn stay-in-play [{:keys [at-start-turn at-end-turn]}]
-  (or (not-empty at-start-turn)
-      (not-empty at-end-turn)))
-
 (defn at-start-turn-effects [game player-no]
   (let [duration-cards (->> (get-in game [:players player-no :play-area])
                             (filter (comp not-empty :at-start-turn)))
@@ -633,11 +629,11 @@
 
 (defn do-clean-up [game {:keys [player-no extra-turn?]}]
   (let [clean-up-player (fn [{:keys [play-area hand number-of-turns] :as player}]
-                          (let [used-cards (concat hand (remove stay-in-play play-area))]
+                          (let [used-cards (concat hand (remove ut/stay-in-play play-area))]
                             (-> player
                                 (cond-> (not-empty used-cards) (update :discard concat used-cards))
                                 (dissoc :hand)
-                                (update :play-area (partial filter stay-in-play))
+                                (update :play-area (partial filter ut/stay-in-play))
                                 (ut/dissoc-if-empty :play-area)
                                 (assoc :actions 0
                                        :coins 0

@@ -163,10 +163,10 @@
                                              :effects  [[::renaissance/horn-at-clean-up]]}]}]}))
       (is (= (-> {:artifacts {:horn    horn
                               :lantern lantern}
-                  :players   [{:hand    [border-guard]
+                  :players   [{:hand      [border-guard]
                                :play-area [border-guard]
-                               :deck    (concat [lackeys lackeys] (repeat 7 copper))
-                               :actions 1}]}
+                               :deck      (concat [lackeys lackeys] (repeat 7 copper))
+                               :actions   1}]}
                  (play 0 :border-guard)
                  (choose :lackeys)
                  (choose :horn)
@@ -484,6 +484,106 @@
                          :discard   [curse]
                          :actions   2}]
               :trash   [estate]})))))
+
+(deftest improve-test
+  (let [improve (assoc improve :id 1)]
+    (testing "Improve"
+      (is (= (-> {:players [{:hand    [improve]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :improve))
+             {:players [{:play-area [(assoc improve :at-clean-up [[::renaissance/improve-give-choice]])]
+                         :actions   0
+                         :coins     2}]}))
+      (is (= (-> {:players [{:hand    [improve]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :improve)
+                 (clean-up {:player-no 0}))
+             {:players      [{:play-area [(assoc improve :at-clean-up [[::renaissance/improve-give-choice]])]
+                              :actions   0
+                              :coins     2}]
+              :effect-stack [{:text      "You may activate cards, that do something when you discard them from play."
+                              :player-no 0
+                              :choice    :at-clean-up-choice
+                              :source    :play-area
+                              :options   [:improve]
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:do-clean-up {:player-no 0}]}
+                             {:player-no 0
+                              :effect    [:draw 5]}
+                             {:player-no 0
+                              :effect    [:check-game-ended]}]}))
+      (is (= (-> {:players [{:play-area [(assoc improve :at-clean-up [[::renaissance/improve-give-choice]])
+                                         lackeys copper]}]}
+                 (clean-up {:player-no 0})
+                 (choose :improve))
+             {:players      [{:play-area [improve lackeys copper]}]
+              :effect-stack [{:text      "You may trash an Action card you would discard this turn to gain a card costing exactly $1 more than it."
+                              :player-no 0
+                              :choice    ::renaissance/improve-trash
+                              :source    :play-area
+                              :options   [:improve :lackeys]
+                              :max       1}
+                             {:player-no 0
+                              :card-id   1
+                              :effect    [:at-clean-up]}
+                             {:player-no 0
+                              :effect    [:do-clean-up {:player-no 0}]}
+                             {:player-no 0
+                              :effect    [:draw 5]}
+                             {:player-no 0
+                              :effect    [:check-game-ended]}]}))
+      (is (= (-> {:players [{:play-area [(assoc researcher :at-start-turn [[:some-effects]])
+                                         (assoc improve :at-clean-up [[::renaissance/improve-give-choice]])
+                                         copper]}]}
+                 (clean-up {:player-no 0})
+                 (choose :improve))
+             {:players      [{:play-area [(assoc researcher :at-start-turn [[:some-effects]])
+                                          improve copper]}]
+              :effect-stack [{:text      "You may trash an Action card you would discard this turn to gain a card costing exactly $1 more than it."
+                              :player-no 0
+                              :choice    ::renaissance/improve-trash
+                              :source    :play-area
+                              :options   [:improve]
+                              :max       1}
+                             {:player-no 0
+                              :card-id   1
+                              :effect    [:at-clean-up]}
+                             {:player-no 0
+                              :effect    [:do-clean-up {:player-no 0}]}
+                             {:player-no 0
+                              :effect    [:draw 5]}
+                             {:player-no 0
+                              :effect    [:check-game-ended]}]}))
+      (is (= (-> {:supply  [{:card lackeys :pile-size 9}
+                            {:card improve :pile-size 9}]
+                  :players [{:play-area [(assoc improve :at-clean-up [[::renaissance/improve-give-choice]])
+                                         lackeys copper]}]}
+                 (clean-up {:player-no 0})
+                 (choose :improve)
+                 (choose :lackeys))
+             {:supply       [{:card lackeys :pile-size 9}
+                             {:card improve :pile-size 9}]
+              :players      [{:play-area [improve copper]}]
+              :trash        [lackeys]
+              :effect-stack [{:text      "Gain a card costing exactly $3."
+                              :player-no 0
+                              :choice    :gain
+                              :source    :supply
+                              :options   [:improve]
+                              :min       1
+                              :max       1}
+                             {:player-no 0
+                              :card-id   1
+                              :effect    [:at-clean-up]}
+                             {:player-no 0
+                              :effect    [:do-clean-up {:player-no 0}]}
+                             {:player-no 0
+                              :effect    [:draw 5]}
+                             {:player-no 0
+                              :effect    [:check-game-ended]}]})))))
 
 (deftest inventor-test
   (let [silver (assoc silver :id 1)

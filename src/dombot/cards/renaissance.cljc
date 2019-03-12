@@ -138,6 +138,41 @@
                                        :min     1
                                        :max     1}]]})
 
+(defn improve-trash [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:name card-name})
+        cost (inc (ut/get-cost game card))]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:trash-from-play-area {:card-name card-name}]
+                                                 [:give-choice {:text    (str "Gain a card costing exactly $" cost ".")
+                                                                :choice  :gain
+                                                                :options [:supply {:cost cost}]
+                                                                :min     1
+                                                                :max     1}]]}))))
+
+(defn improve-give-choice [game {:keys [player-no]}]
+  (give-choice game {:player-no player-no
+                     :text      "You may trash an Action card you would discard this turn to gain a card costing exactly $1 more than it."
+                     :choice    ::improve-trash
+                     :options   [:player :play-area {:type        :action
+                                                     :leaves-play true}]
+                     :max       1}))
+
+(defn improve-clean-up [game {:keys [player-no card-id]}]
+  (ut/update-in-vec game [:players player-no :play-area] {:id card-id}
+                    assoc :at-clean-up [[::improve-give-choice]]))
+
+(effects/register {::improve-trash       improve-trash
+                   ::improve-give-choice improve-give-choice
+                   ::improve-clean-up    improve-clean-up})
+
+(def improve {:name    :improve
+              :set     :renaissance
+              :types   #{:action}
+              :cost    3
+              :effects [[:give-coins 2]
+                        [::improve-clean-up]]})
+
 (def inventor {:name    :inventor
                :set     :renaissance
                :types   #{:action}
@@ -381,6 +416,7 @@
                     experiment
                     flag-bearer
                     hideout
+                    improve
                     inventor
                     lackeys
                     mountain-village

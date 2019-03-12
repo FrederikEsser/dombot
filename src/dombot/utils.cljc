@@ -109,6 +109,10 @@
               card cost-reductions)
       :cost))
 
+(defn stay-in-play [{:keys [at-start-turn at-end-turn]}]
+  (or (not-empty at-start-turn)
+      (not-empty at-end-turn)))
+
 (defn- can-react? [game player-no {:keys [react-pred]}]
   (if react-pred
     (let [can-react-fn (effects/get-effect react-pred)]
@@ -116,7 +120,7 @@
     true))
 
 (defn options-from-player
-  ([game player-no card-id area & [{:keys [last this name names not-name type reacts-to min-cost]}]]
+  ([game player-no card-id area & [{:keys [last this name names not-name type reacts-to min-cost leaves-play]}]]
    (when this
      (assert card-id (str "Card has no id, but is referring to :this in " area ".")))
    (cond->> (get-in game [:players player-no area])
@@ -129,6 +133,7 @@
             reacts-to (filter (every-pred (comp #{reacts-to} :reacts-to)
                                           (partial can-react? game player-no)))
             min-cost (filter (comp (partial <= min-cost) (partial get-cost game)))
+            leaves-play (remove stay-in-play)
             :always (map :name))))
 
 (effects/register-options {:player options-from-player})

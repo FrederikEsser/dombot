@@ -1,5 +1,5 @@
 (ns dombot.cards.common
-  (:require [dombot.operations :refer [gain move-card move-cards give-choice push-effect-stack stay-in-play]]
+  (:require [dombot.operations :refer [gain move-card move-cards give-choice push-effect-stack]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -69,7 +69,7 @@
 (defn check-stay-in-play [game {:keys [player-no card-id target-id]}]
   (let [{{:keys [types] :as card} :card} (ut/get-card-idx game [:players player-no :play-area] {:id target-id})]
     (cond-> game
-            (and (:duration types) (stay-in-play card)) (ut/update-in-vec [:players player-no :play-area] {:id card-id} update :at-start-turn concat [[]]))))
+            (and (:duration types) (ut/stay-in-play card)) (ut/update-in-vec [:players player-no :play-area] {:id card-id} update :at-start-turn concat [[]]))))
 
 (effects/register {:check-stay-in-play check-stay-in-play})
 
@@ -246,6 +246,13 @@
                                          :to           :trash})))))
 
 (effects/register {:trash-this trash-this})
+
+(defn trash-from-play-area [game {:keys [card-name] :as args}]
+  (cond-> game
+          card-name (move-card (merge args {:from :play-area
+                                            :to   :trash}))))
+
+(effects/register {:trash-from-play-area trash-from-play-area})
 
 (defn trash-from-revealed [game args]
   (move-cards game (merge args {:from :revealed
