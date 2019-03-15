@@ -973,6 +973,7 @@
                          :play-area [sculptor]
                          :actions   0}]}))
       (is (= (-> {:track-gained-cards? true
+                  :current-player      0
                   :supply              [{:card silver :pile-size 40}]
                   :players             [{:hand    [sculptor]
                                          :discard [copper]
@@ -980,6 +981,7 @@
                  (play 0 :sculptor)
                  (choose :silver))
              {:track-gained-cards? true
+              :current-player      0
               :supply              [{:card silver :pile-size 39}]
               :players             [{:hand         [silver]
                                      :play-area    [sculptor]

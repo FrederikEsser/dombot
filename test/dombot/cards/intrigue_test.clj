@@ -682,6 +682,7 @@
                               :min       1
                               :max       1}]}))
       (is (= (-> {:track-gained-cards? true
+                  :current-player      0
                   :supply              [{:card upgrade}]
                   :players             [{:hand    [lurker]
                                          :actions 1}]
@@ -690,6 +691,7 @@
                  (choose :gain)
                  (choose :upgrade))
              {:track-gained-cards? true
+              :current-player      0
               :supply              [{:card upgrade}]
               :players             [{:play-area    [lurker]
                                      :discard      [upgrade]

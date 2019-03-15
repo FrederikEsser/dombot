@@ -1217,9 +1217,11 @@
                          :discard [copper]}]})))))
 
 (deftest smugglers-test
-  (let [gold (assoc gold :id 1)]
+  (let [gold (assoc gold :id 1)
+        curse (assoc curse :id 2)]
     (testing "smugglers"
       (is (= (-> {:track-gained-cards? true
+                  :current-player      0
                   :supply              [{:card gold :pile-size 30}]
                   :players             [{:coins 6
                                          :buys  1}
@@ -1348,7 +1350,21 @@
                                  :source    :supply
                                  :options   [:province]
                                  :min       1
-                                 :max       1}]})))))
+                                 :max       1}]}))
+      (is (= (-> {:track-gained-cards? true
+                  :current-player      0
+                  :supply              [{:card curse :pile-size 10}]
+                  :players             [{:hand    [sea-hag smugglers]
+                                         :actions 2}
+                                        {}]}
+                 (play 0 :sea-hag)
+                 (play 0 :smugglers))
+             {:track-gained-cards? true
+              :current-player      0
+              :supply              [{:card curse :pile-size 9}]
+              :players             [{:play-area [sea-hag smugglers]
+                                     :actions   0}
+                                    {:deck [curse]}]})))))
 
 (deftest tactician-test
   (let [tactician (assoc tactician :id 1)
@@ -1465,11 +1481,13 @@
         treasury-2 (assoc treasury :id 2)
         province (assoc province :id 3)]
     (is (= (-> {:track-gained-cards? true
+                :current-player      0
                 :supply              [{:card province :pile-size 8}]
                 :players             [{:coins 8
                                        :buys  1}]}
                (buy-card 0 :province))
            {:track-gained-cards? true
+            :current-player      0
             :supply              [{:card province :pile-size 7}]
             :players             [{:discard      [province]
                                    :coins        0

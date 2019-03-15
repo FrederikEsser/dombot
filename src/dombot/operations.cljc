@@ -136,6 +136,15 @@
                                       (reset-revealed-number-of-cards player-no to))
             (empty? from-cards) (update-in [:players player-no] dissoc from))))
 
+(defn handle-on-gain [{:keys [track-gained-cards? current-player] :as game} {:keys [player-no card-name bought] :as args}]
+  (let [{{:keys [on-gain] :as card} :card} (ut/get-pile-idx game card-name)]
+    (cond-> game
+            on-gain (push-effect-stack (merge args {:effects on-gain}))
+            (and track-gained-cards?
+                 (= current-player player-no)) (update-in [:players player-no :gained-cards]
+                                                          concat [(merge (select-keys card [:name :types :cost])
+                                                                         (when bought {:bought true}))]))))
+
 (defn do-gain [game {:keys [player-no card-name to to-position]
                      :or   {to :discard}}]
   (assert card-name "No card-name specified for gain.")
@@ -152,14 +161,6 @@
             (< 0 pile-size) (-> (update-in [:supply idx :pile-size] dec)
                                 (update-in to-path add-card-to-coll (ut/give-id! card))
                                 (state-maintenance player-no :supply to)))))
-
-(defn handle-on-gain [{:keys [track-gained-cards?] :as game} {:keys [player-no card-name bought] :as args}]
-  (let [{{:keys [on-gain] :as card} :card} (ut/get-pile-idx game card-name)]
-    (cond-> game
-            on-gain (push-effect-stack (merge args {:effects on-gain}))
-            track-gained-cards? (update-in [:players player-no :gained-cards]
-                                           concat [(merge (select-keys card [:name :types :cost])
-                                                          (when bought {:bought true}))]))))
 
 (defn gain [game args]
   (-> game
