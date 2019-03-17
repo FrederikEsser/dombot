@@ -110,7 +110,7 @@
                                  ::interval
                                  ::optional?]))
 
-(s/def ::victory-points nat-int?)
+(s/def ::victory-points integer?)
 
 (s/def ::winner? boolean?)
 
