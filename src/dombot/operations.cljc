@@ -136,6 +136,49 @@
                                       (reset-revealed-number-of-cards player-no to))
             (empty? from-cards) (update-in [:players player-no] dissoc from))))
 
+(defn- get-card [game {:keys [player-no card-name move-card-id from from-position] :as args}]
+  (assert (or card-name move-card-id from-position) (str "Can't move unspecified card: " args))
+  (if (= :supply from)
+    (let [{:keys [card idx pile-size]} (ut/get-pile-idx game card-name)]
+      (assert pile-size (str "Gain error: The supply doesn't have a " (ut/format-name card-name) " pile."))
+      (when (< 0 pile-size)
+        {:card      (ut/give-id! card)
+         :from-path :supply
+         :idx       idx}))
+    (let [player (get-in game [:players player-no])
+          from-path (case from
+                      :trash [:trash]
+                      [:players player-no from])]
+      (merge {:from-path from-path}
+             (case from-position
+               :bottom {:idx (dec (count (get player from))) :card (last (get player from))}
+               :top {:idx 0 :card (first (get player from))}
+               (cond
+                 move-card-id (ut/get-card-idx game from-path {:id move-card-id})
+                 card-name (ut/get-card-idx game from-path {:name card-name})
+                 :else {:idx 0 :card (first (get player from))}))))))
+
+(defn- remove-card [game from-path idx]
+  (if (= :supply from-path)
+    (update-in game [:supply idx :pile-size] dec)
+    (update-in game from-path ut/vec-remove idx)))
+
+(defn- add-card [game to-path to-position {:keys [name] :as card}]
+  (let [add-card-to-coll (fn [coll card]
+                           (let [coll (vec coll)]
+                             (if (empty? coll)
+                               [card]
+                               (cond
+                                 (= :top to-position) (concat [card] coll)
+                                 (integer? to-position) (concat (subvec coll 0 to-position)
+                                                                [card]
+                                                                (subvec coll to-position (count coll)))
+                                 :else (concat coll [card])))))]
+    (if (= :supply to-path)
+      (let [{:keys [idx]} (ut/get-pile-idx game name)]
+        (update-in game [:supply idx :pile-size] inc))
+      (update-in game to-path add-card-to-coll card))))
+
 (defn handle-on-gain [{:keys [track-gained-cards? current-player] :as game} {:keys [player-no card-name bought] :as args}]
   (let [{{:keys [on-gain] :as card} :card} (ut/get-pile-idx game card-name)]
     (cond-> game
@@ -145,22 +188,18 @@
                                                           concat [(merge (select-keys card [:name :types :cost])
                                                                          (when bought {:bought true}))]))))
 
-(defn do-gain [game {:keys [player-no card-name to to-position]
-                     :or   {to :discard}}]
+(defn do-gain [game {:keys [player-no card-name from to to-position]
+                     :or   {from :supply
+                            to   :discard}
+                     :as args}]
   (assert card-name "No card-name specified for gain.")
-  (let [{:keys [idx card pile-size]} (ut/get-pile-idx game card-name)
-        to-path (if (= to :trash)
-                  [:trash]
-                  [:players player-no to])
-        add-card-to-coll (fn [coll card]
-                           (case to-position
-                             :top (concat [card] coll)
-                             (concat coll [card])))]
-    (assert pile-size (str "Gain error: The supply doesn't have a " (ut/format-name card-name) " pile."))
+  (let [{:keys [card from-path idx]} (get-card game {:player-no player-no
+                                                     :card-name card-name
+                                                     :from      from})]
     (cond-> game
-            (< 0 pile-size) (-> (update-in [:supply idx :pile-size] dec)
-                                (update-in to-path add-card-to-coll (ut/give-id! card))
-                                (state-maintenance player-no :supply to)))))
+            card (-> (remove-card from-path idx)
+                     (add-card [:players player-no to] to-position card)
+                     (state-maintenance player-no :supply to)))))
 
 (defn gain [game args]
   (-> game
@@ -229,70 +268,17 @@
 
 (effects/register {:peek-deck peek-deck})
 
-(defn return-to-supply [game {:keys [player-no card-name card-names]}]
-  (if card-name
-    (let [{hand-idx :idx} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-          {supply-idx :idx} (ut/get-pile-idx game card-name)]
-      (-> game
-          (update-in [:players player-no :hand] ut/vec-remove hand-idx)
-          (update-in [:supply supply-idx :pile-size] inc)
-          (state-maintenance player-no :hand :supply)))
-    (push-effect-stack game {:player-no player-no
-                             :effects   (->> card-names
-                                             (map (fn [name]
-                                                    [:return-to-supply {:card-name name}])))})))
-
-(defn return-this-to-supply [game {:keys [player-no card-id]}]
-  (let [{play-area-idx     :idx
-         {card-name :name} :card} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})
-        {supply-idx :idx} (ut/get-pile-idx game card-name)]
-    (cond-> game
-            card-name (-> (update-in [:players player-no :play-area] ut/vec-remove play-area-idx)
-                          (update-in [:supply supply-idx :pile-size] inc)
-                          (state-maintenance player-no :play-area :supply)))))
-
-(effects/register {:return-this-to-supply return-this-to-supply
-                   :return-to-supply      return-to-supply})
-
-(defn- get-card [game {:keys [player-no card-name move-card-id from from-position] :as args}]
-  (assert (or card-name move-card-id from-position) (str "Can't move unspecified card: " args))
-  (let [player (get-in game [:players player-no])
-        from-path (if (= from :trash)
-                    [:trash]
-                    [:players player-no from])]
-    (case from-position
-      :bottom {:idx (dec (count (get player from))) :card (last (get player from))}
-      :top {:idx 0 :card (first (get player from))}
-      (cond
-        move-card-id (ut/get-card-idx game from-path {:id move-card-id})
-        card-name (ut/get-card-idx game from-path {:name card-name})
-        :else {:idx 0 :card (first (get player from))}))))
-
 (defn do-move-card [game {:keys [player-no card-name move-card-id from to to-position to-player] :as args}]
-  (let [from-path (if (= from :trash)
-                    [:trash]
-                    [:players player-no from])
-        {:keys [idx card]} (get-card game args)
-        to-path (if (= to :trash)
-                  [:trash]
-                  [:players (or to-player player-no) to])
-        add-card-to-coll (fn [coll card]
-                           (let [coll (vec coll)]
-                             (if (empty? coll)
-                               [card]
-                               (cond
-                                 (= :top to-position) (concat [card] coll)
-                                 (integer? to-position) (concat (subvec coll 0 to-position)
-                                                                [card]
-                                                                (subvec coll to-position (count coll)))
-                                 :else (concat coll [card])))))]
+  (let [{:keys [card from-path idx]} (get-card game args)
+        to-path (case to
+                  :trash [:trash]
+                  :supply :supply
+                  [:players (or to-player player-no) to])]
     (when card-name
-      (assert card (str "Move error: There is no " (ut/format-name card-name) " in your " (ut/format-name from) ".")))
-    (when move-card-id
-      (assert card (str "Move error: Card-id " move-card-id " is not in your " (ut/format-name from) ".")))
+      (assert card (str "Move error: There is no " (ut/format-name card-name) " in " from-path ".")))
     (cond-> game
-            card (-> (update-in from-path ut/vec-remove idx)
-                     (update-in to-path add-card-to-coll card)
+            card (-> (remove-card from-path idx)
+                     (add-card to-path to-position card)
                      (state-maintenance player-no from to)))))
 
 (defn handle-on-trash [game {:keys [card-name] :as args}]

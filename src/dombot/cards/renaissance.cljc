@@ -103,7 +103,8 @@
                  :effects [[:draw 2]
                            [:give-actions 1]
                            [:return-this-to-supply]]
-                 :on-gain [[:do-gain {:card-name :experiment}]]}) ; todo: Handle other on-gain effects
+                 :on-gain [[:do-gain {:card-name :experiment
+                                      :from :supply}]]}) ; todo: Handle other on-gain effects
 
 (def flag {:name    :flag
            :trigger {:trigger :at-draw-hand

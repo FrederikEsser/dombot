@@ -45,16 +45,13 @@
 (effects/register {:gain-to-topdeck gain-to-topdeck})
 
 (defn gain-from-trash [game args]
-  (push-effect-stack game (merge args {:effects [[:move-card (merge args {:from :trash
-                                                                          :to   :discard})]
-                                                 [:on-gain args]]})))
+  (gain game (merge args {:from :trash})))
 
 (effects/register {:gain-from-trash gain-from-trash})
 
 (defn gain-from-trash-to-hand [game args]
-  (push-effect-stack game (merge args {:effects [[:move-card (merge args {:from :trash
-                                                                          :to   :hand})]
-                                                 [:on-gain args]]})))
+  (gain game (merge args {:from :trash
+                          :to   :hand})))
 
 (effects/register {:gain-from-trash-to-hand gain-from-trash-to-hand})
 
@@ -266,20 +263,11 @@
 
 (effects/register {:trash-from-look-at trash-from-look-at})
 
-(defn do-trash-from-supply [game {:keys [card-name] :as args}]
-  (assert card-name (str "Can't trash unspecified card: " args))
-  (let [{:keys [idx card pile-size]} (ut/get-pile-idx game card-name)]
-    (assert pile-size (str "Trash error: The supply doesn't have a " (ut/format-name card-name) " pile."))
-    (cond-> game
-            (< 0 pile-size) (-> (update-in [:supply idx :pile-size] dec)
-                                (update :trash concat [(ut/give-id! card)])))))
-
 (defn trash-from-supply [game args]
-  (push-effect-stack game (merge args {:effects [[:do-trash-from-supply args]
-                                                 [:on-trash args]]})))
+  (move-card game (merge args {:from :supply
+                               :to   :trash})))
 
-(effects/register {:do-trash-from-supply do-trash-from-supply
-                   :trash-from-supply    trash-from-supply})
+(effects/register {:trash-from-supply trash-from-supply})
 
 (defn trash-from-topdeck [game {:keys [player-no]}]
   (move-card game {:player-no     player-no
@@ -364,6 +352,19 @@
                                             :to   :hand}))))
 
 (effects/register {:take-from-discard take-from-discard})
+
+(defn return-to-supply [game args]
+  (move-cards game (merge args {:from :hand
+                                :to   :supply})))
+
+(defn return-this-to-supply [game {:keys [player-no card-id]}]
+  (move-card game {:player-no    player-no
+                   :move-card-id card-id
+                   :from         :play-area
+                   :to           :supply}))
+
+(effects/register {:return-this-to-supply return-this-to-supply
+                   :return-to-supply      return-to-supply})
 
 (defn add-trigger [game {:keys [player-no trigger]}]
   (update-in game [:players player-no :triggers] concat [trigger]))

@@ -8,6 +8,7 @@
 ; store commands in history
 ; save / load game
 ; fix improve / double border guard bug
+; fix masquerade / torturer bug
 ; hide revealed cards on any movement
 ; handle revealed-cards in hand as a list of card-names
 ; refac supply to a map of lists of cards by name
