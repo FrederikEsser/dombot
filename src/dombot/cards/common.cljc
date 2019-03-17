@@ -366,8 +366,10 @@
 (effects/register {:return-this-to-supply return-this-to-supply
                    :return-to-supply      return-to-supply})
 
-(defn add-trigger [game {:keys [player-no trigger]}]
-  (update-in game [:players player-no :triggers] concat [trigger]))
+(defn add-trigger [game {:keys [player-no card-id trigger]}]
+  (update-in game [:players player-no :triggers] concat [(merge trigger
+                                                                (when card-id
+                                                                  {:card-id card-id}))]))
 
 (effects/register {:add-trigger add-trigger})
 

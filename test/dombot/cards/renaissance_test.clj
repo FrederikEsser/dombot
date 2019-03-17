@@ -277,6 +277,87 @@
                        :revealed-cards {:hand    1
                                         :discard 1}}]})))
 
+(deftest cargo-ship-test
+  (let [cargo-ship (assoc cargo-ship :id 1)
+        gold (assoc gold :id 2)]
+    (testing "Cargo Ship"
+      (is (= (-> {:players [{:hand    [cargo-ship]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :cargo-ship))
+             {:players [{:play-area [cargo-ship]
+                         :actions   0
+                         :coins     2
+                         :triggers  [(assoc cargo-ship-trigger :card-id 1)]}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [cargo-ship]
+                             :discard [copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :cargo-ship)
+                 (gain {:player-no 0 :card-name :gold}))
+             {:supply       [{:card gold :pile-size 29}]
+              :players      [{:play-area [cargo-ship]
+                              :discard   [copper gold]
+                              :actions   0
+                              :coins     2}]
+              :effect-stack [{:text      "You may set the gained Gold aside on Cargo Ship."
+                              :player-no 0
+                              :card-id   1
+                              :choice    ::renaissance/cargo-ship-set-aside
+                              :source    :discard
+                              :options   [:gold]
+                              :max       1}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [cargo-ship]
+                             :discard [copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :cargo-ship)
+                 (gain {:player-no 0 :card-name :gold})
+                 (choose :gold))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:play-area [(assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :gold}]]]
+                                                       :set-aside [gold])]
+                         :discard   [copper]
+                         :actions   0
+                         :coins     2}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [cargo-ship]
+                             :discard [copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :cargo-ship)
+                 (gain {:player-no 0 :card-name :gold})
+                 (choose nil))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:play-area [cargo-ship]
+                         :discard   [copper gold]
+                         :actions   0
+                         :coins     2
+                         :triggers  [(assoc cargo-ship-trigger :card-id 1)]}]}))
+      (is (= (-> {:supply  [{:card cargo-ship :pile-size 10}]
+                  :players [{:hand    [cargo-ship sculptor]
+                             :discard [copper]
+                             :actions 2
+                             :coins   0}]}
+                 (play 0 :cargo-ship)
+                 (play 0 :sculptor)
+                 (choose :cargo-ship))
+             {:supply       [{:card cargo-ship :pile-size 9}]
+              :players      [{:hand      [cargo-ship]
+                              :play-area [cargo-ship sculptor]
+                              :discard   [copper]
+                              :actions   0
+                              :coins     2}]
+              :effect-stack [{:text      "You may set the gained Cargo Ship aside on Cargo Ship."
+                              :player-no 0
+                              :card-id   1
+                              :choice    ::renaissance/cargo-ship-set-aside
+                              :source    :hand
+                              :options   [:cargo-ship]
+                              :max       1}]})))))
+
 (deftest ducat-test
   (let [ducat (assoc ducat :id 1)]
     (testing "Ducat"

@@ -8,7 +8,7 @@
     (or (and province-pile-size (zero? province-pile-size))
         (>= (ut/empty-supply-piles game) 3))))
 
-(defn push-effect-stack [game {:keys [player-no card-id effects choice]}]
+(defn push-effect-stack [game {:keys [player-no card-id effects choice args]}]
   (cond-> game
           (or (not-empty effects)
               choice) (update :effect-stack (partial concat (cond effects (->> effects
@@ -17,7 +17,9 @@
                                                                                         (merge {:player-no player-no
                                                                                                 :effect    effect}
                                                                                                (when card-id
-                                                                                                 {:card-id card-id})))))
+                                                                                                 {:card-id card-id})
+                                                                                               (when args
+                                                                                                 {:args args})))))
                                                                                (remove nil?))
                                                                   choice [(merge choice
                                                                                  {:player-no player-no}
@@ -29,23 +31,25 @@
     (dissoc game :effect-stack)
     (update game :effect-stack (partial drop 1))))
 
-(defn do-effect [game {:keys       [player-no card-id]
-                       [name args] :effect}]
+(defn do-effect [game {:keys              [player-no card-id args]
+                       [name inline-args] :effect}]
   (let [effect-fn (effects/get-effect name)
         args (merge {:player-no player-no}
                     (when card-id
                       {:card-id card-id})
-                    (cond (map? args) args
-                          args {:arg args}))]
+                    args
+                    (cond (map? inline-args) inline-args
+                          inline-args {:arg inline-args}))]
     (effect-fn game args)))
 
 (defn check-stack [game]
-  (let [[{:keys [player-no card-id effect] :as top}] (get game :effect-stack)]
+  (let [[{:keys [player-no card-id effect args] :as top}] (get game :effect-stack)]
     (cond-> game
             effect (-> pop-effect-stack
                        (do-effect {:player-no player-no
                                    :card-id   card-id
-                                   :effect    effect})
+                                   :effect    effect
+                                   :args      args})
                        check-stack))))
 
 (defn at-start-turn-effects [game player-no]
@@ -105,6 +109,22 @@
     (-> game
         (update-in [:players player-no :villagers] dec)
         (update-in [:players player-no :actions] inc))))
+
+(defn remove-trigger [game player-no trigger]
+  (-> game
+      (update-in [:players player-no :triggers] (partial remove (every-pred (ut/match {:trigger trigger})
+                                                                            (comp #{:once} :duration))))
+      (update-in [:players player-no] ut/dissoc-if-empty :triggers)))
+
+(defn- apply-triggers [game player-no trigger & [args]]
+  (let [triggers (get-in game [:players player-no :triggers])
+        apply-trigger (fn [game {:keys [card-id effects]}] (push-effect-stack game {:player-no player-no
+                                                                                    :card-id   card-id
+                                                                                    :effects   effects
+                                                                                    :args      args}))
+        matching-triggers (filter (comp #{trigger} :trigger) triggers)]
+    (-> (reduce apply-trigger game matching-triggers)
+        (remove-trigger player-no trigger))))
 
 (defn set-approx-discard-size [game player-no & [n]]
   (let [{:keys [discard approx-discard-size]} (get-in game [:players player-no])
@@ -179,9 +199,16 @@
         (update-in game [:supply idx :pile-size] inc))
       (update-in game to-path add-card-to-coll card))))
 
-(defn handle-on-gain [{:keys [track-gained-cards? current-player] :as game} {:keys [player-no card-name bought] :as args}]
-  (let [{{:keys [on-gain] :as card} :card} (ut/get-pile-idx game card-name)]
+(defn handle-on-gain [{:keys [track-gained-cards? current-player] :as game}
+                      {:keys [player-no to to-position bought]
+                       :or   {to          :discard
+                              to-position :bottom}
+                       :as   args}]
+  (let [new-args (merge args {:from          to
+                              :from-position to-position})
+        {{:keys [on-gain] :as card} :card} (get-card game new-args)]
     (cond-> game
+            :always (apply-triggers player-no :on-gain new-args)
             on-gain (push-effect-stack (merge args {:effects on-gain}))
             (and track-gained-cards?
                  (= current-player player-no)) (update-in [:players player-no :gained-cards]
@@ -190,8 +217,7 @@
 
 (defn do-gain [game {:keys [player-no card-name from to to-position]
                      :or   {from :supply
-                            to   :discard}
-                     :as args}]
+                            to   :discard}}]
   (assert card-name "No card-name specified for gain.")
   (let [{:keys [card from-path idx]} (get-card game {:player-no player-no
                                                      :card-name card-name
@@ -486,20 +512,6 @@
         check-stack)))
 
 (effects/register {:give-choice give-choice})
-
-(defn remove-trigger [game player-no trigger]
-  (-> game
-      (update-in [:players player-no :triggers] (partial remove (every-pred (ut/match {:trigger trigger})
-                                                                            (comp #{:once} :duration))))
-      (update-in [:players player-no] ut/dissoc-if-empty :triggers)))
-
-(defn- apply-triggers [game player-no trigger]
-  (let [triggers (get-in game [:players player-no :triggers])
-        apply-trigger (fn [game {:keys [effects]}] (push-effect-stack game {:player-no player-no
-                                                                            :effects   effects}))
-        matching-triggers (filter (comp #{trigger} :trigger) triggers)]
-    (-> (reduce apply-trigger game matching-triggers)
-        (remove-trigger player-no trigger))))
 
 (def reaction-choice [[:give-choice {:text    (str "You may reveal a Reaction to react to the Attack.")
                                      :choice  :reveal-reaction

@@ -1,6 +1,6 @@
 (ns dombot.cards.renaissance
   (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards]]
-            [dombot.cards.common :refer [reveal-hand reveal-from-deck]]
+            [dombot.cards.common :refer [reveal-hand reveal-from-deck add-trigger]]
             [dombot.utils :as ut]
             [dombot.effects :as effects])
   (:refer-clojure :exclude [key]))
@@ -84,6 +84,42 @@
                    :setup   [[::add-artifact {:artifact-name :horn}]
                              [::add-artifact {:artifact-name :lantern}]]})
 
+(def cargo-ship-trigger {:trigger  :on-gain
+                         :duration :once
+                         :effects  [[::cargo-ship-give-choice]]})
+
+(defn cargo-ship-set-aside [game {:keys [player-no card-id card-name]}]
+  (if card-name
+    (let [{:keys [card idx]} (ut/get-card-idx game [:players player-no :discard] {:name card-name})]
+      (-> game
+          (update-in [:players player-no :discard] ut/vec-remove idx)
+          (ut/update-in-vec [:players player-no :play-area] {:id card-id}
+                            (fn [cargo-ship]
+                              (-> cargo-ship
+                                  (update :set-aside concat [card])
+                                  (update :at-start-turn concat [[[:put-set-aside-into-hand {:card-name card-name}]]]))))))
+    (add-trigger game {:player-no player-no
+                       :card-id   card-id
+                       :trigger   cargo-ship-trigger})))
+
+(defn cargo-ship-give-choice [game {:keys [player-no card-id card-name from]}]
+  (give-choice game {:player-no player-no
+                     :card-id   card-id
+                     :text      (str "You may set the gained " (ut/format-name card-name) " aside on Cargo Ship.")
+                     :choice    ::cargo-ship-set-aside
+                     :options   [:player from {:last true}]
+                     :max       1}))
+
+(effects/register {::cargo-ship-set-aside   cargo-ship-set-aside
+                   ::cargo-ship-give-choice cargo-ship-give-choice})
+
+(def cargo-ship {:name    :cargo-ship
+                 :set     :renaissance
+                 :types   #{:action :duration}
+                 :cost    3
+                 :effects [[:give-coins 2]
+                           [:add-trigger {:trigger cargo-ship-trigger}]]})
+
 (def ducat {:name       :ducat
             :set        :renaissance
             :types      #{:treasure}
@@ -103,8 +139,7 @@
                  :effects [[:draw 2]
                            [:give-actions 1]
                            [:return-this-to-supply]]
-                 :on-gain [[:do-gain {:card-name :experiment
-                                      :from :supply}]]}) ; todo: Handle other on-gain effects
+                 :on-gain [[:do-gain {:card-name :experiment}]]}) ; todo: Handle other on-gain effects
 
 (def flag {:name    :flag
            :trigger {:trigger :at-draw-hand
@@ -413,6 +448,7 @@
 
 (def kingdom-cards [acting-troupe
                     border-guard
+                    cargo-ship
                     ducat
                     experiment
                     flag-bearer
