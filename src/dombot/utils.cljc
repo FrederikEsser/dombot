@@ -120,12 +120,13 @@
     true))
 
 (defn options-from-player
-  ([game player-no card-id area & [{:keys [last this name names not-name type reacts-to min-cost leaves-play]}]]
+  ([game player-no card-id area & [{:keys [last this id name names not-name type reacts-to min-cost leaves-play]}]]
    (when this
      (assert card-id (str "Card has no id, but is referring to :this in " area ".")))
    (cond->> (get-in game [:players player-no area])
             last (take-last 1)                              ; it's important that 'last' is evaluated first
             this (filter (comp #{card-id} :id))
+            id (filter (comp #{id} :id))
             name (filter (comp #{name} :name))
             names (filter (comp names :name))
             not-name (remove (comp #{not-name} :name))

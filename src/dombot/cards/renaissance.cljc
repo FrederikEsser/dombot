@@ -88,11 +88,11 @@
                          :duration :once
                          :effects  [[::cargo-ship-give-choice]]})
 
-(defn cargo-ship-set-aside [game {:keys [player-no card-id card-name]}]
+(defn cargo-ship-set-aside [game {:keys [player-no card-id card-name gained-card-id from]}]
   (if card-name
-    (let [{:keys [card idx]} (ut/get-card-idx game [:players player-no :discard] {:name card-name})]
+    (let [{:keys [card idx]} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})]
       (-> game
-          (update-in [:players player-no :discard] ut/vec-remove idx)
+          (update-in [:players player-no from] ut/vec-remove idx)
           (ut/update-in-vec [:players player-no :play-area] {:id card-id}
                             (fn [cargo-ship]
                               (-> cargo-ship
@@ -102,12 +102,12 @@
                        :card-id   card-id
                        :trigger   cargo-ship-trigger})))
 
-(defn cargo-ship-give-choice [game {:keys [player-no card-id card-name from]}]
+(defn cargo-ship-give-choice [game {:keys [player-no card-id gained-card-id card-name from]}]
   (give-choice game {:player-no player-no
                      :card-id   card-id
                      :text      (str "You may set the gained " (ut/format-name card-name) " aside on Cargo Ship.")
-                     :choice    ::cargo-ship-set-aside
-                     :options   [:player from {:last true}]
+                     :choice    [::cargo-ship-set-aside {:gained-card-id gained-card-id :from from}]
+                     :options   [:player from {:id gained-card-id}]
                      :max       1}))
 
 (effects/register {::cargo-ship-set-aside   cargo-ship-set-aside

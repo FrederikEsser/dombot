@@ -279,7 +279,9 @@
 
 (deftest cargo-ship-test
   (let [cargo-ship (assoc cargo-ship :id 1)
-        gold (assoc gold :id 2)]
+        gold (assoc gold :id 2)
+        border-guard (assoc border-guard :id 3)
+        border-guard-4 (assoc border-guard :id 4)]
     (testing "Cargo Ship"
       (is (= (-> {:players [{:hand    [cargo-ship]
                              :actions 1
@@ -304,7 +306,7 @@
               :effect-stack [{:text      "You may set the gained Gold aside on Cargo Ship."
                               :player-no 0
                               :card-id   1
-                              :choice    ::renaissance/cargo-ship-set-aside
+                              :choice    [::renaissance/cargo-ship-set-aside {:gained-card-id 2 :from :discard}]
                               :source    :discard
                               :options   [:gold]
                               :max       1}]}))
@@ -336,27 +338,59 @@
                          :actions   0
                          :coins     2
                          :triggers  [(assoc cargo-ship-trigger :card-id 1)]}]}))
-      (is (= (-> {:supply  [{:card cargo-ship :pile-size 10}]
+      (is (= (-> {:supply  [{:card border-guard :pile-size 10}]
                   :players [{:hand    [cargo-ship sculptor]
                              :discard [copper]
                              :actions 2
                              :coins   0}]}
                  (play 0 :cargo-ship)
                  (play 0 :sculptor)
-                 (choose :cargo-ship))
-             {:supply       [{:card cargo-ship :pile-size 9}]
-              :players      [{:hand      [cargo-ship]
+                 (choose :border-guard))
+             {:supply       [{:card border-guard :pile-size 9}]
+              :players      [{:hand      [border-guard]
                               :play-area [cargo-ship sculptor]
                               :discard   [copper]
                               :actions   0
                               :coins     2}]
-              :effect-stack [{:text      "You may set the gained Cargo Ship aside on Cargo Ship."
+              :effect-stack [{:text      "You may set the gained Border Guard aside on Cargo Ship."
                               :player-no 0
                               :card-id   1
-                              :choice    ::renaissance/cargo-ship-set-aside
+                              :choice    [::renaissance/cargo-ship-set-aside {:gained-card-id 3 :from :hand}]
                               :source    :hand
-                              :options   [:cargo-ship]
-                              :max       1}]})))))
+                              :options   [:border-guard]
+                              :max       1}]}))
+      (is (= (-> {:supply  [{:card border-guard :pile-size 10}]
+                  :players [{:hand    [cargo-ship sculptor]
+                             :discard [copper]
+                             :actions 2
+                             :coins   0}]}
+                 (play 0 :cargo-ship)
+                 (play 0 :sculptor)
+                 (choose :border-guard)
+                 (choose :border-guard))
+             {:supply  [{:card border-guard :pile-size 9}]
+              :players [{:hand      []
+                         :play-area [(assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :border-guard}]]]
+                                                       :set-aside [border-guard]) sculptor]
+                         :discard   [copper]
+                         :actions   0
+                         :coins     2}]}))
+      (is (= (-> {:supply  [{:card border-guard :pile-size 10}]
+                    :players [{:hand    [cargo-ship sculptor border-guard-4]
+                               :discard [copper]
+                               :actions 2
+                               :coins   0}]}
+                   (play 0 :cargo-ship)
+                   (play 0 :sculptor)
+                   (choose :border-guard)
+                   (choose :border-guard))
+               {:supply  [{:card border-guard :pile-size 9}]
+                :players [{:hand      [border-guard-4]
+                           :play-area [(assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :border-guard}]]]
+                                                         :set-aside [border-guard]) sculptor]
+                           :discard   [copper]
+                           :actions   0
+                           :coins     2}]})))))
 
 (deftest ducat-test
   (let [ducat (assoc ducat :id 1)]

@@ -206,9 +206,9 @@
                        :as   args}]
   (let [new-args (merge args {:from          to
                               :from-position to-position})
-        {{:keys [on-gain] :as card} :card} (get-card game new-args)]
+        {{:keys [on-gain id] :as card} :card} (get-card game new-args)]
     (cond-> game
-            :always (apply-triggers player-no :on-gain new-args)
+            :always (apply-triggers player-no :on-gain (assoc new-args :gained-card-id id))
             on-gain (push-effect-stack (merge args {:effects on-gain}))
             (and track-gained-cards?
                  (= current-player player-no)) (update-in [:players player-no :gained-cards]
@@ -409,11 +409,18 @@
                    :attack        attack-other-players
                    :all-players   affect-all-players})
 
+(defn- get-choice-fn [data]
+  (let [{:keys [choice] :as result} (if (vector? data)
+                                      {:choice (first data)
+                                       :args   (second data)}
+                                      {:choice data})]
+    (merge result {:choice-fn (effects/get-effect choice)})))
+
 (defn- choose-single [game valid-choices selection]
   (if (coll? selection)
     (assert (<= (count selection) 1) "Choose error: You can only pick 1 option."))
   (let [[{:keys [player-no attacker card-id choice source min optional?]}] (get game :effect-stack)
-        choice-fn (effects/get-effect choice)
+        {:keys [choice-fn args]} (get-choice-fn choice)
         arg-name (case source
                    :deck-position :position
                    :special :choice
@@ -428,7 +435,8 @@
 
     (-> game
         pop-effect-stack
-        (choice-fn (merge {:player-no player-no
+        (choice-fn (merge args
+                          {:player-no player-no
                            :card-id   card-id
                            arg-name   single-selection}
                           (when attacker
@@ -436,7 +444,7 @@
 
 (defn- choose-multi [game valid-choices selection]
   (let [[{:keys [player-no attacker card-id choice source min max optional?]}] (get game :effect-stack)
-        choice-fn (effects/get-effect choice)
+        {:keys [choice-fn args]} (get-choice-fn choice)
         arg-name (case source
                    :deck-position :position
                    :special :choices
@@ -457,7 +465,8 @@
 
     (-> game
         pop-effect-stack
-        (choice-fn (merge {:player-no player-no
+        (choice-fn (merge args
+                          {:player-no player-no
                            :card-id   card-id
                            arg-name   multi-selection}
                           (when attacker
@@ -475,11 +484,11 @@
         (choose-fn valid-choices selection)
         check-stack)))
 
-(defn get-source [{[name arg & [{:keys [last]}]] :options}]
+(defn get-source [{[name arg & [{:keys [id last]}]] :options}]
   (if (= :player name)
     (merge {:source arg}
            (when (and (= :discard arg)
-                      (not last))
+                      (not (or id last)))
              {:reveal-source true}))
     {:source name}))
 
