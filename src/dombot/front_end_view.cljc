@@ -40,8 +40,6 @@
         cards (cond->> (get player area)
                        number-of-cards (take-fn number-of-cards))]
     (-> cards
-        (cond->> (not number-of-cards) (sort-by (juxt (comp first (partial remove nil?) (juxt :action :treasure :curse :victory) :types)
-                                                      :name)))
         (->>
           (map (fn [{:keys [name types set-aside] :as card}]
                  (merge {:name    name
@@ -63,7 +61,9 @@
           frequencies
           (map (fn [[card number-of-cards]]
                  (cond-> card
-                         (< 1 number-of-cards) (assoc :number-of-cards number-of-cards))))))))
+                         (< 1 number-of-cards) (assoc :number-of-cards number-of-cards)))))
+       (cond->> (not number-of-cards) (sort-by (juxt (comp first (partial remove nil?) (juxt :action :treasure :curse :victory) :types)
+                                                     :name))))))
 
 (defn view-hand [{active-player?                      :active-player?
                   {:keys [hand revealed-cards phase]} :player
