@@ -80,6 +80,19 @@
                          :revealed-cards {:hand 1}
                          :actions        0}
                         {:discard [copper]}]}))
+      (is (= (-> {:supply  [{:card copper :pile-size 46}]
+                  :players [{:hand    [ambassador copper estate]
+                             :actions 1}
+                            {}]}
+                 (play 0 :ambassador)
+                 (choose :copper)
+                 (choose nil))
+             {:supply  [{:card copper :pile-size 45}]
+              :players [{:hand           [estate copper]
+                         :play-area      [ambassador]
+                         :revealed-cards {:hand 1}
+                         :actions        0}
+                        {:discard [copper]}]}))
       (is (= (-> {:supply  [{:card estate :pile-size 8}]
                   :players [{:hand    [ambassador copper copper copper estate]
                              :actions 1}

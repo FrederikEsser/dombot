@@ -353,9 +353,10 @@
 
 (effects/register {:take-from-discard take-from-discard})
 
-(defn return-to-supply [game args]
-  (move-cards game (merge args {:from :hand
-                                :to   :supply})))
+(defn return-to-supply [game {:keys [card-name card-names] :as args}]
+  (cond-> game
+          (or card-name card-names) (move-cards (merge args {:from :hand
+                                                             :to   :supply}))))
 
 (defn return-this-to-supply [game {:keys [player-no card-id]}]
   (move-card game {:player-no    player-no
