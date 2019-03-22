@@ -279,9 +279,11 @@
 
 (deftest cargo-ship-test
   (let [cargo-ship (assoc cargo-ship :id 1)
-        gold (assoc gold :id 2)
+        cargo-ship-2 (assoc cargo-ship :id 2)
         border-guard (assoc border-guard :id 3)
-        border-guard-4 (assoc border-guard :id 4)]
+        border-guard-4 (assoc border-guard :id 4)
+        gold (assoc gold :id 5)
+        inventor (assoc inventor :id 6)]
     (testing "Cargo Ship"
       (is (= (-> {:players [{:hand    [cargo-ship]
                              :actions 1
@@ -306,7 +308,7 @@
               :effect-stack [{:text      "You may set the gained Gold aside on Cargo Ship."
                               :player-no 0
                               :card-id   1
-                              :choice    [::renaissance/cargo-ship-set-aside {:gained-card-id 2 :from :discard}]
+                              :choice    [::renaissance/cargo-ship-set-aside {:gained-card-id 5 :from :discard}]
                               :source    :discard
                               :options   [:gold]
                               :max       1}]}))
@@ -371,26 +373,62 @@
              {:supply  [{:card border-guard :pile-size 9}]
               :players [{:hand      []
                          :play-area [(assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :border-guard}]]]
-                                                       :set-aside [border-guard]) sculptor]
+                                                       :set-aside [border-guard])
+                                     sculptor]
                          :discard   [copper]
                          :actions   0
                          :coins     2}]}))
       (is (= (-> {:supply  [{:card border-guard :pile-size 10}]
-                    :players [{:hand    [cargo-ship sculptor border-guard-4]
-                               :discard [copper]
-                               :actions 2
-                               :coins   0}]}
-                   (play 0 :cargo-ship)
-                   (play 0 :sculptor)
-                   (choose :border-guard)
-                   (choose :border-guard))
-               {:supply  [{:card border-guard :pile-size 9}]
-                :players [{:hand      [border-guard-4]
-                           :play-area [(assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :border-guard}]]]
-                                                         :set-aside [border-guard]) sculptor]
-                           :discard   [copper]
-                           :actions   0
-                           :coins     2}]})))))
+                  :players [{:hand    [cargo-ship sculptor border-guard-4]
+                             :discard [copper]
+                             :actions 2
+                             :coins   0}]}
+                 (play 0 :cargo-ship)
+                 (play 0 :sculptor)
+                 (choose :border-guard)
+                 (choose :border-guard))
+             {:supply  [{:card border-guard :pile-size 9}]
+              :players [{:hand      [border-guard-4]
+                         :play-area [(assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :border-guard}]]]
+                                                       :set-aside [border-guard])
+                                     sculptor]
+                         :discard   [copper]
+                         :actions   0
+                         :coins     2}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [cargo-ship cargo-ship-2]
+                             :discard [copper]
+                             :actions 2
+                             :coins   0}]}
+                 (play 0 :cargo-ship)
+                 (play 0 :cargo-ship)
+                 (gain {:player-no 0 :card-name :gold})
+                 (choose :gold))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:play-area [(assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :gold}]]]
+                                                       :set-aside [gold])
+                                     cargo-ship-2]
+                         :discard   [copper]
+                         :actions   0
+                         :coins     4
+                         :triggers  [(assoc cargo-ship-trigger :card-id 2)]}]}))
+      (is (= (-> {:supply  [{:card border-guard :pile-size 10}]
+                  :players [{:hand    [cargo-ship inventor]
+                             :discard [copper]
+                             :actions 2
+                             :coins   0}]}
+                 (play 0 :cargo-ship)
+                 (play 0 :inventor)
+                 (choose :border-guard)
+                 (choose :border-guard))
+             {:cost-reductions [{:reduction 1}]
+              :supply          [{:card border-guard :pile-size 9}]
+              :players         [{:play-area [(assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :border-guard}]]]
+                                                               :set-aside [border-guard])
+                                             inventor]
+                                 :discard   [copper]
+                                 :actions   0
+                                 :coins     2}]})))))
 
 (deftest ducat-test
   (let [ducat (assoc ducat :id 1)]

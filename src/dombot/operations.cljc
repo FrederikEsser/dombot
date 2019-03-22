@@ -35,9 +35,9 @@
                        [name inline-args] :effect}]
   (let [effect-fn (effects/get-effect name)
         args (merge {:player-no player-no}
+                    args
                     (when card-id
                       {:card-id card-id})
-                    args
                     (cond (map? inline-args) inline-args
                           inline-args {:arg inline-args}))]
     (effect-fn game args)))
@@ -123,7 +123,7 @@
                                                                                     :effects   effects
                                                                                     :args      args}))
         matching-triggers (filter (comp #{trigger} :trigger) triggers)]
-    (-> (reduce apply-trigger game matching-triggers)
+    (-> (reduce apply-trigger game (reverse matching-triggers))
         (remove-trigger player-no trigger))))
 
 (defn set-approx-discard-size [game player-no & [n]]
