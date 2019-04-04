@@ -26,8 +26,10 @@
                               [:trash-this]]})
 
 (defn horn-at-clean-up [game {:keys [player-no]}]
-  (ut/update-in-vec game [:players player-no :play-area] {:name :border-guard}
-                    assoc :at-clean-up [[:topdeck-this-from-play-area]]))
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:name :border-guard})]
+    (cond-> game
+            card (ut/update-in-vec [:players player-no :play-area] {:name :border-guard}
+                                   assoc :at-clean-up [[:topdeck-this-from-play-area]]))))
 
 (effects/register {::horn-at-clean-up horn-at-clean-up})
 

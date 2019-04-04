@@ -5,11 +5,15 @@
 
 ; todo:
 
+; view card images
 ; store commands in history
 ; save / load game
-; fix improve / double border guard bug
-; fix masquerade / torturer bug
-; hide revealed cards on any movement
+; fix Improve / double Border Guard bug
+; fix 2x Cargo Ship / buy Experiment bug
+; fix Improve / Cargo Ship bug
+; fix Throne Room / Cargo Ship - both stay in play
+; fix Torturer / Masquerade (empty hand)
+; hide revealed cards on any movement (Border Guard)
 ; handle revealed-cards in hand as a list of card-names
 ; refac supply to a map of lists of cards by name
 ; change options into lists of maps with :name and :id (cards?) - or not??

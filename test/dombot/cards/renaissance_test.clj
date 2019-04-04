@@ -275,7 +275,23 @@
                        :discard        [lackeys]
                        :actions        1
                        :revealed-cards {:hand    1
-                                        :discard 1}}]})))
+                                        :discard 1}}]}))
+  (is (= (-> {:artifacts {:horn    (assoc horn :owner 0)
+                          :lantern lantern}
+              :players   [{:triggers [{:trigger  :at-clean-up
+                                       :duration :horn
+                                       :effects  [[::renaissance/horn-at-clean-up]]}]}]}
+             (clean-up {:player-no 0}))
+         {:artifacts {:horn    (assoc horn :owner 0)
+                      :lantern lantern}
+          :players   [{:actions        0
+                       :coins          0
+                       :buys           0
+                       :actions-played 0
+                       :phase          :out-of-turn
+                       :triggers       [{:trigger  :at-clean-up
+                                         :duration :horn
+                                         :effects  [[::renaissance/horn-at-clean-up]]}]}]})))
 
 (deftest cargo-ship-test
   (let [cargo-ship (assoc cargo-ship :id 1)
@@ -283,7 +299,8 @@
         border-guard (assoc border-guard :id 3)
         border-guard-4 (assoc border-guard :id 4)
         gold (assoc gold :id 5)
-        inventor (assoc inventor :id 6)]
+        inventor (assoc inventor :id 6)
+        improve (assoc improve :id 7)]
     (testing "Cargo Ship"
       (is (= (-> {:players [{:hand    [cargo-ship]
                              :actions 1
@@ -428,7 +445,105 @@
                                              inventor]
                                  :discard   [copper]
                                  :actions   0
-                                 :coins     2}]})))))
+                                 :coins     2}]}))
+      #_(is (= (-> {:supply  [{:card inventor :pile-size 10}]
+                    :players [{:hand    [cargo-ship improve]
+                               :actions 2
+                               :coins   0}]}
+                   (play 0 :cargo-ship)
+                   (play 0 :improve)
+                   (clean-up {:player-no 0})
+                   (choose :improve)
+                   (choose :cargo-ship)                     ; improve Cargo Ship
+                   (choose :inventor)                       ; gain Inventor
+                   (choose :inventor))                      ; put Inventor on vanished Cargo Ship
+               {:supply  [{:card inventor :pile-size 10}]
+                :players [{:play-area      [{:at-start-turn [[[:put-set-aside-into-hand {:card-name :inventor}]]]
+                                             :set-aside     [inventor]}]
+                           :hand           [improve]
+                           :actions        0
+                           :coins          0
+                           :buys           0
+                           :actions-played 0
+                           :phase          :out-of-turn}]
+                :trash   [cargo-ship]})))
+    (is (= (-> {:players [{:hand    [cargo-ship throne-room]
+                           :discard [copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :throne-room)
+               (choose :cargo-ship))
+           {:players [{:play-area [throne-room cargo-ship]
+                       :discard   [copper]
+                       :actions   0
+                       :coins     4
+                       :triggers  [(assoc cargo-ship-trigger :card-id 1) (assoc cargo-ship-trigger :card-id 1)]}]}))
+    (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                :players [{:hand    [cargo-ship throne-room]
+                           :discard [copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :throne-room)
+               (choose :cargo-ship)
+               (gain {:player-no 0 :card-name :gold}))
+           {:supply       [{:card gold :pile-size 29}]
+            :players      [{:play-area [throne-room cargo-ship]
+                            :discard   [copper gold]
+                            :actions   0
+                            :coins     4}]
+            :effect-stack [{:text      "You may set the gained Gold aside on Cargo Ship."
+                            :player-no 0
+                            :card-id   1
+                            :choice    [::renaissance/cargo-ship-set-aside {:gained-card-id 5 :from :discard}]
+                            :source    :discard
+                            :options   [:gold]
+                            :max       1}
+                           {:player-no 0
+                            :card-id   1
+                            :effect    [:dombot.cards.renaissance/cargo-ship-give-choice]
+                            :args      {:player-no      0
+                                        :gained-card-id 5
+                                        :card-name      :gold
+                                        :from           :discard
+                                        :from-position  :bottom}}]}))
+    (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                :players [{:hand    [cargo-ship throne-room]
+                           :discard [copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :throne-room)
+               (choose :cargo-ship)
+               (gain {:player-no 0 :card-name :gold})
+               (choose :gold))
+           {:supply  [{:card gold :pile-size 29}]
+            :players [{:play-area [throne-room
+                                   (assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :gold}]]]
+                                                     :set-aside [gold])]
+                       :discard   [copper]
+                       :actions   0
+                       :coins     4
+                       :triggers  [(assoc cargo-ship-trigger :card-id 1)]}]}))
+    (is (= (-> {:supply  [{:card gold :pile-size 30}
+                          {:card border-guard :pile-size 10}]
+                :players [{:hand    [cargo-ship throne-room]
+                           :discard [copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :throne-room)
+               (choose :cargo-ship)
+               (gain {:player-no 0 :card-name :gold})
+               (choose :gold)
+               (gain {:player-no 0 :card-name :border-guard})
+               (choose :border-guard))
+           {:supply  [{:card gold :pile-size 29}
+                      {:card border-guard :pile-size 9}]
+            :players [{:play-area [throne-room
+                                   (assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :gold}]]
+                                                                     [[:put-set-aside-into-hand {:card-name :border-guard}]]]
+                                                     :set-aside [gold border-guard])]
+                       :discard   [copper]
+                       :actions   0
+                       :coins     4}]}))))
 
 (deftest ducat-test
   (let [ducat (assoc ducat :id 1)]
