@@ -718,8 +718,9 @@
                    :clean-up    clean-up})
 
 (defn clear-at-end-turn-effects [game {:keys [player-no card-id]}]
-  (-> game
-      (ut/update-in-vec [:players player-no :play-area] {:id card-id} dissoc :at-end-turn)))
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
+    (cond-> game
+            card (ut/update-in-vec [:players player-no :play-area] {:id card-id} dissoc :at-end-turn))))
 
 (effects/register {:clear-at-end-turn-effects clear-at-end-turn-effects})
 
