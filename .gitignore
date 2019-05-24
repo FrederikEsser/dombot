@@ -14,6 +14,6 @@ pom.xml.asc
 .cpcache/
 .idea
 logs
-public/js/out
+public/js
 figwheel_server.log
 dombot.iml
