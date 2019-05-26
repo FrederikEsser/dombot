@@ -2,20 +2,23 @@
   (:require
     [reagent.core :as r]
     [dombot.commands :as cmd]
+    [dombot.cards.kingdom :as kingdom]
     [clojure.string :as string]
     [dombot.utils :as ut]))
 
 ;; -------------------------
 ;; Views
 
-(defonce state (r/atom {:sets            #{}
+(def all-sets (->> kingdom/kingdom-cards
+                   (map :set)
+                   set))
+
+(defonce state (r/atom {:sets            all-sets
+                        :setup-game?     true
                         :selection       []
                         :trash-unfolded? false
                         :num-players     2
-                        :players         [:frederik
-                                          :kasper
-                                          :jonas
-                                          :marie]}))
+                        :players         []}))
 
 (defn select! [option]
   (swap! state update :selection conj option))
@@ -122,26 +125,57 @@
                             (swap! state update :sets disj set-name)
                             (swap! state update :sets conj set-name))}]]))
 
-(defn home-page []
+(defn setup-player [idx]
+  [:div
+   (str "Player " (inc idx) ": ")
+   [:input {:type      :text
+            :on-change #(swap! state assoc-in [:players idx] (-> % .-target .-value))
+            :value     (get-in @state [:players idx]) #_player}]])
+
+(defn create-game []
   (fn []
-    (let [{:keys [sets selection trash-unfolded? num-players players]} @state]
-      [:div [:h2 "Dominion"]
-       "Number of players: " [:input {:type      :number
+    (let [{:keys [sets num-players players]} @state]
+      [:div
+       #_#_"Number of players: " [:input {:type      :number
                                       :min       2
                                       :max       4
                                       :on-change (fn [event] (swap! state assoc :num-players (js/parseInt (-> event .-target .-value))))
                                       :value     num-players}]
-       [set-selector sets :dominion]
-       [set-selector sets :intrigue]
-       [set-selector sets :seaside]
-       [set-selector sets :renaissance]
-       [set-selector sets :promos]
+       (setup-player 0)
+       (setup-player 1)
+       (setup-player 2)
+       (setup-player 3)
+
+       #_(mapk-indexed setup-player players)
+
+       (mapk (fn [s]
+               [set-selector sets s])
+             all-sets)
+
+       [:button {:style    (button-style)
+                 :on-click (fn [] (swap! state assoc
+                                         :game (cmd/start-game (->> players
+                                                                    (map clojure.string/trim)
+                                                                    (filter not-empty)
+                                                                    #_(take num-players))
+                                                               :sets sets)
+                                         :setup-game? false))}
+        "Create game"]])))
+
+(defn home-page []
+  (fn []
+    (let [{:keys [sets setup-game? selection trash-unfolded?]} @state]
+      [:div [:h2 "Dominion"]
+
+       (when setup-game?
+         [create-game])
+
        [:div [:button {:style    (button-style)
-                       :on-click (fn [] (swap! state assoc :game (cmd/start-game (take num-players players)
-                                                                                 :sets sets)))}
-              "Start Game"]
+                       :on-click (fn [] (swap! state update :setup-game? not))}
+              "Game setup"]
         [:button {:style    (button-style false)
-                  :on-click (fn [] (swap! state assoc :game (cmd/restart) :selection []))}
+                  :on-click (fn [] (if (js/confirm "Are you sure you want to restart the current game? All progress will be lost.")
+                                     (swap! state assoc :game (cmd/restart) :selection [])))}
          "Restart"]
         (let [disabled (-> @state :game :commands :can-undo? not)]
           [:button {:style    (button-style disabled)
@@ -274,10 +308,14 @@
                                                 :disabled disabled
                                                 :on-click (fn [] (swap! state assoc :game (cmd/play-treasures)))}
                                        "Play Treasures"])]
-                              [:div (let [disabled (-> @state :game :commands :can-end-turn? not)]
+                              [:div (let [disabled (-> @state :game :commands :can-end-turn? not)
+                                          confirm-text (-> @state :game :commands :confirm-end-turn)]
                                       [:button {:style    (button-style disabled)
                                                 :disabled disabled
-                                                :on-click (fn [] (swap! state assoc :game (cmd/end-turn)))}
+                                                :on-click (fn [] (if (or (not confirm-text)
+                                                                         (js/confirm (str confirm-text
+                                                                                          "\nAre you sure you want to end your turn?")))
+                                                                   (swap! state assoc :game (cmd/end-turn))))}
                                        "End Turn"])]])])
                         (when set-aside
                           [:td

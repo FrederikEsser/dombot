@@ -62,8 +62,8 @@
           (map (fn [[card number-of-cards]]
                  (cond-> card
                          (< 1 number-of-cards) (assoc :number-of-cards number-of-cards)))))
-       (cond->> (not number-of-cards) (sort-by (juxt (comp first (partial remove nil?) (juxt :action :treasure :curse :victory) :types)
-                                                     :name))))))
+        (cond->> (not number-of-cards) (sort-by (juxt (comp first (partial remove nil?) (juxt :action :treasure :curse :victory) :types)
+                                                      :name))))))
 
 (defn view-hand [{active-player?                      :active-player?
                   {:keys [hand revealed-cards phase]} :player
@@ -208,15 +208,28 @@
                         (cond-> card
                                 (< 1 number-of-cards) (assoc :number-of-cards number-of-cards))))))))
 
-(defn view-commands [{:keys [players effect-stack current-player can-undo?]}]
-  (let [{:keys [hand phase]} (get players current-player)
-        [choice] effect-stack]
+(defn view-commands [{:keys [supply players effect-stack current-player can-undo?] :as game}]
+  (let [{:keys [hand  phase actions coins buys]} (get players current-player)
+        [choice] effect-stack
+        can-play-treasures? (boolean (and (not choice)
+                                          (#{:action :pay} phase)
+                                          (some (comp :treasure :types) hand)))
+        cheapest-kingdom-card (->> supply
+                                   (drop 7)
+                                   (filter (comp pos? :pile-size))
+                                   (map (comp :cost :card))
+                                   (apply min))
+        potential-coins (cond-> coins
+                                can-play-treasures? (+ (->> hand (keep :coin-value) (apply +))))]
     {:can-undo?           (boolean can-undo?)
-     :can-play-treasures? (boolean (and (not choice)
-                                        (#{:action :pay} phase)
-                                        (some (comp :treasure :types) hand)))
+     :can-play-treasures? can-play-treasures?
      :can-end-turn?       (and (not choice)
-                               (not= phase :end-of-game))}))
+                               (not= phase :end-of-game))
+     :confirm-end-turn    (cond (and (= :action phase)
+                                     (pos? actions)
+                                     (some (comp :action :types) hand)) "You can still play actions."
+                                (and (pos? buys)
+                                     (<= cheapest-kingdom-card potential-coins)) "You can buy a kingdom card.")}))
 
 (defn view-game [{:keys [supply artifacts cost-reductions players trash effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack
