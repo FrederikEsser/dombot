@@ -8,6 +8,57 @@
             [dombot.cards.dominion :as dominion :refer [market]]
             [dombot.utils :as ut]))
 
+(deftest expand-test
+  (let [duchy (assoc duchy :id 1)]
+    (testing "Expand"
+      (is (= (-> {:players [{:hand    [expand copper estate]
+                             :actions 1}]}
+                 (play 0 :expand))
+             {:players      [{:hand      [copper estate]
+                              :play-area [expand]
+                              :actions   0}]
+              :effect-stack [{:text      "Trash a card from your hand."
+                              :player-no 0
+                              :choice    [:trash-and-gain {:extra-cost 3}]
+                              :source    :hand
+                              :options   [:copper :estate]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:players [{:hand    [expand]
+                             :actions 1}]}
+                 (play 0 :expand))
+             {:players [{:play-area [expand]
+                         :actions   0}]}))
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand    [expand copper estate]
+                             :actions 1}]}
+                 (play 0 :expand)
+                 (choose :estate))
+             {:supply       (base/supply 2 8)
+              :players      [{:hand      [copper]
+                              :play-area [expand]
+                              :actions   0}]
+              :effect-stack [{:text      "Gain a card costing up to $5."
+                              :player-no 0
+                              :choice    :gain
+                              :source    :supply
+                              :options   [:curse :estate :duchy :copper :silver]
+                              :min       1
+                              :max       1}]
+              :trash        [estate]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:hand    [expand silver estate]
+                             :actions 1}]}
+                 (play 0 :expand)
+                 (choose :estate)
+                 (choose :duchy))
+             {:supply  [{:card duchy :pile-size 7}]
+              :players [{:hand      [silver]
+                         :play-area [expand]
+                         :discard   [duchy]
+                         :actions   0}]
+              :trash   [estate]})))))
+
 (deftest kings-court-test
   (let [kings-court (assoc kings-court :id 0)]
     (testing "King's Court"

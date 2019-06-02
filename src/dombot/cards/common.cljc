@@ -277,6 +277,20 @@
 
 (effects/register {:trash-from-topdeck trash-from-topdeck})
 
+(defn trash-and-gain [game {:keys [player-no card-name extra-cost]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        max-cost (+ (ut/get-cost game card) extra-cost)]
+    (-> game
+        (push-effect-stack {:player-no player-no
+                            :effects   [[:trash-from-hand {:card-name card-name}]
+                                        [:give-choice {:text    (str "Gain a card costing up to $" max-cost ".")
+                                                       :choice  :gain
+                                                       :options [:supply {:max-cost max-cost}]
+                                                       :min     1
+                                                       :max     1}]]}))))
+
+(effects/register {:trash-and-gain trash-and-gain})
+
 (defn reveal [game args]
   (push-effect-stack game (merge args
                                  {:effects [[:move-cards (merge args

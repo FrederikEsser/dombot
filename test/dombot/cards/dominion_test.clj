@@ -1227,7 +1227,7 @@
                               :actions   0}]
               :effect-stack [{:text      "Trash a card from your hand."
                               :player-no 0
-                              :choice    ::dominion/remodel-trash
+                              :choice    [:trash-and-gain {:extra-cost 2}]
                               :source    :hand
                               :options   [:copper :estate]
                               :min       1

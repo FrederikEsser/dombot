@@ -269,26 +269,12 @@
                         [:give-coins 1]
                         [::poacher-discard]]})
 
-(defn remodel-trash [game {:keys [player-no card-name]}]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        max-cost (+ 2 (ut/get-cost game card))]
-    (-> game
-        (push-effect-stack {:player-no player-no
-                            :effects   [[:trash-from-hand {:card-name card-name}]
-                                        [:give-choice {:text    (str "Gain a card costing up to $" max-cost ".")
-                                                       :choice  :gain
-                                                       :options [:supply {:max-cost max-cost}]
-                                                       :min     1
-                                                       :max     1}]]}))))
-
-(effects/register {::remodel-trash remodel-trash})
-
 (def remodel {:name    :remodel
               :set     :dominion
               :types   #{:action}
               :cost    4
               :effects [[:give-choice {:text    "Trash a card from your hand."
-                                       :choice  ::remodel-trash
+                                       :choice  [:trash-and-gain {:extra-cost 2}]
                                        :options [:player :hand]
                                        :min     1
                                        :max     1}]]})
