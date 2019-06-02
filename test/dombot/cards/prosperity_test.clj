@@ -59,6 +59,97 @@
                          :actions   0}]
               :trash   [estate]})))))
 
+(deftest forge-test
+  (let [duchy (assoc duchy :id 1)]
+    (testing "Forge"
+      (is (= (-> {:players [{:hand    [forge copper estate estate estate copper]
+                             :actions 1}]}
+                 (play 0 :forge))
+             {:players      [{:hand      [copper estate estate estate copper]
+                              :play-area [forge]
+                              :actions   0}]
+              :effect-stack [{:text      "Trash any number of cards from your hand."
+                              :player-no 0
+                              :choice    ::prosperity/forge-trash
+                              :source    :hand
+                              :options   [:copper :estate :estate :estate :copper]}]}))
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand    [forge copper estate estate estate copper]
+                             :actions 1}]}
+                 (play 0 :forge)
+                 (choose nil))
+             {:supply       (base/supply 2 8)
+              :players      [{:hand      [copper estate estate estate copper]
+                              :play-area [forge]
+                              :actions   0}]
+              :effect-stack [{:text      "Gain a card costing exactly 0."
+                              :player-no 0
+                              :choice    :gain
+                              :source    :supply
+                              :options   [:curse :copper]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand    [forge copper estate estate estate copper]
+                             :actions 1}]}
+                 (play 0 :forge)
+                 (choose [:copper :copper]))
+             {:supply       (base/supply 2 8)
+              :players      [{:hand      [estate estate estate]
+                              :play-area [forge]
+                              :actions   0}]
+              :effect-stack [{:text      "Gain a card costing exactly 0."
+                              :player-no 0
+                              :choice    :gain
+                              :source    :supply
+                              :options   [:curse :copper]
+                              :min       1
+                              :max       1}]
+              :trash        [copper copper]}))
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand    [forge copper estate estate estate copper]
+                             :actions 1}]}
+                 (play 0 :forge)
+                 (choose [:copper :copper :estate]))
+             {:supply       (base/supply 2 8)
+              :players      [{:hand      [estate estate]
+                              :play-area [forge]
+                              :actions   0}]
+              :effect-stack [{:text      "Gain a card costing exactly 2."
+                              :player-no 0
+                              :choice    :gain
+                              :source    :supply
+                              :options   [:estate]
+                              :min       1
+                              :max       1}]
+              :trash        [copper copper estate]}))
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand    [forge copper estate estate estate copper]
+                             :actions 1}]}
+                 (play 0 :forge)
+                 (choose [:copper :copper :estate :estate]))
+             {:supply  (base/supply 2 8)
+              :players [{:hand      [estate]
+                         :play-area [forge]
+                         :actions   0}]
+              :trash   [copper copper estate estate]}))
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand    [forge copper estate estate estate copper]
+                             :actions 1}]}
+                 (play 0 :forge)
+                 (choose [:copper :copper :estate :estate :estate]))
+             {:supply       (base/supply 2 8)
+              :players      [{:play-area [forge]
+                              :actions   0}]
+              :effect-stack [{:text      "Gain a card costing exactly 6."
+                              :player-no 0
+                              :choice    :gain
+                              :source    :supply
+                              :options   [:gold]
+                              :min       1
+                              :max       1}]
+              :trash        [copper copper estate estate estate]})))))
+
 (deftest kings-court-test
   (let [kings-court (assoc kings-court :id 0)]
     (testing "King's Court"
