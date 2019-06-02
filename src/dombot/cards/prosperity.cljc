@@ -12,13 +12,32 @@
 
 (effects/register {::bank-give-coins bank-give-coins})
 
-(def bank {:name       :bank
-           :set        :prosperity
-           :types      #{:treasure}
-           :cost       7
-           :coin-value 0
-           :effects    [[::bank-give-coins]]
+(def bank {:name            :bank
+           :set             :prosperity
+           :types           #{:treasure}
+           :cost            7
+           :coin-value      0
+           :effects         [[::bank-give-coins]]
            :auto-play-index 1})
+
+(defn- city-effects [game {:keys [player-no]}]
+  (let [empty-piles (ut/empty-supply-piles game)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (concat [[:draw 1]
+                                                 [:give-actions 2]]
+                                                (when (<= 1 empty-piles)
+                                                  [[:draw 1]])
+                                                (when (<= 2 empty-piles)
+                                                  [[:give-buys 1]
+                                                   [:give-coins 1]]))})))
+
+(effects/register {::city-effects city-effects})
+
+(def city {:name    :city
+           :set     :prosperity
+           :types   #{:action}
+           :cost    5
+           :effects [[::city-effects]]})
 
 (def expand {:name    :expand
              :set     :prosperity
@@ -72,6 +91,7 @@
                                 [:give-buys 1]]})
 
 (def kingdom-cards [bank
+                    city
                     forge
                     expand
                     kings-court

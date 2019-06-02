@@ -22,6 +22,55 @@
            {:players [{:play-area [copper bank]
                        :coins     3}]}))))
 
+(deftest city-test
+  (testing "City"
+    (is (= (-> {:players [{:hand    [city]
+                           :deck    [copper copper copper]
+                           :actions 1}]}
+               (play 0 :city))
+           {:players [{:hand      [copper]
+                       :play-area [city]
+                       :deck      [copper copper]
+                       :actions   2}]}))
+    (is (= (-> {:supply  [{:pile-size 0} {:pile-size 1}]
+                :players [{:hand    [city]
+                           :deck    [copper copper copper]
+                           :actions 1}]}
+               (play 0 :city))
+           {:supply  [{:pile-size 0} {:pile-size 1}]
+            :players [{:hand      [copper copper]
+                       :play-area [city]
+                       :deck      [copper]
+                       :actions   2}]}))
+    (is (= (-> {:supply  [{:pile-size 0} {:pile-size 0} {:pile-size 1}]
+                :players [{:hand    [city]
+                           :deck    [copper copper copper]
+                           :actions 1
+                           :coins   0
+                           :buys    1}]}
+               (play 0 :city))
+           {:supply  [{:pile-size 0} {:pile-size 0} {:pile-size 1}]
+            :players [{:hand      [copper copper]
+                       :play-area [city]
+                       :deck      [copper]
+                       :actions   2
+                       :coins     1
+                       :buys      2}]}))
+    (is (= (-> {:supply  [{:pile-size 0} {:pile-size 0} {:pile-size 0}]
+                :players [{:hand    [city]
+                           :deck    [copper copper copper]
+                           :actions 1
+                           :coins   0
+                           :buys    1}]}
+               (play 0 :city))
+           {:supply  [{:pile-size 0} {:pile-size 0} {:pile-size 0}]
+            :players [{:hand      [copper copper]
+                       :play-area [city]
+                       :deck      [copper]
+                       :actions   2
+                       :coins     1
+                       :buys      2}]}))))
+
 (deftest expand-test
   (let [duchy (assoc duchy :id 1)]
     (testing "Expand"
