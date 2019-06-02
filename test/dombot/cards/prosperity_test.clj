@@ -10,7 +10,7 @@
 
 (deftest kings-court-test
   (let [kings-court (assoc kings-court :id 0)]
-    (testing "Throne Room"
+    (testing "King's Court"
       (is (= (-> {:players [{:hand    [kings-court market estate]
                              :deck    [copper copper copper copper]
                              :actions 1}]}
@@ -48,3 +48,16 @@
                          :hand      [market copper]
                          :play-area [kings-court]
                          :actions   0}]})))))
+
+(deftest workers-village-test
+  (testing "Worker's Village"
+    (is (= (-> {:players [{:hand    [workers-village]
+                           :deck    [estate estate]
+                           :actions 1
+                           :buys    1}]}
+               (play 0 :worker's-village))
+           {:players [{:hand      [estate]
+                       :play-area [workers-village]
+                       :deck      [estate]
+                       :actions   2
+                       :buys      2}]}))))

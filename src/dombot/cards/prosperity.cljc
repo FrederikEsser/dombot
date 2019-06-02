@@ -13,4 +13,13 @@
                                            :options [:player :hand {:type :action}]
                                            :max     1}]]})
 
-(def kingdom-cards [kings-court])
+(def workers-village {:name    :worker's-village
+                      :set     :prosperity
+                      :types   #{:action}
+                      :cost    4
+                      :effects [[:draw 1]
+                                [:give-actions 2]
+                                [:give-buys 1]]})
+
+(def kingdom-cards [kings-court
+                    workers-village])
