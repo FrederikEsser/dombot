@@ -4,8 +4,10 @@
             [clojure.set]))
 
 (defn game-ended? [game]
-  (let [{province-pile-size :pile-size} (ut/get-pile-idx game :province)]
+  (let [{province-pile-size :pile-size} (ut/get-pile-idx game :province)
+        {colony-pile-size :pile-size} (ut/get-pile-idx game :colony)]
     (or (and province-pile-size (zero? province-pile-size))
+        (and colony-pile-size (zero? colony-pile-size))
         (>= (ut/empty-supply-piles game) 3))))
 
 (defn push-effect-stack [game {:keys [player-no card-id effects choice args]}]

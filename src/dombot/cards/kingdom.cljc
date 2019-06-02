@@ -17,11 +17,14 @@
                      renaissance/kingdom-cards
                      promos/kingdom-cards))
 
-(defn create-kingdom [sets victory-pile-size]
+(defn- random-kingdom [sets]
   (->> kingdom-cards
        (filter (comp sets :set))
        shuffle
-       (take 10)
+       (take 10)))
+
+(defn create-kingdom-supply [kingdom victory-pile-size]
+  (->> kingdom
        (sort-by (juxt :cost :name))
        (map (fn [{:keys [:types] :as card}]
               (let [pile-size (if (:victory types) victory-pile-size 10)]
@@ -61,11 +64,13 @@
                             2 8
                             3 12
                             4 12)
-        starting-player (rand-int number-of-players)]
+        starting-player (rand-int number-of-players)
+        kingdom (random-kingdom sets)]
     (ut/reset-ids!)
     (as-> {:mode                mode
-           :supply              (vec (concat (base/supply number-of-players victory-pile-size)
-                                             (create-kingdom sets victory-pile-size)))
+           :supply              (vec (concat (base/supply number-of-players victory-pile-size
+                                                          {:prosperity? (-> kingdom first :set #{:prosperity})})
+                                             (create-kingdom-supply kingdom victory-pile-size)))
            :players             (vec (map create-player player-names))
            :track-gained-cards? true
            :current-player      starting-player

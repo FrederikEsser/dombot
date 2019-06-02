@@ -184,10 +184,10 @@
            "Undo"])]
        [:div "Supply"
         (let [supply (-> (:game @state) :supply)
-              row1 (->> supply (take 4))
-              row2 (->> supply (drop 4) (take 3))
-              row3 (->> supply (drop 7) (take 5))
-              row4 (->> supply (drop 12) (take 5))]
+              properity? (-> (:game @state) :prosperity?)
+              [row1 supply] (split-at (if properity? 5 4) supply)
+              [row2 supply] (split-at (if properity? 4 3) supply)
+              [row3 row4] (split-at 5 supply)]
           [:table
            [:tbody
             (view-row row1)

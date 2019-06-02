@@ -36,6 +36,8 @@
 
 (s/def ::supply ::cards)
 
+(s/def ::prosperity? boolean?)
+
 (s/def ::active? boolean?)
 
 (s/def ::pile (s/keys :opt-un [::number-of-cards
@@ -154,6 +156,7 @@
                                    ::can-end-turn?]))
 
 (s/def ::game (s/keys :req-un [::supply
+                               ::prosperity?
                                ::players
                                ::trash
                                ::commands]))

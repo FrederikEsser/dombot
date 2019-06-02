@@ -209,16 +209,11 @@
                                 (< 1 number-of-cards) (assoc :number-of-cards number-of-cards))))))))
 
 (defn view-commands [{:keys [supply players effect-stack current-player can-undo?] :as game}]
-  (let [{:keys [hand  phase actions coins buys]} (get players current-player)
+  (let [{:keys [hand phase actions coins buys]} (get players current-player)
         [choice] effect-stack
         can-play-treasures? (boolean (and (not choice)
                                           (#{:action :pay} phase)
                                           (some (comp :treasure :types) hand)))
-        cheapest-kingdom-card (->> supply
-                                   (drop 7)
-                                   (filter (comp pos? :pile-size))
-                                   (map (comp :cost :card))
-                                   (apply min))
         potential-coins (cond-> coins
                                 can-play-treasures? (+ (->> hand (keep :coin-value) (apply +))))]
     {:can-undo?           (boolean can-undo?)
@@ -229,27 +224,28 @@
                                      (pos? actions)
                                      (some (comp :action :types) hand)) "You can still play actions."
                                 (and (pos? buys)
-                                     (<= cheapest-kingdom-card potential-coins)) "You can buy a kingdom card.")}))
+                                     (<= 3 potential-coins)) "You can buy a card.")}))
 
 (defn view-game [{:keys [supply artifacts cost-reductions players trash effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
-    (->> {:supply   (view-supply {:supply          supply
-                                  :cost-reductions cost-reductions
-                                  :player          player
-                                  :choice          choice})
-          :players  (->> players
-                         (map-indexed (fn [idx player]
-                                        (let [active-player? (and (= idx current-player)
-                                                                  (or (nil? choice)
-                                                                      (= idx player-no))
-                                                                  (not= phase :end-of-game))]
-                                          (view-player (merge {:active-player? active-player?
-                                                               :player         player
-                                                               :artifacts      (->> artifacts vals (filter (comp #{idx} :owner)))}
-                                                              (when (= idx player-no)
-                                                                {:choice choice})))))))
-          :trash    {:compact (view-trash {:trash trash :choice choice} :compact)
-                     :full    (view-trash {:trash trash :choice choice} :full)}
-          :commands (view-commands game)}
+    (->> {:supply      (view-supply {:supply          supply
+                                     :cost-reductions cost-reductions
+                                     :player          player
+                                     :choice          choice})
+          :prosperity? (->> supply (some (comp #{:platinum :colony} :name :card)) boolean)
+          :players     (->> players
+                            (map-indexed (fn [idx player]
+                                           (let [active-player? (and (= idx current-player)
+                                                                     (or (nil? choice)
+                                                                         (= idx player-no))
+                                                                     (not= phase :end-of-game))]
+                                             (view-player (merge {:active-player? active-player?
+                                                                  :player         player
+                                                                  :artifacts      (->> artifacts vals (filter (comp #{idx} :owner)))}
+                                                                 (when (= idx player-no)
+                                                                   {:choice choice})))))))
+          :trash       {:compact (view-trash {:trash trash :choice choice} :compact)
+                        :full    (view-trash {:trash trash :choice choice} :full)}
+          :commands    (view-commands game)}
          (s/assert* ::specs/game))))
