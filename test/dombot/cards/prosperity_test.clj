@@ -254,6 +254,109 @@
                          :play-area [kings-court]
                          :actions   0}]})))))
 
+(deftest vault-test
+  (testing "Vault"
+    (is (= (-> {:players [{:hand    [vault copper copper estate estate]
+                           :deck    [copper estate silver]
+                           :actions 1}]}
+               (play 0 :vault))
+           {:players      [{:hand      [copper copper estate estate copper estate]
+                            :play-area [vault]
+                            :deck      [silver]
+                            :actions   0}]
+            :effect-stack [{:text      "Discard any number of cards for +$1 each."
+                            :player-no 0
+                            :choice    ::prosperity/vault-discard
+                            :source    :hand
+                            :options   [:copper :copper :estate :estate :copper :estate]}
+                           {:player-no 0
+                            :effect    [:other-players {:effects [[:give-choice {:text      "You may discard 2 cards, to draw a card."
+                                                                                 :choice    ::prosperity/vault-discard-2
+                                                                                 :options   [:player :hand]
+                                                                                 :min       2
+                                                                                 :max       2
+                                                                                 :optional? true}]]}]}]}))
+    (is (= (-> {:players [{:hand    [vault copper copper estate estate]
+                           :deck    [copper estate silver]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :vault)
+               (choose [:estate :estate :estate]))
+           {:players [{:hand      [copper copper copper]
+                       :play-area [vault]
+                       :deck      [silver]
+                       :discard   [estate estate estate]
+                       :actions   0
+                       :coins     3}]})))
+  (is (= (-> {:players [{:hand    [vault]
+                         :deck    [silver silver]
+                         :actions 1
+                         :coins   0}
+                        {:hand [estate estate copper]
+                         :deck [copper copper]}]}
+             (play 0 :vault)
+             (choose nil))
+         {:players      [{:hand      [silver silver]
+                          :play-area [vault]
+                          :actions   0
+                          :coins     0}
+                         {:hand [estate estate copper]
+                          :deck [copper copper]}]
+          :effect-stack [{:text      "You may discard 2 cards, to draw a card."
+                          :player-no 1
+                          :choice    ::prosperity/vault-discard-2
+                          :source    :hand
+                          :options   [:estate :estate :copper]
+                          :min       2
+                          :max       2
+                          :optional? true}]}))
+  (is (= (-> {:players [{:hand    [vault]
+                         :deck    [silver silver]
+                         :actions 1
+                         :coins   0}
+                        {:hand [estate estate copper]
+                         :deck [copper copper]}]}
+             (play 0 :vault)
+             (choose nil)
+             (choose nil))
+         {:players [{:hand      [silver silver]
+                     :play-area [vault]
+                     :actions   0
+                     :coins     0}
+                    {:hand [estate estate copper]
+                     :deck [copper copper]}]}))
+  (is (= (-> {:players [{:hand    [vault]
+                         :deck    [silver silver]
+                         :actions 1
+                         :coins   0}
+                        {:hand [estate estate copper]
+                         :deck [copper copper]}]}
+             (play 0 :vault)
+             (choose nil)
+             (choose [:estate :estate]))
+         {:players [{:hand      [silver silver]
+                     :play-area [vault]
+                     :actions   0
+                     :coins     0}
+                    {:hand    [copper copper]
+                     :deck    [copper]
+                     :discard [estate estate]}]}))
+  (is (= (-> {:players [{:hand    [vault]
+                         :deck    [silver silver]
+                         :actions 1
+                         :coins   0}
+                        {:hand [estate]
+                         :deck [copper copper]}]}
+             (play 0 :vault)
+             (choose nil)
+             (choose [:estate]))
+         {:players [{:hand      [silver silver]
+                     :play-area [vault]
+                     :actions   0
+                     :coins     0}
+                    {:deck    [copper copper]
+                     :discard [estate]}]})))
+
 (deftest workers-village-test
   (testing "Worker's Village"
     (is (= (-> {:players [{:hand    [workers-village]

@@ -82,6 +82,36 @@
                                            :options [:player :hand {:type :action}]
                                            :max     1}]]})
 
+(defn- vault-discard [game {:keys [player-no card-names]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:discard-from-hand {:card-names card-names}]
+                                       [:give-coins (count card-names)]]}))
+
+(defn- vault-discard-2 [game {:keys [player-no card-names] :as args}]
+  (-> game
+      (push-effect-stack {:player-no player-no
+                          :effects   (concat [[:discard-from-hand args]]
+                                             (when (= 2 (count card-names))
+                                               [[:draw 1]]))})))
+
+(effects/register {::vault-discard   vault-discard
+                   ::vault-discard-2 vault-discard-2})
+
+(def vault {:name    :vault
+            :set     :prosperity
+            :types   #{:action}
+            :cost    5
+            :effects [[:draw 2]
+                      [:give-choice {:text    "Discard any number of cards for +$1 each."
+                                     :choice  ::vault-discard
+                                     :options [:player :hand]}]
+                      [:other-players {:effects [[:give-choice {:text      "You may discard 2 cards, to draw a card."
+                                                                :choice    ::vault-discard-2
+                                                                :options   [:player :hand]
+                                                                :min       2
+                                                                :max       2
+                                                                :optional? true}]]}]]})
+
 (def workers-village {:name    :worker's-village
                       :set     :prosperity
                       :types   #{:action}
@@ -95,4 +125,5 @@
                     forge
                     expand
                     kings-court
+                    vault
                     workers-village])
