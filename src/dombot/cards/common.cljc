@@ -61,7 +61,7 @@
                                             :to   :play-area}))))
 
 
-(effects/register {:play play-from-hand})
+(effects/register {:play-from-hand play-from-hand})
 
 (defn check-stay-in-play [game {:keys [player-no card-id target-id]}]
   (let [{{:keys [types] :as card} :card} (ut/get-card-idx game [:players player-no :play-area] {:id target-id})]
@@ -77,7 +77,7 @@
           (push-effect-stack {:player-no player-no
                               :card-id   card-id
                               :effects   (concat
-                                           [[:play {:card-name card-name}]]
+                                           [[:play-from-hand {:card-name card-name}]]
                                            (repeat times [:card-effect {:card card}])
                                            [[:check-stay-in-play {:target-id (:id card)}]])})))
     game))
@@ -251,9 +251,10 @@
 
 (effects/register {:trash-from-play-area trash-from-play-area})
 
-(defn trash-from-revealed [game args]
-  (move-cards game (merge args {:from :revealed
-                                :to   :trash})))
+(defn trash-from-revealed [game {:keys [card-name card-names] :as args}]
+  (cond-> game
+          (or card-name card-names) (move-cards (merge args {:from :revealed
+                                                             :to   :trash}))))
 
 (effects/register {:trash-from-revealed trash-from-revealed})
 

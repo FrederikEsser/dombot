@@ -254,6 +254,65 @@
                          :play-area [kings-court]
                          :actions   0}]})))))
 
+(deftest loan-test
+  (testing "Loan"
+    (is (= (-> {:players [{:hand  [loan]
+                           :deck  [copper estate]
+                           :coins 0}]}
+               (play 0 :loan))
+           {:players      [{:play-area [loan]
+                            :deck      [estate]
+                            :revealed  [copper]
+                            :coins     1}]
+            :effect-stack [{:text      "You may trash the revealed Copper."
+                            :player-no 0
+                            :choice    :trash-from-revealed
+                            :source    :revealed
+                            :options   [:copper]
+                            :min       0
+                            :max       1}
+                           {:player-no 0
+                            :effect    [:discard-all-revealed]}]}))
+    (is (= (-> {:players [{:hand  [loan]
+                           :deck  [copper estate]
+                           :coins 0}]}
+               (play 0 :loan)
+               (choose nil))
+           {:players [{:play-area      [loan]
+                       :deck           [estate]
+                       :discard        [copper]
+                       :revealed-cards {:discard 1}
+                       :coins          1}]}))
+    (is (= (-> {:players [{:hand  [loan]
+                           :deck  [copper estate]
+                           :coins 0}]}
+               (play 0 :loan)
+               (choose :copper))
+           {:players [{:play-area [loan]
+                       :deck      [estate]
+                       :coins     1}]
+            :trash   [copper]}))
+    (is (= (-> {:players [{:hand  [loan]
+                           :deck  [estate copper estate]
+                           :coins 0}]}
+               (play 0 :loan)
+               (choose :copper))
+           {:players [{:play-area      [loan]
+                       :deck           [estate]
+                       :discard        [estate]
+                       :revealed-cards {:discard 1}
+                       :coins          1}]
+            :trash   [copper]}))
+    (is (= (-> {:players [{:hand    [loan]
+                           :deck    [estate]
+                           :discard [duchy]
+                           :coins   0}]}
+               (play 0 :loan))
+           {:players [{:play-area      [loan]
+                       :discard        [estate duchy]
+                       :revealed-cards {:discard 2}
+                       :coins          1}]}))))
+
 (deftest vault-test
   (testing "Vault"
     (is (= (-> {:players [{:hand    [vault copper copper estate estate]

@@ -86,6 +86,31 @@
                                            :options [:player :hand {:type :action}]
                                            :max     1}]]})
 
+(defn- loan-reveal [game {:keys [player-no]}]
+  (let [{:keys [revealed deck discard]} (get-in game [:players player-no])
+        {:keys [types name]} (last revealed)]
+    (cond (:treasure types) (give-choice game {:player-no player-no
+                                               :text      (str "You may trash the revealed " (ut/format-name name) ".")
+                                               :choice    :trash-from-revealed
+                                               :options   [:player :revealed {:type :treasure}]
+                                               :min       0
+                                               :max       1})
+          (not-empty (concat deck discard)) (push-effect-stack game {:player-no player-no
+                                                                     :effects   [[:reveal-from-deck 1]
+                                                                                 [::loan-reveal]]})
+          :else game)))
+
+(effects/register {::loan-reveal loan-reveal})
+
+(def loan {:name       :loan
+           :set        :prosperity
+           :types      #{:treasure}
+           :cost       3
+           :coin-value 1
+           :effects    [[:reveal-from-deck 1]
+                        [::loan-reveal]
+                        [:discard-all-revealed]]})
+
 (defn- vault-discard [game {:keys [player-no card-names]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:discard-from-hand {:card-names card-names}]
@@ -129,5 +154,6 @@
                     forge
                     expand
                     kings-court
+                    loan
                     vault
                     workers-village])
