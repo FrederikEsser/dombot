@@ -4,6 +4,7 @@
             [dombot.cards.dominion :as dominion]
             [dombot.cards.intrigue :as intrigue]
             [dombot.cards.seaside :as seaside]
+            [dombot.cards.prosperity :as prosperity]
             [dombot.cards.renaissance :as renaissance]
             [dombot.cards.promos :as promos]
             [dombot.utils :as ut]))
@@ -12,6 +13,7 @@
                      dominion/kingdom-cards
                      intrigue/kingdom-cards
                      seaside/kingdom-cards
+                     prosperity/kingdom-cards
                      renaissance/kingdom-cards
                      promos/kingdom-cards))
 

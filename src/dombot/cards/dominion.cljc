@@ -322,7 +322,7 @@
                   :types   #{:action}
                   :cost    4
                   :effects [[:give-choice {:text    "You may play an Action card from your hand twice."
-                                           :choice  :play-action-twice
+                                           :choice  [:repeat-action {:times 2}]
                                            :options [:player :hand {:type :action}]
                                            :max     1}]]})
 

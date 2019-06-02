@@ -70,19 +70,19 @@
 
 (effects/register {:check-stay-in-play check-stay-in-play})
 
-(defn play-action-twice [game {:keys [player-no card-id card-name]}]
+(defn repeat-action [game {:keys [player-no card-id card-name times]}]
   (if card-name
     (let [{card :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
       (-> game
           (push-effect-stack {:player-no player-no
                               :card-id   card-id
-                              :effects   [[:play {:card-name card-name}]
-                                          [:card-effect {:card card}]
-                                          [:card-effect {:card card}]
-                                          [:check-stay-in-play {:target-id (:id card)}]]})))
+                              :effects   (concat
+                                           [[:play {:card-name card-name}]]
+                                           (repeat times [:card-effect {:card card}])
+                                           [[:check-stay-in-play {:target-id (:id card)}]])})))
     game))
 
-(effects/register {:play-action-twice play-action-twice})
+(effects/register {:repeat-action repeat-action})
 
 (defn play-from-discard [game {:keys [card-name] :as args}]
   (cond-> game

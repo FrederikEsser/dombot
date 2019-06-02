@@ -1492,7 +1492,7 @@
               :effect-stack [{:text      "You may play an Action card from your hand twice."
                               :player-no 0
                               :card-id   0
-                              :choice    :play-action-twice
+                              :choice    [:repeat-action {:times 2}]
                               :source    :hand
                               :options   [:market]
                               :max       1}]}))
@@ -1530,7 +1530,7 @@
               :effect-stack [{:text      "You may play an Action card from your hand twice."
                               :player-no 0
                               :card-id   0
-                              :choice    :play-action-twice
+                              :choice    [:repeat-action {:times 2}]
                               :source    :hand
                               :options   [:merchant]
                               :max       1}
@@ -1554,7 +1554,7 @@
               :effect-stack [{:text      "You may play an Action card from your hand twice."
                               :player-no 0
                               :card-id   0
-                              :choice    :play-action-twice
+                              :choice    [:repeat-action {:times 2}]
                               :source    :hand
                               :options   [:witch]
                               :max       1}
