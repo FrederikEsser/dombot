@@ -1,8 +1,24 @@
 (ns dombot.cards.prosperity
   (:require [dombot.operations :refer [#_move-cards push-effect-stack give-choice]]
-            [dombot.cards.common :refer []]
+            [dombot.cards.common :refer [give-coins]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
+
+(defn- bank-give-coins [game {:keys [player-no]}]
+  (let [number-of-treasures-in-play (->> (get-in game [:players player-no :play-area])
+                                         (filter (comp :treasure :types))
+                                         count)]
+    (give-coins game {:player-no player-no :arg number-of-treasures-in-play})))
+
+(effects/register {::bank-give-coins bank-give-coins})
+
+(def bank {:name       :bank
+           :set        :prosperity
+           :types      #{:treasure}
+           :cost       7
+           :coin-value 0
+           :effects    [[::bank-give-coins]]
+           :auto-play-index 1})
 
 (def expand {:name    :expand
              :set     :prosperity
@@ -55,7 +71,8 @@
                                 [:give-actions 2]
                                 [:give-buys 1]]})
 
-(def kingdom-cards [forge
+(def kingdom-cards [bank
+                    forge
                     expand
                     kings-court
                     workers-village])

@@ -593,6 +593,7 @@
   (let [{:keys [hand]} (get-in game [:players player-no])
         treasures (->> hand
                        (filter (comp :treasure :types))
+                       (sort-by :auto-play-index)
                        (map :name))]
     (reduce (fn [game card-name] (play game player-no card-name)) game treasures))) ; TODO: Stack treasures separately
 

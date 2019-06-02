@@ -8,6 +8,20 @@
             [dombot.cards.dominion :as dominion :refer [market]]
             [dombot.utils :as ut]))
 
+(deftest bank-test
+  (testing "Bank"
+    (is (= (-> {:players [{:hand  [bank]
+                           :coins 0}]}
+               (play 0 :bank))
+           {:players [{:play-area [bank]
+                       :coins     1}]}))
+    (is (= (-> {:players [{:hand      [bank]
+                           :play-area [copper]
+                           :coins     1}]}
+               (play 0 :bank))
+           {:players [{:play-area [copper bank]
+                       :coins     3}]}))))
+
 (deftest expand-test
   (let [duchy (assoc duchy :id 1)]
     (testing "Expand"
