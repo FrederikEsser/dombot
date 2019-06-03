@@ -311,7 +311,16 @@
            {:players [{:play-area      [loan]
                        :discard        [estate duchy]
                        :revealed-cards {:discard 2}
-                       :coins          1}]}))))
+                       :coins          1}]}))
+    (is (= (-> {:players [{:hand  [loan copper]
+                           :deck  [copper estate]
+                           :coins 0}]}
+               (play-treasures 0)
+               (choose :copper))
+           {:players [{:play-area [loan copper]
+                       :deck      [estate]
+                       :coins     2}]
+            :trash   [copper]}))))
 
 (deftest mountebank-test
   (let [curse (assoc curse :id 0)
