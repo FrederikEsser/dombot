@@ -1,6 +1,6 @@
 (ns dombot.cards.prosperity
   (:require [dombot.operations :refer [#_move-cards push-effect-stack give-choice]]
-            [dombot.cards.common :refer [give-coins]]
+            [dombot.cards.common :refer [give-coins discard-from-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -111,6 +111,36 @@
                         [::loan-reveal]
                         [:discard-all-revealed]]})
 
+(defn- mountebank-gain [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:gain {:card-name :curse}]
+                                       [:gain {:card-name :copper}]]}))
+
+(defn- mountebank-discard-curse [game {:keys [card-name] :as args}]
+  (if (= card-name :curse)
+    (discard-from-hand game args)
+    (mountebank-gain game args)))
+
+(defn- mountebank-attack [game {:keys [player-no] :as args}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name :curse})]
+    (if card
+      (give-choice game {:player-no player-no
+                         :text      "You may discard a Curse."
+                         :choice    ::mountebank-discard-curse
+                         :options   [:player :hand {:name :curse}]
+                         :max       1})
+      (mountebank-gain game args))))
+
+(effects/register {::mountebank-attack        mountebank-attack
+                   ::mountebank-discard-curse mountebank-discard-curse})
+
+(def mountebank {:name    :mountebank
+                 :set     :prosperity
+                 :types   #{:action :attack}
+                 :cost    5
+                 :effects [[:give-coins 2]
+                           [:attack {:effects [[::mountebank-attack]]}]]})
+
 (defn- vault-discard [game {:keys [player-no card-names]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:discard-from-hand {:card-names card-names}]
@@ -155,5 +185,6 @@
                     expand
                     kings-court
                     loan
+                    mountebank
                     vault
                     workers-village])

@@ -313,6 +313,66 @@
                        :revealed-cards {:discard 2}
                        :coins          1}]}))))
 
+(deftest mountebank-test
+  (let [curse (assoc curse :id 0)
+        copper (assoc copper :id 1)]
+    (testing "Mountebank"
+      (is (= (-> {:supply  [{:card curse :pile-size 10}
+                            {:card copper :pile-size 46}]
+                  :players [{:hand    [mountebank]
+                             :actions 1
+                             :coins   0}
+                            {}]}
+                 (play 0 :mountebank))
+             {:supply  [{:card curse :pile-size 9}
+                        {:card copper :pile-size 45}]
+              :players [{:play-area [mountebank]
+                         :actions   0
+                         :coins     2}
+                        {:discard [curse copper]}]}))
+      (is (= (-> {:players [{:hand    [mountebank]
+                             :actions 1
+                             :coins   0}
+                            {:hand [curse]}]}
+                 (play 0 :mountebank))
+             {:players      [{:play-area [mountebank]
+                              :actions   0
+                              :coins     2}
+                             {:hand [curse]}]
+              :effect-stack [{:text      "You may discard a Curse."
+                              :player-no 1
+                              :choice    ::prosperity/mountebank-discard-curse
+                              :source    :hand
+                              :options   [:curse]
+                              :max       1}
+                             {:player-no 1
+                              :effect    [:clear-unaffected {:works :once}]}]}))
+      (is (= (-> {:players [{:hand    [mountebank]
+                             :actions 1
+                             :coins   0}
+                            {:hand [curse]}]}
+                 (play 0 :mountebank)
+                 (choose :curse))
+             {:players [{:play-area [mountebank]
+                         :actions   0
+                         :coins     2}
+                        {:discard [curse]}]})))
+    (is (= (-> {:supply  [{:card curse :pile-size 10}
+                          {:card copper :pile-size 46}]
+                :players [{:hand    [mountebank]
+                           :actions 1
+                           :coins   0}
+                          {:hand [curse]}]}
+               (play 0 :mountebank)
+               (choose nil))
+           {:supply  [{:card curse :pile-size 9}
+                      {:card copper :pile-size 45}]
+            :players [{:play-area [mountebank]
+                       :actions   0
+                       :coins     2}
+                      {:hand    [curse]
+                       :discard [curse copper]}]}))))
+
 (deftest vault-test
   (testing "Vault"
     (is (= (-> {:players [{:hand    [vault copper copper estate estate]
