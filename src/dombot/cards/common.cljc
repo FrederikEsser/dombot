@@ -63,6 +63,14 @@
 
 (effects/register {:play-from-hand play-from-hand})
 
+(defn play-from-revealed [game {:keys [card-name] :as args}]
+  (cond-> game
+          card-name (move-card (merge args {:from :revealed
+                                            :to   :play-area}))))
+
+
+(effects/register {:play-from-revealed play-from-revealed})
+
 (defn check-stay-in-play [game {:keys [player-no card-id target-id]}]
   (let [{{:keys [types] :as card} :card} (ut/get-card-idx game [:players player-no :play-area] {:id target-id})]
     (cond-> game

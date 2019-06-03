@@ -8,6 +8,12 @@
             [dombot.cards.dominion :as dominion :refer [market]]
             [dombot.utils :as ut]))
 
+(defn fixture [f]
+  (ut/reset-ids!)
+  (with-rand-seed 123 (f)))
+
+(use-fixtures :each fixture)
+
 (deftest bank-test
   (testing "Bank"
     (is (= (-> {:players [{:hand  [bank]
@@ -484,6 +490,66 @@
                      :coins     0}
                     {:deck    [copper copper]
                      :discard [estate]}]})))
+
+(deftest venture-test
+  (testing "Venture"
+    (is (= (-> {:players [{:hand  [venture]
+                           :deck  [copper estate]
+                           :coins 0}]}
+               (play 0 :venture))
+           {:players [{:play-area      [venture copper]
+                       :deck           [estate]
+                       :revealed-cards {:play-area 1}
+                       :coins          2}]}))
+    (is (= (-> {:players [{:hand  [venture]
+                           :deck  [estate copper estate]
+                           :coins 0}]}
+               (play 0 :venture))
+           {:players [{:play-area      [venture copper]
+                       :deck           [estate]
+                       :discard        [estate]
+                       :revealed-cards {:play-area 1
+                                        :discard   1}
+                       :coins          2}]}))
+    (is (= (-> {:players [{:hand    [venture]
+                           :deck    [estate]
+                           :discard [duchy]
+                           :coins   0}]}
+               (play 0 :venture))
+           {:players [{:play-area      [venture]
+                       :discard        [estate duchy]
+                       :revealed-cards {:discard 2}
+                       :coins          1}]}))
+    (is (= (-> {:players [{:hand  [venture copper]
+                           :deck  [copper estate]
+                           :coins 0}]}
+               (play-treasures 0))
+           {:players [{:play-area      [copper venture copper]
+                       :deck           [estate]
+                       :revealed-cards {:play-area 1}
+                       :coins          3}]}))
+    (is (= (-> {:players [{:hand    [venture]
+                           :deck    [estate loan duchy]
+                           :discard (repeat 7 copper)
+                           :coins   0}]}
+               (play 0 :venture)
+               (choose :copper))
+           {:players [{:play-area      [venture loan]
+                       :deck           (repeat 6 copper)
+                       :discard        [estate duchy]
+                       :revealed-cards {:play-area 1
+                                        :discard   2}
+                       :coins          2}]
+            :trash   [copper]}))
+    (is (= (-> {:players [{:hand    [venture loan]
+                           :deck    [copper gold]
+                           :coins   0}]}
+               (play-treasures 0)
+               (choose :copper))
+           {:players [{:play-area      [loan venture gold]
+                       :revealed-cards {:play-area 1}
+                       :coins          5}]
+            :trash   [copper]}))))
 
 (deftest workers-village-test
   (testing "Worker's Village"

@@ -118,15 +118,20 @@
                                                                             (comp #{:once} :duration))))
       (update-in [:players player-no] ut/dissoc-if-empty :triggers)))
 
-(defn- apply-triggers [game player-no trigger & [args]]
-  (let [triggers (get-in game [:players player-no :triggers])
-        apply-trigger (fn [game {:keys [card-id effects]}] (push-effect-stack game {:player-no player-no
-                                                                                    :card-id   card-id
-                                                                                    :effects   effects
-                                                                                    :args      args}))
-        matching-triggers (filter (comp #{trigger} :trigger) triggers)]
-    (-> (reduce apply-trigger game (reverse matching-triggers))
-        (remove-trigger player-no trigger))))
+(defn- apply-triggers
+  ([game {:keys [player-no trigger]}]
+   (apply-triggers game player-no trigger))
+  ([game player-no trigger & [args]]
+   (let [triggers (get-in game [:players player-no :triggers])
+         apply-trigger (fn [game {:keys [card-id effects]}] (push-effect-stack game {:player-no player-no
+                                                                                     :card-id   card-id
+                                                                                     :effects   effects
+                                                                                     :args      args}))
+         matching-triggers (filter (comp #{trigger} :trigger) triggers)]
+     (-> (reduce apply-trigger game (reverse matching-triggers))
+         (remove-trigger player-no trigger)))))
+
+(effects/register {:apply-triggers apply-triggers})
 
 (defn set-approx-discard-size [game player-no & [n]]
   (let [{:keys [discard approx-discard-size]} (get-in game [:players player-no])
@@ -560,6 +565,11 @@
 
 (effects/register {:card-effect card-effect})
 
+(defn- set-phase [game {:keys [player-no phase]}]
+  (assoc-in game [:players player-no :phase] phase))
+
+(effects/register {:set-phase set-phase})
+
 (defn play
   ([game {:keys [player-no card-name]}]
    (play game player-no card-name))
@@ -581,17 +591,17 @@
                         (#{:action :pay} phase)))
                (str "You can't play " (ut/format-types types) " cards when you're in the " (ut/format-name phase) " phase.")))
      (-> game
-         (move-card {:player-no player-no
-                     :card-name card-name
-                     :from      :hand
-                     :to        :play-area})
-         (card-effect {:player-no player-no
-                       :card      card})
-         (cond->
-           phase (assoc-in [:players player-no :phase] (cond (:action types) :action
-                                                             (:treasure types) :pay))
-           (:action types) (update-in [:players player-no :actions] - 1)
-           (not-empty triggers) (apply-triggers player-no [:play card-name]))
+         (cond-> (:action types) (update-in [:players player-no :actions] - 1))
+         (push-effect-stack {:player-no player-no
+                             :effects   (concat [[:move-card {:card-name card-name
+                                                              :from      :hand
+                                                              :to        :play-area}]
+                                                 [:card-effect {:card card}]]
+                                                (when phase
+                                                  [[:set-phase {:phase (cond (:action types) :action
+                                                                             (:treasure types) :pay)}]])
+                                                (when (some (comp #{[:play card-name]} :trigger) triggers)
+                                                  [[:apply-triggers {:trigger [:play card-name]}]]))})
          check-stack))))
 
 (effects/register {:play play})

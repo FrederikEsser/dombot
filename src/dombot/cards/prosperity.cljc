@@ -1,5 +1,5 @@
 (ns dombot.cards.prosperity
-  (:require [dombot.operations :refer [#_move-cards push-effect-stack give-choice]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice move-card card-effect]]
             [dombot.cards.common :refer [give-coins discard-from-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -22,7 +22,7 @@
            :cost            7
            :coin-value      0
            :effects         [[::bank-give-coins]]
-           :auto-play-index 1})
+           :auto-play-index 2})
 
 (defn- city-effects [game {:keys [player-no]}]
   (let [empty-piles (ut/empty-supply-piles game)]
@@ -171,6 +171,31 @@
                                                                 :max       2
                                                                 :optional? true}]]}]]})
 
+(defn- venture-reveal [game {:keys [player-no]}]
+  (let [{:keys [revealed deck discard]} (get-in game [:players player-no])
+        {:keys [types name] :as card} (last revealed)]
+    (cond (:treasure types) (push-effect-stack game {:player-no player-no
+                                                     :effects   [[:move-card {:card-name name
+                                                                              :from      :revealed
+                                                                              :to        :play-area}]
+                                                                 [:card-effect {:card card}]]})
+          (not-empty (concat deck discard)) (push-effect-stack game {:player-no player-no
+                                                                     :effects   [[:reveal-from-deck 1]
+                                                                                 [::venture-reveal]]})
+          :else game)))
+
+(effects/register {::venture-reveal venture-reveal})
+
+(def venture {:name            :venture
+              :set             :prosperity
+              :types           #{:treasure}
+              :cost            5
+              :coin-value      1
+              :effects         [[:reveal-from-deck 1]
+                                [::venture-reveal]
+                                [:discard-all-revealed]]
+              :auto-play-index 1})
+
 (def workers-village {:name    :worker's-village
                       :set     :prosperity
                       :types   #{:action}
@@ -187,4 +212,5 @@
                     loan
                     mountebank
                     vault
+                    venture
                     workers-village])
