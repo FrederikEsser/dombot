@@ -77,6 +77,55 @@
                        :coins     1
                        :buys      2}]}))))
 
+(deftest counting-house-test
+  (testing "Counting House"
+    (is (= (-> {:players [{:hand    [counting-house]
+                           :discard [estate copper copper]
+                           :actions 1}]}
+               (play 0 :counting-house))
+           {:players      [{:play-area [counting-house]
+                            :discard   [estate copper copper]
+                            :actions   0}]
+            :effect-stack [{:text          "Put any number of Coppers from your discard pile into your hand."
+                            :player-no     0
+                            :choice        :take-from-discard
+                            :source        :discard
+                            :reveal-source true
+                            :options       [:copper :copper]}]}))
+    (is (= (-> {:players [{:hand    [counting-house]
+                           :discard [estate copper copper]
+                           :actions 1}]}
+               (play 0 :counting-house)
+               (choose nil))
+           {:players [{:play-area [counting-house]
+                       :discard   [estate copper copper]
+                       :actions   0}]}))
+    (is (= (-> {:players [{:hand    [counting-house]
+                           :discard [estate copper copper]
+                           :actions 1}]}
+               (play 0 :counting-house)
+               (choose :copper))
+           {:players [{:hand      [copper]
+                       :play-area [counting-house]
+                       :discard   [estate copper]
+                       :actions   0}]}))
+    (is (= (-> {:players [{:hand    [counting-house]
+                           :discard [estate copper copper]
+                           :actions 1}]}
+               (play 0 :counting-house)
+               (choose [:copper :copper]))
+           {:players [{:hand      [copper copper]
+                       :play-area [counting-house]
+                       :discard   [estate]
+                       :actions   0}]}))
+    (is (= (-> {:players [{:hand    [counting-house]
+                           :discard [estate]
+                           :actions 1}]}
+               (play 0 :counting-house))
+           {:players [{:play-area [counting-house]
+                       :discard   [estate]
+                       :actions   0}]}))))
+
 (deftest expand-test
   (let [duchy (assoc duchy :id 1)]
     (testing "Expand"
@@ -541,9 +590,9 @@
                                         :discard   2}
                        :coins          2}]
             :trash   [copper]}))
-    (is (= (-> {:players [{:hand    [venture loan]
-                           :deck    [copper gold]
-                           :coins   0}]}
+    (is (= (-> {:players [{:hand  [venture loan]
+                           :deck  [copper gold]
+                           :coins 0}]}
                (play-treasures 0)
                (choose :copper))
            {:players [{:play-area      [loan venture gold]

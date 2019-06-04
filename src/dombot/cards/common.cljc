@@ -369,10 +369,10 @@
 
 (effects/register {:put-set-aside-into-hand put-set-aside-into-hand})
 
-(defn take-from-discard [game {:keys [card-name] :as args}]
+(defn take-from-discard [game {:keys [card-name card-names] :as args}]
   (cond-> game
-          card-name (move-card (merge args {:from :discard
-                                            :to   :hand}))))
+          (or card-name card-names) (move-cards (merge args {:from :discard
+                                                             :to   :hand}))))
 
 (effects/register {:take-from-discard take-from-discard})
 

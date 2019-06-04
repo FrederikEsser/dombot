@@ -43,6 +43,14 @@
            :cost    5
            :effects [[::city-effects]]})
 
+(def counting-house {:name    :counting-house
+                     :set     :prosperity
+                     :types   #{:action}
+                     :cost    5
+                     :effects [[:give-choice {:text    "Put any number of Coppers from your discard pile into your hand."
+                                              :choice  :take-from-discard
+                                              :options [:player :discard {:name :copper}]}]]})
+
 (def expand {:name    :expand
              :set     :prosperity
              :types   #{:action}
@@ -206,6 +214,7 @@
 
 (def kingdom-cards [bank
                     city
+                    counting-house
                     forge
                     expand
                     kings-court
