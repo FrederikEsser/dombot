@@ -83,24 +83,24 @@
                            :discard [estate copper copper]
                            :actions 1}]}
                (play 0 :counting-house))
-           {:players      [{:play-area [counting-house]
-                            :discard   [estate copper copper]
+           {:players      [{:play-area      [counting-house]
+                            :discard        [estate copper copper]
                             :revealed-cards {:discard 3}
-                            :actions   0}]
-            :effect-stack [{:text          "Put any number of Coppers from your discard pile into your hand."
-                            :player-no     0
-                            :choice        :take-from-discard
-                            :source        :discard
-                            :options       [:copper :copper]}]}))
+                            :actions        0}]
+            :effect-stack [{:text      "Put any number of Coppers from your discard pile into your hand."
+                            :player-no 0
+                            :choice    :take-from-discard
+                            :source    :discard
+                            :options   [:copper :copper]}]}))
     (is (= (-> {:players [{:hand    [counting-house]
                            :discard [estate copper copper]
                            :actions 1}]}
                (play 0 :counting-house)
                (choose nil))
-           {:players [{:play-area [counting-house]
-                       :discard   [estate copper copper]
+           {:players [{:play-area      [counting-house]
+                       :discard        [estate copper copper]
                        :revealed-cards {:discard 3}
-                       :actions   0}]}))
+                       :actions        0}]}))
     (is (= (-> {:players [{:hand    [counting-house]
                            :discard [estate copper copper]
                            :actions 1}]}
@@ -123,10 +123,10 @@
                            :discard [estate estate estate]
                            :actions 1}]}
                (play 0 :counting-house))
-           {:players [{:play-area [counting-house]
-                       :discard   [estate estate estate]
+           {:players [{:play-area      [counting-house]
+                       :discard        [estate estate estate]
                        :revealed-cards {:discard 3}
-                       :actions   0}]}))))
+                       :actions        0}]}))))
 
 (deftest expand-test
   (let [duchy (assoc duchy :id 1)]
@@ -438,6 +438,57 @@
                        :coins     2}
                       {:hand    [curse]
                        :discard [curse copper]}]}))))
+
+(deftest rabble-test
+  (testing "Rabble"
+    (is (= (-> {:players [{:hand    [rabble]
+                           :deck    [copper copper copper copper]
+                           :actions 1}
+                          {:deck [copper rabble copper estate]}]}
+               (play 0 :rabble))
+           {:players [{:hand      [copper copper copper]
+                       :play-area [rabble]
+                       :deck      [copper]
+                       :actions   0}
+                      {:deck           [estate]
+                       :discard        [copper rabble copper]
+                       :revealed-cards {:discard 3}}]}))
+    (is (= (-> {:players [{:hand    [rabble]
+                           :deck    [copper copper copper copper]
+                           :actions 1}
+                          {:deck [estate copper rabble copper]}]}
+               (play 0 :rabble))
+           {:players      [{:hand      [copper copper copper]
+                            :play-area [rabble]
+                            :deck      [copper]
+                            :actions   0}
+                           {:deck           [copper]
+                            :discard        [copper rabble]
+                            :revealed       [estate]
+                            :revealed-cards {:discard 2}}]
+            :effect-stack [{:text      "Put the revealed cards back onto your deck in any order."
+                            :player-no 1
+                            :choice    :topdeck-from-revealed
+                            :source    :revealed
+                            :options   [:estate]
+                            :min       1
+                            :max       1}
+                           {:player-no 1
+                            :effect    [:clear-unaffected {:works :once}]}]}))
+    (is (= (-> {:players [{:hand    [rabble]
+                           :deck    [copper copper copper copper]
+                           :actions 1}
+                          {:deck [estate copper rabble copper]}]}
+               (play 0 :rabble)
+               (choose :estate))
+           {:players [{:hand      [copper copper copper]
+                       :play-area [rabble]
+                       :deck      [copper]
+                       :actions   0}
+                      {:deck           [estate copper]
+                       :discard        [copper rabble]
+                       :revealed-cards {:discard 2
+                                        :deck    1}}]}))))
 
 (deftest vault-test
   (testing "Vault"

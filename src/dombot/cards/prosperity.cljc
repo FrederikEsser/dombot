@@ -1,5 +1,5 @@
 (ns dombot.cards.prosperity
-  (:require [dombot.operations :refer [push-effect-stack give-choice move-card card-effect]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice move-card move-cards card-effect]]
             [dombot.cards.common :refer [give-coins discard-from-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -149,6 +149,31 @@
                  :effects [[:give-coins 2]
                            [:attack {:effects [[::mountebank-attack]]}]]})
 
+(defn rabble-discard [game {:keys [player-no]}]
+  (let [card-names (->> (get-in game [:players player-no :revealed])
+                        (filter (fn [{:keys [types]}]
+                                  (or (:action types) (:treasure types))))
+                        (map :name))]
+    (move-cards game {:player-no  player-no
+                      :card-names card-names
+                      :from       :revealed
+                      :to         :discard})))
+
+(effects/register {::rabble-discard rabble-discard})
+
+(def rabble {:name    :rabble
+             :set     :prosperity
+             :types   #{:action :attack}
+             :cost    5
+             :effects [[:draw 3]
+                       [:attack {:effects [[:reveal-from-deck 3]
+                                           [::rabble-discard]
+                                           [:give-choice {:text    "Put the revealed cards back onto your deck in any order."
+                                                          :choice  :topdeck-from-revealed
+                                                          :options [:player :revealed]
+                                                          :min     3
+                                                          :max     3}]]}]]})
+
 (defn- vault-discard [game {:keys [player-no card-names]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:discard-from-hand {:card-names card-names}]
@@ -220,6 +245,7 @@
                     kings-court
                     loan
                     mountebank
+                    rabble
                     vault
                     venture
                     workers-village])
