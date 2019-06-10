@@ -307,9 +307,8 @@
                          :deck      [silver copper]
                          :actions   0
                          :coins     2}
-                        {:hand           [copper copper copper]
-                         :discard        [copper copper]
-                         :revealed-cards {}}]})))))
+                        {:hand    [copper copper copper]
+                         :discard [copper copper]}]})))))
 
 (deftest cellar-test
   (testing "Cellar"
@@ -488,13 +487,12 @@
                             :discard   [gold]
                             :play-area [harbinger]
                             :actions   1}]
-            :effect-stack [{:text          "You may put a card from your discard pile onto your deck."
-                            :player-no     0
-                            :choice        :topdeck-from-discard
-                            :source        :discard
-                            :reveal-source true
-                            :options       [:gold]
-                            :max           1}]}))
+            :effect-stack [{:text      "You may put a card from your discard pile onto your deck."
+                            :player-no 0
+                            :choice    :topdeck-from-discard
+                            :source    :discard
+                            :options   [:gold]
+                            :max       1}]}))
     (is (= (-> {:players [{:hand    [harbinger]
                            :deck    [copper copper copper]
                            :discard [gold]
@@ -533,16 +531,16 @@
            {:players      [{:hand                [copper]
                             :deck                [copper copper]
                             :discard             (repeat 10 estate)
+                            :revealed-cards      {:discard 10}
                             :approx-discard-size 10
                             :play-area           [harbinger]
                             :actions             1}]
-            :effect-stack [{:text          "You may put a card from your discard pile onto your deck."
-                            :player-no     0
-                            :choice        :topdeck-from-discard
-                            :source        :discard
-                            :reveal-source true
-                            :options       (repeat 10 :estate)
-                            :max           1}]}))))
+            :effect-stack [{:text      "You may put a card from your discard pile onto your deck."
+                            :player-no 0
+                            :choice    :topdeck-from-discard
+                            :source    :discard
+                            :options   (repeat 10 :estate)
+                            :max       1}]}))))
 
 (deftest laboratory-test
   (testing "Laboratory"

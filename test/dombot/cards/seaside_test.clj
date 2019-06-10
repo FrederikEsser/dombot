@@ -49,10 +49,9 @@
                  (choose :copper)
                  (choose [:copper :copper]))
              {:supply  [{:card copper :pile-size 47}]
-              :players [{:hand           [estate copper]
-                         :play-area      [ambassador]
-                         :revealed-cards {}
-                         :actions        0}
+              :players [{:hand      [estate copper]
+                         :play-area [ambassador]
+                         :actions   0}
                         {:discard [copper]}]}))
       (is (= (-> {:supply  [{:card copper :pile-size 46}]
                   :players [{:hand    [ambassador copper copper copper estate]
@@ -62,10 +61,9 @@
                  (choose :copper)
                  (choose :copper))
              {:supply  [{:card copper :pile-size 46}]
-              :players [{:hand           [copper estate copper]
-                         :play-area      [ambassador]
-                         :revealed-cards {}
-                         :actions        0}
+              :players [{:hand      [copper estate copper]
+                         :play-area [ambassador]
+                         :actions   0}
                         {:discard [copper]}]}))
       (is (= (-> {:supply  [{:card copper :pile-size 46}]
                   :players [{:hand    [ambassador copper copper copper estate]
@@ -101,10 +99,9 @@
                  (choose :estate)
                  (choose :estate))
              {:supply  [{:card estate :pile-size 8}]
-              :players [{:hand           [copper copper copper]
-                         :play-area      [ambassador]
-                         :revealed-cards {}
-                         :actions        0}
+              :players [{:hand      [copper copper copper]
+                         :play-area [ambassador]
+                         :actions   0}
                         {:discard [estate]}]})))))
 
 (deftest bazaar-test

@@ -85,12 +85,12 @@
                (play 0 :counting-house))
            {:players      [{:play-area [counting-house]
                             :discard   [estate copper copper]
+                            :revealed-cards {:discard 3}
                             :actions   0}]
             :effect-stack [{:text          "Put any number of Coppers from your discard pile into your hand."
                             :player-no     0
                             :choice        :take-from-discard
                             :source        :discard
-                            :reveal-source true
                             :options       [:copper :copper]}]}))
     (is (= (-> {:players [{:hand    [counting-house]
                            :discard [estate copper copper]
@@ -99,6 +99,7 @@
                (choose nil))
            {:players [{:play-area [counting-house]
                        :discard   [estate copper copper]
+                       :revealed-cards {:discard 3}
                        :actions   0}]}))
     (is (= (-> {:players [{:hand    [counting-house]
                            :discard [estate copper copper]
@@ -119,11 +120,12 @@
                        :discard   [estate]
                        :actions   0}]}))
     (is (= (-> {:players [{:hand    [counting-house]
-                           :discard [estate]
+                           :discard [estate estate estate]
                            :actions 1}]}
                (play 0 :counting-house))
            {:players [{:play-area [counting-house]
-                       :discard   [estate]
+                       :discard   [estate estate estate]
+                       :revealed-cards {:discard 3}
                        :actions   0}]}))))
 
 (deftest expand-test

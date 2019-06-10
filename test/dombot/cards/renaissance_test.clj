@@ -946,17 +946,17 @@
                            :discard [copper gold]
                            :actions 1}]}
                (play 0 :mountain-village))
-           {:players      [{:play-area [mountain-village]
-                            :discard   [copper gold]
-                            :actions   2}]
-            :effect-stack [{:text          "Look through your discard pile and put a card from it into your hand."
-                            :player-no     0
-                            :choice        :take-from-discard
-                            :source        :discard
-                            :reveal-source true
-                            :options       [:copper :gold]
-                            :min           1
-                            :max           1}]}))
+           {:players      [{:play-area      [mountain-village]
+                            :discard        [copper gold]
+                            :revealed-cards {:discard 2}
+                            :actions        2}]
+            :effect-stack [{:text      "Look through your discard pile and put a card from it into your hand."
+                            :player-no 0
+                            :choice    :take-from-discard
+                            :source    :discard
+                            :options   [:copper :gold]
+                            :min       1
+                            :max       1}]}))
     (is (= (-> {:players [{:hand    [mountain-village]
                            :discard [copper gold]
                            :actions 1}]}

@@ -151,7 +151,8 @@
 (defn reset-revealed-number-of-cards [game player-no area]
   (let [revealed-cards (get-in game [:players player-no :revealed-cards])]
     (cond-> game
-            revealed-cards (update-in [:players player-no :revealed-cards] dissoc area))))
+            revealed-cards (update-in [:players player-no :revealed-cards] dissoc area)
+            (= [area] (keys revealed-cards)) (update-in [:players player-no] dissoc :revealed-cards))))
 
 (defn state-maintenance [game player-no from to]
   (let [from-cards (get-in game [:players player-no from])]
@@ -496,22 +497,25 @@
     (merge {:source arg}
            (when (and (= :discard arg)
                       (not (or id last)))
-             {:reveal-source true}))
+             {:reveal-discard? true}))
     {:source name}))
 
-(defn- ?reveal-discard-size [game player-no {:keys [source reveal-source]}]
-  (let [discard (get-in game [:players player-no :discard])]
+(defn- do-reveal-discard [game player-no reveal-discard?]
+  (let [discard-count (-> (get-in game [:players player-no :discard]) count)]
     (cond-> game
-            (and (= :discard source) reveal-source) (set-approx-discard-size player-no (count discard)))))
+            (and reveal-discard?
+                 (< 1 discard-count)) (-> (set-approx-discard-size player-no discard-count)
+                                          (assoc-in [:players player-no :revealed-cards :discard] discard-count)))))
 
 (defn give-choice [{:keys [mode] :as game} {:keys                 [player-no card-id min max optional?]
                                             [opt-name & opt-args] :options
                                             :as                   choice}]
   (let [opt-fn (effects/get-option opt-name)
         options (apply opt-fn game player-no card-id opt-args)
+        {:keys [source reveal-discard?]} (get-source choice)
         {:keys [min max] :as choice} (-> choice
-                                         (assoc :options options)
-                                         (merge (get-source choice))
+                                         (assoc :options options
+                                                :source source)
                                          (cond-> min (update :min clojure.core/min (count options))
                                                  max (update :max clojure.core/min (count options))))
         swiftable (and (= :swift mode)
@@ -524,7 +528,7 @@
                                                         :card-id   card-id
                                                         :choice    choice})
                 swiftable (choose (take min options)))
-        (?reveal-discard-size player-no choice)
+        (do-reveal-discard player-no reveal-discard?)
         check-stack)))
 
 (effects/register {:give-choice give-choice})

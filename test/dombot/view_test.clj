@@ -251,8 +251,9 @@
                                  :interaction :quick-choosable}]
               :number-of-cards 2}))
       (is (= (view-discard {:player {:discard             [copper estate]
-                                     :approx-discard-size 2}
-                            :choice {:source :discard :reveal-source true :options [:estate]}})
+                                     :approx-discard-size 2
+                                     :revealed-cards      {:discard 2}}
+                            :choice {:source :discard :options [:estate]}})
              {:visible-cards   [{:name    :copper
                                  :name-ui "Copper"
                                  :types   #{:treasure}}
@@ -588,16 +589,16 @@
                                           :play-area           [village]
                                           :deck                [copper estate]
                                           :discard             [copper estate silver]
+                                          :revealed-cards      {:discard 3}
                                           :approx-discard-size 3
                                           :actions             2
                                           :coins               0
                                           :buys                1
                                           :phase               :action}
-                         :choice         {:text          "Choice text"
-                                          :source        :discard
-                                          :reveal-source true
-                                          :options       [:estate]
-                                          :min           1}})
+                         :choice         {:text    "Choice text"
+                                          :source  :discard
+                                          :options [:estate]
+                                          :min     1}})
            {:name-ui   "John Doe"
             :active?   true
             :hand      [{:name    :moat

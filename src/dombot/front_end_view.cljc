@@ -99,12 +99,10 @@
 (defn view-discard [{{:keys [discard
                              approx-discard-size
                              revealed-cards]} :player
-                     {:keys [reveal-source]}  :choice
                      :as                      data}]
   (if (empty? discard)
     {}
-    (let [number-of-cards (or (and reveal-source (count discard))
-                              (:discard revealed-cards)
+    (let [number-of-cards (or (:discard revealed-cards)
                               1)]
       {:visible-cards   (view-area :discard data :bottom number-of-cards)
        :number-of-cards (max approx-discard-size number-of-cards)})))

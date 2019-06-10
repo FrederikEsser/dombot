@@ -1506,11 +1506,10 @@
                            :actions        2
                            :revealed-cards {:hand 4}}]}
                (play 0 :shanty-town))
-           {:players [{:hand           [copper copper copper silver silver]
-                       :play-area      [shanty-town shanty-town]
-                       :deck           [estate]
-                       :actions        3
-                       :revealed-cards {}}]}))))
+           {:players [{:hand      [copper copper copper silver silver]
+                       :play-area [shanty-town shanty-town]
+                       :deck      [estate]
+                       :actions   3}]}))))
 
 (deftest steward-test
   (testing "Steward"
