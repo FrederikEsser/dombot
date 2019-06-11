@@ -203,7 +203,7 @@
                                                 actions coins buys set-aside
                                                 coffers villagers artifacts
                                                 island-mat native-village-mat pirate-ship-coins
-                                                active? victory-points winner?]
+                                                vp-tokens active? victory-points winner?]
                            {:keys [text
                                    options
                                    interval
@@ -254,6 +254,8 @@
                                 [:div "Buys: " buys]
                                 (when pirate-ship-coins
                                   [:div "Pirate Ship: " pirate-ship-coins])
+                                (when vp-tokens
+                                  [:div "Victory Points: " vp-tokens])
                                 (when artifacts
                                   (mapk view-card artifacts))])]
                         (if text

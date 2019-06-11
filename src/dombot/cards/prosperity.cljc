@@ -130,6 +130,13 @@
                                     :max     1}]]
            :on-buy  [[:trash-from-play-area {:type :treasure}]]})
 
+(def monument {:name    :monument
+               :set     :prosperity
+               :types   #{:action}
+               :cost    4
+               :effects [[:give-coins 2]
+                         [:give-victory-points 1]]})
+
 (defn- mountebank-gain [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:gain {:card-name :curse}]
@@ -256,6 +263,7 @@
                     kings-court
                     loan
                     mint
+                    monument
                     mountebank
                     rabble
                     vault

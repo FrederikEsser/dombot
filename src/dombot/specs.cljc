@@ -69,6 +69,8 @@
 
 (s/def ::pirate-ship-coins nat-int?)
 
+(s/def ::vp-tokens nat-int?)
+
 (s/def ::number pos-int?)
 
 (s/def ::resource (s/keys :req-un [::number]
@@ -129,6 +131,7 @@
                                  ::island-mat
                                  ::native-village-mat
                                  ::pirate-ship-coins
+                                 ::vp-tokens
                                  ::coffers
                                  ::villagers
                                  ::artifacts

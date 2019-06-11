@@ -135,6 +135,7 @@
                             island-mat
                             native-village-mat
                             pirate-ship-coins
+                            vp-tokens
                             coffers
                             villagers
                             victory-points
@@ -163,6 +164,8 @@
                                   {:number-of-cards (count native-village-mat)})})
          (when pirate-ship-coins
            {:pirate-ship-coins pirate-ship-coins})
+         (when vp-tokens
+           {:vp-tokens vp-tokens})
          (when (and coffers (< 0 coffers))
            {:coffers (merge {:number coffers}
                             (when (and (not choice)

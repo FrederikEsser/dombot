@@ -426,6 +426,17 @@
                              :buys      0}]
                   :trash   [copper copper copper]})))))))
 
+(deftest monument-test
+  (testing "Monument"
+    (is (= (-> {:players [{:hand    [monument]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :monument))
+           {:players [{:play-area [monument]
+                       :actions   0
+                       :coins     2
+                       :vp-tokens 1}]}))))
+
 (deftest mountebank-test
   (let [curse (assoc curse :id 0)
         copper (assoc copper :id 1)]

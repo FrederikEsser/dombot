@@ -21,6 +21,12 @@
 
 (effects/register {:give-buys give-buys})
 
+(defn give-victory-points [game {:keys [player-no arg]}]
+  (cond-> game
+          (< 0 arg) (update-in [:players player-no :vp-tokens] ut/plus arg)))
+
+(effects/register {:give-victory-points give-victory-points})
+
 (defn give-coffers [game {:keys [player-no arg]}]
   (cond-> game
           (< 0 arg) (update-in [:players player-no :coffers] ut/plus arg)))
