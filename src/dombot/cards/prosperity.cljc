@@ -24,6 +24,31 @@
            :effects         [[::bank-give-coins]]
            :auto-play-index 2})
 
+(defn- bishop-trash [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        cost (ut/get-cost game card)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:trash-from-hand {:card-name card-name}]
+                                         [:give-victory-points (quot cost 2)]]})))
+
+(effects/register {::bishop-trash bishop-trash})
+
+(def bishop {:name    :bishop
+             :set     :prosperity
+             :types   #{:action}
+             :cost    4
+             :effects [[:give-coins 1]
+                       [:give-victory-points 1]
+                       [:give-choice {:text    "Trash a card from your hand."
+                                      :choice  ::bishop-trash
+                                      :options [:player :hand]
+                                      :min     1
+                                      :max     1}]
+                       [:other-players {:effects [[:give-choice {:text    "You may trash a card from your hand."
+                                                                 :choice  :trash-from-hand
+                                                                 :options [:player :hand]
+                                                                 :max     1}]]}]]})
+
 (defn- city-effects [game {:keys [player-no]}]
   (let [empty-piles (ut/empty-supply-piles game)]
     (push-effect-stack game {:player-no player-no
@@ -101,7 +126,6 @@
                                                :text      (str "You may trash the revealed " (ut/format-name name) ".")
                                                :choice    :trash-from-revealed
                                                :options   [:player :revealed {:type :treasure}]
-                                               :min       0
                                                :max       1})
           (not-empty (concat deck discard)) (push-effect-stack game {:player-no player-no
                                                                      :effects   [[:reveal-from-deck 1]
@@ -126,7 +150,6 @@
            :effects [[:give-choice {:text    "You may reveal a Treasure card from your hand to gain a copy of it."
                                     :choice  :gain
                                     :options [:player :hand {:type :treasure}]
-                                    :min     0
                                     :max     1}]]
            :on-buy  [[:trash-from-play-area {:type :treasure}]]})
 
@@ -256,6 +279,7 @@
                                 [:give-buys 1]]})
 
 (def kingdom-cards [bank
+                    bishop
                     city
                     counting-house
                     forge

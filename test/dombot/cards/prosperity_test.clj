@@ -28,6 +28,96 @@
            {:players [{:play-area [copper bank]
                        :coins     3}]}))))
 
+(deftest bishop-test
+  (testing "Bishop"
+    (is (= (-> {:players [{:hand    [bishop estate]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :bishop))
+           {:players      [{:hand      [estate]
+                            :play-area [bishop]
+                            :actions   0
+                            :coins     1
+                            :vp-tokens 1}]
+            :effect-stack [{:text      "Trash a card from your hand."
+                            :player-no 0
+                            :choice    ::prosperity/bishop-trash
+                            :source    :hand
+                            :options   [:estate]
+                            :min       1
+                            :max       1}
+                           {:player-no 0
+                            :effect    [:other-players {:effects [[:give-choice {:text    "You may trash a card from your hand."
+                                                                                 :choice  :trash-from-hand
+                                                                                 :options [:player :hand]
+                                                                                 :max     1}]]}]}]}))
+    (is (= (-> {:players [{:hand    [bishop estate]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :bishop)
+               (choose :estate))
+           {:players [{:play-area [bishop]
+                       :actions   0
+                       :coins     1
+                       :vp-tokens 2}]
+            :trash   [estate]}))
+    (is (= (-> {:players [{:hand    [bishop]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :bishop))
+           {:players [{:play-area [bishop]
+                       :actions   0
+                       :coins     1
+                       :vp-tokens 1}]}))
+    (is (= (-> {:players [{:hand    [bishop copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :bishop)
+               (choose :copper))
+           {:players [{:play-area [bishop]
+                       :actions   0
+                       :coins     1
+                       :vp-tokens 1}]
+            :trash   [copper]}))
+    (is (= (-> {:players [{:hand    [bishop silver]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :bishop)
+               (choose :silver))
+           {:players [{:play-area [bishop]
+                       :actions   0
+                       :coins     1
+                       :vp-tokens 2}]
+            :trash   [silver]}))
+    (is (= (-> {:players [{:hand    [bishop]
+                           :actions 1
+                           :coins   0}
+                          {:hand [estate]}]}
+               (play 0 :bishop))
+           {:players      [{:play-area [bishop]
+                            :actions   0
+                            :coins     1
+                            :vp-tokens 1}
+                           {:hand [estate]}]
+            :effect-stack [{:text      "You may trash a card from your hand."
+                            :player-no 1
+                            :choice    :trash-from-hand
+                            :source    :hand
+                            :options   [:estate]
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand    [bishop]
+                           :actions 1
+                           :coins   0}
+                          {:hand [estate]}]}
+               (play 0 :bishop)
+               (choose :estate))
+           {:players [{:play-area [bishop]
+                       :actions   0
+                       :coins     1
+                       :vp-tokens 1}
+                      {}]
+            :trash   [estate]}))))
+
 (deftest city-test
   (testing "City"
     (is (= (-> {:players [{:hand    [city]
@@ -326,7 +416,6 @@
                             :choice    :trash-from-revealed
                             :source    :revealed
                             :options   [:copper]
-                            :min       0
                             :max       1}
                            {:player-no 0
                             :effect    [:discard-all-revealed]}]}))
@@ -393,7 +482,6 @@
                               :choice    :gain
                               :source    :hand
                               :options   [:copper :gold]
-                              :min       0
                               :max       1}]}))
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [mint copper gold]
