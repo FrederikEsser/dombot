@@ -252,10 +252,18 @@
 
 (effects/register {:trash-this trash-this})
 
-(defn trash-from-play-area [game {:keys [card-name] :as args}]
-  (cond-> game
-          card-name (move-card (merge args {:from :play-area
-                                            :to   :trash}))))
+(defn trash-from-play-area [game {:keys [player-no card-name type] :as args}]
+  (let [card-names (and type
+                        (->> (get-in game [:players player-no :play-area])
+                             (filter (comp type :types))
+                             (map :name)))]
+    (cond-> game
+            card-name (move-card (merge args {:from :play-area
+                                              :to   :trash}))
+            card-names (move-cards {:player-no  player-no
+                                    :card-names card-names
+                                    :from       :play-area
+                                    :to         :trash}))))
 
 (effects/register {:trash-from-play-area trash-from-play-area})
 

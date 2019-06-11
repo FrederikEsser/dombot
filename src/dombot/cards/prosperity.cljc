@@ -119,6 +119,17 @@
                         [::loan-reveal]
                         [:discard-all-revealed]]})
 
+(def mint {:name    :mint
+           :set     :prosperity
+           :types   #{:action}
+           :cost    5
+           :effects [[:give-choice {:text    "You may reveal a Treasure card from your hand to gain a copy of it."
+                                    :choice  :gain
+                                    :options [:player :hand {:type :treasure}]
+                                    :min     0
+                                    :max     1}]]
+           :on-buy  [[:trash-from-play-area {:type :treasure}]]})
+
 (defn- mountebank-gain [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:gain {:card-name :curse}]
@@ -244,6 +255,7 @@
                     expand
                     kings-court
                     loan
+                    mint
                     mountebank
                     rabble
                     vault

@@ -235,11 +235,11 @@
                      (add-card [:players player-no to] to-position card)
                      (state-maintenance player-no :supply to)))))
 
-(defn gain [game args]
-  (-> game
-      (push-effect-stack (merge args {:effects [[:do-gain args]
-                                                [:on-gain args]]}))
-      check-stack))
+(defn gain [game {:keys [card-name] :as args}]
+  (cond-> game
+          card-name (-> (push-effect-stack (merge args {:effects [[:do-gain args]
+                                                                  [:on-gain args]]}))
+                        check-stack)))
 
 (effects/register {:do-gain do-gain
                    :on-gain handle-on-gain
@@ -262,7 +262,8 @@
     (-> game
         (cond-> phase (assoc-in [:players player-no :phase] :buy))
         (push-effect-stack {:player-no player-no
-                            :effects   (concat trigger-effects
+                            :effects   (concat (:on-buy card)
+                                               trigger-effects
                                                [[:gain {:card-name card-name
                                                         :bought    true}]])})
         (update-in [:players player-no :coins] - cost)

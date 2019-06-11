@@ -379,6 +379,53 @@
                        :coins     2}]
             :trash   [copper]}))))
 
+(deftest mint-test
+  (let [gold (assoc gold :id 0)]
+    (testing "Mint"
+      (is (= (-> {:players [{:hand    [mint copper gold]
+                             :actions 1}]}
+                 (play 0 :mint))
+             {:players      [{:hand      [copper gold]
+                              :play-area [mint]
+                              :actions   0}]
+              :effect-stack [{:text      "You may reveal a Treasure card from your hand to gain a copy of it."
+                              :player-no 0
+                              :choice    :gain
+                              :source    :hand
+                              :options   [:copper :gold]
+                              :min       0
+                              :max       1}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [mint copper gold]
+                             :actions 1}]}
+                 (play 0 :mint)
+                 (choose :gold))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:hand      [copper gold]
+                         :play-area [mint]
+                         :discard   [gold]
+                         :actions   0}]}))
+      (is (= (-> {:players [{:hand    [mint copper]
+                             :actions 1}]}
+                 (play 0 :mint)
+                 (choose nil))
+             {:players [{:hand      [copper]
+                         :play-area [mint]
+                         :actions   0}]}))
+      (testing "on buy"
+        (let [mint (assoc mint :id 1)]
+          (is (= (-> {:supply  [{:card mint :pile-size 10}]
+                      :players [{:play-area [mountebank copper copper copper]
+                                 :coins     5
+                                 :buys      1}]}
+                     (buy-card 0 :mint))
+                 {:supply  [{:card mint :pile-size 9}]
+                  :players [{:play-area [mountebank]
+                             :discard   [mint]
+                             :coins     0
+                             :buys      0}]
+                  :trash   [copper copper copper]})))))))
+
 (deftest mountebank-test
   (let [curse (assoc curse :id 0)
         copper (assoc copper :id 1)]
