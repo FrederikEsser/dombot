@@ -248,7 +248,7 @@
 (defn buy-card [{:keys [effect-stack] :as game} player-no card-name]
   (let [{:keys [buys coins phase]} (get-in game [:players player-no])
         {:keys [card pile-size triggers] :as supply-pile} (ut/get-pile-idx game card-name)
-        cost (ut/get-cost game card)
+        cost (ut/get-buy-cost game player-no card)
         trigger-effects (->> triggers
                              (filter (comp #{:on-buy} :trigger))
                              (mapcat :effects))]
@@ -726,13 +726,15 @@
 (defn clean-up [game {:keys [player-no number-of-cards]
                       :or   {number-of-cards 5}
                       :as   args}]
-  (let [at-clean-up-triggers (->> (get-in game [:players player-no :triggers])
+  (let [phase (get-in game [:players player-no :phase])
+        at-clean-up-triggers (->> (get-in game [:players player-no :triggers])
                                   (filter (comp #{:at-clean-up} :trigger))
                                   (mapcat :effects))
         at-draw-hand-triggers (->> (get-in game [:players player-no :triggers])
                                    (filter (comp #{:at-draw-hand} :trigger))
                                    (mapcat :effects))]
     (-> game
+        (cond-> phase (assoc-in [:players player-no :phase] :clean-up))
         (push-effect-stack (merge args
                                   {:effects (concat at-clean-up-triggers
                                                     [[:at-clean-up]

@@ -5,7 +5,8 @@
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
             [dombot.cards.prosperity :as prosperity :refer :all]
-            [dombot.cards.dominion :as dominion :refer [market]]
+            [dombot.cards.dominion :refer [market]]
+            [dombot.cards.renaissance :as renaissance :refer [improve]]
             [dombot.utils :as ut]))
 
 (defn fixture [f]
@@ -584,6 +585,86 @@
                        :coins     2}
                       {:hand    [curse]
                        :discard [curse copper]}]}))))
+
+(deftest peddler-test
+  (let [peddler (assoc peddler :id 0)]
+    (testing "Peddler"
+      (is (= (-> {:players [{:hand    [peddler]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :peddler))
+             {:players [{:hand      [copper]
+                         :play-area [peddler]
+                         :deck      [copper]
+                         :actions   1
+                         :coins     1}]}))
+      (is (= (-> {:supply  [{:card peddler :pile-size 10}]
+                  :players [{:coins 8
+                             :buys  1
+                             :phase :buy}]}
+                 (buy-card 0 :peddler))
+             {:supply  [{:card peddler :pile-size 9}]
+              :players [{:discard [peddler]
+                         :coins   0
+                         :buys    0
+                         :phase   :buy}]}))
+      (is (= (-> {:supply  [{:card peddler :pile-size 9}]
+                  :players [{:play-area [peddler gold silver]
+                             :coins     6
+                             :buys      1
+                             :phase     :buy}]}
+                 (buy-card 0 :peddler))
+             {:supply  [{:card peddler :pile-size 8}]
+              :players [{:play-area [peddler gold silver]
+                         :discard   [peddler]
+                         :coins     0
+                         :buys      0
+                         :phase     :buy}]}))
+      (is (= (-> {:supply          [{:card peddler :pile-size 9}]
+                  :cost-reductions [{:reduction 2 :type :action}]
+                  :players         [{:play-area [peddler peddler]
+                                     :coins     2
+                                     :buys      1
+                                     :phase     :action}]}
+                 (buy-card 0 :peddler))
+             {:supply          [{:card peddler :pile-size 8}]
+              :cost-reductions [{:reduction 2 :type :action}]
+              :players         [{:play-area [peddler peddler]
+                                 :discard   [peddler]
+                                 :coins     0
+                                 :buys      0
+                                 :phase     :buy}]}))
+      (is (= (-> {:players [{:hand      [bishop peddler]
+                             :play-area [peddler peddler]
+                             :actions   1
+                             :coins     2
+                             :phase     :action}]}
+                 (play 0 :bishop)
+                 (choose :peddler))
+             {:players [{:play-area [peddler peddler bishop]
+                         :actions   0
+                         :coins     3
+                         :vp-tokens 5
+                         :phase     :action}]
+              :trash   [peddler]}))
+      (let [improve (assoc improve :id 0)]
+        (is (= (-> {:supply  [{:card peddler :pile-size 9}]
+                    :players [{:play-area [expand
+                                           (assoc improve :at-clean-up [[::renaissance/improve-give-choice]])]
+                               :phase     :buy}]}
+                   (clean-up {:player-no 0})
+                   (choose :improve)
+                   (choose :expand)
+                   (choose :peddler))
+               {:supply  [{:card peddler :pile-size 8}]
+                :players [{:hand           [peddler improve]
+                           :actions        0
+                           :coins          0
+                           :buys           0
+                           :actions-played 0
+                           :phase          :out-of-turn}]
+                :trash   [expand]}))))))
 
 (deftest rabble-test
   (testing "Rabble"

@@ -384,25 +384,23 @@
 
 (deftest cost-reduction-test
   (testing "Cost reduction"
-    (is (= (ut/get-cost {:cost-reductions [{:reduction 1}]}
-                        {:cost 3})
+    (is (= (ut/get-cost {:cost-reductions [{:reduction 1}]} 0 {:cost 3})
            2))
-    (is (= (ut/get-cost {:cost-reductions [{:reduction 2}]}
-                        {:cost 3})
+    (is (= (ut/get-cost {:cost-reductions [{:reduction 2}]} 0 {:cost 3})
            1))
-    (is (= (ut/get-cost {:cost-reductions [{:reduction 1} {:reduction 1}]}
-                        {:cost 3})
+    (is (= (ut/get-cost {:cost-reductions [{:reduction 1} {:reduction 1}]} 0 {:cost 3})
            1))
-    (is (= (ut/get-cost {:cost-reductions [{:reduction 1}]}
-                        {:cost 0})
+    (is (= (ut/get-cost {:cost-reductions [{:reduction 1}]} 0 {:cost 0})
            0))
     (is (= (ut/get-cost {:cost-reductions [{:type      :action
                                             :reduction 2}]}
+                        0
                         {:types #{:action}
                          :cost  5})
            3))
     (is (= (ut/get-cost {:cost-reductions [{:type      :action
                                             :reduction 2}]}
+                        0
                         {:types #{:victory}
                          :cost  5})
            5))))

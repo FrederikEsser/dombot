@@ -9,24 +9,27 @@
       {:interaction :quick-choosable}
       {:interaction :choosable})))
 
-(defn view-supply [{supply               :supply
-                    {:keys [coins buys]} :player
-                    choice               :choice
-                    :as                  game}]
+(defn view-supply [{supply                         :supply
+                    {:keys [coins buys player-no]} :player
+                    choice                         :choice
+                    :as                            game}]
   (->> supply
        (map (fn [{{:keys [name types] :as card} :card
                   number-of-cards               :pile-size
                   :keys                         [tokens]}]
-              (let [cost (ut/get-cost game card)]
+              (let [cost (ut/get-cost game player-no card)
+                    buy-cost (ut/get-buy-cost game player-no card)]
                 (merge {:name            name
                         :name-ui         (ut/format-name name)
                         :types           types
                         :cost            cost
                         :number-of-cards number-of-cards}
+                       (when (not= cost buy-cost)
+                         {:buy-cost buy-cost})
                        (when (and (not choice)              ; todo: check phase
                                   (< 0 number-of-cards)
                                   buys (< 0 buys)
-                                  coins (<= cost coins))
+                                  coins (<= buy-cost coins))
                          {:interaction :buyable})
                        (choice-interaction name :supply choice)
                        (when tokens
@@ -232,7 +235,8 @@
         {:keys [phase] :as player} (get players current-player)]
     (->> {:supply      (view-supply {:supply          supply
                                      :cost-reductions cost-reductions
-                                     :player          player
+                                     :player          (assoc player :player-no current-player)
+                                     :players         players
                                      :choice          choice})
           :prosperity? (->> supply (some (comp #{:platinum :colony} :name :card)) boolean)
           :players     (->> players

@@ -26,7 +26,7 @@
 
 (defn- bishop-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        cost (ut/get-cost game card)]
+        cost (ut/get-cost game player-no card)]
     (push-effect-stack game {:player-no player-no
                              :effects   [[:trash-from-hand {:card-name card-name}]
                                          [:give-victory-points (quot cost 2)]]})))
@@ -90,7 +90,7 @@
   (let [total-cost (->> card-names
                         (map (fn [card-name]
                                (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
-                                 (ut/get-cost game card))))
+                                 (ut/get-cost game player-no card))))
                         (apply + 0))]
     (push-effect-stack game {:player-no player-no
                              :effects   [[:trash-from-hand {:card-names card-names}]
@@ -189,6 +189,23 @@
                  :cost    5
                  :effects [[:give-coins 2]
                            [:attack {:effects [[::mountebank-attack]]}]]})
+
+(defn- peddler-buy-cost [game {:keys [player-no]}]
+  (let [actions-in-play (->> (get-in game [:players player-no :play-area])
+                             (filter (comp :action :types))
+                             count)]
+    (max 0 (- 8 (* 2 actions-in-play)))))
+
+(effects/register {::peddler-buy-cost peddler-buy-cost})
+
+(def peddler {:name     :peddler
+              :set      :prosperity
+              :types    #{:action}
+              :cost     8
+              :buy-cost ::peddler-buy-cost
+              :effects  [[:draw 1]
+                         [:give-actions 1]
+                         [:give-coins 1]]})
 
 (defn rabble-discard [game {:keys [player-no]}]
   (let [card-names (->> (get-in game [:players player-no :revealed])
@@ -289,6 +306,7 @@
                     mint
                     monument
                     mountebank
+                    peddler
                     rabble
                     vault
                     venture

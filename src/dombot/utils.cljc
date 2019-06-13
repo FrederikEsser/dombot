@@ -102,12 +102,24 @@
                                {card-types :types}]
   (or (nil? reduction-type) (reduction-type card-types)))
 
-(defn get-cost [{:keys [cost-reductions]} card]
+(defn get-cost-with-reduction [{:keys [cost-reductions]} card]
   (-> (reduce (fn [card {:keys [reduction] :as reduction-data}]
                 (cond-> card
                         (reduction-matches-card reduction-data card) (update :cost minus-cost reduction)))
               card cost-reductions)
       :cost))
+
+(defn get-buy-cost [game player-no card]
+  (let [{:keys [buy-cost]} card
+        buy-cost-fn (when buy-cost (effects/get-effect buy-cost))]
+    (get-cost-with-reduction game (cond-> card
+                                          buy-cost-fn (assoc :cost (buy-cost-fn game {:player-no player-no}))))))
+
+(defn get-cost [game player-no card]
+  (let [{:keys [phase]} (get-in game [:players player-no])]
+    (if (#{:pay :buy} phase)
+      (get-buy-cost game player-no card)
+      (get-cost-with-reduction game card))))
 
 (defn stay-in-play [{:keys [at-start-turn at-end-turn]}]
   (or (not-empty at-start-turn)
@@ -133,7 +145,7 @@
             type (filter (comp type :types))
             reacts-to (filter (every-pred (comp #{reacts-to} :reacts-to)
                                           (partial can-react? game player-no)))
-            min-cost (filter (comp (partial <= min-cost) (partial get-cost game)))
+            min-cost (filter (comp (partial <= min-cost) (partial get-cost game player-no)))
             leaves-play (remove stay-in-play)
             :always (map :name))))
 
@@ -141,8 +153,8 @@
 
 (defn options-from-supply [{:keys [supply] :as game} player-no card-id & [{:keys [max-cost cost type names all]}]]
   (cond->> supply
-           max-cost (filter (comp (partial >= max-cost) (partial get-cost game) :card))
-           cost (filter (comp #{cost} (partial get-cost game) :card))
+           max-cost (filter (comp (partial >= max-cost) (partial get-cost game player-no) :card))
+           cost (filter (comp #{cost} (partial get-cost game player-no) :card))
            type (filter (comp type :types :card))
            names (filter (comp names :name :card))
            (not all) (filter (comp pos? :pile-size))

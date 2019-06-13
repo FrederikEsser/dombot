@@ -302,7 +302,7 @@
 
 (defn trash-and-gain [game {:keys [player-no card-name extra-cost]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        max-cost (+ (ut/get-cost game card) extra-cost)]
+        max-cost (+ (ut/get-cost game player-no card) extra-cost)]
     (-> game
         (push-effect-stack {:player-no player-no
                             :effects   [[:trash-from-hand {:card-name card-name}]

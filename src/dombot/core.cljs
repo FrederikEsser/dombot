@@ -60,7 +60,7 @@
 (defn view-card
   ([card]
    (view-card nil card))
-  ([max {:keys [name name-ui types cost set-aside number-of-cards interaction tokens] :as card}]
+  ([max {:keys [name name-ui types cost buy-cost set-aside number-of-cards interaction tokens] :as card}]
    (if (map? card)
      (let [selection (:selection @state)
            num-selected (->> selection (filter #{name}) count)
@@ -84,7 +84,7 @@
                                          :buyable (swap! state assoc :game (cmd/buy name)))))}
            (str (when tokens (->> (repeat (count tokens) "(E) ") string/join))
                 name-ui
-                (when cost (str " ($" cost ")"))
+                (when cost (str " ($" cost (when buy-cost (str "/" buy-cost)) ")"))
                 (when set-aside (str " (" (string/join ", " set-aside) ")"))
                 (when number-of-cards (str " x" number-of-cards)))]]))
      card)))
