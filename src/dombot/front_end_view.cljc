@@ -29,7 +29,8 @@
                        (when (and (not choice)              ; todo: check phase
                                   (< 0 number-of-cards)
                                   buys (< 0 buys)
-                                  coins (<= buy-cost coins))
+                                  coins (<= buy-cost coins)
+                                  (ut/card-buyable? game player-no card))
                          {:interaction :buyable})
                        (choice-interaction name :supply choice)
                        (when tokens

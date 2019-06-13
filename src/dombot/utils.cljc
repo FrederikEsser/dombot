@@ -109,9 +109,8 @@
               card cost-reductions)
       :cost))
 
-(defn get-buy-cost [game player-no card]
-  (let [{:keys [buy-cost]} card
-        buy-cost-fn (when buy-cost (effects/get-effect buy-cost))]
+(defn get-buy-cost [game player-no {:keys [buy-cost] :as card}]
+  (let [buy-cost-fn (when buy-cost (effects/get-effect buy-cost))]
     (get-cost-with-reduction game (cond-> card
                                           buy-cost-fn (assoc :cost (buy-cost-fn game {:player-no player-no}))))))
 
@@ -120,6 +119,12 @@
     (if (#{:pay :buy} phase)
       (get-buy-cost game player-no card)
       (get-cost-with-reduction game card))))
+
+(defn card-buyable? [game player-no {:keys [buyable?] :as card}]
+  (if buyable?
+    (let [buyable-fn (effects/get-effect buyable?)]
+      (buyable-fn game {:player-no player-no}))
+    true))
 
 (defn stay-in-play [{:keys [at-start-turn at-end-turn]}]
   (or (not-empty at-start-turn)

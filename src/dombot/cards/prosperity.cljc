@@ -110,6 +110,23 @@
                                      :choice  ::forge-trash
                                      :options [:player :hand]}]]})
 
+(defn grand-market-buyable? [game {:keys [player-no]}]
+  (->> (get-in game [:players player-no :play-area])
+       (some (comp #{:copper} :name))
+       not))
+
+(effects/register {::grand-market-buyable? grand-market-buyable?})
+
+(def grand-market {:name     :grand-market
+                   :set      :prosperity
+                   :types    #{:action}
+                   :cost     6
+                   :effects  [[:draw 1]
+                              [:give-actions 1]
+                              [:give-buys 1]
+                              [:give-coins 2]]
+                   :buyable? ::grand-market-buyable?})
+
 (def kings-court {:name    :king's-court
                   :set     :prosperity
                   :types   #{:action}
@@ -299,8 +316,9 @@
                     bishop
                     city
                     counting-house
-                    forge
                     expand
+                    forge
+                    grand-market
                     kings-court
                     loan
                     mint
