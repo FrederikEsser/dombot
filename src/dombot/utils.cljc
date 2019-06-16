@@ -120,11 +120,12 @@
       (get-buy-cost game player-no card)
       (get-cost-with-reduction game card))))
 
-(defn card-buyable? [game player-no {:keys [buyable?] :as card}]
-  (if buyable?
-    (let [buyable-fn (effects/get-effect buyable?)]
-      (buyable-fn game {:player-no player-no}))
-    true))
+(defn card-buyable? [{:keys [unbuyable-cards] :as game} player-no {:keys [name buyable?] :as card}]
+  (cond
+    (and unbuyable-cards (unbuyable-cards name)) false
+    buyable? (let [buyable-fn (effects/get-effect buyable?)]
+               (buyable-fn game {:player-no player-no}))
+    :else true))
 
 (defn stay-in-play [{:keys [at-start-turn at-end-turn]}]
   (or (not-empty at-start-turn)

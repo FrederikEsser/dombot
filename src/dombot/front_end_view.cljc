@@ -234,11 +234,8 @@
 (defn view-game [{:keys [supply artifacts cost-reductions players trash effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
-    (->> {:supply      (view-supply {:supply          supply
-                                     :cost-reductions cost-reductions
-                                     :player          (assoc player :player-no current-player)
-                                     :players         players
-                                     :choice          choice})
+    (->> {:supply      (view-supply (merge game {:player (assoc player :player-no current-player)
+                                                 :choice choice}))
           :prosperity? (->> supply (some (comp #{:platinum :colony} :name :card)) boolean)
           :players     (->> players
                             (map-indexed (fn [idx player]

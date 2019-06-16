@@ -616,7 +616,7 @@
   (let [{:keys [hand]} (get-in game [:players player-no])
         treasures (->> hand
                        (filter (comp :treasure :types))
-                       (sort-by :auto-play-index)
+                       (sort-by (fn [{:keys [auto-play-index]}] (or auto-play-index 0)))
                        (map :name))]
     (-> game
         (push-effect-stack {:player-no player-no
@@ -687,7 +687,7 @@
         (update-in [:players player-no] clean-up-player)
         (set-approx-discard-size player-no)
         (update :players (partial mapv (fn [player] (dissoc player :revealed-cards))))
-        (dissoc :cost-reductions))))
+        (dissoc :cost-reductions :unbuyable-cards))))
 
 (defn at-clean-up-choice [game {:keys [player-no card-name]}]
   (let [{{:keys [at-clean-up id]} :card} (ut/get-card-idx game [:players player-no :play-area] {:name card-name})]

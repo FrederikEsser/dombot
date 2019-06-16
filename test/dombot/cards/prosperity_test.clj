@@ -168,6 +168,77 @@
                        :coins     1
                        :buys      2}]}))))
 
+(deftest contraband-test
+  (testing "Contraband"
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand  [contraband]
+                           :coins 0
+                           :buys  1}
+                          {}
+                          {}]}
+               (play 0 :contraband))
+           {:supply       (base/supply 2 8)
+            :players      [{:play-area [contraband]
+                            :coins     3
+                            :buys      2}
+                           {}
+                           {}]
+            :effect-stack [{:text      "Name a card that can't be bought this turn."
+                            :player-no 1
+                            :choice    ::prosperity/contraband-choice
+                            :source    :supply
+                            :options   [:curse :estate :duchy :province :copper :silver :gold]
+                            :min       1
+                            :max       1}]}))
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand  [contraband]
+                           :coins 0
+                           :buys  1}
+                          {}
+                          {}]}
+               (play 0 :contraband)
+               (choose :gold))
+           {:supply          (base/supply 2 8)
+            :players         [{:play-area [contraband]
+                               :coins     3
+                               :buys      2}
+                              {}
+                              {}]
+            :unbuyable-cards #{:gold}}))
+    (is (thrown-with-msg? AssertionError #"Gold can't be bought."
+                          (-> {:supply          (base/supply 2 8)
+                               :players         [{:play-area [contraband gold]
+                                                  :coins     6
+                                                  :buys      2}]
+                               :unbuyable-cards #{:gold}}
+                              (buy-card 0 :gold))))
+    (let [silver (assoc silver :id 0)]
+      (is (= (-> {:supply          [{:card silver :pile-size 40}
+                                    {:card gold :pile-size 30}]
+                  :players         [{:play-area [contraband gold]
+                                     :coins     6
+                                     :buys      2}]
+                  :unbuyable-cards #{:gold}}
+                 (buy-card 0 :silver))
+             {:supply          [{:card silver :pile-size 39}
+                                {:card gold :pile-size 30}]
+              :players         [{:play-area [contraband gold]
+                                 :discard   [silver]
+                                 :coins     3
+                                 :buys      1}]
+              :unbuyable-cards #{:gold}})))
+    (is (= (-> {:players         [{:play-area [contraband gold]
+                                   :deck      (repeat 5 copper)}]
+                :unbuyable-cards #{:gold}}
+               (clean-up {:player-no 0}))
+           {:players [{:hand           (repeat 5 copper)
+                       :discard        [contraband gold]
+                       :actions        0
+                       :coins          0
+                       :buys           0
+                       :actions-played 0
+                       :phase          :out-of-turn}]}))))
+
 (deftest counting-house-test
   (testing "Counting House"
     (is (= (-> {:players [{:hand    [counting-house]

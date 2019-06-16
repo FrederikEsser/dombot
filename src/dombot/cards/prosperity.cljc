@@ -68,6 +68,30 @@
            :cost    5
            :effects [[::city-effects]]})
 
+(defn contraband-choice [game {:keys [card-name]}]
+  (update game :unbuyable-cards (comp set conj) card-name))
+
+(defn contraband-give-choice [{:keys [players] :as game} {:keys [player-no]}]
+  (let [next-player (mod (inc player-no) (count players))]
+    (give-choice game {:player-no next-player
+                       :text      "Name a card that can't be bought this turn."
+                       :choice    ::contraband-choice
+                       :options   [:supply {:all true}]
+                       :min       1
+                       :max       1})))
+
+(effects/register {::contraband-choice      contraband-choice
+                   ::contraband-give-choice contraband-give-choice})
+
+(def contraband {:name       :contraband
+                 :set        :prosperity
+                 :types      #{:treasure}
+                 :cost       5
+                 :coin-value 3
+                 :effects    [[:give-buys 1]
+                              [::contraband-give-choice]]
+                 :auto-play-index -1})
+
 (def counting-house {:name    :counting-house
                      :set     :prosperity
                      :types   #{:action}
@@ -315,6 +339,7 @@
 (def kingdom-cards [bank
                     bishop
                     city
+                    contraband
                     counting-house
                     expand
                     forge
