@@ -431,6 +431,86 @@
                             :max       1}]
             :trash        [copper copper estate estate estate]}))))
 
+(deftest goons-test
+  (let [estate (assoc estate :id 0)
+        copper (assoc copper :id 1)]
+    (testing "Goons"
+      (is (= (-> {:players [{:hand    [goons]
+                             :actions 1
+                             :coins   0
+                             :buys    1}
+                            {:hand (repeat 5 copper)}]}
+                 (play 0 :goons))
+             {:players      [{:play-area [goons]
+                              :actions   0
+                              :coins     2
+                              :buys      2}
+                             {:hand (repeat 5 copper)}]
+              :effect-stack [{:text      "Discard down to 3 cards in hand."
+                              :player-no 1
+                              :choice    :discard-from-hand
+                              :source    :hand
+                              :options   (repeat 5 :copper)
+                              :min       2
+                              :max       2}
+                             {:player-no 1
+                              :effect    [:clear-unaffected {:works :once}]}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}
+                            {:card copper :pile-size 46}]
+                  :players [{:play-area [goons]
+                             :coins     2
+                             :buys      2}]}
+                 (buy-card 0 :estate))
+             {:supply  [{:card estate :pile-size 7}
+                        {:card copper :pile-size 46}]
+              :players [{:play-area [goons]
+                         :discard   [estate]
+                         :coins     0
+                         :buys      1
+                         :vp-tokens 1}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}
+                            {:card copper :pile-size 46}]
+                  :players [{:play-area [goons]
+                             :coins     2
+                             :buys      2}]}
+                 (buy-card 0 :estate)
+                 (buy-card 0 :copper))
+             {:supply  [{:card estate :pile-size 7}
+                        {:card copper :pile-size 45}]
+              :players [{:play-area [goons]
+                         :discard   [estate copper]
+                         :coins     0
+                         :buys      0
+                         :vp-tokens 2}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}
+                            {:card copper :pile-size 46}]
+                  :players [{:play-area [goons goons]
+                             :coins     4
+                             :buys      3}]}
+                 (buy-card 0 :estate))
+             {:supply  [{:card estate :pile-size 7}
+                        {:card copper :pile-size 46}]
+              :players [{:play-area [goons goons]
+                         :discard   [estate]
+                         :coins     2
+                         :buys      2
+                         :vp-tokens 2}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}
+                            {:card copper :pile-size 46}]
+                  :players [{:play-area [goons goons]
+                             :coins     4
+                             :buys      3}]}
+                 (buy-card 0 :estate)
+                 (buy-card 0 :estate)
+                 (buy-card 0 :copper))
+             {:supply  [{:card estate :pile-size 6}
+                        {:card copper :pile-size 45}]
+              :players [{:play-area [goons goons]
+                         :discard   [estate estate copper]
+                         :coins     0
+                         :buys      0
+                         :vp-tokens 6}]})))))
+
 (deftest grand-market-test
   (let [grand-market (assoc grand-market :id 0)]
     (testing "Grand Market"

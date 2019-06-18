@@ -83,13 +83,13 @@
 (effects/register {::contraband-choice      contraband-choice
                    ::contraband-give-choice contraband-give-choice})
 
-(def contraband {:name       :contraband
-                 :set        :prosperity
-                 :types      #{:treasure}
-                 :cost       5
-                 :coin-value 3
-                 :effects    [[:give-buys 1]
-                              [::contraband-give-choice]]
+(def contraband {:name            :contraband
+                 :set             :prosperity
+                 :types           #{:treasure}
+                 :cost            5
+                 :coin-value      3
+                 :effects         [[:give-buys 1]
+                                   [::contraband-give-choice]]
                  :auto-play-index -1})
 
 (def counting-house {:name    :counting-house
@@ -133,6 +133,15 @@
             :effects [[:give-choice {:text    "Trash any number of cards from your hand."
                                      :choice  ::forge-trash
                                      :options [:player :hand]}]]})
+
+(def goons {:name          :goons
+            :set           :prosperity
+            :types         #{:action :attack}
+            :cost          6
+            :effects       [[:give-buys 1]
+                            [:give-coins 2]
+                            [:attack {:effects [[:discard-down-to 3]]}]]
+            :while-in-play {:on-buy [[:give-victory-points 1]]}})
 
 (defn grand-market-buyable? [game {:keys [player-no]}]
   (->> (get-in game [:players player-no :play-area])
@@ -343,6 +352,7 @@
                     counting-house
                     expand
                     forge
+                    goons
                     grand-market
                     kings-court
                     loan
