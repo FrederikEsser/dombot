@@ -253,7 +253,12 @@
                              (filter (comp #{:on-buy} :trigger))
                              (mapcat :effects))
         while-in-play-effects (->> play-area
-                                   (mapcat (comp :on-buy :while-in-play)))]
+                                   (mapcat (comp :on-buy :while-in-play))
+                                   (map (fn [[effect args]]
+                                          [effect (cond
+                                                    (map? args) (merge {:card-name card-name} args)
+                                                    args {:arg args :card-name card-name}
+                                                    :else {:card-name card-name})])))]
     (assert (empty? effect-stack) "You can't buy cards when you have a choice to make.")
     (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
     (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))

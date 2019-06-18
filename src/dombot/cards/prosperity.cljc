@@ -282,6 +282,23 @@
                                                           :min     3
                                                           :max     3}]]}]]})
 
+(defn- talisman-on-buy [game {:keys [player-no card-name] :as args}]
+kingdom-cards  (let [{{:keys [types] :as card} :card} (ut/get-pile-idx game card-name)
+        cost (ut/get-cost game player-no card)]
+    (cond-> game
+            (and (not (:victory types))
+                 (<= cost 4)) (push-effect-stack {:player-no player-no
+                                                  :effects   [[:gain {:card-name card-name}]]}))))
+
+(effects/register {::talisman-on-buy talisman-on-buy})
+
+(def talisman {:name          :talisman
+               :set           :prosperity
+               :types         #{:treasure}
+               :cost          4
+               :coin-value    1
+               :while-in-play {:on-buy [[::talisman-on-buy]]}})
+
 (defn- vault-discard [game {:keys [player-no card-names]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:discard-from-hand {:card-names card-names}]
@@ -361,6 +378,7 @@
                     mountebank
                     peddler
                     rabble
+                    talisman
                     vault
                     venture
                     workers-village])

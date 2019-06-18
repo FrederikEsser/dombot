@@ -897,6 +897,47 @@
                        :revealed-cards {:discard 2
                                         :deck    1}}]}))))
 
+(deftest talisman-test
+  (let [talisman (assoc talisman :id 0)
+        estate (assoc estate :id 1)
+        venture (assoc venture :id 2)]
+    (testing "Talisman"
+      (is (= (-> {:players [{:hand  [talisman]
+                             :coins 0}]}
+                 (play 0 :talisman))
+             {:players [{:play-area [talisman]
+                         :coins     1}]}))
+      (is (= (-> {:supply  [{:card talisman :pile-size 9}]
+                  :players [{:play-area [talisman]
+                             :coins     5
+                             :buys      1}]}
+                 (buy-card 0 :talisman))
+             {:supply  [{:card talisman :pile-size 7}]
+              :players [{:play-area [talisman]
+                         :discard   [talisman talisman]
+                         :coins     1
+                         :buys      0}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}]
+                  :players [{:play-area [talisman]
+                             :coins     5
+                             :buys      1}]}
+                 (buy-card 0 :estate))
+             {:supply  [{:card estate :pile-size 7}]
+              :players [{:play-area [talisman]
+                         :discard   [estate]
+                         :coins     3
+                         :buys      0}]}))
+      (is (= (-> {:supply  [{:card venture :pile-size 10}]
+                  :players [{:play-area [talisman]
+                             :coins     5
+                             :buys      1}]}
+                 (buy-card 0 :venture))
+             {:supply  [{:card venture :pile-size 9}]
+              :players [{:play-area [talisman]
+                         :discard   [venture]
+                         :coins     0
+                         :buys      0}]})))))
+
 (deftest vault-test
   (testing "Vault"
     (is (= (-> {:players [{:hand    [vault copper copper estate estate]
