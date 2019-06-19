@@ -931,6 +931,46 @@
                        :revealed-cards {:discard 2
                                         :deck    1}}]}))))
 
+(deftest quarry-test
+  (let [monument (assoc monument :id 0)
+        quarry (assoc quarry :id 1)]
+    (testing "Quarry"
+      (is (= (-> {:players [{:hand  [quarry]
+                             :coins 0}]}
+                 (play 0 :quarry))
+             {:players [{:play-area [quarry]
+                         :coins     1}]}))
+      (is (= (-> {:supply  [{:card monument :pile-size 10}]
+                  :players [{:play-area [quarry gold]
+                             :coins     4
+                             :buys      1}]}
+                 (buy-card 0 :monument))
+             {:supply  [{:card monument :pile-size 9}]
+              :players [{:play-area [quarry gold]
+                         :discard   [monument]
+                         :coins     2
+                         :buys      0}]}))
+      (is (= (-> {:supply  [{:card monument :pile-size 10}]
+                  :players [{:play-area [quarry quarry]
+                             :coins     2
+                             :buys      1}]}
+                 (buy-card 0 :monument))
+             {:supply  [{:card monument :pile-size 9}]
+              :players [{:play-area [quarry quarry]
+                         :discard   [monument]
+                         :coins     2
+                         :buys      0}]}))
+      (is (= (-> {:supply  [{:card quarry :pile-size 10}]
+                  :players [{:play-area [quarry gold]
+                             :coins     4
+                             :buys      1}]}
+                 (buy-card 0 :quarry))
+             {:supply  [{:card quarry :pile-size 9}]
+              :players [{:play-area [quarry gold]
+                         :discard   [quarry]
+                         :coins     0
+                         :buys      0}]})))))
+
 (deftest royal-seal-test
   (let [gold (assoc gold :id 0)]
     (testing "Royal Seal"

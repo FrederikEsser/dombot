@@ -272,6 +272,13 @@
                          [:give-actions 1]
                          [:give-coins 1]]})
 
+(def quarry {:name          :quarry
+             :set           :prosperity
+             :types         #{:treasure}
+             :cost          4
+             :coin-value    1
+             :while-in-play {:cost-reductions [{:type :action :reduction 2}]}})
+
 (defn rabble-discard [game {:keys [player-no]}]
   (let [card-names (->> (get-in game [:players player-no :revealed])
                         (filter (fn [{:keys [types]}]
@@ -420,6 +427,7 @@
                     monument
                     mountebank
                     peddler
+                    quarry
                     rabble
                     royal-seal
                     talisman

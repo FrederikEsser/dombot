@@ -102,23 +102,26 @@
                                {card-types :types}]
   (or (nil? reduction-type) (reduction-type card-types)))
 
-(defn get-cost-with-reduction [{:keys [cost-reductions]} card]
-  (-> (reduce (fn [card {:keys [reduction] :as reduction-data}]
-                (cond-> card
-                        (reduction-matches-card reduction-data card) (update :cost minus-cost reduction)))
-              card cost-reductions)
-      :cost))
+(defn get-cost-with-reduction [game player-no card]
+  (let [cost-reductions (->> (get-in game [:players player-no :play-area])
+                             (mapcat (comp :cost-reductions :while-in-play))
+                             (concat (:cost-reductions game)))]
+    (-> (reduce (fn [card {:keys [reduction] :as reduction-data}]
+                  (cond-> card
+                          (reduction-matches-card reduction-data card) (update :cost minus-cost reduction)))
+                card cost-reductions)
+        :cost)))
 
 (defn get-buy-cost [game player-no {:keys [buy-cost] :as card}]
   (let [buy-cost-fn (when buy-cost (effects/get-effect buy-cost))]
-    (get-cost-with-reduction game (cond-> card
-                                          buy-cost-fn (assoc :cost (buy-cost-fn game {:player-no player-no}))))))
+    (get-cost-with-reduction game player-no (cond-> card
+                                                    buy-cost-fn (assoc :cost (buy-cost-fn game {:player-no player-no}))))))
 
 (defn get-cost [game player-no card]
   (let [{:keys [phase]} (get-in game [:players player-no])]
     (if (#{:pay :buy} phase)
       (get-buy-cost game player-no card)
-      (get-cost-with-reduction game card))))
+      (get-cost-with-reduction game player-no card))))
 
 (defn card-buyable? [{:keys [unbuyable-cards] :as game} player-no {:keys [name buyable?] :as card}]
   (cond
