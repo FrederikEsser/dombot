@@ -541,6 +541,40 @@
                                             :buys      1}]}
                                 (buy-card 0 :grand-market)))))))
 
+(deftest hoard-test
+  (let [duchy (assoc duchy :id 0)
+        gold (assoc gold :id 1)]
+    (testing "Hoard"
+      (is (= (-> {:players [{:hand  [hoard]
+                             :coins 0}]}
+                 (play 0 :hoard))
+             {:players [{:play-area [hoard]
+                         :coins     2}]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}
+                            {:card gold :pile-size 30}]
+                  :players [{:play-area [hoard]
+                             :coins     6
+                             :buys      1}]}
+                 (buy-card 0 :duchy))
+             {:supply  [{:card duchy :pile-size 7}
+                        {:card gold :pile-size 29}]
+              :players [{:play-area [hoard]
+                         :discard   [gold duchy]
+                         :coins     1
+                         :buys      0}]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}
+                            {:card gold :pile-size 30}]
+                  :players [{:play-area [hoard]
+                             :coins     6
+                             :buys      1}]}
+                 (buy-card 0 :gold))
+             {:supply  [{:card duchy :pile-size 8}
+                        {:card gold :pile-size 29}]
+              :players [{:play-area [hoard]
+                         :discard   [gold]
+                         :coins     0
+                         :buys      0}]})))))
+
 (deftest kings-court-test
   (let [kings-court (assoc kings-court :id 0)]
     (testing "King's Court"
@@ -915,6 +949,26 @@
              {:supply  [{:card talisman :pile-size 7}]
               :players [{:play-area [talisman]
                          :discard   [talisman talisman]
+                         :coins     1
+                         :buys      0}]}))
+      (is (= (-> {:supply  [{:card talisman :pile-size 1}]
+                  :players [{:play-area [talisman]
+                             :coins     5
+                             :buys      1}]}
+                 (buy-card 0 :talisman))
+             {:supply  [{:card talisman :pile-size 0}]
+              :players [{:play-area [talisman]
+                         :discard   [talisman]
+                         :coins     1
+                         :buys      0}]}))
+      (is (= (-> {:supply  [{:card talisman :pile-size 8}]
+                  :players [{:play-area [talisman talisman]
+                             :coins     5
+                             :buys      1}]}
+                 (buy-card 0 :talisman))
+             {:supply  [{:card talisman :pile-size 5}]
+              :players [{:play-area [talisman talisman]
+                         :discard   [talisman talisman talisman]
                          :coins     1
                          :buys      0}]}))
       (is (= (-> {:supply  [{:card estate :pile-size 8}]

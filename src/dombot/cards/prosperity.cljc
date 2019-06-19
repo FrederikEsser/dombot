@@ -160,6 +160,21 @@
                               [:give-coins 2]]
                    :buyable? ::grand-market-buyable?})
 
+(defn- hoard-on-buy [game {:keys [player-no card-name]}]
+  (let [{{:keys [types]} :card} (ut/get-pile-idx game card-name)]
+    (cond-> game
+            (:victory types) (push-effect-stack {:player-no player-no
+                                                 :effects   [[:gain {:card-name :gold}]]}))))
+
+(effects/register {::hoard-on-buy hoard-on-buy})
+
+(def hoard {:name          :hoard
+            :set           :prosperity
+            :types         #{:treasure}
+            :cost          6
+            :coin-value    2
+            :while-in-play {:on-buy [[::hoard-on-buy]]}})
+
 (def kings-court {:name    :king's-court
                   :set     :prosperity
                   :types   #{:action}
@@ -282,8 +297,8 @@
                                                           :min     3
                                                           :max     3}]]}]]})
 
-(defn- talisman-on-buy [game {:keys [player-no card-name] :as args}]
-kingdom-cards  (let [{{:keys [types] :as card} :card} (ut/get-pile-idx game card-name)
+(defn- talisman-on-buy [game {:keys [player-no card-name]}]
+  (let [{{:keys [types] :as card} :card} (ut/get-pile-idx game card-name)
         cost (ut/get-cost game player-no card)]
     (cond-> game
             (and (not (:victory types))
@@ -371,6 +386,7 @@ kingdom-cards  (let [{{:keys [types] :as card} :card} (ut/get-pile-idx game card
                     forge
                     goons
                     grand-market
+                    hoard
                     kings-court
                     loan
                     mint
