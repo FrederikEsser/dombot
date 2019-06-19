@@ -214,10 +214,21 @@
                        :as   args}]
   (let [new-args (merge args {:from          to
                               :from-position to-position})
-        {{:keys [on-gain id] :as card} :card} (get-card game new-args)]
+        {{:keys [on-gain id] :as card} :card} (get-card game new-args)
+        play-area (get-in game [:players player-no :play-area])
+        while-in-play-effects (->> play-area
+                                   (mapcat (comp :on-gain :while-in-play))
+                                   (map (fn [[effect args]]
+                                          (let [on-gain-args {:gained-card-id id
+                                                              :from           to}]
+                                            [effect (cond
+                                                      (map? args) (merge on-gain-args args)
+                                                      args (merge on-gain-args {:arg args})
+                                                      :else on-gain-args)]))))]
     (cond-> game
             :always (apply-triggers player-no :on-gain (assoc new-args :gained-card-id id))
-            on-gain (push-effect-stack (merge args {:effects on-gain}))
+            (or on-gain
+                (not-empty while-in-play-effects)) (push-effect-stack (merge args {:effects (concat on-gain while-in-play-effects)}))
             (and track-gained-cards?
                  (= current-player player-no)) (update-in [:players player-no :gained-cards]
                                                           concat [(merge (select-keys card [:name :types :cost])
@@ -255,10 +266,11 @@
         while-in-play-effects (->> play-area
                                    (mapcat (comp :on-buy :while-in-play))
                                    (map (fn [[effect args]]
-                                          [effect (cond
-                                                    (map? args) (merge {:card-name card-name} args)
-                                                    args {:arg args :card-name card-name}
-                                                    :else {:card-name card-name})])))]
+                                          (let [on-buy-args {:card-name card-name}]
+                                            [effect (cond
+                                                      (map? args) (merge on-buy-args args)
+                                                      args (merge on-buy-args {:arg args})
+                                                      :else on-buy-args)]))))]
     (assert (empty? effect-stack) "You can't buy cards when you have a choice to make.")
     (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
     (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))

@@ -297,6 +297,33 @@
                                                           :min     3
                                                           :max     3}]]}]]})
 
+(defn royal-seal-topdeck [game {:keys [player-no card-name gained-card-id from]}]
+  (cond-> game
+          card-name (move-card {:player-no    player-no
+                                :move-card-id gained-card-id
+                                :from         from
+                                :to           :deck
+                                :to-position  :top})))
+
+(defn royal-seal-give-choice [game {:keys [player-no gained-card-id from] :as args}]
+  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})]
+    (cond-> game
+            card (give-choice {:player-no player-no
+                               :text      (str "You may put the gained " (ut/format-name name) " onto your deck.")
+                               :choice    [::royal-seal-topdeck args]
+                               :options   [:player from {:id gained-card-id}]
+                               :max       1}))))
+
+(effects/register {::royal-seal-topdeck     royal-seal-topdeck
+                   ::royal-seal-give-choice royal-seal-give-choice})
+
+(def royal-seal {:name          :royal-seal
+                 :set           :prosperity
+                 :types         #{:treasure}
+                 :cost          5
+                 :coin-value    2
+                 :while-in-play {:on-gain [[::royal-seal-give-choice]]}})
+
 (defn- talisman-on-buy [game {:keys [player-no card-name]}]
   (let [{{:keys [types] :as card} :card} (ut/get-pile-idx game card-name)
         cost (ut/get-cost game player-no card)]
@@ -394,6 +421,7 @@
                     mountebank
                     peddler
                     rabble
+                    royal-seal
                     talisman
                     vault
                     venture

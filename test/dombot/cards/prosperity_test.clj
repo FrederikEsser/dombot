@@ -931,6 +931,70 @@
                        :revealed-cards {:discard 2
                                         :deck    1}}]}))))
 
+(deftest royal-seal-test
+  (let [gold (assoc gold :id 0)]
+    (testing "Royal Seal"
+      (is (= (-> {:players [{:hand  [royal-seal]
+                             :coins 0}]}
+                 (play 0 :royal-seal))
+             {:players [{:play-area [royal-seal]
+                         :coins     2}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:play-area [royal-seal]
+                             :coins     6
+                             :buys      1}]}
+                 (buy-card 0 :gold))
+             {:supply       [{:card gold :pile-size 29}]
+              :players      [{:play-area [royal-seal]
+                              :discard   [gold]
+                              :coins     0
+                              :buys      0}]
+              :effect-stack [{:text      "You may put the gained Gold onto your deck."
+                              :player-no 0
+                              :choice    [::prosperity/royal-seal-topdeck {:player-no      0
+                                                                           :gained-card-id 0
+                                                                           :from           :discard}]
+                              :source    :discard
+                              :options   [:gold]
+                              :max       1}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:play-area [royal-seal]
+                             :deck      [copper]
+                             :coins     6
+                             :buys      1}]}
+                 (buy-card 0 :gold)
+                 (choose :gold))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:play-area [royal-seal]
+                         :deck      [gold copper]
+                         :coins     0
+                         :buys      0}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:play-area [royal-seal royal-seal]
+                             :deck      [copper]
+                             :coins     6
+                             :buys      1}]}
+                 (buy-card 0 :gold)
+                 (choose :gold))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:play-area [royal-seal royal-seal]
+                         :deck      [gold copper]
+                         :coins     0
+                         :buys      0}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:play-area [royal-seal]
+                             :deck      [copper]
+                             :coins     6
+                             :buys      1}]}
+                 (buy-card 0 :gold)
+                 (choose nil))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:play-area [royal-seal]
+                         :deck      [copper]
+                         :discard   [gold]
+                         :coins     0
+                         :buys      0}]})))))
+
 (deftest talisman-test
   (let [talisman (assoc talisman :id 0)
         estate (assoc estate :id 1)
