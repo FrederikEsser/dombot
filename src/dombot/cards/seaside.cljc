@@ -65,9 +65,8 @@
 (defn embargo-place-token [game {:keys [card-name]}]
   (let [{:keys [idx]} (ut/get-pile-idx game card-name)]
     (-> game
-        (update-in [:supply idx :tokens] concat [{:token-type :embargo}])
-        (update-in [:supply idx :triggers] concat [{:trigger :on-buy
-                                                    :effects [[:gain {:card-name :curse}]]}]))))
+        (update-in [:supply idx :tokens] concat [{:token-type :embargo
+                                                  :on-buy     [[:gain {:card-name :curse}]]}]))))
 
 (effects/register {::embargo-place-token embargo-place-token})
 

@@ -258,11 +258,10 @@
 
 (defn buy-card [{:keys [effect-stack] :as game} player-no card-name]
   (let [{:keys [buys coins phase play-area]} (get-in game [:players player-no])
-        {:keys [card pile-size triggers] :as supply-pile} (ut/get-pile-idx game card-name)
+        {:keys [card pile-size tokens] :as supply-pile} (ut/get-pile-idx game card-name)
         cost (ut/get-buy-cost game player-no card)
-        trigger-effects (->> triggers
-                             (filter (comp #{:on-buy} :trigger))
-                             (mapcat :effects))
+        token-effects (->> tokens
+                           (mapcat :on-buy))
         while-in-play-effects (->> play-area
                                    (mapcat (comp :on-buy :while-in-play))
                                    (map (fn [[effect args]]
@@ -283,7 +282,7 @@
         (cond-> phase (assoc-in [:players player-no :phase] :buy))
         (push-effect-stack {:player-no player-no
                             :effects   (concat (:on-buy card)
-                                               trigger-effects
+                                               token-effects
                                                while-in-play-effects
                                                [[:gain {:card-name card-name
                                                         :bought    true}]])})
