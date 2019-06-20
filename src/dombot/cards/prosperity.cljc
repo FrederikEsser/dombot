@@ -348,6 +348,40 @@
                :coin-value    1
                :while-in-play {:on-buy [[::talisman-on-buy]]}})
 
+(defn- trade-route-give-coins [{:keys [trade-route-mat] :as game} {:keys [player-no]}]
+  (cond-> game
+          trade-route-mat (give-coins {:player-no player-no :arg trade-route-mat})))
+
+(defn trade-route-move-token [game {:keys [card-name]}]
+  (let [{:keys [idx]} (ut/get-pile-idx game card-name)]
+    (-> game
+        (update :trade-route-mat ut/plus 1)
+        (update-in [:supply idx :tokens] (partial remove (comp #{:trade-route} :token-type)))
+        (update-in [:supply idx] ut/dissoc-if-empty :tokens))))
+
+(defn- trade-route-setup [game _]
+  (update game :supply (partial mapv (fn [{{:keys [types]} :card :as pile}]
+                                       (cond-> pile
+                                               (:victory types) (update :tokens concat [{:token-type :trade-route
+                                                                                         :on-gain    [[::trade-route-move-token]]}]))))))
+
+(effects/register {::trade-route-give-coins trade-route-give-coins
+                   ::trade-route-move-token trade-route-move-token
+                   ::trade-route-setup      trade-route-setup})
+
+(def trade-route {:name    :trade-route
+                  :set     :prosperity
+                  :types   #{:action}
+                  :cost    3
+                  :effects [[:give-buys 1]
+                            [::trade-route-give-coins]
+                            [:give-choice {:text    "Trash a card from your hand."
+                                           :choice  :trash-from-hand
+                                           :options [:player :hand]
+                                           :min     1
+                                           :max     1}]]
+                  :setup   [[::trade-route-setup]]})
+
 (defn- vault-discard [game {:keys [player-no card-names]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:discard-from-hand {:card-names card-names}]
@@ -431,6 +465,7 @@
                     rabble
                     royal-seal
                     talisman
+                    trade-route
                     vault
                     venture
                     workers-village])

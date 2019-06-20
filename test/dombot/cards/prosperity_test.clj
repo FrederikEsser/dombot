@@ -1096,6 +1096,56 @@
                          :coins     0
                          :buys      0}]})))))
 
+(deftest trade-route-test
+  (let [duchy (assoc duchy :id 0)]
+    (testing "Trade Route"
+      (is (= (-> {:players [{:hand    [trade-route copper estate]
+                             :actions 1
+                             :buys    1}]}
+                 (play 0 :trade-route))
+             {:players      [{:hand      [copper estate]
+                              :play-area [trade-route]
+                              :actions   0
+                              :buys      2}]
+              :effect-stack [{:text      "Trash a card from your hand."
+                              :player-no 0
+                              :choice    :trash-from-hand
+                              :source    :hand
+                              :options   [:copper :estate]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:trade-route-mat 1
+                  :players            [{:hand    [trade-route copper estate]
+                                        :actions 1
+                                        :coins   0
+                                        :buys    1}]}
+                 (play 0 :trade-route))
+             {:trade-route-mat 1
+              :players            [{:hand      [copper estate]
+                                    :play-area [trade-route]
+                                    :actions   0
+                                    :coins     1
+                                    :buys      2}]
+              :effect-stack       [{:text      "Trash a card from your hand."
+                                    :player-no 0
+                                    :choice    :trash-from-hand
+                                    :source    :hand
+                                    :options   [:copper :estate]
+                                    :min       1
+                                    :max       1}]}))
+      (is (= (-> {:supply  [{:card      duchy
+                             :pile-size 8
+                             :tokens    [{:token-type :trade-route
+                                          :on-gain    [[::prosperity/trade-route-move-token]]}]}]
+                  :players [{:coins 5
+                             :buys  1}]}
+                 (buy-card 0 :duchy))
+             {:trade-route-mat 1
+              :supply             [{:card duchy :pile-size 7}]
+              :players            [{:discard [duchy]
+                                    :coins   0
+                                    :buys    0}]})))))
+
 (deftest vault-test
   (testing "Vault"
     (is (= (-> {:players [{:hand    [vault copper copper estate estate]

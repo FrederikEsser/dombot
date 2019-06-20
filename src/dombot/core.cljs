@@ -82,7 +82,7 @@
                                          :choosable (select! name)
                                          :quick-choosable (swap! state assoc :game (cmd/choose name))
                                          :buyable (swap! state assoc :game (cmd/buy name)))))}
-           (str (when tokens (->> (repeat (count tokens) "(E) ") string/join))
+           (str (when tokens (->> tokens (map ut/format-token) (string/join " ")))
                 name-ui
                 (when cost (str " ($" cost (when buy-cost (str "/" buy-cost)) ")"))
                 (when set-aside (str " (" (string/join ", " set-aside) ")"))
@@ -194,6 +194,8 @@
             (view-row (concat [nil] row2))
             (view-row row3)
             (view-row row4)]])]
+       (when (-> @state :game :trade-route-mat)
+         [:div "Trade Route Mat: " (-> @state :game :trade-route-mat)])
        [:div "Players"
         [:table
          [:tbody

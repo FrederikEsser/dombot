@@ -231,24 +231,27 @@
                                 (and (pos? buys)
                                      (<= 3 potential-coins)) "You can buy a card.")}))
 
-(defn view-game [{:keys [supply artifacts cost-reductions players trash effect-stack current-player] :as game}]
+(defn view-game [{:keys [supply artifacts trade-route-mat players trash effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
-    (->> {:supply      (view-supply (merge game {:player (assoc player :player-no current-player)
-                                                 :choice choice}))
-          :prosperity? (->> supply (some (comp #{:platinum :colony} :name :card)) boolean)
-          :players     (->> players
-                            (map-indexed (fn [idx player]
-                                           (let [active-player? (and (= idx current-player)
-                                                                     (or (nil? choice)
-                                                                         (= idx player-no))
-                                                                     (not= phase :end-of-game))]
-                                             (view-player (merge {:active-player? active-player?
-                                                                  :player         player
-                                                                  :artifacts      (->> artifacts vals (filter (comp #{idx} :owner)))}
-                                                                 (when (= idx player-no)
-                                                                   {:choice choice})))))))
-          :trash       {:compact (view-trash {:trash trash :choice choice} :compact)
-                        :full    (view-trash {:trash trash :choice choice} :full)}
-          :commands    (view-commands game)}
+    (->> (merge
+           {:supply      (view-supply (merge game {:player (assoc player :player-no current-player)
+                                                  :choice choice}))
+           :prosperity? (->> supply (some (comp #{:platinum :colony} :name :card)) boolean)
+           :players     (->> players
+                             (map-indexed (fn [idx player]
+                                            (let [active-player? (and (= idx current-player)
+                                                                      (or (nil? choice)
+                                                                          (= idx player-no))
+                                                                      (not= phase :end-of-game))]
+                                              (view-player (merge {:active-player? active-player?
+                                                                   :player         player
+                                                                   :artifacts      (->> artifacts vals (filter (comp #{idx} :owner)))}
+                                                                  (when (= idx player-no)
+                                                                    {:choice choice})))))))
+           :trash       {:compact (view-trash {:trash trash :choice choice} :compact)
+                         :full    (view-trash {:trash trash :choice choice} :full)}
+           :commands    (view-commands game)}
+           (when trade-route-mat
+             {:trade-route-mat trade-route-mat}))
          (s/assert* ::specs/game))))

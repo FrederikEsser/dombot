@@ -17,7 +17,7 @@
 
 (s/def ::stay-in-play boolean?)
 
-(s/def ::token-type #{:embargo})
+(s/def ::token-type #{:embargo :trade-route})
 
 (s/def ::token (s/keys :req-un [::token-type]))
 
@@ -158,8 +158,11 @@
                                    ::can-play-treasures?
                                    ::can-end-turn?]))
 
+(s/def ::trade-route-mat pos-int?)
+
 (s/def ::game (s/keys :req-un [::supply
                                ::prosperity?
                                ::players
                                ::trash
-                               ::commands]))
+                               ::commands]
+                      :opt-un [::trade-route-mat]))

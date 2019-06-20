@@ -207,28 +207,38 @@
         (update-in game [:supply idx :pile-size] inc))
       (update-in game to-path add-card-to-coll card))))
 
+(defn- add-effect-args [new-args [effect args]]
+  [effect (cond
+            (map? args) (merge new-args args)
+            args (merge new-args {:arg args})
+            :else new-args)])
+
 (defn handle-on-gain [{:keys [track-gained-cards? current-player] :as game}
-                      {:keys [player-no to to-position bought]
-                       :or   {to          :discard
+                      {:keys [player-no card-name from to to-position bought]
+                       :or   {from        :supply
+                              to          :discard
                               to-position :bottom}
                        :as   args}]
   (let [new-args (merge args {:from          to
                               :from-position to-position})
         {{:keys [on-gain id] :as card} :card} (get-card game new-args)
         play-area (get-in game [:players player-no :play-area])
+        token-effects (when (= :supply from)
+                        (->> (ut/get-pile-idx game card-name)
+                             :tokens
+                             (mapcat :on-gain)
+                             (map (partial add-effect-args {:card-name card-name}))))
         while-in-play-effects (->> play-area
                                    (mapcat (comp :on-gain :while-in-play))
-                                   (map (fn [[effect args]]
-                                          (let [on-gain-args {:gained-card-id id
-                                                              :from           to}]
-                                            [effect (cond
-                                                      (map? args) (merge on-gain-args args)
-                                                      args (merge on-gain-args {:arg args})
-                                                      :else on-gain-args)]))))]
+                                   (map (partial add-effect-args {:gained-card-id id
+                                                                  :from           to})))]
     (cond-> game
             :always (apply-triggers player-no :on-gain (assoc new-args :gained-card-id id))
             (or on-gain
-                (not-empty while-in-play-effects)) (push-effect-stack (merge args {:effects (concat on-gain while-in-play-effects)}))
+                (not-empty token-effects)
+                (not-empty while-in-play-effects)) (push-effect-stack (merge args {:effects (concat on-gain
+                                                                                                    token-effects
+                                                                                                    while-in-play-effects)}))
             (and track-gained-cards?
                  (= current-player player-no)) (update-in [:players player-no :gained-cards]
                                                           concat [(merge (select-keys card [:name :types :cost])
@@ -264,12 +274,7 @@
                            (mapcat :on-buy))
         while-in-play-effects (->> play-area
                                    (mapcat (comp :on-buy :while-in-play))
-                                   (map (fn [[effect args]]
-                                          (let [on-buy-args {:card-name card-name}]
-                                            [effect (cond
-                                                      (map? args) (merge on-buy-args args)
-                                                      args (merge on-buy-args {:arg args})
-                                                      :else on-buy-args)]))))]
+                                   (map (partial add-effect-args {:card-name card-name})))]
     (assert (empty? effect-stack) "You can't buy cards when you have a choice to make.")
     (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
     (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))
