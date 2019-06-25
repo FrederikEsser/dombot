@@ -222,7 +222,11 @@
   (let [new-args (merge args {:from          to
                               :from-position to-position})
         {{:keys [on-gain id] :as card} :card} (get-card game new-args)
-        play-area (get-in game [:players player-no :play-area])
+        {:keys [hand play-area]} (get-in game [:players player-no])
+        reaction-effects (->> hand
+                              (mapcat (comp :on-gain :reaction))
+                              (map (partial add-effect-args {:gained-card-id id
+                                                             :from           to})))
         token-effects (when (= :supply from)
                         (->> (ut/get-pile-idx game card-name)
                              :tokens
@@ -234,9 +238,11 @@
                                                                   :from           to})))]
     (cond-> game
             :always (apply-triggers player-no :on-gain (assoc new-args :gained-card-id id))
-            (or on-gain
+            (or (not-empty reaction-effects)
+                on-gain
                 (not-empty token-effects)
-                (not-empty while-in-play-effects)) (push-effect-stack (merge args {:effects (concat on-gain
+                (not-empty while-in-play-effects)) (push-effect-stack (merge args {:effects (concat reaction-effects
+                                                                                                    on-gain
                                                                                                     token-effects
                                                                                                     while-in-play-effects)}))
             (and track-gained-cards?

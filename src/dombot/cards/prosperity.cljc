@@ -1,5 +1,5 @@
 (ns dombot.cards.prosperity
-  (:require [dombot.operations :refer [push-effect-stack give-choice move-card move-cards card-effect]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice move-card move-cards draw card-effect]]
             [dombot.cards.common :refer [give-coins discard-from-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -437,6 +437,48 @@
                                 [:discard-all-revealed]]
               :auto-play-index 1})
 
+(defn watchtower-draw [game {:keys [player-no]}]
+  (let [{:keys [hand]} (get-in game [:players player-no])]
+    (draw game {:player-no player-no
+                :arg       (- 6 (count hand))})))
+
+(defn watchtower-choice [game {:keys [player-no gained-card-id from choice] :as args}]
+  (case choice
+    :trash (move-card game {:player-no    player-no
+                            :move-card-id gained-card-id
+                            :from         from
+                            :to           :trash})
+    :topdeck (move-card game {:player-no    player-no
+                              :move-card-id gained-card-id
+                              :from         from
+                              :to           :deck
+                              :to-position  :top})
+    :nothing game))
+
+(defn watchtower-give-choice [game {:keys [player-no gained-card-id from] :as args}]
+  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})]
+    (cond-> game
+            card (give-choice {:player-no player-no
+                               :text      (str "You may reveal a Watchtower from your hand, to either trash the gained " (ut/format-name name) " or put it onto your deck.")
+                               :choice    [::watchtower-choice {:gained-card-id gained-card-id :from from}]
+                               :options   [:special
+                                           {:option :trash :text (str "Trash " (ut/format-name name) ".")}
+                                           {:option :topdeck :text (str "Put " (ut/format-name name) " onto your deck.")}
+                                           {:option :nothing :text "Don't reveal Watchtower."}]
+                               :min       1
+                               :max       1}))))
+
+(effects/register {::watchtower-draw        watchtower-draw
+                   ::watchtower-choice      watchtower-choice
+                   ::watchtower-give-choice watchtower-give-choice})
+
+(def watchtower {:name     :watchtower
+                 :set      :prosperity
+                 :types    #{:action :reaction}
+                 :cost     3
+                 :effects  [[::watchtower-draw]]
+                 :reaction {:on-gain [[::watchtower-give-choice]]}})
+
 (def workers-village {:name    :worker's-village
                       :set     :prosperity
                       :types   #{:action}
@@ -468,4 +510,5 @@
                     trade-route
                     vault
                     venture
+                    watchtower
                     workers-village])

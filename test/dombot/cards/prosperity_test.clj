@@ -6,6 +6,7 @@
             [dombot.cards.common :refer :all]
             [dombot.cards.prosperity :as prosperity :refer :all]
             [dombot.cards.dominion :refer [market]]
+            [dombot.cards.seaside :refer [sea-hag]]
             [dombot.cards.renaissance :as renaissance :refer [improve]]
             [dombot.utils :as ut]))
 
@@ -1115,24 +1116,24 @@
                               :min       1
                               :max       1}]}))
       (is (= (-> {:trade-route-mat 1
-                  :players            [{:hand    [trade-route copper estate]
-                                        :actions 1
-                                        :coins   0
-                                        :buys    1}]}
+                  :players         [{:hand    [trade-route copper estate]
+                                     :actions 1
+                                     :coins   0
+                                     :buys    1}]}
                  (play 0 :trade-route))
              {:trade-route-mat 1
-              :players            [{:hand      [copper estate]
-                                    :play-area [trade-route]
-                                    :actions   0
-                                    :coins     1
-                                    :buys      2}]
-              :effect-stack       [{:text      "Trash a card from your hand."
-                                    :player-no 0
-                                    :choice    :trash-from-hand
-                                    :source    :hand
-                                    :options   [:copper :estate]
-                                    :min       1
-                                    :max       1}]}))
+              :players         [{:hand      [copper estate]
+                                 :play-area [trade-route]
+                                 :actions   0
+                                 :coins     1
+                                 :buys      2}]
+              :effect-stack    [{:text      "Trash a card from your hand."
+                                 :player-no 0
+                                 :choice    :trash-from-hand
+                                 :source    :hand
+                                 :options   [:copper :estate]
+                                 :min       1
+                                 :max       1}]}))
       (is (= (-> {:supply  [{:card      duchy
                              :pile-size 8
                              :tokens    [{:token-type :trade-route
@@ -1141,10 +1142,10 @@
                              :buys  1}]}
                  (buy-card 0 :duchy))
              {:trade-route-mat 1
-              :supply             [{:card duchy :pile-size 7}]
-              :players            [{:discard [duchy]
-                                    :coins   0
-                                    :buys    0}]})))))
+              :supply          [{:card duchy :pile-size 7}]
+              :players         [{:discard [duchy]
+                                 :coins   0
+                                 :buys    0}]})))))
 
 (deftest vault-test
   (testing "Vault"
@@ -1308,6 +1309,111 @@
                        :revealed-cards {:play-area 1}
                        :coins          5}]
             :trash   [copper]}))))
+
+(deftest watchtower-test
+  (let [gold (assoc gold :id 0)
+        curse (assoc curse :id 1)]
+    (testing "Watchtower"
+      (is (= (-> {:players [{:hand    [watchtower estate estate]
+                             :deck    (repeat 5 copper)
+                             :actions 1}]}
+                 (play 0 :watchtower))
+             {:players [{:hand      [estate estate copper copper copper copper]
+                         :play-area [watchtower]
+                         :deck      [copper]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand  [watchtower]
+                             :coins 6
+                             :buys  1}]}
+                 (buy-card 0 :gold))
+             {:supply       [{:card gold :pile-size 29}]
+              :players      [{:hand    [watchtower]
+                              :discard [gold]
+                              :coins   0
+                              :buys    0}]
+              :effect-stack [{:text      "You may reveal a Watchtower from your hand, to either trash the gained Gold or put it onto your deck."
+                              :player-no 0
+                              :choice    [::prosperity/watchtower-choice {:gained-card-id 0
+                                                                          :from           :discard}]
+                              :source    :special
+                              :options   [{:option :trash :text "Trash Gold."}
+                                          {:option :topdeck :text "Put Gold onto your deck."}
+                                          {:option :nothing :text "Don't reveal Watchtower."}]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand  [watchtower]
+                             :coins 6
+                             :buys  1}]}
+                 (buy-card 0 :gold)
+                 (choose :trash))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:hand  [watchtower]
+                         :coins 0
+                         :buys  0}]
+              :trash   [gold]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand  [watchtower]
+                             :deck  [copper]
+                             :coins 6
+                             :buys  1}]}
+                 (buy-card 0 :gold)
+                 (choose :topdeck))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:hand  [watchtower]
+                         :deck  [gold copper]
+                         :coins 0
+                         :buys  0}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand  [watchtower]
+                             :coins 6
+                             :buys  1}]}
+                 (buy-card 0 :gold)
+                 (choose :nothing))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:hand    [watchtower]
+                         :discard [gold]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:hand    [sea-hag]
+                             :actions 1}
+                            {:hand [watchtower]
+                             :deck [copper copper]}]}
+                 (play 0 :sea-hag))
+             {:supply       [{:card curse :pile-size 9}]
+              :players      [{:play-area [sea-hag]
+                              :actions   0}
+                             {:hand    [watchtower]
+                              :deck    [curse copper]
+                              :discard [copper]}]
+              :effect-stack [{:text      "You may reveal a Watchtower from your hand, to either trash the gained Curse or put it onto your deck."
+                              :player-no 1
+                              :choice    [::prosperity/watchtower-choice {:gained-card-id 1
+                                                                          :from           :deck}]
+                              :source    :special
+                              :options   [{:option :trash :text "Trash Curse."}
+                                          {:option :topdeck :text "Put Curse onto your deck."}
+                                          {:option :nothing :text "Don't reveal Watchtower."}]
+                              :min       1
+                              :max       1}
+                             {:player-no 1
+                              :effect    [:clear-unaffected {:works :once}]}]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:hand    [sea-hag]
+                             :actions 1}
+                            {:hand [watchtower]
+                             :deck [copper copper]}]}
+                 (play 0 :sea-hag)
+                 (choose :trash))
+             {:supply  [{:card curse :pile-size 9}]
+              :players [{:play-area [sea-hag]
+                         :actions   0}
+                        {:hand    [watchtower]
+                         :deck    [copper]
+                         :discard [copper]}]
+              :trash   [curse]})))))
 
 (deftest workers-village-test
   (testing "Worker's Village"
