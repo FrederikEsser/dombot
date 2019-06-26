@@ -557,31 +557,13 @@
                                             :min     2
                                             :max     2}]]})
 
-(defn upgrade-trash [game {:keys [player-no card-name]}]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        cost (inc (ut/get-cost game player-no card))]
-    (-> game
-        (push-effect-stack {:player-no player-no
-                            :effects   [[:trash-from-hand {:card-name card-name}]
-                                        [:give-choice {:text    (str "Gain a card costing exactly $" cost ".")
-                                                       :choice  :gain
-                                                       :options [:supply {:cost cost}]
-                                                       :min     1
-                                                       :max     1}]]}))))
-
-(effects/register {::upgrade-trash upgrade-trash})
-
 (def upgrade {:name    :upgrade
               :set     :intrigue
               :types   #{:action}
               :cost    5
               :effects [[:draw 1]
                         [:give-actions 1]
-                        [:give-choice {:text    "Trash a card from your hand."
-                                       :choice  ::upgrade-trash
-                                       :options [:player :hand]
-                                       :min     1
-                                       :max     1}]]})
+                        [:upgrade-give-choice]]})
 
 (defn wishing-well-guess [game {:keys [player-no card-name]}]
   (let [{[{:keys [name]}] :deck

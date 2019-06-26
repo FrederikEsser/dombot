@@ -415,3 +415,28 @@
   (update game :cost-reductions concat [{:reduction arg}]))
 
 (effects/register {:add-cost-reduction add-cost-reduction})
+
+(defn upgrade-trash [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        cost (inc (ut/get-cost game player-no card))]
+    (-> game
+        (push-effect-stack {:player-no player-no
+                            :effects   [[:trash-from-hand {:card-name card-name}]
+                                        [:give-choice {:text    (str "Gain a card costing exactly $" cost ".")
+                                                       :choice  :gain
+                                                       :options [:supply {:cost cost}]
+                                                       :min     1
+                                                       :max     1}]]}))))
+
+(defn upgrade-give-choice [game args]
+  (push-effect-stack game (merge args
+                                 {:effects [[:give-choice {:text    "Trash a card from your hand."
+                                                           :choice  :upgrade-trash
+                                                           :options [:player :hand]
+                                                           :min     1
+                                                           :max     1}]]})))
+
+(effects/register {:upgrade-trash       upgrade-trash
+                   :upgrade-give-choice upgrade-give-choice})
+
+

@@ -1839,7 +1839,7 @@
                               :actions   1}]
               :effect-stack [{:text      "Trash a card from your hand."
                               :player-no 0
-                              :choice    ::intrigue/upgrade-trash
+                              :choice    :upgrade-trash
                               :source    :hand
                               :options   [:copper :copper :estate :estate :silver]
                               :min       1
