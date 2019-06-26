@@ -27,6 +27,30 @@
                                 [::farming-village-reveal]
                                 [:discard-all-revealed]]})
 
+(defn- fortune-teller-reveal [game {:keys [player-no]}]
+  (let [{:keys [revealed deck discard]} (get-in game [:players player-no])
+        {:keys [types name] :as card} (last revealed)]
+    (cond (or (:victory types)
+              (:curse types)) (push-effect-stack game {:player-no player-no
+                                                       :effects   [[:move-card {:card-name   name
+                                                                                :from        :revealed
+                                                                                :to          :deck
+                                                                                :to-position :top}]]})
+          (not-empty (concat deck discard)) (push-effect-stack game {:player-no player-no
+                                                                     :effects   [[:reveal-from-deck 1]
+                                                                                 [::fortune-teller-reveal]]})
+          :else game)))
+
+(effects/register {::fortune-teller-reveal fortune-teller-reveal})
+
+(def fortune-teller {:name    :fortune-teller
+                     :set     :cornucopia
+                     :types   #{:action :attack}
+                     :cost    3
+                     :effects [[:give-coins 2]
+                               [:attack {:effects [[::fortune-teller-reveal]
+                                                   [:discard-all-revealed]]}]]})
+
 (defn- hamlet-give-action [game {:keys [player-no card-name]}]
   (cond-> game
           card-name (push-effect-stack {:player-no player-no
@@ -123,6 +147,7 @@
                        [:upgrade-give-choice]]})
 
 (def kingdom-cards [farming-village
+                    fortune-teller
                     hamlet
                     harvest
                     hunting-party

@@ -5,6 +5,7 @@
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
             [dombot.cards.cornucopia :refer :all]
+            [dombot.cards.intrigue :refer [nobles]]
             [dombot.utils :as ut]))
 
 (defn fixture [f]
@@ -44,6 +45,53 @@
                        :revealed-cards {:hand    1
                                         :discard 2}
                        :actions        2}]}))))
+
+(deftest fortune-teller-test
+  (testing "Fortune Teller"
+    (is (= (-> {:players [{:hand    [fortune-teller]
+                           :actions 1
+                           :coins   0}
+                          {:deck [curse]}]}
+               (play 0 :fortune-teller))
+           {:players [{:play-area [fortune-teller]
+                       :actions   0
+                       :coins     2}
+                      {:deck           [curse]
+                       :revealed-cards {:deck 1}}]}))
+    (is (= (-> {:players [{:hand    [fortune-teller]
+                           :actions 1
+                           :coins   0}
+                          {:deck [nobles]}]}
+               (play 0 :fortune-teller))
+           {:players [{:play-area [fortune-teller]
+                       :actions   0
+                       :coins     2}
+                      {:deck           [nobles]
+                       :revealed-cards {:deck 1}}]}))
+    (is (= (-> {:players [{:hand    [fortune-teller]
+                           :actions 1
+                           :coins   0}
+                          {:deck [copper curse]}]}
+               (play 0 :fortune-teller))
+           {:players [{:play-area [fortune-teller]
+                       :actions   0
+                       :coins     2}
+                      {:deck           [curse]
+                       :discard        [copper]
+                       :revealed-cards {:deck    1
+                                        :discard 1}}]}))
+    (is (= (-> {:players [{:hand    [fortune-teller]
+                           :actions 1
+                           :coins   0}
+                          {:deck [copper silver fortune-teller estate copper curse]}]}
+               (play 0 :fortune-teller))
+           {:players [{:play-area [fortune-teller]
+                       :actions   0
+                       :coins     2}
+                      {:deck           [estate copper curse]
+                       :discard        [copper silver fortune-teller]
+                       :revealed-cards {:deck    1
+                                        :discard 3}}]}))))
 
 (deftest hamlet-test
   (testing "Hamlet"
