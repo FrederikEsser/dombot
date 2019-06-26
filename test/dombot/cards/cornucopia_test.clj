@@ -13,6 +13,38 @@
 
 (use-fixtures :each fixture)
 
+(deftest farming-village-test
+  (testing "Farming Village"
+    (is (= (-> {:players [{:hand    [farming-village]
+                           :deck    [copper copper]
+                           :actions 1}]}
+               (play 0 :farming-village))
+           {:players [{:hand           [copper]
+                       :play-area      [farming-village]
+                       :deck           [copper]
+                       :revealed-cards {:hand 1}
+                       :actions        2}]}))
+    (is (= (-> {:players [{:hand    [farming-village]
+                           :deck    [farming-village copper]
+                           :actions 1}]}
+               (play 0 :farming-village))
+           {:players [{:hand           [farming-village]
+                       :play-area      [farming-village]
+                       :deck           [copper]
+                       :revealed-cards {:hand 1}
+                       :actions        2}]}))
+    (is (= (-> {:players [{:hand    [farming-village]
+                           :deck    [estate estate copper copper]
+                           :actions 1}]}
+               (play 0 :farming-village))
+           {:players [{:hand           [copper]
+                       :play-area      [farming-village]
+                       :deck           [copper]
+                       :discard        [estate estate]
+                       :revealed-cards {:hand    1
+                                        :discard 2}
+                       :actions        2}]}))))
+
 (deftest hamlet-test
   (testing "Hamlet"
     (is (= (-> {:players [{:hand    [hamlet copper copper estate estate]

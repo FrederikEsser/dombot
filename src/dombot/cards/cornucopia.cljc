@@ -4,6 +4,29 @@
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
+(defn- farming-village-reveal [game {:keys [player-no]}]
+  (let [{:keys [revealed deck discard]} (get-in game [:players player-no])
+        {:keys [types name] :as card} (last revealed)]
+    (cond (or (:treasure types)
+              (:action types)) (push-effect-stack game {:player-no player-no
+                                                        :effects   [[:move-card {:card-name name
+                                                                                 :from      :revealed
+                                                                                 :to        :hand}]]})
+          (not-empty (concat deck discard)) (push-effect-stack game {:player-no player-no
+                                                                     :effects   [[:reveal-from-deck 1]
+                                                                                 [::farming-village-reveal]]})
+          :else game)))
+
+(effects/register {::farming-village-reveal farming-village-reveal})
+
+(def farming-village {:name    :farming-village
+                      :set     :cornucopia
+                      :types   #{:action}
+                      :cost    4
+                      :effects [[:give-actions 2]
+                                [::farming-village-reveal]
+                                [:discard-all-revealed]]})
+
 (defn- hamlet-give-action [game {:keys [player-no card-name]}]
   (cond-> game
           card-name (push-effect-stack {:player-no player-no
@@ -59,6 +82,7 @@
              :effects [[:upgrade-give-choice]
                        [:upgrade-give-choice]]})
 
-(def kingdom-cards [hamlet
+(def kingdom-cards [farming-village
+                    hamlet
                     menagerie
                     remake])
