@@ -13,6 +13,60 @@
 
 (use-fixtures :each fixture)
 
+(deftest hamlet-test
+  (testing "Hamlet"
+    (is (= (-> {:players [{:hand    [hamlet copper copper estate estate]
+                           :deck    [silver silver]
+                           :actions 1
+                           :buys    1}]}
+               (play 0 :hamlet)
+               (choose :estate)
+               (choose :estate))
+           {:players [{:hand      [copper copper silver]
+                       :play-area [hamlet]
+                       :deck      [silver]
+                       :discard   [estate estate]
+                       :actions   2
+                       :buys      2}]}))
+    (is (= (-> {:players [{:hand    [hamlet copper copper estate estate]
+                           :deck    [silver silver]
+                           :actions 1
+                           :buys    1}]}
+               (play 0 :hamlet)
+               (choose :estate)
+               (choose nil))
+           {:players [{:hand      [copper copper estate silver]
+                       :play-area [hamlet]
+                       :deck      [silver]
+                       :discard   [estate]
+                       :actions   2
+                       :buys      1}]}))
+    (is (= (-> {:players [{:hand    [hamlet copper copper estate estate]
+                           :deck    [silver silver]
+                           :actions 1
+                           :buys    1}]}
+               (play 0 :hamlet)
+               (choose nil)
+               (choose :estate))
+           {:players [{:hand      [copper copper estate silver]
+                       :play-area [hamlet]
+                       :deck      [silver]
+                       :discard   [estate]
+                       :actions   1
+                       :buys      2}]}))
+    (is (= (-> {:players [{:hand    [hamlet copper copper estate estate]
+                           :deck    [silver silver]
+                           :actions 1
+                           :buys    1}]}
+               (play 0 :hamlet)
+               (choose nil)
+               (choose nil))
+           {:players [{:hand      [copper copper estate estate silver]
+                       :play-area [hamlet]
+                       :deck      [silver]
+                       :actions   1
+                       :buys      1}]}))))
+
 (deftest remake-test
   (let [silver (assoc silver :id 0)]
     (testing "Remake"
