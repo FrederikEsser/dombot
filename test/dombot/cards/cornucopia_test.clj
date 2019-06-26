@@ -124,6 +124,47 @@
                        :actions        0
                        :coins          3}]}))))
 
+(deftest hunting-party-test
+  (testing "Hunting Party"
+    (is (= (-> {:players [{:hand    [hunting-party copper copper copper copper]
+                           :deck    [copper silver estate]
+                           :actions 1}]}
+               (play 0 :hunting-party))
+           {:players [{:hand           [copper copper copper copper copper silver]
+                       :play-area      [hunting-party]
+                       :deck           [estate]
+                       :revealed-cards {:hand 6}
+                       :actions        1}]}))
+    (is (= (-> {:players [{:hand    [hunting-party copper copper copper copper]
+                           :deck    [silver copper estate]
+                           :actions 1}]}
+               (play 0 :hunting-party))
+           {:players [{:hand           [copper copper copper copper silver estate]
+                       :play-area      [hunting-party]
+                       :discard        [copper]
+                       :revealed-cards {:hand    6
+                                        :discard 1}
+                       :actions        1}]}))
+    (is (= (-> {:players [{:hand    [hunting-party]
+                           :deck    [silver copper estate]
+                           :actions 1}]}
+               (play 0 :hunting-party))
+           {:players [{:hand           [silver copper]
+                       :play-area      [hunting-party]
+                       :deck           [estate]
+                       :revealed-cards {:hand 2}
+                       :actions        1}]}))
+    (is (= (-> {:players [{:hand    [hunting-party]
+                           :deck    [copper copper copper]
+                           :actions 1}]}
+               (play 0 :hunting-party))
+           {:players [{:hand           [copper]
+                       :play-area      [hunting-party]
+                       :discard        [copper copper]
+                       :revealed-cards {:hand    1
+                                        :discard 2}
+                       :actions        1}]}))))
+
 (deftest menagerie-test
   (testing "Menagerie"
     (is (= (-> {:players [{:hand    [menagerie estate copper silver estate]

@@ -71,6 +71,32 @@
                         [::harvest-give-coins]
                         [:discard-all-revealed]]})
 
+(defn- hunting-party-reveal [game {:keys [player-no]}]
+  (let [{:keys [hand revealed deck discard]} (get-in game [:players player-no])
+        hand-card-names (->> hand (map :name) set)
+        {:keys [name] :as card} (last revealed)]
+    (cond (and card
+               (not (hand-card-names name))) (push-effect-stack game {:player-no player-no
+                                                                      :effects   [[:move-card {:card-name name
+                                                                                               :from      :revealed
+                                                                                               :to        :hand}]]})
+          (not-empty (concat deck discard)) (push-effect-stack game {:player-no player-no
+                                                                     :effects   [[:reveal-from-deck 1]
+                                                                                 [::hunting-party-reveal]]})
+          :else game)))
+
+(effects/register {::hunting-party-reveal hunting-party-reveal})
+
+(def hunting-party {:name    :hunting-party
+                    :set     :cornucopia
+                    :types   #{:action}
+                    :cost    5
+                    :effects [[:draw 1]
+                              [:give-actions 1]
+                              [:reveal-hand]
+                              [::hunting-party-reveal]
+                              [:discard-all-revealed]]})
+
 (defn- menagerie-draw [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])
         different-names? (->> hand
@@ -99,5 +125,6 @@
 (def kingdom-cards [farming-village
                     hamlet
                     harvest
+                    hunting-party
                     menagerie
                     remake])
