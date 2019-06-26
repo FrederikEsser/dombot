@@ -67,6 +67,25 @@
                        :actions   1
                        :buys      1}]}))))
 
+(deftest menagerie-test
+  (testing "Menagerie"
+    (is (= (-> {:players [{:hand    [menagerie estate copper silver estate]
+                           :deck    [copper copper copper copper]
+                           :actions 1}]}
+               (play 0 :menagerie))
+           {:players [{:hand      [estate copper silver estate copper]
+                       :play-area [menagerie]
+                       :deck      [copper copper copper]
+                       :actions   1}]}))
+    (is (= (-> {:players [{:hand    [menagerie estate copper silver gold]
+                           :deck    [copper copper copper copper]
+                           :actions 1}]}
+               (play 0 :menagerie))
+           {:players [{:hand      [estate copper silver gold copper copper copper]
+                       :play-area [menagerie]
+                       :deck      [copper]
+                       :actions   1}]}))))
+
 (deftest remake-test
   (let [silver (assoc silver :id 0)]
     (testing "Remake"

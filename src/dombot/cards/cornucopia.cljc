@@ -1,6 +1,6 @@
 (ns dombot.cards.cornucopia
   (:require [dombot.operations :refer [push-effect-stack]]
-            [dombot.cards.common :refer []]
+            [dombot.cards.common :refer [reveal-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -34,6 +34,24 @@
                                       :options [:player :hand]
                                       :max     1}]]})
 
+(defn- menagerie-draw [game {:keys [player-no]}]
+  (let [hand (get-in game [:players player-no :hand])
+        different-names? (->> hand
+                              (map :name)
+                              (apply distinct?))]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:reveal-hand]
+                                         [:draw (if different-names? 3 1)]]})))
+
+(effects/register {::menagerie-draw menagerie-draw})
+
+(def menagerie {:name    :menagerie
+                :set     :cornucopia
+                :types   #{:action}
+                :cost    3
+                :effects [[:give-actions 1]
+                          [::menagerie-draw]]})
+
 (def remake {:name    :remake
              :set     :cornucopia
              :types   #{:action}
@@ -42,4 +60,5 @@
                        [:upgrade-give-choice]]})
 
 (def kingdom-cards [hamlet
+                    menagerie
                     remake])
