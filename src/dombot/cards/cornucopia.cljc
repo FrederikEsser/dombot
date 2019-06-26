@@ -1,6 +1,6 @@
 (ns dombot.cards.cornucopia
   (:require [dombot.operations :refer [push-effect-stack]]
-            [dombot.cards.common :refer [reveal-hand]]
+            [dombot.cards.common :refer [reveal-hand give-coins]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -57,6 +57,20 @@
                                       :options [:player :hand]
                                       :max     1}]]})
 
+(defn- harvest-give-coins [game {:keys [player-no]}]
+  (let [revealed (get-in game [:players player-no :revealed])]
+    (give-coins game {:player-no player-no :arg (->> revealed (map :name) set count)})))
+
+(effects/register {::harvest-give-coins harvest-give-coins})
+
+(def harvest {:name    :harvest
+              :set     :cornucopia
+              :types   #{:action}
+              :cost    5
+              :effects [[:reveal-from-deck 4]
+                        [::harvest-give-coins]
+                        [:discard-all-revealed]]})
+
 (defn- menagerie-draw [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])
         different-names? (->> hand
@@ -84,5 +98,6 @@
 
 (def kingdom-cards [farming-village
                     hamlet
+                    harvest
                     menagerie
                     remake])

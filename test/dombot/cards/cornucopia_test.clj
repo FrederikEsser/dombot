@@ -99,6 +99,31 @@
                        :actions   1
                        :buys      1}]}))))
 
+(deftest harvest-test
+  (testing "Harvest"
+    (is (= (-> {:players [{:hand    [harvest]
+                           :deck    (repeat 5 copper)
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :harvest))
+           {:players [{:play-area      [harvest]
+                       :deck           [copper]
+                       :discard        [copper copper copper copper]
+                       :revealed-cards {:discard 4}
+                       :actions        0
+                       :coins          1}]}))
+    (is (= (-> {:players [{:hand    [harvest]
+                           :deck    [copper estate silver estate copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :harvest))
+           {:players [{:play-area      [harvest]
+                       :deck           [copper]
+                       :discard        [copper estate silver estate]
+                       :revealed-cards {:discard 4}
+                       :actions        0
+                       :coins          3}]}))))
+
 (deftest menagerie-test
   (testing "Menagerie"
     (is (= (-> {:players [{:hand    [menagerie estate copper silver estate]
