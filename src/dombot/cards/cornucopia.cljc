@@ -4,6 +4,22 @@
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
+(defn fairgrounds-victory-points [cards]
+  (-> (->> cards
+           (map :name)
+           set
+           count)
+      (quot 5)
+      (* 2)))
+
+(effects/register {::fairgrounds-victory-points fairgrounds-victory-points})
+
+(def fairgrounds {:name           :fairgrounds
+                  :set            :cornucopia
+                  :types          #{:victory}
+                  :cost           6
+                  :victory-points ::fairgrounds-victory-points})
+
 (defn- farming-village-reveal [game {:keys [player-no]}]
   (let [{:keys [revealed deck discard]} (get-in game [:players player-no])
         {:keys [types name] :as card} (last revealed)]
@@ -118,12 +134,12 @@
 (effects/register {::horn-of-plenty-gain        horn-of-plenty-gain
                    ::horn-of-plenty-give-choice horn-of-plenty-give-choice})
 
-(def horn-of-plenty {:name       :horn-of-plenty
-                     :set        :cornucopia
-                     :types      #{:treasure}
-                     :cost       5
-                     :coin-value 0
-                     :effects    [[::horn-of-plenty-give-choice]]
+(def horn-of-plenty {:name            :horn-of-plenty
+                     :set             :cornucopia
+                     :types           #{:treasure}
+                     :cost            5
+                     :coin-value      0
+                     :effects         [[::horn-of-plenty-give-choice]]
                      :auto-play-index 2})
 
 (defn- hunting-party-reveal [game {:keys [player-no]}]
@@ -207,7 +223,8 @@
              :effects [[:upgrade-give-choice]
                        [:upgrade-give-choice]]})
 
-(def kingdom-cards [farming-village
+(def kingdom-cards [fairgrounds
+                    farming-village
                     fortune-teller
                     hamlet
                     harvest

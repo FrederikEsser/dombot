@@ -14,6 +14,17 @@
 
 (use-fixtures :each fixture)
 
+(deftest fairgrounds-test
+  (testing "Fairgrounds"
+    (is (= (calc-victory-points {:deck [fairgrounds copper silver gold]})
+           0))
+    (is (= (calc-victory-points {:deck [fairgrounds copper silver gold hamlet]})
+           2))
+    (is (= (calc-victory-points {:deck [fairgrounds copper silver gold hamlet fairgrounds]})
+           4))
+    (is (= (calc-victory-points {:deck cornucopia/kingdom-cards})
+           4))))
+
 (deftest farming-village-test
   (testing "Farming Village"
     (is (= (-> {:players [{:hand    [farming-village]
