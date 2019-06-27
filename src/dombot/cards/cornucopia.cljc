@@ -1,5 +1,5 @@
 (ns dombot.cards.cornucopia
-  (:require [dombot.operations :refer [push-effect-stack]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice gain]]
             [dombot.cards.common :refer [reveal-hand give-coins]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -121,6 +121,36 @@
                               [::hunting-party-reveal]
                               [:discard-all-revealed]]})
 
+(defn- jester-gain-copy [game {:keys [player-no card-name choice]}]
+  (gain game {:player-no choice
+              :card-name card-name}))
+
+(defn- jester-give-choice [game {:keys [player-no attacking-player-no]}]
+  (let [{:keys [name types] :as card} (last (get-in game [:players player-no :discard]))]
+    (if (:victory types)
+      (gain game {:player-no player-no
+                  :card-name :curse})
+      (cond-> game
+              card (give-choice {:player-no attacking-player-no
+                                 :text      (str "Who gains a " (ut/format-name name) "?")
+                                 :choice    [::jester-gain-copy {:card-name name}]
+                                 :options   [:special
+                                             {:option player-no :text (-> (get-in game [:players player-no :name]) ut/format-name)}
+                                             {:option attacking-player-no :text (-> (get-in game [:players attacking-player-no :name]) ut/format-name)}]
+                                 :min       1
+                                 :max       1})))))
+
+(effects/register {::jester-gain-copy   jester-gain-copy
+                   ::jester-give-choice jester-give-choice})
+
+(def jester {:name    :jester
+             :set     :cornucopia
+             :types   #{:action :attack}
+             :cost    5
+             :effects [[:give-coins 2]
+                       [:attack {:effects [[:discard-from-topdeck 1]
+                                           [::jester-give-choice]]}]]})
+
 (defn- menagerie-draw [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])
         different-names? (->> hand
@@ -151,5 +181,6 @@
                     hamlet
                     harvest
                     hunting-party
+                    jester
                     menagerie
                     remake])

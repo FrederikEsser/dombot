@@ -88,7 +88,8 @@
 
 (s/def ::max nat-int?)
 
-(s/def ::option keyword?)
+(s/def ::option (s/or :keyword keyword?
+                      :int integer?))
 
 (s/def ::option-elem (s/keys :req-un [::text
                                       ::option]))

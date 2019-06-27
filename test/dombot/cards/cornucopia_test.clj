@@ -4,7 +4,7 @@
             [dombot.operations :refer :all]
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
-            [dombot.cards.cornucopia :refer :all]
+            [dombot.cards.cornucopia :as cornucopia :refer :all]
             [dombot.cards.intrigue :refer [nobles]]
             [dombot.utils :as ut]))
 
@@ -212,6 +212,87 @@
                        :revealed-cards {:hand    1
                                         :discard 2}
                        :actions        1}]}))))
+
+(deftest jester-test
+  (let [curse (assoc curse :id 0)
+        copper (assoc copper :id 1)
+        gold (assoc gold :id 2)]
+    (testing "Jester"
+      (is (= (-> {:players [{:name    :p1
+                             :hand    [jester]
+                             :actions 1
+                             :coins   0}
+                            {:name :p2
+                             :deck [copper copper]}]}
+                 (play 0 :jester))
+             {:players      [{:name      :p1
+                              :play-area [jester]
+                              :actions   0
+                              :coins     2}
+                             {:name    :p2
+                              :deck    [copper]
+                              :discard [copper]}]
+              :effect-stack [{:text      "Who gains a Copper?"
+                              :player-no 0
+                              :choice    [::cornucopia/jester-gain-copy {:card-name :copper}]
+                              :source    :special
+                              :options   [{:option 1 :text "P2"}
+                                          {:option 0 :text "P1"}]
+                              :min       1
+                              :max       1}
+                             {:player-no 1
+                              :effect    [:clear-unaffected {:works :once}]}]}))
+      (is (= (-> {:supply  [{:card copper :pile-size 46}]
+                  :players [{:name    :p1
+                             :hand    [jester]
+                             :actions 1
+                             :coins   0}
+                            {:name :p2
+                             :discard [copper copper]}]}
+                 (play 0 :jester)
+                 (choose 1))
+             {:supply  [{:card copper :pile-size 45}]
+              :players [{:name      :p1
+                         :play-area [jester]
+                         :actions   0
+                         :coins     2}
+                        {:name    :p2
+                         :deck    [copper]
+                         :discard [copper copper]}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 29}]
+                  :players [{:name    :p1
+                             :hand    [jester]
+                             :actions 1
+                             :coins   0}
+                            {:name :p2
+                             :deck [gold copper]}]}
+                 (play 0 :jester)
+                 (choose 0))
+             {:supply  [{:card gold :pile-size 28}]
+              :players [{:name      :p1
+                         :play-area [jester]
+                         :discard   [gold]
+                         :actions   0
+                         :coins     2}
+                        {:name    :p2
+                         :deck    [copper]
+                         :discard [gold]}]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:name    :p1
+                             :hand    [jester]
+                             :actions 1
+                             :coins   0}
+                            {:name :p2
+                             :deck [estate copper]}]}
+                 (play 0 :jester))
+             {:supply  [{:card curse :pile-size 9}]
+              :players [{:name      :p1
+                         :play-area [jester]
+                         :actions   0
+                         :coins     2}
+                        {:name    :p2
+                         :deck    [copper]
+                         :discard [estate curse]}]})))))
 
 (deftest menagerie-test
   (testing "Menagerie"
