@@ -107,15 +107,16 @@
                               :actions   0}
                              {:deck     [gold]
                               :revealed [estate silver]}]
-              :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
-                              :player-no 1
-                              :choice    :trash-from-revealed
-                              :source    :revealed
-                              :options   [:silver]
-                              :min       1
-                              :max       1}
+              :effect-stack [{:text                "Trash a revealed Treasure other than Copper, and discards the rest."
+                              :player-no           1
+                              :attacking-player-no 0
+                              :choice              :trash-from-revealed
+                              :source              :revealed
+                              :options             [:silver]
+                              :min                 1
+                              :max                 1}
                              {:player-no 1
-                              :effect    [:discard-all-revealed]}
+                              :effect    [:discard-all-revealed {:attacking-player-no 0}]}
                              {:player-no 1
                               :effect    [:clear-unaffected {:works :once}]}]}))
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
@@ -160,26 +161,29 @@
                              {:deck     [estate]
                               :revealed [silver gold]}
                              {:deck [copper gold estate]}]
-              :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
-                              :player-no 1
-                              :choice    :trash-from-revealed
-                              :source    :revealed
-                              :options   [:silver :gold]
-                              :min       1
-                              :max       1}
+              :effect-stack [{:text                "Trash a revealed Treasure other than Copper, and discards the rest."
+                              :player-no           1
+                              :attacking-player-no 0
+                              :choice              :trash-from-revealed
+                              :source              :revealed
+                              :options             [:silver :gold]
+                              :min                 1
+                              :max                 1}
                              {:player-no 1
-                              :effect    [:discard-all-revealed]}
+                              :effect    [:discard-all-revealed {:attacking-player-no 0}]}
                              {:player-no 2
-                              :effect    [:reveal-from-deck 2]}
+                              :effect    [:reveal-from-deck {:arg                 2
+                                                             :attacking-player-no 0}]}
                              {:player-no 2
                               :effect    [:give-choice
-                                          {:text    "Trash a revealed Treasure other than Copper, and discards the rest."
-                                           :choice  :trash-from-revealed
-                                           :options [:player :revealed {:not-name :copper :type :treasure}]
-                                           :max     1
-                                           :min     1}]}
+                                          {:attacking-player-no 0
+                                           :text                "Trash a revealed Treasure other than Copper, and discards the rest."
+                                           :choice              :trash-from-revealed
+                                           :options             [:player :revealed {:not-name :copper :type :treasure}]
+                                           :max                 1
+                                           :min                 1}]}
                              {:player-no 2
-                              :effect    [:discard-all-revealed]}
+                              :effect    [:discard-all-revealed {:attacking-player-no 0}]}
                              {:player-no 1
                               :effect    [:clear-unaffected {:works :once}]}
                              {:player-no 2
@@ -200,15 +204,16 @@
                               :revealed-cards {:discard 1}}
                              {:deck     [estate]
                               :revealed [copper gold]}]
-              :effect-stack [{:text      "Trash a revealed Treasure other than Copper, and discards the rest."
-                              :player-no 2
-                              :choice    :trash-from-revealed
-                              :source    :revealed
-                              :options   [:gold]
-                              :min       1
-                              :max       1}
+              :effect-stack [{:text                "Trash a revealed Treasure other than Copper, and discards the rest."
+                              :player-no           2
+                              :attacking-player-no 0
+                              :choice              :trash-from-revealed
+                              :source              :revealed
+                              :options             [:gold]
+                              :min                 1
+                              :max                 1}
                              {:player-no 2
-                              :effect    [:discard-all-revealed]}
+                              :effect    [:discard-all-revealed {:attacking-player-no 0}]}
                              {:player-no 1
                               :effect    [:clear-unaffected {:works :once}]}
                              {:player-no 2

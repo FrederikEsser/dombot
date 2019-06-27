@@ -1004,12 +1004,13 @@
                               :actions   0}
                              {:hand    [curse copper copper estate copper]
                               :discard [copper copper curse]}]
-              :effect-stack [{:text      "You may trash a Curse from your hand."
-                              :player-no 1
-                              :choice    :trash-from-hand
-                              :source    :hand
-                              :options   [:curse]
-                              :max       1}
+              :effect-stack [{:text                "You may trash a Curse from your hand."
+                              :player-no           1
+                              :attacking-player-no 0
+                              :choice              :trash-from-hand
+                              :source              :hand
+                              :options             [:curse]
+                              :max                 1}
                              {:player-no 1
                               :effect    [:clear-unaffected {:works :once}]}]}))
       (is (= (-> {:supply  [{:card curse :pile-size 9}]

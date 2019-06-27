@@ -1079,16 +1079,17 @@
                             :actions   0}
                            {:deck     [copper]
                             :revealed [estate copper]}]
-            :effect-stack [{:text      "Trash a revealed Treasure (attacker chooses)."
-                            :player-no 1
-                            :attacker  0
-                            :choice    ::seaside/pirate-ship-trash
-                            :source    :revealed
-                            :options   [:copper]
-                            :min       1
-                            :max       1}
+            :effect-stack [{:text                "Trash a revealed Treasure (attacker chooses)."
+                            :player-no           1
+                            :attacking-player-no 0
+                            :attacker            0
+                            :choice              ::seaside/pirate-ship-trash
+                            :source              :revealed
+                            :options             [:copper]
+                            :min                 1
+                            :max                 1}
                            {:player-no 1
-                            :effect    [:discard-all-revealed]}
+                            :effect    [:discard-all-revealed {:attacking-player-no 0}]}
                            {:player-no 0
                             :effect    [::seaside/pirate-ship-add-coin]}
                            {:player-no 1

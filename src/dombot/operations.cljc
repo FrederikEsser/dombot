@@ -432,7 +432,9 @@
                                 (map (fn [n] (-> n (+ player-no) (mod (count players)))))
                                 (remove (fn [n] (and attack (is-unaffected? game n)))))
                            (not at-once) reverse
-                           all (concat [player-no]))]
+                           all (concat [player-no]))
+        effects (cond->> effects
+                         attack (map (partial add-effect-args {:attacking-player-no player-no})))]
     (reduce (fn [game other-player-no]
               (push-effect-stack game {:player-no other-player-no
                                        :effects   effects}))

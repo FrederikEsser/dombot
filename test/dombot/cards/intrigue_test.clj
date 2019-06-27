@@ -1694,14 +1694,15 @@
                               :deck      [copper]
                               :actions   0}
                              {:hand [copper copper copper copper]}]
-              :effect-stack [{:text      "Choose one:"
-                              :player-no 1
-                              :choice    ::intrigue/torturer-choice
-                              :source    :special
-                              :options   [{:option :discard :text "Discard 2 cards."}
-                                          {:option :curse :text "Gain a Curse to your hand."}]
-                              :min       1
-                              :max       1}
+              :effect-stack [{:text                "Choose one:"
+                              :player-no           1
+                              :attacking-player-no 0
+                              :choice              ::intrigue/torturer-choice
+                              :source              :special
+                              :options             [{:option :discard :text "Discard 2 cards."}
+                                                    {:option :curse :text "Gain a Curse to your hand."}]
+                              :min                 1
+                              :max                 1}
                              {:player-no 1
                               :effect    [:clear-unaffected {:works :once}]}]}))
       (is (= (-> {:players [{:hand    [torturer]

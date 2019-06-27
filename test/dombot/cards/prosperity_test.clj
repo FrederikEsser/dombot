@@ -908,13 +908,14 @@
                             :discard        [copper rabble]
                             :revealed       [estate]
                             :revealed-cards {:discard 2}}]
-            :effect-stack [{:text      "Put the revealed cards back onto your deck in any order."
-                            :player-no 1
-                            :choice    :topdeck-from-revealed
-                            :source    :revealed
-                            :options   [:estate]
-                            :min       1
-                            :max       1}
+            :effect-stack [{:text                "Put the revealed cards back onto your deck in any order."
+                            :player-no           1
+                            :attacking-player-no 0
+                            :choice              :topdeck-from-revealed
+                            :source              :revealed
+                            :options             [:estate]
+                            :min                 1
+                            :max                 1}
                            {:player-no 1
                             :effect    [:clear-unaffected {:works :once}]}]}))
     (is (= (-> {:players [{:hand    [rabble]
