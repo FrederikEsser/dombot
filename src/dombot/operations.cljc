@@ -575,10 +575,11 @@
 
 (defn reveal-reaction [game {:keys [player-no card-name]}]
   (if card-name
-    (let [{{:keys [reaction]} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})] ; TODO: Handle reactions that are not in hand
+    (let [{{:keys [id reaction]} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})] ; TODO: Handle reactions that are not in hand
       (assert reaction (str "Revealed Reaction " card-name " has no reaction effects specified."))
       (-> game
           (push-effect-stack {:player-no player-no
+                              :card-id   id
                               :effects   (concat reaction reaction-choice)})))
     game))
 

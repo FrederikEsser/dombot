@@ -1,5 +1,5 @@
 (ns dombot.cards.cornucopia
-  (:require [dombot.operations :refer [push-effect-stack give-choice gain]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice gain move-card]]
             [dombot.cards.common :refer [reveal-hand give-coins]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -142,6 +142,35 @@
                      :effects         [[::horn-of-plenty-give-choice]]
                      :auto-play-index 2})
 
+(defn- horse-traders-return-to-hand [game {:keys [player-no card-id]}]
+  (move-card game {:player-no    player-no
+                   :move-card-id card-id
+                   :from         :play-area
+                   :to           :hand}))
+
+(defn- horse-traders-set-start-of-turn [game {:keys [player-no card-id]}]
+  (ut/update-in-vec game [:players player-no :play-area] {:id card-id}
+                    assoc :at-start-turn [[[::horse-traders-return-to-hand {:card-id card-id}]
+                                           [:draw 1]]]))
+
+(effects/register {::horse-traders-return-to-hand    horse-traders-return-to-hand
+                   ::horse-traders-set-start-of-turn horse-traders-set-start-of-turn})
+
+(def horse-traders {:name      :horse-traders
+                    :set       :cornucopia
+                    :types     #{:action :reaction}
+                    :cost      4
+                    :effects   [[:give-buys 1]
+                                [:give-coins 3]
+                                [:give-choice {:text    "Discard 2 cards."
+                                               :choice  :discard-from-hand
+                                               :options [:player :hand]
+                                               :min     2
+                                               :max     2}]]
+                    :reacts-to :attack
+                    :reaction  [[:play-from-hand {:card-name :horse-traders}]
+                                [::horse-traders-set-start-of-turn]]})
+
 (defn- hunting-party-reveal [game {:keys [player-no]}]
   (let [{:keys [hand revealed deck discard]} (get-in game [:players player-no])
         hand-card-names (->> hand (map :name) set)
@@ -229,6 +258,7 @@
                     hamlet
                     harvest
                     horn-of-plenty
+                    horse-traders
                     hunting-party
                     jester
                     menagerie

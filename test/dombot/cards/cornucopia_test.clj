@@ -5,6 +5,7 @@
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
             [dombot.cards.cornucopia :as cornucopia :refer :all]
+            [dombot.cards.dominion :refer [militia]]
             [dombot.cards.intrigue :refer [nobles]]
             [dombot.utils :as ut]))
 
@@ -227,6 +228,79 @@
                          :discard   [estate]
                          :coins     0}]
               :trash   [horn-of-plenty]})))))
+
+(deftest horse-traders-test
+  (let [horse-traders (assoc horse-traders :id 0)]
+    (testing "Horse Traders"
+      (is (= (-> {:players [{:hand    [horse-traders copper copper copper copper]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :horse-traders)
+                 (choose [:copper :copper]))
+             {:players [{:hand      [copper copper]
+                         :play-area [horse-traders]
+                         :discard   [copper copper]
+                         :actions   0
+                         :coins     3
+                         :buys      2}]}))
+      (is (= (-> {:players [{:hand    [horse-traders copper]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :horse-traders)
+                 (choose :copper))
+             {:players [{:play-area [horse-traders]
+                         :discard   [copper]
+                         :actions   0
+                         :coins     3
+                         :buys      2}]}))
+      (is (= (-> {:players [{:hand    [horse-traders]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :horse-traders))
+             {:players [{:play-area [horse-traders]
+                         :actions   0
+                         :coins     3
+                         :buys      2}]}))
+      (is (= (-> {:players [{:hand    [militia]
+                             :actions 1
+                             :coins   0}
+                            {:hand [horse-traders copper copper copper copper]}]}
+                 (play 0 :militia)
+                 (choose :horse-traders)
+                 (choose :copper))
+             {:players [{:play-area [militia]
+                         :actions   0
+                         :coins     2}
+                        {:hand      [copper copper copper]
+                         :play-area [(assoc horse-traders :at-start-turn [[[::cornucopia/horse-traders-return-to-hand {:card-id 0}]
+                                                                           [:draw 1]]])]
+                         :discard   [copper]}]}))
+      (is (= (-> {:players [{:hand    [militia]
+                             :actions 1
+                             :coins   0}
+                            {:hand [horse-traders copper copper copper copper]
+                             :deck [silver silver]}]}
+                 (play 0 :militia)
+                 (choose :horse-traders)
+                 (choose :copper)
+                 (end-turn 0))
+             {:current-player 1
+              :players        [{:hand           [militia]
+                                :actions        0
+                                :coins          0
+                                :buys           0
+                                :actions-played 0
+                                :phase          :out-of-turn}
+                               {:hand    [copper copper copper horse-traders silver]
+                                :deck    [silver]
+                                :discard [copper]
+                                :actions 1
+                                :coins   0
+                                :buys    1
+                                :phase   :action}]})))))
 
 (deftest hunting-party-test
   (testing "Hunting Party"
