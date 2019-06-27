@@ -172,6 +172,51 @@
                        :actions        0
                        :coins          3}]}))))
 
+(deftest horn-of-plenty-test
+  (let [copper (assoc copper :id 0)
+        silver (assoc silver :id 1)
+        estate (assoc estate :id 2)
+        horn-of-plenty (assoc horn-of-plenty :id 3)]
+    (testing "Horn of Plenty"
+      (is (= (-> {:supply  [{:card copper :pile-size 46}]
+                  :players [{:hand  [horn-of-plenty]
+                             :coins 0}]}
+                 (play 0 :horn-of-plenty)
+                 (choose :copper))
+             {:supply  [{:card copper :pile-size 45}]
+              :players [{:play-area [horn-of-plenty]
+                         :discard   [copper]
+                         :coins     0}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 39}]
+                  :players [{:hand      [horn-of-plenty]
+                             :play-area [copper silver]
+                             :coins     0}]}
+                 (play 0 :horn-of-plenty)
+                 (choose :silver))
+             {:supply  [{:card silver :pile-size 38}]
+              :players [{:play-area [copper silver horn-of-plenty]
+                         :discard   [silver]
+                         :coins     0}]}))
+      (is (thrown-with-msg? AssertionError #"Choose error: Silver is not a valid option."
+                            (-> {:supply  [{:card copper :pile-size 46}
+                                           {:card silver :pile-size 39}]
+                                 :players [{:hand      [horn-of-plenty]
+                                            :play-area [gold]
+                                            :coins     0}]}
+                                (play 0 :horn-of-plenty)
+                                (choose :silver))))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}]
+                  :players [{:hand      [horn-of-plenty]
+                             :play-area [silver]
+                             :coins     0}]}
+                 (play 0 :horn-of-plenty)
+                 (choose :estate))
+             {:supply  [{:card estate :pile-size 7}]
+              :players [{:play-area [silver]
+                         :discard   [estate]
+                         :coins     0}]
+              :trash   [horn-of-plenty]})))))
+
 (deftest hunting-party-test
   (testing "Hunting Party"
     (is (= (-> {:players [{:hand    [hunting-party copper copper copper copper]
@@ -247,7 +292,7 @@
                              :hand    [jester]
                              :actions 1
                              :coins   0}
-                            {:name :p2
+                            {:name    :p2
                              :discard [copper copper]}]}
                  (play 0 :jester)
                  (choose 1))

@@ -95,6 +95,37 @@
                         [::harvest-give-coins]
                         [:discard-all-revealed]]})
 
+(defn- horn-of-plenty-gain [game {:keys [player-no card-id card-name]}]
+  (let [{{:keys [types]} :card} (ut/get-pile-idx game card-name)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (concat [[:gain {:card-name card-name}]]
+                                                (when (:victory types)
+                                                  [[:trash-this {:card-id card-id}]]))})))
+
+(defn- horn-of-plenty-give-choice [game {:keys [player-no card-id]}]
+  (let [different-cards-in-play (->> (get-in game [:players player-no :play-area])
+                                     (map :name)
+                                     set
+                                     count)]
+    (give-choice game {:player-no player-no
+                       :card-id   card-id
+                       :text      (str "Gain a card costing up to $" different-cards-in-play ".")
+                       :choice    ::horn-of-plenty-gain
+                       :options   [:supply {:max-cost different-cards-in-play}]
+                       :min       1
+                       :max       1})))
+
+(effects/register {::horn-of-plenty-gain        horn-of-plenty-gain
+                   ::horn-of-plenty-give-choice horn-of-plenty-give-choice})
+
+(def horn-of-plenty {:name       :horn-of-plenty
+                     :set        :cornucopia
+                     :types      #{:treasure}
+                     :cost       5
+                     :coin-value 0
+                     :effects    [[::horn-of-plenty-give-choice]]
+                     :auto-play-index 2})
+
 (defn- hunting-party-reveal [game {:keys [player-no]}]
   (let [{:keys [hand revealed deck discard]} (get-in game [:players player-no])
         hand-card-names (->> hand (map :name) set)
@@ -121,7 +152,7 @@
                               [::hunting-party-reveal]
                               [:discard-all-revealed]]})
 
-(defn- jester-gain-copy [game {:keys [player-no card-name choice]}]
+(defn- jester-gain-copy [game {:keys [card-name choice]}]
   (gain game {:player-no choice
               :card-name card-name}))
 
@@ -180,6 +211,7 @@
                     fortune-teller
                     hamlet
                     harvest
+                    horn-of-plenty
                     hunting-party
                     jester
                     menagerie
