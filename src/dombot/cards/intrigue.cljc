@@ -233,8 +233,7 @@
                                                                    :options [:player :hand]
                                                                    :min     1
                                                                    :max     1}]]
-                                          :at-once true
-                                          }]
+                                          :at-once true}]
                            [:all-players {:effects [[::masquerade-take]]}]
                            [:give-choice {:text    "You may trash a card from your hand."
                                           :choice  :trash-from-hand

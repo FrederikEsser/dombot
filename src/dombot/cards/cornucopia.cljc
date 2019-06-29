@@ -252,6 +252,39 @@
              :effects [[:upgrade-give-choice]
                        [:upgrade-give-choice]]})
 
+(defn- tournament-results [{:keys [revealed-provinces] :as game} {:keys [player-no]}]
+  (-> game
+      (dissoc :revealed-provinces)
+      (push-effect-stack {:player-no player-no
+                          :effects   (concat (when (contains? revealed-provinces player-no)
+                                               [[:discard-from-hand {:card-name :province}]])
+                                             (when (not-any? (comp not #{player-no}) revealed-provinces)
+                                               [[:draw 1]
+                                                [:give-coins 1]]))})))
+
+(defn- tournament-reveal-province [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (update :revealed-provinces (comp set conj) player-no)))
+
+(defn- tournament-give-choice [game {:keys [player-no] :as args}]
+  (give-choice game {:player-no player-no
+                     :text      "You may reveal a Province from your hand."
+                     :choice    ::tournament-reveal-province
+                     :options   [:player :hand {:name :province}]
+                     :max       1}))
+
+(effects/register {::tournament-results         tournament-results
+                   ::tournament-reveal-province tournament-reveal-province
+                   ::tournament-give-choice     tournament-give-choice})
+
+(def tournament {:name    :tournament
+                 :set     :cornucopia
+                 :types   #{:action}
+                 :cost    4
+                 :effects [[:give-actions 1]
+                           [:all-players {:effects [[::tournament-give-choice]]}]
+                           [::tournament-results]]})
+
 (defn- young-witch-choice [game {:keys [player-no card-name]}]
   (cond-> game
           (not card-name) (gain {:player-no player-no
@@ -297,4 +330,5 @@
                     jester
                     menagerie
                     remake
+                    tournament
                     young-witch])

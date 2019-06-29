@@ -493,6 +493,70 @@
                                 (play 0 :remake)
                                 (choose nil)))))))
 
+(deftest tournament-test
+  (testing "Tournament"
+    (is (= (-> {:players [{:hand    [tournament]
+                           :deck    [copper copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :tournament))
+           {:players [{:hand      [copper]
+                       :play-area [tournament]
+                       :deck      [copper]
+                       :actions   1
+                       :coins     1}]}))
+    (is (= (-> {:players [{:hand    [tournament province]
+                           :deck    [copper copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :tournament)
+               (choose nil))
+           {:players [{:hand      [province copper]
+                       :play-area [tournament]
+                       :deck      [copper]
+                       :actions   1
+                       :coins     1}]}))
+    (is (= (-> {:players [{:hand    [tournament province]
+                           :deck    [copper copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :tournament)
+               (choose :province))
+           {:players [{:hand      [copper]
+                       :play-area [tournament]
+                       :deck      [copper]
+                       :discard   [province]
+                       :actions   1
+                       :coins     1}]}))
+    (is (= (-> {:players [{:hand    [tournament province]
+                           :deck    [copper copper]
+                           :actions 1
+                           :coins   0}
+                          {:hand [province]}]}
+               (play 0 :tournament)
+               (choose nil)
+               (choose :province))
+           {:players [{:hand      [province]
+                       :play-area [tournament]
+                       :deck      [copper copper]
+                       :actions   1
+                       :coins     0}
+                      {:hand [province]}]}))
+    (is (= (-> {:players [{:hand    [tournament province]
+                           :deck    [copper copper]
+                           :actions 1
+                           :coins   0}
+                          {:hand [province]}]}
+               (play 0 :tournament)
+               (choose :province)
+               (choose :province))
+           {:players [{:play-area [tournament]
+                       :deck      [copper copper]
+                       :discard   [province]
+                       :actions   1
+                       :coins     0}
+                      {:hand [province]}]}))))
+
 (deftest young-witch-test
   (let [curse (assoc curse :id 0)
         hamlet (assoc hamlet :id 1 :bane? true)]
