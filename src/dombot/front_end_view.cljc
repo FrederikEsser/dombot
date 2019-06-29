@@ -14,7 +14,7 @@
                     choice                         :choice
                     :as                            game}]
   (->> supply
-       (map (fn [{{:keys [name types] :as card} :card
+       (map (fn [{{:keys [name types bane?] :as card} :card
                   number-of-cards               :pile-size
                   :keys                         [tokens]}]
               (let [cost (ut/get-cost game player-no card)
@@ -34,7 +34,9 @@
                          {:interaction :buyable})
                        (choice-interaction name :supply choice)
                        (when tokens
-                         {:tokens tokens})))))))
+                         {:tokens tokens})
+                       (when bane?
+                         {:bane? true})))))))
 
 (defn view-area [area {{:keys [phase actions] :as player} :player
                        choice                             :choice

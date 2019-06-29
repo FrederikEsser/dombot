@@ -20,10 +20,20 @@
                      promos/kingdom-cards))
 
 (defn- random-kingdom [sets]
-  (->> kingdom-cards
-       (filter (comp sets :set))
-       shuffle
-       (take 10)))
+  (let [[kingdom randomizers] (->> kingdom-cards
+                                   (filter (comp sets :set))
+                                   shuffle
+                                   (split-at 10))]
+    (if (some (comp #{:young-witch} :name) kingdom)
+      (let [kingdom (vec (concat kingdom
+                                 [(or (->> randomizers (filter (comp #{2 3} :cost)) first)
+                                      (->> randomizers first))]))
+            bane-idx (->> kingdom
+                          (keep-indexed (fn [idx {:keys [cost]}]
+                                          (when (#{2 3} cost) idx)))
+                          last)]
+        (update-in kingdom [bane-idx] assoc :bane? true))
+      kingdom)))
 
 (defn create-kingdom-supply [kingdom victory-pile-size]
   (->> kingdom

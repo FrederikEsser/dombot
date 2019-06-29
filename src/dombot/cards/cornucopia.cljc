@@ -252,6 +252,40 @@
              :effects [[:upgrade-give-choice]
                        [:upgrade-give-choice]]})
 
+(defn- young-witch-choice [game {:keys [player-no card-name]}]
+  (cond-> game
+          (not card-name) (gain {:player-no player-no
+                                 :card-name :curse})))
+
+(defn- young-witch-give-choice [game {:keys [player-no]}]
+  (let [bane (->> (get-in game [:players player-no :hand])
+                  (filter :bane?)
+                  (map :name)
+                  first)]
+    (if bane
+      (give-choice game {:player-no player-no
+                         :text      "You may reveal a Bane card from your hand."
+                         :choice    ::young-witch-choice
+                         :options   [:player :hand {:name bane}]
+                         :max       1})
+      (gain game {:player-no player-no
+                  :card-name :curse}))))
+
+(effects/register {::young-witch-choice      young-witch-choice
+                   ::young-witch-give-choice young-witch-give-choice})
+
+(def young-witch {:name    :young-witch
+                  :set     :cornucopia
+                  :types   #{:action :attack}
+                  :cost    4
+                  :effects [[:draw 2]
+                            [:give-choice {:text    "Discard 2 cards."
+                                           :choice  :discard-from-hand
+                                           :options [:player :hand]
+                                           :min     2
+                                           :max     2}]
+                            [:attack {:effects [[::young-witch-give-choice]]}]]})
+
 (def kingdom-cards [fairgrounds
                     farming-village
                     fortune-teller
@@ -262,4 +296,5 @@
                     hunting-party
                     jester
                     menagerie
-                    remake])
+                    remake
+                    young-witch])

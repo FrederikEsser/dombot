@@ -281,6 +281,18 @@
       (is (= (-> {:players [{:hand    [militia]
                              :actions 1
                              :coins   0}
+                            {:hand [horse-traders copper copper copper copper]}]}
+                 (play 0 :militia)
+                 (choose nil)
+                 (choose [:copper :copper]))
+             {:players [{:play-area [militia]
+                         :actions   0
+                         :coins     2}
+                        {:hand    [horse-traders copper copper]
+                         :discard [copper copper]}]}))
+      (is (= (-> {:players [{:hand    [militia]
+                             :actions 1
+                             :coins   0}
                             {:hand [horse-traders copper copper copper copper]
                              :deck [silver silver]}]}
                  (play 0 :militia)
@@ -480,3 +492,54 @@
                                             :actions 1}]}
                                 (play 0 :remake)
                                 (choose nil)))))))
+
+(deftest young-witch-test
+  (let [curse (assoc curse :id 0)
+        hamlet (assoc hamlet :id 1 :bane? true)]
+    (testing "Young Witch"
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:hand    [young-witch estate copper silver estate]
+                             :deck    [copper copper copper]
+                             :actions 1}
+                            {:hand [copper]}]}
+                 (play 0 :young-witch)
+                 (choose [:estate :estate]))
+             {:supply  [{:card curse :pile-size 9}]
+              :players [{:hand      [copper silver copper copper]
+                         :play-area [young-witch]
+                         :deck      [copper]
+                         :discard   [estate estate]
+                         :actions   0}
+                        {:hand    [copper]
+                         :discard [curse]}]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:hand    [young-witch estate copper silver estate]
+                             :deck    [copper copper copper]
+                             :actions 1}
+                            {:hand [copper hamlet]}]}
+                 (play 0 :young-witch)
+                 (choose [:estate :estate])
+                 (choose nil))
+             {:supply  [{:card curse :pile-size 9}]
+              :players [{:hand      [copper silver copper copper]
+                         :play-area [young-witch]
+                         :deck      [copper]
+                         :discard   [estate estate]
+                         :actions   0}
+                        {:hand    [copper hamlet]
+                         :discard [curse]}]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:hand    [young-witch estate copper silver estate]
+                             :deck    [copper copper copper]
+                             :actions 1}
+                            {:hand [copper hamlet]}]}
+                 (play 0 :young-witch)
+                 (choose [:estate :estate])
+                 (choose :hamlet))
+             {:supply  [{:card curse :pile-size 10}]
+              :players [{:hand      [copper silver copper copper]
+                         :play-area [young-witch]
+                         :deck      [copper]
+                         :discard   [estate estate]
+                         :actions   0}
+                        {:hand [copper hamlet]}]})))))
