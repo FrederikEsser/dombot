@@ -251,7 +251,7 @@
 (defn poacher-discard [game {:keys [player-no]}]
   (let [empty-piles (ut/empty-supply-piles game)]
     (cond-> game
-            (< 0 empty-piles) (give-choice {:player-no player-no
+            (pos? empty-piles) (give-choice {:player-no player-no
                                             :text      (str "Discard a card per empty supply pile [" empty-piles "].")
                                             :choice    :discard-from-hand
                                             :options   [:player :hand]

@@ -279,7 +279,7 @@
                                                                      :game (cmd/choose 0)
                                                                      :selection []))}
                                     "Top"]
-                              (when (< 0 (:to interval))
+                              (when (pos? (:to interval))
                                 [:span [:input {:type      :number
                                                 :min       1
                                                 :max       (dec (:to interval))

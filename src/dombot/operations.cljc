@@ -95,7 +95,7 @@
     (when phase
       (assert (#{:action :pay} phase)
               (str "You can't spend Coffers when you're in the " (ut/format-name phase) " phase.")))
-    (assert (and coffers (< 0 coffers)) "You have no Coffers to spend.")
+    (assert (and coffers (pos? coffers)) "You have no Coffers to spend.")
     (-> game
         (cond-> phase (assoc-in [:players player-no :phase] :pay))
         (update-in [:players player-no :coffers] dec)
@@ -107,7 +107,7 @@
     (when phase
       (assert (#{:action} phase)
               (str "You can't spend Villagers when you're in the " (ut/format-name phase) " phase.")))
-    (assert (and villagers (< 0 villagers)) "You have no Villagers to spend.")
+    (assert (and villagers (pos? villagers)) "You have no Villagers to spend.")
     (-> game
         (update-in [:players player-no :villagers] dec)
         (update-in [:players player-no :actions] inc))))
@@ -284,7 +284,7 @@
     (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
     (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))
     (assert (and coins cost (>= coins cost)) (str "Buy error: " (ut/format-name card-name) " costs " cost " and you only have " coins " coins."))
-    (assert (and pile-size (< 0 pile-size)) (str "Buy error: " (ut/format-name card-name) " supply is empty."))
+    (assert (and pile-size (pos? pile-size)) (str "Buy error: " (ut/format-name card-name) " supply is empty."))
     (assert (ut/card-buyable? game player-no card) (str (ut/format-name card-name) " can't be bought."))
     (when phase
       (assert (#{:action :pay :buy} phase) (str "You can't buy cards when you're in the " (ut/format-name phase) " phase.")))
@@ -378,7 +378,7 @@
               (and number-of-cards from-position)) (str "Can't move unspecified cards: " args))
   (if number-of-cards
     (cond-> game
-            (< 0 number-of-cards)
+            (pos? number-of-cards)
             (push-effect-stack {:player-no player-no
                                 :effects   (repeat number-of-cards [:move-card (dissoc args :number-of-cards)])}))
     (let [card-names (or card-names [card-name])]
@@ -619,7 +619,7 @@
      (assert types (str "Play error: " (ut/format-name card-name) " has no types."))
      (cond
        (:action types) (do (assert effects (str "Play error: " (ut/format-name card-name) " has no effect."))
-                           (assert (and actions (< 0 actions)) "Play error: You have no more actions."))
+                           (assert (and actions (pos? actions)) "Play error: You have no more actions."))
        (:treasure types) (assert coin-value (str "Play error: " (ut/format-name card-name) " has no coin value"))
        :else (assert false (str "Play error: " (ut/format-types types) " cards cannot be played.")))
      (when phase

@@ -23,19 +23,19 @@
 
 (defn give-victory-points [game {:keys [player-no arg]}]
   (cond-> game
-          (< 0 arg) (update-in [:players player-no :vp-tokens] ut/plus arg)))
+          (pos? arg) (update-in [:players player-no :vp-tokens] ut/plus arg)))
 
 (effects/register {:give-victory-points give-victory-points})
 
 (defn give-coffers [game {:keys [player-no arg]}]
   (cond-> game
-          (< 0 arg) (update-in [:players player-no :coffers] ut/plus arg)))
+          (pos? arg) (update-in [:players player-no :coffers] ut/plus arg)))
 
 (effects/register {:give-coffers give-coffers})
 
 (defn give-villagers [game {:keys [player-no arg]}]
   (cond-> game
-          (< 0 arg) (update-in [:players player-no :villagers] ut/plus arg)))
+          (pos? arg) (update-in [:players player-no :villagers] ut/plus arg)))
 
 (effects/register {:give-villagers give-villagers})
 

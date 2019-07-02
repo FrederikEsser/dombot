@@ -431,7 +431,7 @@
 
 (defn tactician-discard [game {:keys [player-no card-id]}]
   (let [hand (get-in game [:players player-no :hand])]
-    (if (< 0 (count hand))
+    (if (pos? (count hand))
       (move-cards game {:player-no  player-no
                         :card-names (map :name hand)
                         :from       :hand

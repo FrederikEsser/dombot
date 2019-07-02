@@ -27,8 +27,8 @@
                        (when (not= cost buy-cost)
                          {:buy-cost buy-cost})
                        (when (and (not choice)              ; todo: check phase
-                                  (< 0 number-of-cards)
-                                  buys (< 0 buys)
+                                  (pos? number-of-cards)
+                                  buys (pos? buys)
                                   coins (<= buy-cost coins)
                                   (ut/card-buyable? game player-no card))
                          {:interaction :buyable})
@@ -57,7 +57,7 @@
                                    (not choice)
                                    (or (and (:action types)
                                             (#{:action} phase)
-                                            (< 0 actions))
+                                            (pos? actions))
                                        (and (:treasure types)
                                             (#{:action :pay} phase))))
                           {:interaction :playable})
@@ -172,12 +172,12 @@
            {:pirate-ship-coins pirate-ship-coins})
          (when vp-tokens
            {:vp-tokens vp-tokens})
-         (when (and coffers (< 0 coffers))
+         (when (and coffers (pos? coffers))
            {:coffers (merge {:number coffers}
                             (when (and (not choice)
                                        (#{:action :pay} phase))
                               {:interaction :spendable}))})
-         (when (and villagers (< 0 villagers))
+         (when (and villagers (pos? villagers))
            {:villagers (merge {:number villagers}
                               (when (and (not choice)
                                          (#{:action} phase))
