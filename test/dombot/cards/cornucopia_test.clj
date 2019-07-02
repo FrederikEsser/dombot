@@ -494,68 +494,178 @@
                                 (choose nil)))))))
 
 (deftest tournament-test
-  (testing "Tournament"
-    (is (= (-> {:players [{:hand    [tournament]
-                           :deck    [copper copper]
-                           :actions 1
-                           :coins   0}]}
-               (play 0 :tournament))
-           {:players [{:hand      [copper]
-                       :play-area [tournament]
-                       :deck      [copper]
-                       :actions   1
-                       :coins     1}]}))
-    (is (= (-> {:players [{:hand    [tournament province]
-                           :deck    [copper copper]
-                           :actions 1
-                           :coins   0}]}
-               (play 0 :tournament)
-               (choose nil))
-           {:players [{:hand      [province copper]
-                       :play-area [tournament]
-                       :deck      [copper]
-                       :actions   1
-                       :coins     1}]}))
-    (is (= (-> {:players [{:hand    [tournament province]
-                           :deck    [copper copper]
-                           :actions 1
-                           :coins   0}]}
-               (play 0 :tournament)
-               (choose :province))
-           {:players [{:hand      [copper]
-                       :play-area [tournament]
-                       :deck      [copper]
-                       :discard   [province]
-                       :actions   1
-                       :coins     1}]}))
-    (is (= (-> {:players [{:hand    [tournament province]
-                           :deck    [copper copper]
-                           :actions 1
-                           :coins   0}
-                          {:hand [province]}]}
-               (play 0 :tournament)
-               (choose nil)
-               (choose :province))
-           {:players [{:hand      [province]
-                       :play-area [tournament]
-                       :deck      [copper copper]
-                       :actions   1
-                       :coins     0}
-                      {:hand [province]}]}))
-    (is (= (-> {:players [{:hand    [tournament province]
-                           :deck    [copper copper]
-                           :actions 1
-                           :coins   0}
-                          {:hand [province]}]}
-               (play 0 :tournament)
-               (choose :province)
-               (choose :province))
-           {:players [{:play-area [tournament]
-                       :deck      [copper copper]
-                       :discard   [province]
-                       :actions   1
-                       :coins     0}
-                      {:hand [province]}]}))))
+  (let [duchy (assoc duchy :id 0)
+        bag-of-gold (assoc bag-of-gold :id 1)
+        gold (assoc gold :id 2)
+        curse (assoc curse :id 3)
+        estate (assoc estate :id 4)
+        silver (assoc silver :id 5)]
+    (testing "Tournament"
+      (is (= (-> {:players [{:hand    [tournament]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :tournament))
+             {:players [{:hand      [copper]
+                         :play-area [tournament]
+                         :deck      [copper]
+                         :actions   1
+                         :coins     1}]}))
+      (is (= (-> {:players [{:hand    [tournament province]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :tournament)
+                 (choose nil))
+             {:players [{:hand      [province copper]
+                         :play-area [tournament]
+                         :deck      [copper]
+                         :actions   1
+                         :coins     1}]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:hand    [tournament province]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :tournament)
+                 (choose :province)
+                 (choose :duchy))
+             {:supply  [{:card duchy :pile-size 7}]
+              :players [{:hand      [duchy]
+                         :play-area [tournament]
+                         :deck      [copper copper]
+                         :discard   [province]
+                         :actions   1
+                         :coins     1}]}))
+      (is (= (-> {:players [{:hand    [tournament province]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0}
+                            {:hand [province]}]}
+                 (play 0 :tournament)
+                 (choose nil)
+                 (choose :province))
+             {:players [{:hand      [province]
+                         :play-area [tournament]
+                         :deck      [copper copper]
+                         :actions   1
+                         :coins     0}
+                        {:hand [province]}]}))
+      (is (= (-> {:players [{:hand    [tournament province]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0}
+                            {:hand [province]}]}
+                 (play 0 :tournament)
+                 (choose :province)
+                 (choose :province)
+                 (choose :nothing))
+             {:players [{:play-area [tournament]
+                         :deck      [copper copper]
+                         :discard   [province]
+                         :actions   1
+                         :coins     0}
+                        {:hand [province]}]}))
+      (is (= (-> {:supply      [{:card duchy :pile-size 8}]
+                  :extra-cards [{:card bag-of-gold :pile-size 1}]
+                  :players     [{:hand    [tournament province]
+                                 :deck    [copper copper]
+                                 :actions 1
+                                 :coins   0}]}
+                 (play 0 :tournament)
+                 (choose :province)
+                 (choose :bag-of-gold))
+             {:supply      [{:card duchy :pile-size 8}]
+              :extra-cards [{:card bag-of-gold :pile-size 0}]
+              :players     [{:hand      [bag-of-gold]
+                             :play-area [tournament]
+                             :deck      [copper copper]
+                             :discard   [province]
+                             :actions   1
+                             :coins     1}]}))
+      (testing "Prizes"
+        (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                    :players [{:hand    [bag-of-gold]
+                               :deck    [copper]
+                               :actions 1}]}
+                   (play 0 :bag-of-gold))
+               {:supply  [{:card gold :pile-size 29}]
+                :players [{:play-area [bag-of-gold]
+                           :deck      [gold copper]
+                           :actions   1}]}))
+        (is (= (-> {:players [{:hand    [diadem]
+                               :actions 0
+                               :coins   0}]}
+                   (play 0 :diadem))
+               {:players [{:play-area [diadem]
+                           :actions   0
+                           :coins     2}]}))
+        (is (= (-> {:players [{:hand    [diadem]
+                               :actions 1
+                               :coins   0}]}
+                   (play 0 :diadem))
+               {:players [{:play-area [diadem]
+                           :actions   1
+                           :coins     3}]}))
+        (is (= (-> {:players [{:hand    [diadem]
+                               :actions 3
+                               :coins   0}]}
+                   (play 0 :diadem))
+               {:players [{:play-area [diadem]
+                           :actions   3
+                           :coins     5}]}))
+        (is (= (-> {:supply  [{:card curse :pile-size 10}
+                              {:card estate :pile-size 8}]
+                    :players [{:hand    [followers]
+                               :deck    [copper copper copper]
+                               :actions 1}
+                              {:hand [copper copper copper estate estate]}]}
+                   (play 0 :followers)
+                   (choose [:estate :estate]))
+               {:supply  [{:card curse :pile-size 9}
+                          {:card estate :pile-size 7}]
+                :players [{:hand      [copper copper]
+                           :play-area [followers]
+                           :deck      [copper]
+                           :discard   [estate]
+                           :actions   0}
+                          {:hand    [copper copper copper]
+                           :discard [curse estate estate]}]}))
+        (is (= (-> {:supply  [{:card estate :pile-size 8}
+                              {:card gold :pile-size 30}]
+                    :players [{:hand    [princess]
+                               :actions 1
+                               :coins   4
+                               :buys    1}]}
+                   (play 0 :princess)
+                   (buy-card 0 :gold)
+                   (buy-card 0 :estate))
+               {:supply  [{:card estate :pile-size 7}
+                          {:card gold :pile-size 29}]
+                :players [{:play-area [princess]
+                           :discard   [gold estate]
+                           :actions   0
+                           :coins     0
+                           :buys      0}]}))
+        (is (= (-> {:players [{:hand    [trusty-steed]
+                               :actions 1
+                               :coins   0}]}
+                   (play 0 :trusty-steed)
+                   (choose [:coins :actions]))
+               {:players [{:play-area [trusty-steed]
+                           :actions   2
+                           :coins     2}]}))
+        (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                    :players [{:hand    [trusty-steed]
+                               :deck    [copper copper copper]
+                               :actions 1}]}
+                   (play 0 :trusty-steed)
+                   (choose [:silvers :cards]))
+               {:supply  [{:card silver :pile-size 36}]
+                :players [{:hand      [copper copper]
+                           :play-area [trusty-steed]
+                           :discard   [silver silver silver silver copper]
+                           :actions   0}]}))))))
 
 (deftest young-witch-test
   (let [curse (assoc curse :id 0)

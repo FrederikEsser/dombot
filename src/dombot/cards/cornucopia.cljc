@@ -252,12 +252,106 @@
              :effects [[:upgrade-give-choice]
                        [:upgrade-give-choice]]})
 
+(def bag-of-gold {:name    :bag-of-gold
+                  :types   #{:action :prize}
+                  :cost    0
+                  :effects [[:give-actions 1]
+                            [:gain {:card-name   :gold
+                                    :to          :deck
+                                    :to-position :top}]]})
+
+(defn- diadem-give-coins [game {:keys [player-no]}]
+  (let [{:keys [actions]} (get-in game [:players player-no])]
+    (give-coins game {:player-no player-no :arg actions})))
+
+(def diadem {:name       :diadem
+             :types      #{:treasure :prize}
+             :cost       0
+             :coin-value 2
+             :effects    [[::diadem-give-coins]]})
+
+(def followers {:name    :followers
+                :types   #{:action :attack :prize}
+                :cost    0
+                :effects [[:draw 2]
+                          [:gain {:card-name :estate}]
+                          [:attack {:effects [[:gain {:card-name :curse}]
+                                              [:discard-down-to 3]]}]]})
+
+(def princess {:name          :princess
+               :types         #{:action :prize}
+               :cost          0
+               :effects       [[:give-buys 1]]
+               :while-in-play {:cost-reductions [{:reduction 2}]}})
+
+(defn trusty-steed-choices [game {:keys [player-no choices]}]
+  (assert choices "No choices specified for trusty-steed.")
+  (assert (apply distinct? choices) "The choices must be different.")
+  (push-effect-stack game {:player-no player-no
+                           :effects   (concat
+                                        (when (:cards (set choices)) [[:draw 2]])
+                                        (when (:actions (set choices)) [[:give-actions 2]])
+                                        (when (:coins (set choices)) [[:give-coins 2]])
+                                        (when (:silvers (set choices)) (concat
+                                                                         (repeat 4 [:gain {:card-name :silver}])
+                                                                         [[:put-deck-into-discard]])))}))
+
+(def trusty-steed {:name    :trusty-steed
+                   :types   #{:action :prize}
+                   :cost    0
+                   :effects [[:give-choice {:text    "Choose two:"
+                                            :choice  ::trusty-steed-choices
+                                            :options [:special
+                                                      {:option :cards :text "+2 Cards"}
+                                                      {:option :actions :text "+2 Actions"}
+                                                      {:option :coins :text "+$2"}
+                                                      {:option :silvers :text "Gain 4 Silvers"}]
+                                            :min     2
+                                            :max     2}]]})
+
+(effects/register {::diadem-give-coins    diadem-give-coins
+                   ::trusty-steed-choices trusty-steed-choices})
+
+(defn- tournament-setup-prizes [game _]
+  (update game :extra-cards (comp vec concat) [{:card bag-of-gold :pile-size 1}
+                                               {:card diadem :pile-size 1}
+                                               {:card followers :pile-size 1}
+                                               {:card princess :pile-size 1}
+                                               {:card trusty-steed :pile-size 1}]))
+
+(defn- tournament-gain-prize [game {:keys [player-no choice]}]
+  (cond-> game
+          (not= :nothing choice)
+          (gain {:player-no   player-no
+                 :card-name   choice
+                 :from        (if (= :duchy choice) :supply :extra-cards)
+                 :to          :deck
+                 :to-position :top})))
+
+(defn- tournament-choose-prize [{:keys [extra-cards] :as game} {:keys [player-no]}]
+  (let [prize-options (->> extra-cards
+                           (filter (comp :prize :types :card))
+                           (filter (comp pos? :pile-size))
+                           (map (fn create-prize-option [{{:keys [name]} :card}]
+                                  {:option name :text (ut/format-name name)})))
+        all-options (concat prize-options
+                            [{:option :duchy :text "Duchy"}]
+                            (when (empty? prize-options)
+                              [{:option :nothing :text "No Prize"}]))]
+    (give-choice game {:player-no player-no
+                       :text      "Gain any Prize or a Duchy onto your deck."
+                       :choice    ::tournament-gain-prize
+                       :options   (apply vector :special all-options)
+                       :min       1
+                       :max       1})))
+
 (defn- tournament-results [{:keys [revealed-provinces] :as game} {:keys [player-no]}]
   (-> game
       (dissoc :revealed-provinces)
       (push-effect-stack {:player-no player-no
                           :effects   (concat (when (contains? revealed-provinces player-no)
-                                               [[:discard-from-hand {:card-name :province}]])
+                                               [[:discard-from-hand {:card-name :province}]
+                                                [::tournament-choose-prize]])
                                              (when (not-any? (comp not #{player-no}) revealed-provinces)
                                                [[:draw 1]
                                                 [:give-coins 1]]))})))
@@ -273,7 +367,10 @@
                      :options   [:player :hand {:name :province}]
                      :max       1}))
 
-(effects/register {::tournament-results         tournament-results
+(effects/register {::tournament-setup-prizes    tournament-setup-prizes
+                   ::tournament-gain-prize      tournament-gain-prize
+                   ::tournament-choose-prize    tournament-choose-prize
+                   ::tournament-results         tournament-results
                    ::tournament-reveal-province tournament-reveal-province
                    ::tournament-give-choice     tournament-give-choice})
 
@@ -283,7 +380,8 @@
                  :cost    4
                  :effects [[:give-actions 1]
                            [:all-players {:effects [[::tournament-give-choice]]}]
-                           [::tournament-results]]})
+                           [::tournament-results]]
+                 :setup   [[::tournament-setup-prizes]]})
 
 (defn- young-witch-choice [game {:keys [player-no card-name]}]
   (cond-> game

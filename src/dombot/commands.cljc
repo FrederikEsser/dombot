@@ -5,6 +5,7 @@
 
 ; todo:
 
+; make extra-cards (Prizes) visible for Wishing Well
 ; view card images
 ; store commands in history
 ; save / load game

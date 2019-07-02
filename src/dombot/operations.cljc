@@ -166,12 +166,11 @@
 
 (defn- get-card [game {:keys [player-no card-name move-card-id from from-position] :as args}]
   (assert (or card-name move-card-id from-position) (str "Can't move unspecified card: " args))
-  (if (= :supply from)
-    (let [{:keys [card idx pile-size]} (ut/get-pile-idx game card-name)]
-      (assert pile-size (str "Gain error: The supply doesn't have a " (ut/format-name card-name) " pile."))
-      (when (< 0 pile-size)
+  (if (#{:supply :extra-cards} from)
+    (let [{:keys [card idx pile-size]} (ut/get-pile-idx game from card-name)]
+      (when (and pile-size (pos? pile-size))
         {:card      (ut/give-id! card)
-         :from-path :supply
+         :from-path from
          :idx       idx}))
     (let [player (get-in game [:players player-no])
           from-path (case from
@@ -187,8 +186,8 @@
                  :else {:idx 0 :card (first (get player from))}))))))
 
 (defn- remove-card [game from-path idx]
-  (if (= :supply from-path)
-    (update-in game [:supply idx :pile-size] dec)
+  (if (#{:supply :extra-cards} from-path)
+    (update-in game [from-path idx :pile-size] dec)
     (update-in game from-path ut/vec-remove idx)))
 
 (defn- add-card [game to-path to-position {:keys [name] :as card}]
@@ -260,7 +259,7 @@
     (cond-> game
             card (-> (remove-card from-path idx)
                      (add-card [:players player-no to] to-position card)
-                     (state-maintenance player-no :supply to)))))
+                     (state-maintenance player-no from-path to)))))
 
 (defn gain [game {:keys [card-name] :as args}]
   (cond-> game

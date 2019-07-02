@@ -40,10 +40,9 @@
                       :card-name :province}))
            {:supply  [{:card {:name :province} :pile-size 0}]
             :players [{}]}))
-    (is (thrown-with-msg? AssertionError #"Gain error: The supply doesn't have a Province pile"
-                          (-> {:players [{}]}
-                              (gain {:player-no 0
-                                     :card-name :province}))))
+    (is (= (-> {:players [{}]}
+               (gain {:player-no 0 :card-name :province}))
+           {:players [{}]}))
     (is (= (-> {:supply  [{:card {:name :province} :pile-size 8}]
                 :players [{:discard             [{:name :copper} {:name :copper}]
                            :approx-discard-size 1}]}

@@ -81,12 +81,15 @@
 (defn count-as-coll [data]
   (-> data ensure-coll count))
 
-(defn get-pile-idx [game card-name]
-  (->> game
-       :supply
-       (keep-indexed (fn [idx pile]
-                       (when ((comp #{card-name} :name :card) pile) (merge pile {:idx idx}))))
-       first))
+(defn get-pile-idx
+  ([game card-name]
+   (get-pile-idx game :supply card-name))
+  ([game from card-name]
+   (->> game
+        from
+        (keep-indexed (fn [idx pile]
+                        (when ((comp #{card-name} :name :card) pile) (merge pile {:idx idx}))))
+        first)))
 
 (defn get-card-idx [game path criteria]
   (let [result (->> (get-in game path)

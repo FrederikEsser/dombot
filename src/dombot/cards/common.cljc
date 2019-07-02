@@ -175,6 +175,14 @@
 
 (effects/register {:discard-all-hand discard-all-hand})
 
+(defn put-deck-into-discard [game {:keys [player-no]}]
+  (let [deck (get-in game [:players player-no :deck])]
+    (-> game
+        (update-in [:players player-no] dissoc :deck)
+        (update-in [:players player-no :discard] concat deck))))
+
+(effects/register {:put-deck-into-discard put-deck-into-discard})
+
 (defn set-aside [game args]
   (move-cards game (merge args {:from          :deck
                                 :from-position :top
