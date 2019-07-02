@@ -427,7 +427,8 @@
                    :clear-unaffected clear-unaffected})
 
 (defn affect-other-players [{:keys [players] :as game} {:keys [player-no effects attack all at-once]}]
-  (let [player-nos (cond-> (->> (range 1 (count players))
+  (let [player-no (or player-no 0)
+        player-nos (cond-> (->> (range 1 (count players))
                                 (map (fn [n] (-> n (+ player-no) (mod (count players)))))
                                 (remove (fn [n] (and attack (is-unaffected? game n)))))
                            (not at-once) reverse

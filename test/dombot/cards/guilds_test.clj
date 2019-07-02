@@ -13,6 +13,18 @@
 
 (use-fixtures :each fixture)
 
+(deftest baker-test
+  (testing "Baker"
+    (is (= (-> {:players [{:hand    [baker]
+                           :deck    [copper copper]
+                           :actions 1}]}
+               (play 0 :baker))
+           {:players [{:hand      [copper]
+                       :play-area [baker]
+                       :deck      [copper]
+                       :actions   1
+                       :coffers   1}]}))))
+
 (deftest candlestick-maker-test
   (testing "Candlestick Maker"
     (is (= (-> {:players [{:hand    [candlestick-maker]

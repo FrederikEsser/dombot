@@ -4,6 +4,15 @@
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
+(def baker {:name    :baker
+            :set     :guilds
+            :types   #{:action}
+            :cost    5
+            :effects [[:draw 1]
+                      [:give-actions 1]
+                      [:give-coffers 1]]
+            :setup [[:all-players {:effects [[:give-coffers 1]]}]]})
+
 (def candlestick-maker {:name    :candlestick-maker
                         :set     :guilds
                         :types   #{:action}
@@ -31,5 +40,6 @@
                                      :options [:player :hand {:type :treasure}]
                                      :max     1}]]})
 
-(def kingdom-cards [candlestick-maker
+(def kingdom-cards [baker
+                    candlestick-maker
                     plaza])
