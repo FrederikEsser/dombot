@@ -6,6 +6,7 @@
             [dombot.cards.seaside :as seaside]
             [dombot.cards.prosperity :as prosperity]
             [dombot.cards.cornucopia :as cornucopia]
+            [dombot.cards.guilds :as guilds]
             [dombot.cards.renaissance :as renaissance]
             [dombot.cards.promos :as promos]
             [dombot.utils :as ut]))
@@ -16,6 +17,7 @@
                      seaside/kingdom-cards
                      prosperity/kingdom-cards
                      cornucopia/kingdom-cards
+                     guilds/kingdom-cards
                      renaissance/kingdom-cards
                      promos/kingdom-cards))
 
