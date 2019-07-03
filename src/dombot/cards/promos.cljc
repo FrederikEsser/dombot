@@ -4,6 +4,19 @@
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
+(def envoy {:name    :envoy
+            :set     :promos
+            :types   #{:action}
+            :cost    4
+            :effects [[:reveal-from-deck 5]
+                      [:give-choice {:text       "Choose which of the revealed cards will be discarded."
+                                     :choice     :discard-from-revealed
+                                     :options    [:player :revealed]
+                                     :min        1
+                                     :max        1
+                                     :hide-hand? true}]
+                      [:put-all-revealed-into-hand]]})
+
 (defn stash-put [game {:keys [player-no card-id position]}]
   (move-card game {:player-no   player-no
                    :card-name   :stash
@@ -27,4 +40,5 @@
                                                        :min     1
                                                        :max     1}]]}})
 
-(def kingdom-cards [stash])
+(def kingdom-cards [envoy
+                    stash])

@@ -13,6 +13,23 @@
 
 (use-fixtures :each fixture)
 
+(deftest envoy-test
+  (testing "Envoy"
+    (is (= (-> {:players [{:hand    [envoy]
+                           :deck    [copper copper copper copper estate estate]
+                           :actions 1}
+                          {}]}
+               (play 0 :envoy)
+               (choose :copper))
+           {:players [{:hand           [copper copper copper estate]
+                       :play-area      [envoy]
+                       :deck           [estate]
+                       :discard        [copper]
+                       :revealed-cards {:discard 1
+                                        :hand    4}
+                       :actions        0}
+                      {}]}))))
+
 (deftest stash-test
   (let [stash (assoc stash :id 1)
         caravan (assoc caravan :id 2)]
