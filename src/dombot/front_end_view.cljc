@@ -15,8 +15,8 @@
                     :as                            game}]
   (->> supply
        (map (fn [{{:keys [name types bane?] :as card} :card
-                  number-of-cards               :pile-size
-                  :keys                         [tokens]}]
+                  number-of-cards                     :pile-size
+                  :keys                               [tokens]}]
               (let [cost (ut/get-cost game player-no card)
                     buy-cost (ut/get-buy-cost game player-no card)]
                 (merge {:name            name
@@ -73,13 +73,14 @@
 
 (defn view-hand [{active-player?                      :active-player?
                   {:keys [hand revealed-cards phase]} :player
-                  choice                              :choice
+                  {:keys [hide-hand?] :as choice}     :choice
                   :as                                 data}]
   (let [revealed-cards-in-hand (:hand revealed-cards)]
-    (if (or active-player?
-            (= revealed-cards-in-hand (count hand))
-            choice
-            (= :end-of-game phase))
+    (if (and (or active-player?
+                 (= revealed-cards-in-hand (count hand))
+                 choice
+                 (= :end-of-game phase))
+             (not hide-hand?))
       (view-area :hand data)
       (if (empty? hand)
         {}
@@ -238,22 +239,22 @@
         {:keys [phase] :as player} (get players current-player)]
     (->> (merge
            {:supply      (view-supply (merge game {:player (assoc player :player-no current-player)
-                                                  :choice choice}))
-           :prosperity? (->> supply (some (comp #{:platinum :colony} :name :card)) boolean)
-           :players     (->> players
-                             (map-indexed (fn [idx player]
-                                            (let [active-player? (and (= idx current-player)
-                                                                      (or (nil? choice)
-                                                                          (= idx player-no))
-                                                                      (not= phase :end-of-game))]
-                                              (view-player (merge {:active-player? active-player?
-                                                                   :player         player
-                                                                   :artifacts      (->> artifacts vals (filter (comp #{idx} :owner)))}
-                                                                  (when (= idx player-no)
-                                                                    {:choice choice})))))))
-           :trash       {:compact (view-trash {:trash trash :choice choice} :compact)
-                         :full    (view-trash {:trash trash :choice choice} :full)}
-           :commands    (view-commands game)}
+                                                   :choice choice}))
+            :prosperity? (->> supply (some (comp #{:platinum :colony} :name :card)) boolean)
+            :players     (->> players
+                              (map-indexed (fn [idx player]
+                                             (let [active-player? (and (= idx current-player)
+                                                                       (or (nil? choice)
+                                                                           (= idx player-no))
+                                                                       (not= phase :end-of-game))]
+                                               (view-player (merge {:active-player? active-player?
+                                                                    :player         player
+                                                                    :artifacts      (->> artifacts vals (filter (comp #{idx} :owner)))}
+                                                                   (when (= idx player-no)
+                                                                     {:choice choice})))))))
+            :trash       {:compact (view-trash {:trash trash :choice choice} :compact)
+                          :full    (view-trash {:trash trash :choice choice} :full)}
+            :commands    (view-commands game)}
            (when trade-route-mat
              {:trade-route-mat trade-route-mat}))
          (s/assert* ::specs/game))))

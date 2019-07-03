@@ -14,6 +14,36 @@
 
 (use-fixtures :each fixture)
 
+(deftest advisor-test
+  (testing "Advisor"
+    (is (= (-> {:players [{:hand    [advisor]
+                           :deck    [copper copper copper copper]
+                           :actions 1}
+                          {}]}
+               (play 0 :advisor)
+               (choose :copper))
+           {:players [{:hand           [copper copper]
+                       :play-area      [advisor]
+                       :deck           [copper]
+                       :discard        [copper]
+                       :revealed-cards {:discard 1
+                                        :hand    2}
+                       :actions        1}
+                      {}]}))
+    (is (= (-> {:players [{:hand    [advisor]
+                           :deck    [copper copper]
+                           :actions 1}
+                          {}]}
+               (play 0 :advisor)
+               (choose :copper))
+           {:players [{:hand           [copper]
+                       :play-area      [advisor]
+                       :discard        [copper]
+                       :revealed-cards {:discard 1
+                                        :hand    1}
+                       :actions        1}
+                      {}]}))))
+
 (deftest baker-test
   (testing "Baker"
     (is (= (-> {:players [{:hand    [baker]

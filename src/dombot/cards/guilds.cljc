@@ -1,8 +1,22 @@
 (ns dombot.cards.guilds
-  (:require [dombot.operations :refer [push-effect-stack]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice]]
             [dombot.cards.common :refer []]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
+
+(def advisor {:name    :advisor
+              :set     :guilds
+              :types   #{:action}
+              :cost    4
+              :effects [[:give-actions 1]
+                        [:reveal-from-deck 3]
+                        [:give-choice {:text       "Choose which of the revealed cards will be discarded."
+                                       :choice     :discard-from-revealed
+                                       :options    [:player :revealed]
+                                       :min        1
+                                       :max        1
+                                       :hide-hand? true}]
+                        [:put-all-revealed-into-hand]]})
 
 (def baker {:name    :baker
             :set     :guilds
@@ -48,7 +62,8 @@
                                      :options [:player :hand {:type :treasure}]
                                      :max     1}]]})
 
-(def kingdom-cards [baker
+(def kingdom-cards [advisor
+                    baker
                     candlestick-maker
                     merchant-guild
                     plaza])

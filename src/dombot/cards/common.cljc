@@ -133,6 +133,12 @@
 
 (effects/register {:discard-all-revealed discard-all-revealed})
 
+(defn discard-from-revealed [game args]
+  (move-cards game (merge args {:from :revealed
+                                :to   :discard})))
+
+(effects/register {:discard-from-revealed discard-from-revealed})
+
 (defn discard-from-look-at [game args]
   (move-cards game (merge args {:from :look-at
                                 :to   :discard})))
@@ -363,6 +369,15 @@
                     :to              :look-at}))
 
 (effects/register {:look-at look-at})
+
+(defn put-all-revealed-into-hand [game {:keys [player-no]}]
+  (let [revealed (get-in game [:players player-no :revealed])]
+    (move-cards game {:player-no  player-no
+                      :card-names (map :name revealed)
+                      :from       :revealed
+                      :to         :hand})))
+
+(effects/register {:put-all-revealed-into-hand put-all-revealed-into-hand})
 
 (defn put-revealed-into-hand [game args]
   (move-cards game (merge args {:from :revealed
