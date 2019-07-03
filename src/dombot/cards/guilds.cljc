@@ -11,7 +11,7 @@
             :effects [[:draw 1]
                       [:give-actions 1]
                       [:give-coffers 1]]
-            :setup [[:all-players {:effects [[:give-coffers 1]]}]]})
+            :setup   [[:all-players {:effects [[:give-coffers 1]]}]]})
 
 (def candlestick-maker {:name    :candlestick-maker
                         :set     :guilds
@@ -20,6 +20,14 @@
                         :effects [[:give-actions 1]
                                   [:give-buys 1]
                                   [:give-coffers 1]]})
+
+(def merchant-guild {:name          :merchant-guild
+                     :set           :guilds
+                     :types         #{:action}
+                     :cost          5
+                     :effects       [[:give-buys 1]
+                                     [:give-coins 1]]
+                     :while-in-play {:on-buy [[:give-coffers 1]]}})
 
 (defn- plaza-discard-treasure [game {:keys [player-no card-name]}]
   (cond-> game
@@ -42,4 +50,5 @@
 
 (def kingdom-cards [baker
                     candlestick-maker
+                    merchant-guild
                     plaza])

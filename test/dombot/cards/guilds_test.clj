@@ -5,6 +5,7 @@
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
             [dombot.cards.guilds :as guilds :refer :all]
+            [dombot.cards.dominion :refer [throne-room]]
             [dombot.utils :as ut]))
 
 (defn fixture [f]
@@ -35,6 +36,78 @@
                        :actions   1
                        :buys      2
                        :coffers   1}]}))))
+
+(deftest merchant-guild-test
+  (let [copper (assoc copper :id 1)]
+    (testing "Merchant Guild"
+      (is (= (-> {:players [{:hand    [merchant-guild]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :merchant-guild))
+             {:players [{:play-area [merchant-guild]
+                         :actions   0
+                         :coins     1
+                         :buys      2}]}))
+      (is (= (-> {:supply  [{:card copper :pile-size 46}]
+                  :players [{:hand    [merchant-guild]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :merchant-guild)
+                 (buy-card 0 :copper))
+             {:supply  [{:card copper :pile-size 45}]
+              :players [{:play-area [merchant-guild]
+                         :discard   [copper]
+                         :actions   0
+                         :coins     1
+                         :buys      1
+                         :coffers   1}]}))
+      (is (= (-> {:supply  [{:card copper :pile-size 46}]
+                  :players [{:hand    [merchant-guild]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :merchant-guild)
+                 (buy-card 0 :copper)
+                 (buy-card 0 :copper))
+             {:supply  [{:card copper :pile-size 44}]
+              :players [{:play-area [merchant-guild]
+                         :discard   [copper copper]
+                         :actions   0
+                         :coins     1
+                         :buys      0
+                         :coffers   2}]}))
+      (is (= (-> {:supply  [{:card copper :pile-size 46}]
+                  :players [{:hand    [merchant-guild merchant-guild]
+                             :actions 2
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :merchant-guild)
+                 (play 0 :merchant-guild)
+                 (buy-card 0 :copper))
+             {:supply  [{:card copper :pile-size 45}]
+              :players [{:play-area [merchant-guild merchant-guild]
+                         :discard   [copper]
+                         :actions   0
+                         :coins     2
+                         :buys      2
+                         :coffers   2}]}))
+      (is (= (-> {:supply  [{:card copper :pile-size 46}]
+                  :players [{:hand    [merchant-guild throne-room]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :throne-room)
+                 (choose :merchant-guild)
+                 (buy-card 0 :copper))
+             {:supply  [{:card copper :pile-size 45}]
+              :players [{:play-area [throne-room merchant-guild]
+                         :discard   [copper]
+                         :actions   0
+                         :coins     2
+                         :buys      2
+                         :coffers   1}]})))))
 
 (deftest plaza-test
   (testing "Plaza"
