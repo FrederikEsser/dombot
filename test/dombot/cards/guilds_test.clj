@@ -168,3 +168,60 @@
                        :discard   [copper]
                        :actions   2
                        :coffers   1}]}))))
+
+(deftest taxman-test
+  (let [gold (assoc gold :id 0)]
+    (testing "Taxman"
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [taxman silver]
+                             :actions 1}
+                            {:hand [copper copper copper copper silver]}]}
+                 (play 0 :taxman)
+                 (choose nil))
+             {:supply  [{:card gold :pile-size 30}]
+              :players [{:hand      [silver]
+                         :play-area [taxman]
+                         :actions   0}
+                        {:hand [copper copper copper copper silver]}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [taxman silver]
+                             :actions 1}
+                            {:hand [copper copper copper copper silver]}]}
+                 (play 0 :taxman)
+                 (choose :silver)                           ; player 0 trash
+                 (choose :silver)                           ; player 1 discard
+                 (choose :gold))                            ; player 0 gain onto deck
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:play-area [taxman]
+                         :deck      [gold]
+                         :actions   0}
+                        {:hand    [copper copper copper copper]
+                         :discard [silver]}]
+              :trash   [silver]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [taxman silver]
+                             :actions 1}
+                            {:hand [copper copper copper silver]}]}
+                 (play 0 :taxman)
+                 (choose :silver)
+                 (choose :gold))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:play-area [taxman]
+                         :deck      [gold]
+                         :actions   0}
+                        {:hand [copper copper copper silver]}]
+              :trash   [silver]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [taxman silver]
+                             :actions 1}
+                            {:hand [copper copper copper copper copper]}]}
+                 (play 0 :taxman)
+                 (choose :silver)
+                 (choose :gold))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:play-area [taxman]
+                         :deck      [gold]
+                         :actions   0}
+                        {:hand           [copper copper copper copper copper]
+                         :revealed-cards {:hand 5}}]
+              :trash   [silver]})))))

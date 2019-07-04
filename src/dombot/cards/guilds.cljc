@@ -1,6 +1,6 @@
 (ns dombot.cards.guilds
   (:require [dombot.operations :refer [push-effect-stack give-choice]]
-            [dombot.cards.common :refer []]
+            [dombot.cards.common :refer [reveal-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -62,8 +62,49 @@
                                      :options [:player :hand {:type :treasure}]
                                      :max     1}]]})
 
+(defn taxman-attack [game {:keys [player-no card-name]}]
+  (let [hand (get-in game [:players player-no :hand])]
+    (cond
+      (< (count hand) 5) game
+      (some (comp #{card-name} :name) hand) (give-choice game {:player-no player-no
+                                                               :text      (str "Discard a " (ut/format-name card-name) ".")
+                                                               :choice    :discard-from-hand
+                                                               :options   [:player :hand {:name card-name}]
+                                                               :min       1
+                                                               :max       1})
+      :else (-> game
+                (reveal-hand {:player-no player-no})))))
+
+(defn- taxman-trash [game {:keys [player-no card-name]}]
+  (if card-name
+    (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+          max-cost (+ 3 (ut/get-cost game player-no card))]
+      (-> game
+          (push-effect-stack {:player-no player-no
+                              :effects   [[:trash-from-hand {:card-name card-name}]
+                                          [:attack {:effects [[::taxman-attack {:card-name card-name}]]}]
+                                          [:give-choice {:text    (str "Gain a Treasure onto your deck costing up to $" max-cost ".")
+                                                         :choice  :gain-to-topdeck
+                                                         :options [:supply {:max-cost max-cost :type :treasure}]
+                                                         :min     1
+                                                         :max     1}]]})))
+    game))
+
+(effects/register {::taxman-attack taxman-attack
+                   ::taxman-trash  taxman-trash})
+
+(def taxman {:name    :taxman
+             :set     :guilds
+             :types   #{:action :attack}
+             :cost    4
+             :effects [[:give-choice {:text    "You may trash a treasure from your hand."
+                                      :choice  ::taxman-trash
+                                      :options [:player :hand {:type :treasure}]
+                                      :max     1}]]})
+
 (def kingdom-cards [advisor
                     baker
                     candlestick-maker
                     merchant-guild
-                    plaza])
+                    plaza
+                    taxman])
