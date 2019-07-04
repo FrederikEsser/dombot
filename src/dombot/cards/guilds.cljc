@@ -35,6 +35,19 @@
                                   [:give-buys 1]
                                   [:give-coffers 1]]})
 
+(defn- masterpiece-overpay [game {:keys [player-no amount]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (repeat amount [:gain {:card-name :silver}])}))
+
+(effects/register {::masterpiece-overpay masterpiece-overpay})
+
+(def masterpiece {:name       :masterpiece
+                  :set        :guilds
+                  :types      #{:treasure}
+                  :cost       3
+                  :coin-value 1
+                  :overpay    ::masterpiece-overpay})
+
 (def merchant-guild {:name          :merchant-guild
                      :set           :guilds
                      :types         #{:action}
@@ -127,6 +140,7 @@
 (def kingdom-cards [advisor
                     baker
                     candlestick-maker
+                    masterpiece
                     merchant-guild
                     plaza
                     soothsayer

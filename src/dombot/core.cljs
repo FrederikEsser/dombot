@@ -138,10 +138,10 @@
     (let [{:keys [sets num-players players]} @state]
       [:div
        #_#_"Number of players: " [:input {:type      :number
-                                      :min       2
-                                      :max       4
-                                      :on-change (fn [event] (swap! state assoc :num-players (js/parseInt (-> event .-target .-value))))
-                                      :value     num-players}]
+                                          :min       2
+                                          :max       4
+                                          :on-change (fn [event] (swap! state assoc :num-players (js/parseInt (-> event .-target .-value))))
+                                          :value     num-players}]
        (setup-player 0)
        (setup-player 1)
        (setup-player 2)

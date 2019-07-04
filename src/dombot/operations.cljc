@@ -267,14 +267,30 @@
                                                                   [:on-gain args]]}))
                         check-stack)))
 
-(effects/register {:do-gain do-gain
-                   :on-gain handle-on-gain
-                   :gain    gain})
+(defn overpay-choice [game {:keys [player-no amount effect]}]
+  (if (pos? amount)
+    (-> game
+        (update-in [:players player-no :coins] - amount)
+        (push-effect-stack {:player-no player-no
+                            :effects   [[effect {:amount amount}]]}))
+    game))
+
+(effects/register {:do-gain        do-gain
+                   :on-gain        handle-on-gain
+                   :gain           gain
+                   :overpay-choice overpay-choice})
 
 (defn buy-card [{:keys [effect-stack] :as game} player-no card-name]
   (let [{:keys [buys coins phase play-area]} (get-in game [:players player-no])
         {:keys [card pile-size tokens] :as supply-pile} (ut/get-pile-idx game card-name)
         cost (ut/get-buy-cost game player-no card)
+        {:keys [on-buy overpay]} card
+        overpay-effects (when (and overpay (pos? (- coins cost)))
+                          [[:give-choice {:text    (str "You may overpay for your " (ut/format-name card-name) ". Choose amount:")
+                                          :choice  [:overpay-choice {:effect overpay}]
+                                          :options [:overpay]
+                                          :min     1
+                                          :max     1}]])
         token-effects (->> tokens
                            (mapcat :on-buy))
         while-in-play-effects (->> play-area
@@ -290,14 +306,15 @@
       (assert (#{:action :pay :buy} phase) (str "You can't buy cards when you're in the " (ut/format-name phase) " phase.")))
     (-> game
         (cond-> phase (assoc-in [:players player-no :phase] :buy))
+        (update-in [:players player-no :coins] - cost)
+        (update-in [:players player-no :buys] - 1)
         (push-effect-stack {:player-no player-no
-                            :effects   (concat (:on-buy card)
+                            :effects   (concat overpay-effects
+                                               on-buy
                                                token-effects
                                                while-in-play-effects
                                                [[:gain {:card-name card-name
                                                         :bought    true}]])})
-        (update-in [:players player-no :coins] - cost)
-        (update-in [:players player-no :buys] - 1)
         check-stack)))
 
 (defn do-shuffle
@@ -465,6 +482,7 @@
         {:keys [choice-fn args]} (get-choice-fn choice)
         arg-name (case source
                    :deck-position :position
+                   :overpay :amount
                    :special :choice
                    :card-name)
         single-selection (if (coll? selection)
@@ -489,6 +507,7 @@
         {:keys [choice-fn args]} (get-choice-fn choice)
         arg-name (case source
                    :deck-position :position
+                   :overpay :amount
                    :special :choices
                    :card-names)
         multi-selection (if (coll? selection)

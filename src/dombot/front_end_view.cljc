@@ -126,6 +126,9 @@
                                    (not optional?))}
               (case source
                 :special {:options (view-options options)}
+                :overpay {:options (->> options
+                                        (map (fn [o] {:option o
+                                                      :text   (str o)})))}
                 :deck-position {:interval {:from (first options)
                                            :to   (last options)}}
                 {})

@@ -68,6 +68,78 @@
                        :buys      2
                        :coffers   1}]}))))
 
+(deftest masterpiece-test
+  (let [masterpiece (assoc masterpiece :id 0)
+        silver (assoc silver :id 1)]
+    (testing "Masterpiece"
+      (is (= (-> {:players [{:hand  [masterpiece]
+                             :coins 0}]}
+                 (play 0 :masterpiece))
+             {:players [{:play-area [masterpiece]
+                         :coins     1}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card masterpiece :pile-size 10}]
+                  :players [{:coins 3
+                             :buys  1}]}
+                 (buy-card 0 :masterpiece))
+             {:supply  [{:card silver :pile-size 40}
+                        {:card masterpiece :pile-size 9}]
+              :players [{:discard [masterpiece]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card masterpiece :pile-size 10}]
+                  :players [{:coins 4
+                             :buys  1}]}
+                 (buy-card 0 :masterpiece))
+             {:supply       [{:card silver :pile-size 40}
+                             {:card masterpiece :pile-size 10}]
+              :players      [{:coins 1
+                              :buys  0}]
+              :effect-stack [{:text      "You may overpay for your Masterpiece. Choose amount:"
+                              :player-no 0
+                              :choice    [:overpay-choice {:effect :dombot.cards.guilds/masterpiece-overpay}]
+                              :source    :overpay
+                              :options   [0 1]
+                              :min       1
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:gain {:card-name :masterpiece
+                                                 :bought    true}]}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card masterpiece :pile-size 10}]
+                  :players [{:coins 4
+                             :buys  1}]}
+                 (buy-card 0 :masterpiece)
+                 (choose 0))
+             {:supply  [{:card silver :pile-size 40}
+                        {:card masterpiece :pile-size 9}]
+              :players [{:coins   1
+                         :buys    0
+                         :discard [masterpiece]}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card masterpiece :pile-size 10}]
+                  :players [{:coins 4
+                             :buys  1}]}
+                 (buy-card 0 :masterpiece)
+                 (choose 1))
+             {:supply  [{:card silver :pile-size 39}
+                        {:card masterpiece :pile-size 9}]
+              :players [{:coins   0
+                         :buys    0
+                         :discard [silver masterpiece]}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card masterpiece :pile-size 10}]
+                  :players [{:coins 7
+                             :buys  1}]}
+                 (buy-card 0 :masterpiece)
+                 (choose 4))
+             {:supply  [{:card silver :pile-size 36}
+                        {:card masterpiece :pile-size 9}]
+              :players [{:coins   0
+                         :buys    0
+                         :discard [silver silver silver silver masterpiece]}]})))))
+
 (deftest merchant-guild-test
   (let [copper (assoc copper :id 1)]
     (testing "Merchant Guild"

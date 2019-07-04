@@ -189,6 +189,12 @@
 
 (effects/register-options {:deck-position options-from-deck-position})
 
+(defn options-from-overbuy [game player-no & args]
+  (let [coins (get-in game [:players player-no :coins])]
+    (-> coins inc range)))
+
+(effects/register-options {:overpay options-from-overbuy})
+
 (defn options-from-trash [{:keys [trash]} player-no card-id {:keys [type]}]
   (cond->> trash
            type (filter (comp type :types))
