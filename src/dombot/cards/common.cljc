@@ -234,11 +234,11 @@
 
 (effects/register {:topdeck-from-play-area topdeck-from-play-area})
 
-(defn topdeck-from-discard [game {:keys [card-name] :as args}]
+(defn topdeck-from-discard [game {:keys [card-name card-names] :as args}]
   (cond-> game
-          card-name (move-card (merge args {:from        :discard
-                                            :to          :deck
-                                            :to-position :top}))))
+          (or card-name card-names) (move-cards (merge args {:from        :discard
+                                                             :to          :deck
+                                                             :to-position :top}))))
 
 (effects/register {:topdeck-from-discard topdeck-from-discard})
 

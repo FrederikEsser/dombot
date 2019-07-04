@@ -35,6 +35,37 @@
                                   [:give-buys 1]
                                   [:give-coffers 1]]})
 
+(defn- herald-play-action [game {:keys [player-no]}]
+  (let [revealed (get-in game [:players player-no :revealed])
+        {:keys [name types] :as card} (first revealed)]
+    (assert (= 1 (count revealed)) "Herald error: Number of revealed cards is not 1.")
+    (push-effect-stack game {:player-no player-no
+                             :effects   (if (:action types)
+                                          [[:play-from-revealed {:card-name name}]
+                                           [:card-effect {:card card}]]
+                                          [[:topdeck-from-revealed {:card-name name}]])})))
+
+(defn- herald-overpay [game {:keys [player-no amount]}]
+  (give-choice game {:player-no player-no
+                     :text      (str "Put " amount " cards from your discard onto your deck.")
+                     :choice    :topdeck-from-discard
+                     :options   [:player :discard]
+                     :min       amount
+                     :max       amount}))
+
+(effects/register {::herald-play-action herald-play-action
+                   ::herald-overpay     herald-overpay})
+
+(def herald {:name    :herald
+             :set     :guilds
+             :types   #{:action}
+             :cost    4
+             :effects [[:draw 1]
+                       [:give-actions 1]
+                       [:reveal-from-deck 1]
+                       [::herald-play-action]]
+             :overpay ::herald-overpay})
+
 (defn- masterpiece-overpay [game {:keys [player-no amount]}]
   (push-effect-stack game {:player-no player-no
                            :effects   (repeat amount [:gain {:card-name :silver}])}))
@@ -140,6 +171,7 @@
 (def kingdom-cards [advisor
                     baker
                     candlestick-maker
+                    herald
                     masterpiece
                     merchant-guild
                     plaza
