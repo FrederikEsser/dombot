@@ -1,5 +1,5 @@
 (ns dombot.cards.guilds
-  (:require [dombot.operations :refer [push-effect-stack give-choice]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice draw]]
             [dombot.cards.common :refer [reveal-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -62,6 +62,28 @@
                                      :options [:player :hand {:type :treasure}]
                                      :max     1}]]})
 
+(defn- soothsayer-draw [game {:keys [player-no previous-curse-count]}]
+  (let [{curse-count :pile-size} (ut/get-pile-idx game :curse)]
+    (cond-> game
+            (not= curse-count previous-curse-count) (draw {:player-no player-no
+                                                           :arg       1}))))
+
+(defn- soothsayer-attack [game {:keys [player-no]}]
+  (let [{curse-count :pile-size} (ut/get-pile-idx game :curse)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:gain {:card-name :curse}]
+                                         [::soothsayer-draw {:previous-curse-count curse-count}]]})))
+
+(effects/register {::soothsayer-draw   soothsayer-draw
+                   ::soothsayer-attack soothsayer-attack})
+
+(def soothsayer {:name    :soothsayer
+                 :set     :guilds
+                 :types   #{:action :attack}
+                 :cost    5
+                 :effects [[:gain {:card-name :gold}]
+                           [:attack {:effects [[::soothsayer-attack]]}]]})
+
 (defn taxman-attack [game {:keys [player-no card-name]}]
   (let [hand (get-in game [:players player-no :hand])]
     (cond
@@ -107,4 +129,5 @@
                     candlestick-maker
                     merchant-guild
                     plaza
+                    soothsayer
                     taxman])

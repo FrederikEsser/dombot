@@ -6,6 +6,7 @@
             [dombot.cards.common :refer :all]
             [dombot.cards.guilds :as guilds :refer :all]
             [dombot.cards.dominion :refer [throne-room]]
+            [dombot.cards.prosperity :refer [watchtower]]
             [dombot.utils :as ut]))
 
 (defn fixture [f]
@@ -168,6 +169,53 @@
                        :discard   [copper]
                        :actions   2
                        :coffers   1}]}))))
+
+(deftest soothsayer-test
+  (let [gold (assoc gold :id 0)
+        curse (assoc curse :id 1)]
+    (testing "Soothsayer"
+      (is (= (-> {:supply  [{:card curse :pile-size 10}
+                            {:card gold :pile-size 30}]
+                  :players [{:hand    [soothsayer]
+                             :actions 1}
+                            {:deck [copper copper]}]}
+                 (play 0 :soothsayer))
+             {:supply  [{:card curse :pile-size 9}
+                        {:card gold :pile-size 29}]
+              :players [{:play-area [soothsayer]
+                         :discard   [gold]
+                         :actions   0}
+                        {:hand    [copper]
+                         :deck    [copper]
+                         :discard [curse]}]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 0}
+                            {:card gold :pile-size 30}]
+                  :players [{:hand    [soothsayer]
+                             :actions 1}
+                            {:deck [copper copper]}]}
+                 (play 0 :soothsayer))
+             {:supply  [{:card curse :pile-size 0}
+                        {:card gold :pile-size 29}]
+              :players [{:play-area [soothsayer]
+                         :discard   [gold]
+                         :actions   0}
+                        {:deck [copper copper]}]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}
+                            {:card gold :pile-size 30}]
+                  :players [{:hand    [soothsayer]
+                             :actions 1}
+                            {:hand [watchtower]
+                             :deck [copper copper]}]}
+                 (play 0 :soothsayer)
+                 (choose :trash))
+             {:supply  [{:card curse :pile-size 9}
+                        {:card gold :pile-size 29}]
+              :players [{:play-area [soothsayer]
+                         :discard   [gold]
+                         :actions   0}
+                        {:hand [watchtower copper]
+                         :deck [copper]}]
+              :trash   [curse]})))))
 
 (deftest taxman-test
   (let [gold (assoc gold :id 0)]
