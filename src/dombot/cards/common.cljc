@@ -31,7 +31,14 @@
   (cond-> game
           (pos? arg) (update-in [:players player-no :coffers] ut/plus arg)))
 
-(effects/register {:give-coffers give-coffers})
+(defn remove-coffers [game {:keys [player-no arg]}]
+  (let [coffers (or (get-in game [:players player-no :coffers] 0))]
+    (assert (<= arg coffers) "You have not enough Coffers to spend.")
+    (cond-> game
+            (pos? arg) (update-in [:players player-no :coffers] - arg))))
+
+(effects/register {:give-coffers   give-coffers
+                   :remove-coffers remove-coffers})
 
 (defn give-villagers [game {:keys [player-no arg]}]
   (cond-> game

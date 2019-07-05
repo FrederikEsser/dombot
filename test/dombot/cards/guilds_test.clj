@@ -57,6 +57,71 @@
                        :actions   1
                        :coffers   1}]}))))
 
+(deftest butcher-test
+  (let [estate (assoc estate :id 0)
+        silver (assoc silver :id 1)
+        duchy (assoc duchy :id 2)]
+    (testing "Butcher"
+      (is (= (-> {:players [{:hand    [butcher]
+                             :actions 1}]}
+                 (play 0 :butcher))
+             {:players [{:play-area [butcher]
+                         :actions   0
+                         :coffers   2}]}))
+      (is (= (-> {:players [{:hand    [butcher estate]
+                             :actions 1}]}
+                 (play 0 :butcher)
+                 (choose nil))
+             {:players [{:hand      [estate]
+                         :play-area [butcher]
+                         :actions   0
+                         :coffers   2}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}]
+                  :players [{:hand    [butcher estate]
+                             :actions 1}]}
+                 (play 0 :butcher)
+                 (choose :estate)
+                 (choose :estate))
+             {:supply  [{:card estate :pile-size 7}]
+              :players [{:play-area [butcher]
+                         :discard   [estate]
+                         :actions   0
+                         :coffers   2}]
+              :trash   [estate]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [butcher estate]
+                             :actions 1}]}
+                 (play 0 :butcher)
+                 (choose :estate)
+                 (choose :silver))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:play-area [butcher]
+                         :discard   [silver]
+                         :actions   0
+                         :coffers   1}]
+              :trash   [estate]}))
+      (is (thrown-with-msg? AssertionError #"Choose error. Duchy is not a valid option."
+                            (-> {:supply  [{:card silver :pile-size 40}
+                                           {:card duchy :pile-size 8}]
+                                 :players [{:hand    [butcher estate]
+                                            :actions 1}]}
+                                (play 0 :butcher)
+                                (choose :estate)
+                                (choose :duchy))))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:hand    [butcher estate]
+                             :actions 1
+                             :coffers 1}]}
+                 (play 0 :butcher)
+                 (choose :estate)
+                 (choose :duchy))
+             {:supply  [{:card duchy :pile-size 7}]
+              :players [{:play-area [butcher]
+                         :discard   [duchy]
+                         :actions   0
+                         :coffers   0}]
+              :trash   [estate]})))))
+
 (deftest candlestick-maker-test
   (testing "Candlestick Maker"
     (is (= (-> {:players [{:hand    [candlestick-maker]

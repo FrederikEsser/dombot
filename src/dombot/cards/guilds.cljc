@@ -27,6 +27,40 @@
                       [:give-coffers 1]]
             :setup   [[:all-players {:effects [[:give-coffers 1]]}]]})
 
+(defn- butcher-gain [game {:keys [player-no card-name trashed-card-cost]}]
+  (let [{:keys [card]} (ut/get-pile-idx game card-name)
+        cost (ut/get-cost game player-no card)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:remove-coffers (- cost trashed-card-cost)]
+                                         [:gain {:card-name card-name}]]})))
+
+(defn- butcher-trash [game {:keys [player-no card-name]}]
+  (if card-name
+    (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+          cost (ut/get-cost game player-no card)
+          coffers (or (get-in game [:players player-no :coffers]) 0)]
+      (push-effect-stack game {:player-no player-no
+                               :effects   [[:trash-from-hand {:card-name card-name}]
+                                           [:give-choice {:text    (str "Gain a card costing up to $" cost " plus any number of Coffers you spend.")
+                                                          :choice  [::butcher-gain {:trashed-card-cost cost}]
+                                                          :options [:supply {:max-cost (+ cost coffers)}]
+                                                          :min     1
+                                                          :max     1}]]}))
+    game))
+
+(effects/register {::butcher-gain  butcher-gain
+                   ::butcher-trash butcher-trash})
+
+(def butcher {:name    :butcher
+              :set     :guilds
+              :types   #{:action}
+              :cost    5
+              :effects [[:give-coffers 2]
+                        [:give-choice {:text    "You may trash a card from your hand."
+                                       :choice  ::butcher-trash
+                                       :options [:player :hand]
+                                       :max     1}]]})
+
 (def candlestick-maker {:name    :candlestick-maker
                         :set     :guilds
                         :types   #{:action}
@@ -170,6 +204,7 @@
 
 (def kingdom-cards [advisor
                     baker
+                    butcher
                     candlestick-maker
                     herald
                     masterpiece
