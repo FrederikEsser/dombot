@@ -415,6 +415,67 @@
                          :deck [copper]}]
               :trash   [curse]})))))
 
+(deftest stonemason-test
+  (let [stonemason (assoc stonemason :id 0)
+        baker (assoc baker :id 1)]
+    (testing "Stonemason"
+      (is (= (-> {:players [{:hand    [stonemason copper]
+                             :actions 1}]}
+                 (play 0 :stonemason)
+                 (choose :copper))
+             {:players [{:play-area [stonemason]
+                         :actions   0}]
+              :trash   [copper]}))
+      (is (= (-> {:supply  [{:card baker :pile-size 10}]
+                  :players [{:hand    [stonemason gold]
+                             :actions 1}]}
+                 (play 0 :stonemason)
+                 (choose :gold)
+                 (choose :baker)
+                 (choose :baker))
+             {:supply  [{:card baker :pile-size 8}]
+              :players [{:play-area [stonemason]
+                         :discard   [baker baker]
+                         :actions   0}]
+              :trash   [gold]}))
+      (is (= (-> {:supply  [{:card stonemason :pile-size 10}
+                            {:card baker :pile-size 10}]
+                  :players [{:coins 7
+                             :buys  1}]}
+                 (buy-card 0 :stonemason)
+                 (choose 0))
+             {:supply  [{:card stonemason :pile-size 9}
+                        {:card baker :pile-size 10}]
+              :players [{:discard [stonemason]
+                         :coins   5
+                         :buys    0}]}))
+      (is (= (-> {:supply  [{:card stonemason :pile-size 10}
+                            {:card silver :pile-size 40}
+                            {:card baker :pile-size 10}]
+                  :players [{:coins 7
+                             :buys  1}]}
+                 (buy-card 0 :stonemason)
+                 (choose 3))
+             {:supply  [{:card stonemason :pile-size 9}
+                        {:card silver :pile-size 40}
+                        {:card baker :pile-size 10}]
+              :players [{:discard [stonemason]
+                         :coins   2
+                         :buys    0}]}))
+      (is (= (-> {:supply  [{:card stonemason :pile-size 10}
+                            {:card baker :pile-size 10}]
+                  :players [{:coins 7
+                             :buys  1}]}
+                 (buy-card 0 :stonemason)
+                 (choose 5)
+                 (choose :baker)
+                 (choose :baker))
+             {:supply  [{:card stonemason :pile-size 9}
+                        {:card baker :pile-size 8}]
+              :players [{:discard [baker baker stonemason]
+                         :coins   0
+                         :buys    0}]})))))
+
 (deftest taxman-test
   (let [gold (assoc gold :id 0)]
     (testing "Taxman"

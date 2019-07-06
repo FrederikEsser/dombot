@@ -162,6 +162,44 @@
                  :effects [[:gain {:card-name :gold}]
                            [:attack {:effects [[::soothsayer-attack]]}]]})
 
+(defn- stonemason-trash [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        max-cost (dec (ut/get-cost game player-no card))
+        gain-card [:give-choice {:text    (str "Gain 2 cards each costing up to $" max-cost ".")
+                                 :choice  :gain
+                                 :options [:supply {:max-cost max-cost}]
+                                 :min     1
+                                 :max     1}]]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:trash-from-hand {:card-name card-name}]
+                                         gain-card
+                                         gain-card]})))
+
+(defn- stonemason-overpay [game {:keys [player-no amount]}]
+  (let [gain-action [:give-choice {:text    (str "Gain 2 Action card each costing exactly $" amount ".")
+                                   :choice  :gain
+                                   :options [:supply {:type :action
+                                                      :cost amount}]
+                                   :min     1
+                                   :max     1}]]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [gain-action
+                                         gain-action]})))
+
+(effects/register {::stonemason-trash   stonemason-trash
+                   ::stonemason-overpay stonemason-overpay})
+
+(def stonemason {:name    :stonemason
+                 :set     :guilds
+                 :types   #{:action}
+                 :cost    2
+                 :effects [[:give-choice {:text    "Trash a card from your hand."
+                                          :choice  ::stonemason-trash
+                                          :options [:player :hand]
+                                          :min     1
+                                          :max     1}]]
+                 :overpay ::stonemason-overpay})
+
 (defn taxman-attack [game {:keys [player-no card-name]}]
   (let [hand (get-in game [:players player-no :hand])]
     (cond
@@ -211,4 +249,5 @@
                     merchant-guild
                     plaza
                     soothsayer
+                    stonemason
                     taxman])
