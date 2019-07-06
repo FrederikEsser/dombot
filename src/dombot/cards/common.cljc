@@ -420,6 +420,13 @@
 
 (effects/register {:take-from-discard take-from-discard})
 
+(defn take-from-revealed [game {:keys [card-name card-names] :as args}]
+  (cond-> game
+          (or card-name card-names) (move-cards (merge args {:from :revealed
+                                                             :to   :hand}))))
+
+(effects/register {:take-from-revealed take-from-revealed})
+
 (defn return-to-supply [game {:keys [card-name card-names] :as args}]
   (cond-> game
           (or card-name card-names) (move-cards (merge args {:from :hand

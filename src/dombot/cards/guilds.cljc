@@ -164,6 +164,32 @@
                        [::herald-play-action]]
              :overpay ::herald-overpay})
 
+(defn journeyman-reveal [game {:keys [player-no card-name]}]
+  (let [{:keys [revealed deck discard]} (get-in game [:players player-no])
+        card-names (->> revealed
+                        (map :name)
+                        (remove #{card-name}))]
+    (if (and (< (count card-names) 3)
+             (not-empty (concat deck discard)))
+      (push-effect-stack game {:player-no player-no
+                               :effects   [[:reveal-from-deck 1]
+                                           [::journeyman-reveal {:card-name card-name}]]})
+      (push-effect-stack game {:player-no player-no
+                               :effects   [[:take-from-revealed {:card-names card-names}]
+                                           [:discard-all-revealed]]}))))
+
+(effects/register {::journeyman-reveal journeyman-reveal})
+
+(def journeyman {:name    :journeyman
+                 :set     :guilds
+                 :types   #{:action}
+                 :cost    5
+                 :effects [[:give-choice {:text    "Name a card."
+                                          :choice  ::journeyman-reveal
+                                          :options [:supply {:all true}]
+                                          :min     1
+                                          :max     1}]]})
+
 (defn- masterpiece-overpay [game {:keys [player-no amount]}]
   (push-effect-stack game {:player-no player-no
                            :effects   (repeat amount [:gain {:card-name :silver}])}))
@@ -310,6 +336,7 @@
                     candlestick-maker
                     doctor
                     herald
+                    journeyman
                     masterpiece
                     merchant-guild
                     plaza

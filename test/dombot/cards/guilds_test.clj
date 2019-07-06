@@ -305,6 +305,62 @@
                            :coins   0
                            :buys    0}]}))))))
 
+(deftest journeyman-test
+  (testing "Journeyman"
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand    [journeyman]
+                           :deck    [copper estate silver estate gold]
+                           :actions 1}]}
+               (play 0 :journeyman)
+               (choose :province))
+           {:supply  (base/supply 2 8)
+            :players [{:hand           [copper estate silver]
+                       :play-area      [journeyman]
+                       :deck           [estate gold]
+                       :revealed-cards {:hand 3}
+                       :actions        0}]}))
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand    [journeyman]
+                           :deck    [copper estate silver estate gold]
+                           :actions 1}]}
+               (play 0 :journeyman)
+               (choose :copper))
+           {:supply  (base/supply 2 8)
+            :players [{:hand           [estate silver estate]
+                       :play-area      [journeyman]
+                       :deck           [gold]
+                       :discard        [copper]
+                       :revealed-cards {:hand    3
+                                        :discard 1}
+                       :actions        0}]}))
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand    [journeyman]
+                           :deck    [copper estate silver estate gold copper]
+                           :actions 1}]}
+               (play 0 :journeyman)
+               (choose :estate))
+           {:supply  (base/supply 2 8)
+            :players [{:hand           [copper silver gold]
+                       :play-area      [journeyman]
+                       :deck           [copper]
+                       :discard        [estate estate]
+                       :revealed-cards {:hand    3
+                                        :discard 2}
+                       :actions        0}]}))
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand    [journeyman]
+                           :deck    [copper estate silver estate]
+                           :actions 1}]}
+               (play 0 :journeyman)
+               (choose :estate))
+           {:supply  (base/supply 2 8)
+            :players [{:hand           [copper silver]
+                       :play-area      [journeyman]
+                       :discard        [estate estate]
+                       :revealed-cards {:hand    2
+                                        :discard 2}
+                       :actions        0}]}))))
+
 (deftest masterpiece-test
   (let [masterpiece (assoc masterpiece :id 0)
         silver (assoc silver :id 1)]

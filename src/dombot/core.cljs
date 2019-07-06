@@ -137,6 +137,15 @@
   (fn []
     (let [{:keys [sets num-players players]} @state]
       [:div
+       [:button {:style    (button-style)
+                 :on-click (fn [] (swap! state assoc
+                                         :game (cmd/start-game (->> players
+                                                                    (map clojure.string/trim)
+                                                                    (filter not-empty)
+                                                                    #_(take num-players))
+                                                               :sets sets)
+                                         :setup-game? false))}
+        "Create game"]
        #_#_"Number of players: " [:input {:type      :number
                                           :min       2
                                           :max       4
@@ -151,17 +160,7 @@
 
        (mapk (fn [s]
                [set-selector sets s])
-             all-sets)
-
-       [:button {:style    (button-style)
-                 :on-click (fn [] (swap! state assoc
-                                         :game (cmd/start-game (->> players
-                                                                    (map clojure.string/trim)
-                                                                    (filter not-empty)
-                                                                    #_(take num-players))
-                                                               :sets sets)
-                                         :setup-game? false))}
-        "Create game"]])))
+             all-sets)])))
 
 (defn home-page []
   (fn []
