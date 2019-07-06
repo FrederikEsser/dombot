@@ -229,9 +229,10 @@
 
 (defn- menagerie-draw [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])
-        different-names? (->> hand
-                              (map :name)
-                              (apply distinct?))]
+        different-names? (or (empty? hand)
+                             (->> hand
+                                  (map :name)
+                                  (apply distinct?)))]
     (push-effect-stack game {:player-no player-no
                              :effects   [[:reveal-hand]
                                          [:draw (if different-names? 3 1)]]})))

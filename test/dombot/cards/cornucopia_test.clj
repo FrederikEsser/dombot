@@ -453,6 +453,14 @@
            {:players [{:hand      [estate copper silver gold copper copper copper]
                        :play-area [menagerie]
                        :deck      [copper]
+                       :actions   1}]}))
+    (is (= (-> {:players [{:hand    [menagerie]
+                           :deck    [copper copper copper copper]
+                           :actions 1}]}
+               (play 0 :menagerie))
+           {:players [{:hand      [copper copper copper]
+                       :play-area [menagerie]
+                       :deck      [copper]
                        :actions   1}]}))))
 
 (deftest remake-test
