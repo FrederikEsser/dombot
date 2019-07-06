@@ -133,6 +133,118 @@
                        :buys      2
                        :coffers   1}]}))))
 
+(deftest doctor-test
+  (let [doctor (assoc doctor :id 0)]
+    (testing "Doctor"
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand    [doctor]
+                             :deck    [copper copper copper copper]
+                             :actions 1}]}
+                 (play 0 :doctor)
+                 (choose :estate)
+                 (choose [:copper :copper :copper]))
+             {:supply  (base/supply 2 8)
+              :players [{:play-area      [doctor]
+                         :deck           [copper copper copper copper]
+                         :revealed-cards {:deck 3}
+                         :actions        0}]}))
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand    [doctor]
+                             :deck    [copper copper copper copper]
+                             :actions 1}]}
+                 (play 0 :doctor)
+                 (choose :copper))
+             {:supply  (base/supply 2 8)
+              :players [{:play-area [doctor]
+                         :deck      [copper]
+                         :actions   0}]
+              :trash   [copper copper copper]}))
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand    [doctor]
+                             :deck    [silver estate copper copper]
+                             :actions 1}]}
+                 (play 0 :doctor)
+                 (choose :estate)
+                 (choose [:silver :copper]))
+             {:supply  (base/supply 2 8)
+              :players [{:play-area      [doctor]
+                         :deck           [copper silver copper]
+                         :revealed-cards {:deck 2}
+                         :actions        0}]
+              :trash   [estate]}))
+      (is (= (-> {:supply  [{:card doctor :pile-size 10}]
+                  :players [{:coins 3
+                             :buys  1}]}
+                 (buy-card 0 :doctor))
+             {:supply  [{:card doctor :pile-size 9}]
+              :players [{:discard [doctor]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:supply  [{:card doctor :pile-size 10}]
+                  :players [{:deck  [copper estate]
+                             :coins 4
+                             :buys  1}]}
+                 (buy-card 0 :doctor)
+                 (choose 1)
+                 (choose :trash))
+             {:supply  [{:card doctor :pile-size 9}]
+              :players [{:deck    [estate]
+                         :discard [doctor]
+                         :coins   0
+                         :buys    0}]
+              :trash   [copper]}))
+      (is (= (-> {:supply  [{:card doctor :pile-size 10}]
+                  :players [{:deck  [copper estate]
+                             :coins 4
+                             :buys  1}]}
+                 (buy-card 0 :doctor)
+                 (choose 1)
+                 (choose :discard))
+             {:supply  [{:card doctor :pile-size 9}]
+              :players [{:deck    [estate]
+                         :discard [copper doctor]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:supply  [{:card doctor :pile-size 10}]
+                  :players [{:deck  [copper estate]
+                             :coins 4
+                             :buys  1}]}
+                 (buy-card 0 :doctor)
+                 (choose 1)
+                 (choose :deck))
+             {:supply  [{:card doctor :pile-size 9}]
+              :players [{:deck    [copper estate]
+                         :discard [doctor]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:supply  [{:card doctor :pile-size 10}]
+                  :players [{:deck  [copper estate]
+                             :coins 5
+                             :buys  1}]}
+                 (buy-card 0 :doctor)
+                 (choose 2)
+                 (choose :discard)
+                 (choose :trash))
+             {:supply  [{:card doctor :pile-size 9}]
+              :players [{:discard [copper doctor]
+                         :coins   0
+                         :buys    0}]
+              :trash   [estate]}))
+      (is (= (-> {:supply  [{:card doctor :pile-size 10}]
+                  :players [{:deck  [copper estate]
+                             :coins 5
+                             :buys  1}]}
+                 (buy-card 0 :doctor)
+                 (choose 2)
+                 (choose :deck)
+                 (choose :trash))
+             {:supply  [{:card doctor :pile-size 9}]
+              :players [{:deck    [estate]
+                         :discard [doctor]
+                         :coins   0
+                         :buys    0}]
+              :trash   [copper]})))))
+
 (deftest herald-test
   (let [herald (assoc herald :id 0)]
     (testing "Herald"

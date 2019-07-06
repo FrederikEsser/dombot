@@ -1,6 +1,6 @@
 (ns dombot.cards.guilds
-  (:require [dombot.operations :refer [push-effect-stack give-choice draw]]
-            [dombot.cards.common :refer [reveal-hand]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice draw move-card move-cards]]
+            [dombot.cards.common :refer [reveal-hand trash-from-look-at]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -68,6 +68,70 @@
                         :effects [[:give-actions 1]
                                   [:give-buys 1]
                                   [:give-coffers 1]]})
+
+(defn- doctor-trash [game {:keys [player-no card-name]}]
+  (let [card-names (->> (get-in game [:players player-no :revealed])
+                        (map :name)
+                        (filter #{card-name}))]
+    (move-cards game {:player-no  player-no
+                      :card-names card-names
+                      :from       :revealed
+                      :to         :trash})))
+
+(defn- doctor-reveal [game {:keys [player-no card-name]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:reveal-from-deck 3]
+                                       [::doctor-trash {:card-name card-name}]
+                                       [:give-choice {:text    "Put the revealed cards back onto your deck in any order."
+                                                      :choice  :topdeck-from-revealed
+                                                      :options [:player :revealed]
+                                                      :min     3
+                                                      :max     3}]]}))
+
+(defn- doctor-choice [game {:keys [player-no choice]}]
+  (let [[{:keys [name]}] (get-in game [:players player-no :look-at])]
+    (move-card game (merge {:player-no player-no
+                            :card-name name
+                            :from      :look-at
+                            :to        choice}
+                           (when (= choice :deck)
+                             {:to-position :top})))))
+
+(defn- doctor-look-at [game {:keys [player-no]}]
+  (let [{:keys [deck discard]} (get-in game [:players player-no])]
+    (if (not-empty (concat deck discard))
+      (push-effect-stack game {:player-no player-no
+                               :effects   [[:look-at 1]
+                                           [:give-choice {:text    "Look at the top card of your deck;"
+                                                          :choice  ::doctor-choice
+                                                          :options [:special
+                                                                    {:option :trash :text "Trash it."}
+                                                                    {:option :discard :text "Discard it."}
+                                                                    {:option :deck :text "Put it back."}]
+                                                          :min     1
+                                                          :max     1}]]})
+      game)))
+
+(defn- doctor-overpay [game {:keys [player-no amount]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (repeat amount [::doctor-look-at])}))
+
+(effects/register {::doctor-trash   doctor-trash
+                   ::doctor-reveal  doctor-reveal
+                   ::doctor-choice  doctor-choice
+                   ::doctor-look-at doctor-look-at
+                   ::doctor-overpay doctor-overpay})
+
+(def doctor {:name    :doctor
+             :set     :guilds
+             :types   #{:action}
+             :cost    3
+             :effects [[:give-choice {:text    "Name a card."
+                                      :choice  ::doctor-reveal
+                                      :options [:supply {:all true}]
+                                      :min     1
+                                      :max     1}]]
+             :overpay ::doctor-overpay})
 
 (defn- herald-play-action [game {:keys [player-no]}]
   (let [revealed (get-in game [:players player-no :revealed])
@@ -244,6 +308,7 @@
                     baker
                     butcher
                     candlestick-maker
+                    doctor
                     herald
                     masterpiece
                     merchant-guild
