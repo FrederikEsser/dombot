@@ -13,6 +13,38 @@
 
 (use-fixtures :each fixture)
 
+(deftest dismantle-test
+  (let [copper (assoc copper :id 0)
+        gold (assoc gold :id 1)]
+    (testing "Dismantle"
+      (is (= (-> {:players [{:hand    [dismantle copper estate]
+                             :actions 1}]}
+                 (play 0 :dismantle)
+                 (choose :copper))
+             {:players [{:hand      [estate]
+                         :play-area [dismantle]
+                         :actions   0}]
+              :trash   [copper]}))
+      (is (= (-> {:supply  [{:card copper :pile-size 46}
+                            {:card gold :pile-size 30}]
+                  :players [{:hand    [dismantle copper estate]
+                             :actions 1}]}
+                 (play 0 :dismantle)
+                 (choose :estate)
+                 (choose :copper))
+             {:supply  [{:card copper :pile-size 45}
+                        {:card gold :pile-size 29}]
+              :players [{:hand      [copper]
+                         :play-area [dismantle]
+                         :discard   [copper gold]
+                         :actions   0}]
+              :trash   [estate]}))
+      (is (= (-> {:players [{:hand    [dismantle]
+                             :actions 1}]}
+                 (play 0 :dismantle))
+             {:players [{:play-area [dismantle]
+                         :actions   0}]})))))
+
 (deftest envoy-test
   (testing "Envoy"
     (is (= (-> {:players [{:hand    [envoy]
