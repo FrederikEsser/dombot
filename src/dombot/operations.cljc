@@ -73,9 +73,16 @@
 (effects/register {:at-start-turn at-start-turn-effects})
 
 (defn set-phase [game {:keys [player-no phase]}]
-  (let [current-phase (get-in game [:players player-no :phase])]
+  (let [current-phase (get-in game [:players player-no :phase])
+        phase-change (cond (and (#{:action} current-phase)
+                                (#{:pay :buy :clean-up} phase)) :at-start-buy)
+        phase-change-effects (->> (get-in game [:players player-no :triggers])
+                                  (filter (comp #{phase-change} :trigger))
+                                  (mapcat :effects))]
     (cond-> game
-            current-phase (assoc-in [:players player-no :phase] phase))))
+            current-phase (assoc-in [:players player-no :phase] phase)
+            phase-change-effects (push-effect-stack {:player-no player-no
+                                                     :effects   phase-change-effects}))))
 
 (effects/register {:set-phase set-phase})
 

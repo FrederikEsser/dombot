@@ -395,6 +395,29 @@
              :effects    [[:give-buys 1]]
              :on-gain    [[:give-coffers 2]]})
 
+(def treasure-chest {:name    :treasure-chest
+                     :trigger {:trigger :at-start-buy
+                               :effects [[:gain {:card-name :gold}]]}})
+
+(defn- swashbuckler-check-discard [game {:keys [player-no]}]
+  (let [{:keys [discard coffers]} (get-in game [:players player-no])]
+    (cond-> game
+            (not-empty discard) (push-effect-stack {:player-no player-no
+                                                    :effects   (concat
+                                                                 [[:give-coffers 1]]
+                                                                 (when (and coffers (<= 3 coffers))
+                                                                   [[::take-artifact {:artifact-name :treasure-chest}]]))}))))
+
+(effects/register {::swashbuckler-check-discard swashbuckler-check-discard})
+
+(def swashbuckler {:name    :swashbuckler
+                   :set     :renaissance
+                   :types   #{:action}
+                   :cost    5
+                   :effects [[:draw 3]
+                             [::swashbuckler-check-discard]]
+                   :setup   [[::add-artifact {:artifact-name :treasure-chest}]]})
+
 (def key {:name    :key
           :trigger {:trigger :at-start-turn
                     :effects [[:give-coins 1]]}})
@@ -473,13 +496,15 @@
                     seer
                     silk-merchant
                     spices
+                    swashbuckler
                     treasurer
                     villain])
 
-(def artifacts {:flag    flag
-                :horn    horn
-                :key     key
-                :lantern lantern})
+(def artifacts {:flag           flag
+                :horn           horn
+                :key            key
+                :lantern        lantern
+                :treasure-chest treasure-chest})
 
 (defn add-artifact [game {:keys [artifact-name]}]
   (assoc-in game [:artifacts artifact-name] (get artifacts artifact-name)))

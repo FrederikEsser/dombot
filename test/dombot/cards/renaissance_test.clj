@@ -102,9 +102,8 @@
                            :actions        1
                            :revealed-cards {:hand    1
                                             :discard 1}
-                           :triggers       [{:trigger  :at-clean-up
-                                             :duration :horn
-                                             :effects  [[::renaissance/horn-at-clean-up]]}]}]}))
+                           :triggers       [(merge {:duration :horn}
+                                                   (:trigger horn))]}]}))
       (is (= (-> {:artifacts {:horn    horn
                               :lantern lantern}
                   :players   [{:hand    [border-guard]
@@ -123,9 +122,8 @@
                               :actions        1
                               :revealed-cards {:hand    1
                                                :discard 1}
-                              :triggers       [{:trigger  :at-clean-up
-                                                :duration :horn
-                                                :effects  [[::renaissance/horn-at-clean-up]]}]}]
+                              :triggers       [(merge {:duration :horn}
+                                                      (:trigger horn))]}]
               :effect-stack [{:text      "You may activate cards, that do something when you discard them from play."
                               :player-no 0
                               :choice    :at-clean-up-choice
@@ -158,9 +156,8 @@
                            :buys           0
                            :actions-played 0
                            :phase          :out-of-turn
-                           :triggers       [{:trigger  :at-clean-up
-                                             :duration :horn
-                                             :effects  [[::renaissance/horn-at-clean-up]]}]}]}))
+                           :triggers       [(merge {:duration :horn}
+                                                   (:trigger horn))]}]}))
       (is (= (-> {:artifacts {:horn    horn
                               :lantern lantern}
                   :players   [{:hand      [border-guard]
@@ -182,9 +179,8 @@
                            :buys           0
                            :actions-played 0
                            :phase          :out-of-turn
-                           :triggers       [{:trigger  :at-clean-up
-                                             :duration :horn
-                                             :effects  [[::renaissance/horn-at-clean-up]]}]}]}))))
+                           :triggers       [(merge {:duration :horn}
+                                                   (:trigger horn))]}]}))))
   (is (= (-> {:artifacts {:horn    horn
                           :lantern lantern}
               :players   [{:hand    [border-guard]
@@ -278,9 +274,8 @@
                                         :discard 1}}]}))
   (is (= (-> {:artifacts {:horn    (assoc horn :owner 0)
                           :lantern lantern}
-              :players   [{:triggers [{:trigger  :at-clean-up
-                                       :duration :horn
-                                       :effects  [[::renaissance/horn-at-clean-up]]}]}]}
+              :players   [{:triggers [(merge {:duration :horn}
+                                             (:trigger horn))]}]}
              (clean-up {:player-no 0}))
          {:artifacts {:horn    (assoc horn :owner 0)
                       :lantern lantern}
@@ -289,9 +284,8 @@
                        :buys           0
                        :actions-played 0
                        :phase          :out-of-turn
-                       :triggers       [{:trigger  :at-clean-up
-                                         :duration :horn
-                                         :effects  [[::renaissance/horn-at-clean-up]]}]}]})))
+                       :triggers       [(merge {:duration :horn}
+                                               (:trigger horn))]}]})))
 
 (deftest cargo-ship-test
   (let [cargo-ship (assoc cargo-ship :id 1)
@@ -652,27 +646,23 @@
              {:supply    [{:card flag-bearer :pile-size 9}]
               :artifacts {:flag (assoc flag :owner 0)}
               :players   [{:discard  [flag-bearer]
-                           :triggers [{:trigger  :at-draw-hand
-                                       :duration :flag
-                                       :effects  [[:draw 1]]}]}]}))
+                           :triggers [(merge {:duration :flag}
+                                             (:trigger flag))]}]}))
       (is (= (-> {:supply    [{:card flag-bearer :pile-size 9}]
                   :artifacts {:flag (assoc flag :owner 0)}
-                  :players   [{:triggers [{:trigger  :at-draw-hand
-                                           :duration :flag
-                                           :effects  [[:draw 1]]}]}]}
+                  :players   [{:triggers [(merge {:duration :flag}
+                                                 (:trigger flag))]}]}
                  (gain {:player-no 0
                         :card-name :flag-bearer}))
              {:supply    [{:card flag-bearer :pile-size 8}]
               :artifacts {:flag (assoc flag :owner 0)}
               :players   [{:discard  [flag-bearer]
-                           :triggers [{:trigger  :at-draw-hand
-                                       :duration :flag
-                                       :effects  [[:draw 1]]}]}]}))
+                           :triggers [(merge {:duration :flag}
+                                             (:trigger flag))]}]}))
       (is (= (-> {:supply    [{:card flag-bearer :pile-size 9}]
                   :artifacts {:flag (assoc flag :owner 0)}
-                  :players   [{:triggers [{:trigger  :at-draw-hand
-                                           :duration :flag
-                                           :effects  [[:draw 1]]}]}
+                  :players   [{:triggers [(merge {:duration :flag}
+                                                 (:trigger flag))]}
                               {}]}
                  (gain {:player-no 1
                         :card-name :flag-bearer}))
@@ -680,9 +670,8 @@
               :artifacts {:flag (assoc flag :owner 1)}
               :players   [{}
                           {:discard  [flag-bearer]
-                           :triggers [{:trigger  :at-draw-hand
-                                       :duration :flag
-                                       :effects  [[:draw 1]]}]}]}))
+                           :triggers [(merge {:duration :flag}
+                                             (:trigger flag))]}]}))
       (is (= (-> {:artifacts {:flag flag}
                   :players   [{:hand    [chapel flag-bearer]
                                :actions 1}]}
@@ -691,20 +680,17 @@
              {:artifacts {:flag (assoc flag :owner 0)}
               :players   [{:play-area [chapel]
                            :actions   0
-                           :triggers  [{:trigger  :at-draw-hand
-                                        :duration :flag
-                                        :effects  [[:draw 1]]}]}]
+                           :triggers  [(merge {:duration :flag}
+                                              (:trigger flag))]}]
               :trash     [flag-bearer]}))
       (is (= (-> {:players [{:deck     (repeat 7 copper)
-                             :triggers [{:trigger  :at-draw-hand
-                                         :duration :flag
-                                         :effects  [[:draw 1]]}]}]}
+                             :triggers [(merge {:duration :flag}
+                                               (:trigger flag))]}]}
                  (clean-up {:player-no 0}))
              {:players [{:hand           (repeat 6 copper)
                          :deck           [copper]
-                         :triggers       [{:trigger  :at-draw-hand
-                                           :duration :flag
-                                           :effects  [[:draw 1]]}]
+                         :triggers       [(merge {:duration :flag}
+                                                 (:trigger flag))]
                          :actions        0
                          :coins          0
                          :buys           0
@@ -1399,6 +1385,99 @@
                          :discard [spices]
                          :coffers 2}]})))))
 
+(deftest swashbuckler-test
+  (let [gold (assoc gold :id 0)]
+    (testing "Swashbuckler"
+      (is (= (-> {:artifacts {:treasure-chest treasure-chest}
+                  :players   [{:hand    [swashbuckler]
+                               :deck    [copper copper]
+                               :discard [copper copper]
+                               :actions 1}]}
+                 (play 0 :swashbuckler))
+             {:artifacts {:treasure-chest treasure-chest}
+              :players   [{:hand      [copper copper copper]
+                           :play-area [swashbuckler]
+                           :deck      [copper]
+                           :actions   0}]}))
+      (is (= (-> {:artifacts {:treasure-chest treasure-chest}
+                  :players   [{:hand    [swashbuckler]
+                               :deck    [copper copper copper]
+                               :discard [estate]
+                               :actions 1
+                               :coffers 2}]}
+                 (play 0 :swashbuckler))
+             {:artifacts {:treasure-chest treasure-chest}
+              :players   [{:hand      [copper copper copper]
+                           :play-area [swashbuckler]
+                           :discard   [estate]
+                           :actions   0
+                           :coffers   3}]}))
+      (is (= (-> {:artifacts {:treasure-chest treasure-chest}
+                  :players   [{:hand    [swashbuckler]
+                               :deck    [copper copper copper copper]
+                               :discard [estate]
+                               :actions 1
+                               :coffers 3}]}
+                 (play 0 :swashbuckler))
+             {:artifacts {:treasure-chest (assoc treasure-chest :owner 0)}
+              :players   [{:hand      [copper copper copper]
+                           :play-area [swashbuckler]
+                           :deck      [copper]
+                           :discard   [estate]
+                           :actions   0
+                           :coffers   4
+                           :triggers  [(merge {:duration :treasure-chest}
+                                              (:trigger treasure-chest))]}]}))
+      (is (= (-> {:artifacts {:treasure-chest (assoc treasure-chest :owner 0)}
+                  :supply    [{:card gold :pile-size 30}]
+                  :players   [{:hand     [copper]
+                               :phase    :action
+                               :coins    0
+                               :triggers [(merge {:duration :treasure-chest}
+                                                 (:trigger treasure-chest))]}]}
+                 (play 0 :copper))
+             {:artifacts {:treasure-chest (assoc treasure-chest :owner 0)}
+              :supply    [{:card gold :pile-size 29}]
+              :players   [{:play-area [copper]
+                           :discard   [gold]
+                           :phase     :pay
+                           :coins     1
+                           :triggers  [(merge {:duration :treasure-chest}
+                                              (:trigger treasure-chest))]}]}))
+      (is (= (-> {:artifacts {:treasure-chest (assoc treasure-chest :owner 0)}
+                  :supply    [{:card gold :pile-size 30}]
+                  :players   [{:phase    :action
+                               :coins    6
+                               :buys     1
+                               :triggers [(merge {:duration :treasure-chest}
+                                                 (:trigger treasure-chest))]}]}
+                 (buy-card 0 :gold))
+             {:artifacts {:treasure-chest (assoc treasure-chest :owner 0)}
+              :supply    [{:card gold :pile-size 28}]
+              :players   [{:discard  [gold gold]
+                           :phase    :buy
+                           :coins    0
+                           :buys     0
+                           :triggers [(merge {:duration :treasure-chest}
+                                             (:trigger treasure-chest))]}]}))
+      (is (= (-> {:artifacts {:treasure-chest (assoc treasure-chest :owner 0)}
+                  :supply    [{:card gold :pile-size 30}]
+                  :players   [{:phase    :action
+                               :triggers [(merge {:duration :treasure-chest}
+                                                 (:trigger treasure-chest))]}]}
+                 (end-turn 0))
+             {:artifacts      {:treasure-chest (assoc treasure-chest :owner 0)}
+              :supply         [{:card gold :pile-size 29}]
+              :current-player 0
+              :players        [{:hand           [gold]
+                                :actions        1
+                                :coins          0
+                                :buys           1
+                                :actions-played 0
+                                :phase          :action
+                                :triggers       [(merge {:duration :treasure-chest}
+                                                        (:trigger treasure-chest))]}]})))))
+
 (deftest treasurer-test
   (testing "Treasurer"
     (is (= (-> {:players [{:hand    [treasurer]
@@ -1475,13 +1554,11 @@
             :players   [{:play-area [treasurer]
                          :actions   0
                          :coins     3
-                         :triggers  [{:trigger  :at-start-turn
-                                      :duration :key
-                                      :effects  [[:give-coins 1]]}]}]}))
+                         :triggers  [(merge {:duration :key}
+                                            (:trigger key))]}]}))
     (is (= (-> {:artifacts {:key (assoc key :owner 0)}
-                :players   [{:triggers [{:trigger  :at-start-turn
-                                         :duration :key
-                                         :effects  [[:give-coins 1]]}]}]}
+                :players   [{:triggers [(merge {:duration :key}
+                                               (:trigger key))]}]}
                (end-turn 0))
            {:current-player 0
             :artifacts      {:key (assoc key :owner 0)}
@@ -1490,16 +1567,14 @@
                               :buys           1
                               :actions-played 0
                               :phase          :action
-                              :triggers       [{:trigger  :at-start-turn
-                                                :duration :key
-                                                :effects  [[:give-coins 1]]}]}]}))
+                              :triggers       [(merge {:duration :key}
+                                                      (:trigger key))]}]}))
     (let [merchant-ship (assoc merchant-ship :id 1)]
       (is (= (-> {:players [{:hand     [merchant-ship]
                              :actions  1
                              :coins    0
-                             :triggers [{:trigger  :at-start-turn
-                                         :duration :key
-                                         :effects  [[:give-coins 1]]}]}]}
+                             :triggers [(merge {:duration :key}
+                                               (:trigger key))]}]}
                  (play 0 :merchant-ship)
                  (end-turn 0))
              {:current-player 0
@@ -1509,9 +1584,8 @@
                                 :buys           1
                                 :actions-played 0
                                 :phase          :action
-                                :triggers       [{:trigger  :at-start-turn
-                                                  :duration :key
-                                                  :effects  [[:give-coins 1]]}]}]})))))
+                                :triggers       [(merge {:duration :key}
+                                                        (:trigger key))]}]})))))
 
 (deftest villain-test
   (testing "Villain"
