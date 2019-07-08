@@ -311,8 +311,7 @@
                                 :discard [copper]
                                 :actions 1
                                 :coins   0
-                                :buys    1
-                                :phase   :action}]})))))
+                                :buys    1}]})))))
 
 (deftest hunting-party-test
   (testing "Hunting Party"

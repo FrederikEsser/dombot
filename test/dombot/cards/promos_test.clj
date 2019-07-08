@@ -208,7 +208,6 @@
                                 :actions         1
                                 :coins           0
                                 :buys            1
-                                :phase           :action
                                 :number-of-turns 1}]
               :effect-stack   [{:text      "Put the Stash anywhere in your deck."
                                 :player-no 1

@@ -54,7 +54,7 @@
                                    :args      args})
                        check-stack))))
 
-(defn at-start-turn-effects [game player-no]
+(defn at-start-turn-effects [game {:keys [player-no]}]
   (let [duration-cards (->> (get-in game [:players player-no :play-area])
                             (filter (comp not-empty :at-start-turn)))
         start-turn-effects (->> (get-in game [:players player-no :triggers])
@@ -70,13 +70,21 @@
         (push-effect-stack {:player-no player-no
                             :effects   start-turn-effects}))))
 
+(effects/register {:at-start-turn at-start-turn-effects})
+
+(defn set-phase [game {:keys [player-no phase]}]
+  (let [current-phase (get-in game [:players player-no :phase])]
+    (cond-> game
+            current-phase (assoc-in [:players player-no :phase] phase))))
+
+(effects/register {:set-phase set-phase})
+
 (defn start-turn
   ([player]
    (-> player
        (assoc :actions 1
               :coins 0
-              :buys 1
-              :phase :action)
+              :buys 1)
        (dissoc :gained-cards)))
   ([game {:keys [player-no]}]
    (if (game-ended? game)
@@ -84,7 +92,9 @@
      (-> game
          (assoc :current-player player-no)
          (update-in [:players player-no] start-turn)
-         (at-start-turn-effects player-no)
+         (push-effect-stack {:player-no player-no
+                             :effects   [[:set-phase {:phase :action}]
+                                         [:at-start-turn]]})
          check-stack))))
 
 (effects/register {:start-turn start-turn})
@@ -97,9 +107,11 @@
               (str "You can't spend Coffers when you're in the " (ut/format-name phase) " phase.")))
     (assert (and coffers (pos? coffers)) "You have no Coffers to spend.")
     (-> game
-        (cond-> phase (assoc-in [:players player-no :phase] :pay))
-        (update-in [:players player-no :coffers] dec)
-        (update-in [:players player-no :coins] inc))))
+        (push-effect-stack {:player-no player-no
+                            :effects   [[:set-phase {:phase :pay}]
+                                        [:remove-coffers 1]
+                                        [:give-coins 1]]})
+        check-stack)))
 
 (defn spend-villager [{:keys [effect-stack] :as game} player-no]
   (assert (empty? effect-stack) "You can't spend Villagers when you have a choice to make.")
@@ -305,11 +317,11 @@
     (when phase
       (assert (#{:action :pay :buy} phase) (str "You can't buy cards when you're in the " (ut/format-name phase) " phase.")))
     (-> game
-        (cond-> phase (assoc-in [:players player-no :phase] :buy))
         (update-in [:players player-no :coins] - cost)
         (update-in [:players player-no :buys] - 1)
         (push-effect-stack {:player-no player-no
-                            :effects   (concat overpay-effects
+                            :effects   (concat [[:set-phase {:phase :buy}]]
+                                               overpay-effects
                                                on-buy
                                                token-effects
                                                while-in-play-effects
@@ -623,11 +635,6 @@
 
 (effects/register {:card-effect card-effect})
 
-(defn- set-phase [game {:keys [player-no phase]}]
-  (assoc-in game [:players player-no :phase] phase))
-
-(effects/register {:set-phase set-phase})
-
 (defn play
   ([game {:keys [player-no card-name]}]
    (play game player-no card-name))
@@ -651,13 +658,12 @@
      (-> game
          (cond-> (:action types) (update-in [:players player-no :actions] - 1))
          (push-effect-stack {:player-no player-no
-                             :effects   (concat [[:move-card {:card-name card-name
+                             :effects   (concat [[:set-phase {:phase (cond (:action types) :action
+                                                                           (:treasure types) :pay)}]
+                                                 [:move-card {:card-name card-name
                                                               :from      :hand
                                                               :to        :play-area}]
                                                  [:card-effect {:card card}]]
-                                                (when phase
-                                                  [[:set-phase {:phase (cond (:action types) :action
-                                                                             (:treasure types) :pay)}]])
                                                 (when (some (comp #{[:play card-name]} :trigger) triggers)
                                                   [[:apply-triggers {:trigger [:play card-name]}]]))})
          check-stack))))
@@ -779,17 +785,16 @@
 (defn clean-up [game {:keys [player-no number-of-cards]
                       :or   {number-of-cards 5}
                       :as   args}]
-  (let [phase (get-in game [:players player-no :phase])
-        at-clean-up-triggers (->> (get-in game [:players player-no :triggers])
+  (let [at-clean-up-triggers (->> (get-in game [:players player-no :triggers])
                                   (filter (comp #{:at-clean-up} :trigger))
                                   (mapcat :effects))
         at-draw-hand-triggers (->> (get-in game [:players player-no :triggers])
                                    (filter (comp #{:at-draw-hand} :trigger))
                                    (mapcat :effects))]
     (-> game
-        (cond-> phase (assoc-in [:players player-no :phase] :clean-up))
         (push-effect-stack (merge args
-                                  {:effects (concat at-clean-up-triggers
+                                  {:effects (concat [[:set-phase {:phase :clean-up}]]
+                                                    at-clean-up-triggers
                                                     [[:at-clean-up]
                                                      [:do-clean-up args]
                                                      [:draw number-of-cards]]

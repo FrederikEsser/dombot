@@ -656,8 +656,7 @@
                                 :unaffected     [{:card-id 1}]}
                                {:actions 1
                                 :coins   0
-                                :buys    1
-                                :phase   :action}]}))
+                                :buys    1}]}))
       (let [curse (assoc curse :id 1)]
         (is (= (-> {:supply  [{:card curse :pile-size 20}]
                     :players [{:hand    [lighthouse-1]
@@ -693,8 +692,7 @@
                                   :play-area [witch]
                                   :actions   0
                                   :coins     0
-                                  :buys      1
-                                  :phase     :action}]})))
+                                  :buys      1}]})))
       (is (= (-> {:players [{:hand    [lighthouse-1]
                              :actions 1
                              :coins   0}]}
@@ -982,8 +980,7 @@
                                 :number-of-turns 2}
                                {:actions 1
                                 :buys    1
-                                :coins   0
-                                :phase   :action}]})))))
+                                :coins   0}]})))))
 
 (deftest pearl-diver-test
   (testing "Pearl Diver"
@@ -1251,8 +1248,7 @@
                                     {:hand    [smugglers]
                                      :actions 1
                                      :coins   0
-                                     :buys    1
-                                     :phase   :action}]}))
+                                     :buys    1}]}))
       (is (= (-> {:supply  (base/supply 2 8)
                   :players [{:gained-cards [{:name  :duchy
                                              :types #{:victory}
