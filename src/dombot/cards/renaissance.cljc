@@ -1,6 +1,6 @@
 (ns dombot.cards.renaissance
-  (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards]]
-            [dombot.cards.common :refer [reveal-hand reveal-from-deck add-trigger]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards card-effect]]
+            [dombot.cards.common :refer [reveal-hand reveal-from-deck add-trigger give-coins]]
             [dombot.utils :as ut]
             [dombot.effects :as effects])
   (:refer-clojure :exclude [key]))
@@ -326,6 +326,41 @@
                                           :min     1
                                           :max     1}]]})
 
+(defn- scepter-replay [game {:keys [player-no card-name]}]
+  (let [played-card-ids (set (get-in game [:players player-no :actions-played]))
+        {:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:name card-name
+                                                                              :id   played-card-ids})]
+    (card-effect game {:player-no player-no
+                       :card      card})))
+
+(defn- scepter-choice [game {:keys [player-no choice]}]
+  (let [played-card-ids (set (get-in game [:players player-no :actions-played]))]
+    (case choice
+      :coins (give-coins game {:player-no player-no :arg 2})
+      :replay-action (give-choice game {:player-no player-no
+                                        :text      "Replay an Action card you played this turn."
+                                        :choice    ::scepter-replay
+                                        :options   [:player :play-area {:type :action
+                                                                        :ids  played-card-ids}]
+                                        :min       1
+                                        :max       1}))))
+
+(effects/register {::scepter-replay scepter-replay
+                   ::scepter-choice scepter-choice})
+
+(def scepter {:name       :scepter
+              :set        :renaissance
+              :types      #{:treasure}
+              :cost       5
+              :coin-value 0
+              :effects    [[:give-choice {:text    "Choose one:"
+                                          :choice  ::scepter-choice
+                                          :options [:special
+                                                    {:option :coins :text "+$2"}
+                                                    {:option :replay-action :text "Replay an Action card."}]
+                                          :min     1
+                                          :max     1}]]})
+
 (def scholar {:name    :scholar
               :set     :renaissance
               :types   #{:action}
@@ -491,6 +526,7 @@
                     patron
                     recruiter
                     researcher
+                    scepter
                     scholar
                     sculptor
                     seer

@@ -1175,6 +1175,49 @@
                                 :phase     :action}]
               :trash          [estate silver]})))))
 
+(deftest scepter-test
+  (let [patron (assoc patron :id 0)]
+    (testing "Scepter"
+      (is (= (-> {:players [{:hand  [scepter]
+                             :coins 0}]}
+                 (play 0 :scepter)
+                 (choose :coins))
+             {:players [{:play-area [scepter]
+                         :coins     2}]}))
+      (is (= (-> {:players [{:hand  [scepter]
+                             :coins 0}]}
+                 (play 0 :scepter)
+                 (choose :replay-action))
+             {:players [{:play-area [scepter]
+                         :coins     0}]}))
+      (is (= (-> {:players [{:hand  [scepter]
+                             :coins 0}]}
+                 (play 0 :scepter)
+                 (choose :replay-action))
+             {:players [{:play-area [scepter]
+                         :coins     0}]}))
+      (is (= (-> {:track-played-actions? true
+                  :players               [{:hand    [patron scepter]
+                                           :actions 1
+                                           :coins   0}]}
+                 (play 0 :patron)
+                 (play 0 :scepter)
+                 (choose :replay-action)
+                 (choose :patron))
+             {:track-played-actions? true
+              :players               [{:play-area      [patron scepter]
+                                       :actions-played [0 0]
+                                       :actions        0
+                                       :coins          4
+                                       :villagers      2}]}))
+      (is (= (-> {:players [{:hand      [scepter]
+                             :play-area [cargo-ship]
+                             :coins     0}]}
+                 (play 0 :scepter)
+                 (choose :replay-action))
+             {:players [{:play-area [cargo-ship scepter]
+                         :coins     0}]})))))
+
 (deftest scholar-test
   (testing "Scholar"
     (is (= (-> {:players [{:hand    [scholar estate estate estate]

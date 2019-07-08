@@ -68,9 +68,9 @@
 (defn match [data1]
   (fn [data2]
     (->> data1
-         (map (fn [[k v]]
-                (#{v} (get data2 k))))
-         (every? (comp not nil?)))))
+         (every? (fn [[key val]]
+                   (let [values (if (set? val) val #{val})]
+                     (contains? values (get data2 key))))))))
 
 (defn ensure-coll [data]
   (cond
@@ -153,7 +153,7 @@
     true))
 
 (defn options-from-player
-  ([game player-no card-id area & [{:keys [last this id name names not-name type reacts-to min-cost leaves-play]}]]
+  ([game player-no card-id area & [{:keys [last this id ids name names not-name type reacts-to min-cost leaves-play]}]]
    (when this
      (assert card-id (str "Card has no id, but is referring to :this in " area ".")))
    (cond->> (get-in game [:players player-no area])
@@ -168,6 +168,7 @@
                                           (partial can-react? game player-no)))
             min-cost (filter (comp (partial <= min-cost) (partial get-cost game player-no)))
             leaves-play (remove stay-in-play)
+            ids (filter (comp ids :id))
             :always (map :name))))
 
 (effects/register-options {:player options-from-player})
