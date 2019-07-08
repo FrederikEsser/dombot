@@ -623,22 +623,22 @@
 
 (effects/register {:reveal-reaction reveal-reaction})
 
-(defn card-effect [game {:keys                                          [player-no]
-                         {:keys [id types effects coin-value duration]} :card}]
-  (let [{:keys [actions-played]} (get-in game [:players player-no])]
-    (cond-> game
-            (and (:action types)
-                 actions-played) (update-in [:players player-no :actions-played] inc)
-            (:attack types) (affect-other-players {:player-no player-no
-                                                   :effects   [[:clear-unaffected {:works :once}]]})
-            :always (push-effect-stack {:player-no player-no
-                                        :card-id   id
-                                        :effects   (concat (when coin-value
-                                                             [[:give-coins coin-value]])
-                                                           effects)})
-            (:attack types) (affect-other-players {:player-no player-no
-                                                   :effects   reaction-choice})
-            duration (ut/update-in-vec [:players player-no :play-area] {:id id} update :at-start-turn concat [duration]))))
+(defn card-effect [{:keys [track-played-actions?] :as game}
+                   {:keys                                          [player-no]
+                    {:keys [id types effects coin-value duration]} :card}]
+  (cond-> game
+          (and (:action types)
+               track-played-actions?) (update-in [:players player-no :actions-played] conj id)
+          (:attack types) (affect-other-players {:player-no player-no
+                                                 :effects   [[:clear-unaffected {:works :once}]]})
+          :always (push-effect-stack {:player-no player-no
+                                      :card-id   id
+                                      :effects   (concat (when coin-value
+                                                           [[:give-coins coin-value]])
+                                                         effects)})
+          (:attack types) (affect-other-players {:player-no player-no
+                                                 :effects   reaction-choice})
+          duration (ut/update-in-vec [:players player-no :play-area] {:id id} update :at-start-turn concat [duration])))
 
 (effects/register {:card-effect card-effect})
 
@@ -735,13 +735,13 @@
                           (let [used-cards (concat hand (remove ut/stay-in-play play-area))]
                             (-> player
                                 (cond-> (not-empty used-cards) (update :discard concat used-cards))
-                                (dissoc :hand)
+                                (dissoc :hand
+                                        :actions-played)
                                 (update :play-area (partial filter ut/stay-in-play))
                                 (ut/dissoc-if-empty :play-area)
                                 (assoc :actions 0
                                        :coins 0
                                        :buys 0
-                                       :actions-played 0
                                        :phase :out-of-turn)
                                 (update :triggers (partial remove (comp #{:once :turn} :duration)))
                                 (ut/dissoc-if-empty :triggers)

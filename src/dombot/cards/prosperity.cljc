@@ -1,5 +1,5 @@
 (ns dombot.cards.prosperity
-  (:require [dombot.operations :refer [push-effect-stack give-choice move-card move-cards draw card-effect]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice move-card move-cards draw]]
             [dombot.cards.common :refer [give-coins discard-from-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))

@@ -300,12 +300,11 @@
                  (choose :copper)
                  (end-turn 0))
              {:current-player 1
-              :players        [{:hand           [militia]
-                                :actions        0
-                                :coins          0
-                                :buys           0
-                                :actions-played 0
-                                :phase          :out-of-turn}
+              :players        [{:hand    [militia]
+                                :actions 0
+                                :coins   0
+                                :buys    0
+                                :phase   :out-of-turn}
                                {:hand    [copper copper copper horse-traders silver]
                                 :deck    [silver]
                                 :discard [copper]

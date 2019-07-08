@@ -54,7 +54,6 @@
    :actions             0
    :coins               0
    :buys                0
-   :actions-played      0
    :number-of-turns     0
    :phase               :out-of-turn})
 
@@ -82,13 +81,14 @@
         starting-player (rand-int number-of-players)
         kingdom (random-kingdom sets)]
     (ut/reset-ids!)
-    (as-> {:mode                mode
-           :supply              (vec (concat (base/supply number-of-players victory-pile-size
-                                                          {:prosperity? (-> kingdom first :set #{:prosperity})})
-                                             (create-kingdom-supply kingdom victory-pile-size)))
-           :players             (vec (map create-player player-names))
-           :track-gained-cards? true
-           :current-player      starting-player
-           :starting-player     starting-player} game
+    (as-> {:mode                  mode
+           :supply                (vec (concat (base/supply number-of-players victory-pile-size
+                                                            {:prosperity? (-> kingdom first :set #{:prosperity})})
+                                               (create-kingdom-supply kingdom victory-pile-size)))
+           :players               (vec (map create-player player-names))
+           :track-gained-cards?   true
+           :track-played-actions? true
+           :current-player        starting-player
+           :starting-player       starting-player} game
           (-> (reduce prepare-cards game (range number-of-players))
               setup-game))))

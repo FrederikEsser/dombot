@@ -175,7 +175,6 @@
                               :actions         0
                               :coins           0
                               :buys            0
-                              :actions-played  0
                               :phase           :out-of-turn
                               :number-of-turns 2}
                              {:play-area       [(assoc caravan :at-start-turn [[[:draw 1]]])]
@@ -231,7 +230,6 @@
                                 :actions         0
                                 :coins           0
                                 :buys            0
-                                :actions-played  0
                                 :phase           :out-of-turn
                                 :number-of-turns 2}
                                {:play-area       [caravan]

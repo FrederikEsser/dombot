@@ -45,9 +45,9 @@
 (defn conspirator-cantrip [game {:keys [player-no]}]
   (let [{:keys [actions-played]} (get-in game [:players player-no])]
     (cond-> game
-            (<= 3 actions-played) (push-effect-stack {:player-no player-no
-                                                      :effects   [[:draw 1]
-                                                                  [:give-actions 1]]}))))
+            (<= 3 (count actions-played)) (push-effect-stack {:player-no player-no
+                                                              :effects   [[:draw 1]
+                                                                          [:give-actions 1]]}))))
 
 (effects/register {::conspirator-cantrip conspirator-cantrip})
 

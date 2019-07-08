@@ -232,13 +232,12 @@
                                    :deck      (repeat 5 copper)}]
                 :unbuyable-cards #{:gold}}
                (clean-up {:player-no 0}))
-           {:players [{:hand           (repeat 5 copper)
-                       :discard        [contraband gold]
-                       :actions        0
-                       :coins          0
-                       :buys           0
-                       :actions-played 0
-                       :phase          :out-of-turn}]}))))
+           {:players [{:hand    (repeat 5 copper)
+                       :discard [contraband gold]
+                       :actions 0
+                       :coins   0
+                       :buys    0
+                       :phase   :out-of-turn}]}))))
 
 (deftest counting-house-test
   (testing "Counting House"
@@ -873,12 +872,11 @@
                    (choose :expand)
                    (choose :peddler))
                {:supply  [{:card peddler :pile-size 8}]
-                :players [{:hand           [peddler improve]
-                           :actions        0
-                           :coins          0
-                           :buys           0
-                           :actions-played 0
-                           :phase          :out-of-turn}]
+                :players [{:hand    [peddler improve]
+                           :actions 0
+                           :coins   0
+                           :buys    0
+                           :phase   :out-of-turn}]
                 :trash   [expand]}))))))
 
 (deftest rabble-test

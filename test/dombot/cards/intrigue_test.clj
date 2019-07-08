@@ -113,50 +113,58 @@
                                :coins     2}]}))))
 
 (deftest conspirator-test
-  (testing "Conspirator"
-    (is (= (-> {:players [{:hand           [conspirator]
-                           :actions        1
-                           :actions-played 0
-                           :coins          0}]}
-               (play 0 :conspirator))
-           {:players [{:play-area      [conspirator]
-                       :actions        0
-                       :actions-played 1
-                       :coins          2}]}))
-    (is (= (-> {:players [{:hand           [conspirator]
-                           :actions        1
-                           :actions-played 1
-                           :coins          0}]}
-               (play 0 :conspirator))
-           {:players [{:play-area      [conspirator]
-                       :actions        0
-                       :actions-played 2
-                       :coins          2}]}))
-    (is (= (-> {:players [{:hand           [conspirator]
-                           :deck           [copper copper]
-                           :actions        1
-                           :actions-played 2
-                           :coins          0}]}
-               (play 0 :conspirator))
-           {:players [{:hand           [copper]
-                       :play-area      [conspirator]
-                       :deck           [copper]
-                       :actions        1
-                       :actions-played 3
-                       :coins          2}]}))
-    (is (= (-> {:players [{:hand           [throne-room conspirator]
-                           :deck           [copper copper]
-                           :actions        1
-                           :actions-played 0
-                           :coins          0}]}
-               (play 0 :throne-room)
-               (choose :conspirator))
-           {:players [{:hand           [copper]
-                       :play-area      [throne-room conspirator]
-                       :deck           [copper]
-                       :actions        1
-                       :actions-played 3
-                       :coins          4}]}))))
+  (let [conspirator (assoc conspirator :id 0)
+        throne-room (assoc throne-room :id 1)]
+    (testing "Conspirator"
+      (is (= (-> {:track-played-actions? true
+                  :players               [{:hand    [conspirator]
+                                           :actions 1
+                                           :coins   0}]}
+                 (play 0 :conspirator))
+             {:track-played-actions? true
+              :players               [{:play-area      [conspirator]
+                                       :actions        0
+                                       :actions-played [0]
+                                       :coins          2}]}))
+      (is (= (-> {:track-played-actions? true
+                  :players               [{:hand           [conspirator]
+                                           :actions        1
+                                           :actions-played [0]
+                                           :coins          0}]}
+                 (play 0 :conspirator))
+             {:track-played-actions? true
+              :players               [{:play-area      [conspirator]
+                                       :actions        0
+                                       :actions-played [0 0]
+                                       :coins          2}]}))
+      (is (= (-> {:track-played-actions? true
+                  :players               [{:hand           [conspirator]
+                                           :deck           [copper copper]
+                                           :actions        1
+                                           :actions-played [0 0]
+                                           :coins          0}]}
+                 (play 0 :conspirator))
+             {:track-played-actions? true
+              :players               [{:hand           [copper]
+                                       :play-area      [conspirator]
+                                       :deck           [copper]
+                                       :actions        1
+                                       :actions-played [0 0 0]
+                                       :coins          2}]}))
+      (is (= (-> {:track-played-actions? true
+                  :players               [{:hand    [throne-room conspirator]
+                                           :deck    [copper copper]
+                                           :actions 1
+                                           :coins   0}]}
+                 (play 0 :throne-room)
+                 (choose :conspirator))
+             {:track-played-actions? true
+              :players               [{:hand           [copper]
+                                       :play-area      [throne-room conspirator]
+                                       :deck           [copper]
+                                       :actions        1
+                                       :actions-played [0 0 1]
+                                       :coins          4}]})))))
 
 (deftest courtier-test
   (let [gold (assoc gold :id 1)]

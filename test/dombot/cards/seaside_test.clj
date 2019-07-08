@@ -135,44 +135,41 @@
                              :actions 1}]}
                  (play 0 :caravan)
                  (clean-up {:player-no 0}))
-             {:players [{:hand           [copper copper copper copper copper]
-                         :play-area      [(assoc caravan-1 :at-start-turn [[[:draw 1]]])]
-                         :deck           [silver]
-                         :discard        [estate estate estate copper copper]
-                         :actions        0
-                         :coins          0
-                         :buys           0
-                         :actions-played 0
-                         :phase          :out-of-turn}]}))
+             {:players [{:hand      [copper copper copper copper copper]
+                         :play-area [(assoc caravan-1 :at-start-turn [[[:draw 1]]])]
+                         :deck      [silver]
+                         :discard   [estate estate estate copper copper]
+                         :actions   0
+                         :coins     0
+                         :buys      0
+                         :phase     :out-of-turn}]}))
       (is (= (-> {:players [{:hand    [caravan-1 estate estate estate copper]
                              :deck    [copper copper copper copper copper copper silver]
                              :actions 1}]}
                  (play 0 :caravan)
                  (end-turn 0))
              {:current-player 0
-              :players        [{:hand           [copper copper copper copper copper silver]
-                                :play-area      [caravan-1]
-                                :discard        [estate estate estate copper copper]
-                                :actions        1
-                                :coins          0
-                                :buys           1
-                                :actions-played 0
-                                :phase          :action}]}))
+              :players        [{:hand      [copper copper copper copper copper silver]
+                                :play-area [caravan-1]
+                                :discard   [estate estate estate copper copper]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]}))
       (is (= (-> {:players [{:hand    [caravan-1 caravan-2 copper copper copper]
                              :deck    [copper copper estate estate copper copper silver]
                              :actions 1}]}
                  (play 0 :caravan)
                  (play 0 :caravan)
                  (clean-up {:player-no 0}))
-             {:players [{:hand           [estate estate copper copper silver]
-                         :play-area      [(assoc caravan-1 :at-start-turn [[[:draw 1]]])
-                                          (assoc caravan-2 :at-start-turn [[[:draw 1]]])]
-                         :discard        [copper copper copper copper copper]
-                         :actions        0
-                         :coins          0
-                         :buys           0
-                         :actions-played 0
-                         :phase          :out-of-turn}]}))
+             {:players [{:hand      [estate estate copper copper silver]
+                         :play-area [(assoc caravan-1 :at-start-turn [[[:draw 1]]])
+                                     (assoc caravan-2 :at-start-turn [[[:draw 1]]])]
+                         :discard   [copper copper copper copper copper]
+                         :actions   0
+                         :coins     0
+                         :buys      0
+                         :phase     :out-of-turn}]}))
       (is (= (-> {:players [{:hand    [caravan-1 caravan-2 copper copper copper]
                              :deck    [copper copper estate estate copper copper silver]
                              :actions 1}]}
@@ -180,29 +177,27 @@
                  (play 0 :caravan)
                  (end-turn 0))
              {:current-player 0
-              :players        [{:hand           [estate estate copper copper silver copper copper]
-                                :play-area      [caravan-1 caravan-2]
-                                :deck           [copper copper copper]
-                                :actions        1
-                                :coins          0
-                                :buys           1
-                                :actions-played 0
-                                :phase          :action}]}))
+              :players        [{:hand      [estate estate copper copper silver copper copper]
+                                :play-area [caravan-1 caravan-2]
+                                :deck      [copper copper copper]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]}))
       (is (= (-> {:players [{:hand    [caravan-1 throne-room copper copper copper]
                              :deck    [copper copper estate estate copper copper silver]
                              :actions 1}]}
                  (play 0 :throne-room)
                  (choose :caravan)
                  (clean-up {:player-no 0}))
-             {:players [{:hand           [estate estate copper copper silver]
-                         :play-area      [(assoc throne-room :at-start-turn [[]])
-                                          (assoc caravan-1 :at-start-turn [[[:draw 1]] [[:draw 1]]])]
-                         :discard        [copper copper copper copper copper]
-                         :actions        0
-                         :coins          0
-                         :buys           0
-                         :actions-played 0
-                         :phase          :out-of-turn}]}))
+             {:players [{:hand      [estate estate copper copper silver]
+                         :play-area [(assoc throne-room :at-start-turn [[]])
+                                     (assoc caravan-1 :at-start-turn [[[:draw 1]] [[:draw 1]]])]
+                         :discard   [copper copper copper copper copper]
+                         :actions   0
+                         :coins     0
+                         :buys      0
+                         :phase     :out-of-turn}]}))
       (is (= (-> {:players [{:hand    [caravan-1 throne-room copper copper copper]
                              :deck    [copper copper estate estate copper copper silver]
                              :actions 1}]}
@@ -210,14 +205,13 @@
                  (choose :caravan)
                  (end-turn 0))
              {:current-player 0
-              :players        [{:hand           [estate estate copper copper silver copper copper]
-                                :play-area      [throne-room caravan-1]
-                                :deck           [copper copper copper]
-                                :actions        1
-                                :coins          0
-                                :buys           1
-                                :actions-played 0
-                                :phase          :action}]})))))
+              :players        [{:hand      [estate estate copper copper silver copper copper]
+                                :play-area [throne-room caravan-1]
+                                :deck      [copper copper copper]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]})))))
 
 (deftest cutpurse-test
   (testing "Cutpurse"
@@ -438,12 +432,11 @@
                  (play 0 :fishing-village)
                  (end-turn 0))
              {:current-player 0
-              :players        [{:play-area      [fishing-village]
-                                :actions        2
-                                :coins          1
-                                :buys           1
-                                :actions-played 0
-                                :phase          :action}]})))))
+              :players        [{:play-area [fishing-village]
+                                :actions   2
+                                :coins     1
+                                :buys      1
+                                :phase     :action}]})))))
 
 (deftest ghost-ship-test
   (testing "Ghost Ship"
@@ -543,13 +536,12 @@
                  (choose :copper)
                  (end-turn 0))
              {:current-player 0
-              :players        [{:hand           [copper estate copper]
-                                :play-area      [(assoc haven :set-aside [])]
-                                :actions        1
-                                :coins          0
-                                :buys           1
-                                :actions-played 0
-                                :phase          :action}]}))
+              :players        [{:hand      [copper estate copper]
+                                :play-area [(assoc haven :set-aside [])]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]}))
       (is (= (-> {:players [{:hand    [haven]
                              :actions 1}]}
                  (play 0 :haven))
@@ -577,14 +569,13 @@
                  (choose :estate)
                  (end-turn 0))
              {:current-player 0
-              :players        [{:hand           [copper copper estate]
-                                :play-area      [throne-room
-                                                 (assoc haven :set-aside [])]
-                                :actions        1
-                                :coins          0
-                                :buys           1
-                                :actions-played 0
-                                :phase          :action}]})))))
+              :players        [{:hand      [copper copper estate]
+                                :play-area [throne-room
+                                            (assoc haven :set-aside [])]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]})))))
 
 (deftest island-test
   (let [island (assoc island :id 1)]
@@ -646,14 +637,13 @@
                  (play 0 :lighthouse)
                  (end-turn 0))
              {:current-player 1
-              :players        [{:play-area      [(assoc lighthouse-1 :at-start-turn [[[:give-coins 1]
-                                                                                      [:clear-unaffected]]])]
-                                :actions        0
-                                :coins          0
-                                :buys           0
-                                :actions-played 0
-                                :phase          :out-of-turn
-                                :unaffected     [{:card-id 1}]}
+              :players        [{:play-area  [(assoc lighthouse-1 :at-start-turn [[[:give-coins 1]
+                                                                                  [:clear-unaffected]]])]
+                                :actions    0
+                                :coins      0
+                                :buys       0
+                                :phase      :out-of-turn
+                                :unaffected [{:card-id 1}]}
                                {:actions 1
                                 :coins   0
                                 :buys    1}]}))
@@ -672,22 +662,20 @@
                    (play 2 :witch))
                {:current-player 2
                 :supply         [{:card curse :pile-size 18}]
-                :players        [{:hand           [moat]
-                                  :play-area      [(assoc lighthouse-1 :at-start-turn [[[:give-coins 1]
-                                                                                        [:clear-unaffected]]])]
-                                  :actions        0
-                                  :coins          0
-                                  :buys           0
-                                  :actions-played 0
-                                  :phase          :out-of-turn
-                                  :unaffected     [{:card-id 1}]}
-                                 {:hand           [witch]
-                                  :discard        [curse]
-                                  :actions        0
-                                  :coins          0
-                                  :buys           0
-                                  :actions-played 0
-                                  :phase          :out-of-turn}
+                :players        [{:hand       [moat]
+                                  :play-area  [(assoc lighthouse-1 :at-start-turn [[[:give-coins 1]
+                                                                                    [:clear-unaffected]]])]
+                                  :actions    0
+                                  :coins      0
+                                  :buys       0
+                                  :phase      :out-of-turn
+                                  :unaffected [{:card-id 1}]}
+                                 {:hand    [witch]
+                                  :discard [curse]
+                                  :actions 0
+                                  :coins   0
+                                  :buys    0
+                                  :phase   :out-of-turn}
                                  {:hand      [curse]
                                   :play-area [witch]
                                   :actions   0
@@ -699,12 +687,11 @@
                  (play 0 :lighthouse)
                  (end-turn 0))
              {:current-player 0
-              :players        [{:play-area      [lighthouse-1]
-                                :actions        1
-                                :coins          1
-                                :buys           1
-                                :actions-played 0
-                                :phase          :action}]}))
+              :players        [{:play-area [lighthouse-1]
+                                :actions   1
+                                :coins     1
+                                :buys      1
+                                :phase     :action}]}))
       (is (= (-> {:players [{:hand    [lighthouse-1 lighthouse-2]
                              :actions 1
                              :coins   0}]}
@@ -712,12 +699,11 @@
                  (play 0 :lighthouse)
                  (end-turn 0))
              {:current-player 0
-              :players        [{:play-area      [lighthouse-1 lighthouse-2]
-                                :actions        1
-                                :coins          2
-                                :buys           1
-                                :actions-played 0
-                                :phase          :action}]})))))
+              :players        [{:play-area [lighthouse-1 lighthouse-2]
+                                :actions   1
+                                :coins     2
+                                :buys      1
+                                :phase     :action}]})))))
 
 (deftest lookout-test
   (testing "Lookout"
@@ -797,12 +783,11 @@
                  (play 0 :merchant-ship)
                  (end-turn 0))
              {:current-player 0
-              :players        [{:play-area      [merchant-ship]
-                                :actions        1
-                                :coins          2
-                                :buys           1
-                                :actions-played 0
-                                :phase          :action}]})))))
+              :players        [{:play-area [merchant-ship]
+                                :actions   1
+                                :coins     2
+                                :buys      1
+                                :phase     :action}]})))))
 
 (deftest native-village-test
   (testing "Native Village"
@@ -956,7 +941,6 @@
                                 :actions                  1
                                 :coins                    0
                                 :buys                     1
-                                :actions-played           0
                                 :phase                    :action
                                 :previous-turn-was-yours? true
                                 :number-of-turns          1}
@@ -975,7 +959,6 @@
                                 :actions         0
                                 :coins           0
                                 :buys            0
-                                :actions-played  0
                                 :phase           :out-of-turn
                                 :number-of-turns 2}
                                {:actions 1
@@ -1236,15 +1219,14 @@
              {:track-gained-cards? true
               :current-player      1
               :supply              [{:card gold :pile-size 29}]
-              :players             [{:hand           [gold]
-                                     :actions        0
-                                     :coins          0
-                                     :buys           0
-                                     :phase          :out-of-turn
-                                     :actions-played 0
-                                     :gained-cards   [{:name  :gold
-                                                       :types #{:treasure}
-                                                       :cost  6}]}
+              :players             [{:hand         [gold]
+                                     :actions      0
+                                     :coins        0
+                                     :buys         0
+                                     :phase        :out-of-turn
+                                     :gained-cards [{:name  :gold
+                                                     :types #{:treasure}
+                                                     :cost  6}]}
                                     {:hand    [smugglers]
                                      :actions 1
                                      :coins   0
@@ -1391,14 +1373,13 @@
                  (play 0 :tactician)
                  (end-turn 0))
              {:current-player 0
-              :players        [{:hand           (repeat 10 copper)
-                                :play-area      [tactician]
-                                :discard        [estate]
-                                :actions        2
-                                :coins          0
-                                :buys           2
-                                :actions-played 0
-                                :phase          :action}]}))
+              :players        [{:hand      (repeat 10 copper)
+                                :play-area [tactician]
+                                :discard   [estate]
+                                :actions   2
+                                :coins     0
+                                :buys      2
+                                :phase     :action}]}))
       (is (= (-> {:players [{:hand    [tactician]
                              :deck    (repeat 10 copper)
                              :actions 1
@@ -1406,14 +1387,13 @@
                  (play 0 :tactician)
                  (end-turn 0))
              {:current-player 0
-              :players        [{:hand           (repeat 5 copper)
-                                :deck           (repeat 5 copper)
-                                :discard        [(assoc tactician :at-start-turn [])]
-                                :actions        1
-                                :coins          0
-                                :buys           1
-                                :actions-played 0
-                                :phase          :action}]}))
+              :players        [{:hand    (repeat 5 copper)
+                                :deck    (repeat 5 copper)
+                                :discard [(assoc tactician :at-start-turn [])]
+                                :actions 1
+                                :coins   0
+                                :buys    1
+                                :phase   :action}]}))
       (is (= (-> {:players [{:hand    [throne-room tactician estate]
                              :actions 1}]}
                  (play 0 :throne-room)
@@ -1542,15 +1522,14 @@
                              :coins        0}]}
                  (play 0 :treasury)
                  (clean-up {:player-no 0}))
-             {:players [{:hand           [copper copper copper copper copper]
-                         :deck           [copper]
-                         :discard        [copper treasury-1]
-                         :gained-cards   [{:types #{:victory} :bought true}]
-                         :actions        0
-                         :coins          0
-                         :buys           0
-                         :actions-played 0
-                         :phase          :out-of-turn}]}))
+             {:players [{:hand         [copper copper copper copper copper]
+                         :deck         [copper]
+                         :discard      [copper treasury-1]
+                         :gained-cards [{:types #{:victory} :bought true}]
+                         :actions      0
+                         :coins        0
+                         :buys         0
+                         :phase        :out-of-turn}]}))
       (is (= (-> {:players [{:deck    (repeat 7 copper)
                              :hand    [treasury-1]
                              :actions 1
@@ -1558,14 +1537,13 @@
                  (play 0 :treasury)
                  (clean-up {:player-no 0})
                  (choose :treasury))
-             {:players [{:hand           [treasury-1 copper copper copper copper]
-                         :deck           [copper copper]
-                         :discard        [copper]
-                         :actions        0
-                         :coins          0
-                         :buys           0
-                         :actions-played 0
-                         :phase          :out-of-turn}]}))
+             {:players [{:hand    [treasury-1 copper copper copper copper]
+                         :deck    [copper copper]
+                         :discard [copper]
+                         :actions 0
+                         :coins   0
+                         :buys    0
+                         :phase   :out-of-turn}]}))
       (is (= (-> {:players [{:deck    (repeat 7 copper)
                              :hand    [treasury-1]
                              :actions 1
@@ -1573,14 +1551,13 @@
                  (play 0 :treasury)
                  (clean-up {:player-no 0})
                  (choose nil))
-             {:players [{:hand           [copper copper copper copper copper]
-                         :deck           [copper]
-                         :discard        [copper treasury-1]
-                         :actions        0
-                         :coins          0
-                         :buys           0
-                         :actions-played 0
-                         :phase          :out-of-turn}]}))
+             {:players [{:hand    [copper copper copper copper copper]
+                         :deck    [copper]
+                         :discard [copper treasury-1]
+                         :actions 0
+                         :coins   0
+                         :buys    0
+                         :phase   :out-of-turn}]}))
       (is (= (-> {:players [{:deck    (repeat 7 copper)
                              :hand    [treasury-1 treasury-2]
                              :actions 1
@@ -1614,13 +1591,12 @@
                  (play 0 :treasury)
                  (clean-up {:player-no 0})
                  (choose nil))
-             {:players [{:hand           (repeat 5 copper)
-                         :discard        [copper copper treasury-1 treasury-2]
-                         :actions        0
-                         :coins          0
-                         :buys           0
-                         :actions-played 0
-                         :phase          :out-of-turn}]}))
+             {:players [{:hand    (repeat 5 copper)
+                         :discard [copper copper treasury-1 treasury-2]
+                         :actions 0
+                         :coins   0
+                         :buys    0
+                         :phase   :out-of-turn}]}))
       (is (= (-> {:players [{:deck    (repeat 7 copper)
                              :hand    [treasury-1 throne-room]
                              :actions 1
@@ -1629,14 +1605,13 @@
                  (choose :treasury)
                  (clean-up {:player-no 0})
                  (choose :treasury))
-             {:players [{:hand           [treasury-1 copper copper copper copper]
-                         :deck           [copper]
-                         :discard        [copper copper throne-room]
-                         :actions        0
-                         :coins          0
-                         :buys           0
-                         :actions-played 0
-                         :phase          :out-of-turn}]})))))
+             {:players [{:hand    [treasury-1 copper copper copper copper]
+                         :deck    [copper]
+                         :discard [copper copper throne-room]
+                         :actions 0
+                         :coins   0
+                         :buys    0
+                         :phase   :out-of-turn}]})))))
 
 (deftest warehouse-test
   (testing "Warehouse"
@@ -1703,11 +1678,10 @@
                  (play 0 :wharf)
                  (end-turn 0))
              {:current-player 0
-              :players        [{:hand           [copper copper copper copper silver silver silver]
-                                :play-area      [wharf]
-                                :discard        [estate estate estate copper copper copper]
-                                :actions        1
-                                :coins          0
-                                :buys           2
-                                :actions-played 0
-                                :phase          :action}]})))))
+              :players        [{:hand      [copper copper copper copper silver silver silver]
+                                :play-area [wharf]
+                                :discard   [estate estate estate copper copper copper]
+                                :actions   1
+                                :coins     0
+                                :buys      2
+                                :phase     :action}]})))))

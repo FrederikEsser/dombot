@@ -148,16 +148,15 @@
                  (choose nil))
              {:artifacts {:horn    (assoc horn :owner 0)
                           :lantern lantern}
-              :players   [{:hand           (repeat 5 copper)
-                           :deck           (repeat 2 copper)
-                           :discard        [lackeys lackeys border-guard]
-                           :actions        0
-                           :coins          0
-                           :buys           0
-                           :actions-played 0
-                           :phase          :out-of-turn
-                           :triggers       [(merge {:duration :horn}
-                                                   (:trigger horn))]}]}))
+              :players   [{:hand     (repeat 5 copper)
+                           :deck     (repeat 2 copper)
+                           :discard  [lackeys lackeys border-guard]
+                           :actions  0
+                           :coins    0
+                           :buys     0
+                           :phase    :out-of-turn
+                           :triggers [(merge {:duration :horn}
+                                             (:trigger horn))]}]}))
       (is (= (-> {:artifacts {:horn    horn
                               :lantern lantern}
                   :players   [{:hand      [border-guard]
@@ -171,16 +170,15 @@
                  (choose :border-guard))
              {:artifacts {:horn    (assoc horn :owner 0)
                           :lantern lantern}
-              :players   [{:hand           [border-guard copper copper copper copper]
-                           :deck           (repeat 3 copper)
-                           :discard        [lackeys lackeys border-guard]
-                           :actions        0
-                           :coins          0
-                           :buys           0
-                           :actions-played 0
-                           :phase          :out-of-turn
-                           :triggers       [(merge {:duration :horn}
-                                                   (:trigger horn))]}]}))))
+              :players   [{:hand     [border-guard copper copper copper copper]
+                           :deck     (repeat 3 copper)
+                           :discard  [lackeys lackeys border-guard]
+                           :actions  0
+                           :coins    0
+                           :buys     0
+                           :phase    :out-of-turn
+                           :triggers [(merge {:duration :horn}
+                                             (:trigger horn))]}]}))))
   (is (= (-> {:artifacts {:horn    horn
                           :lantern lantern}
               :players   [{:hand    [border-guard]
@@ -279,13 +277,12 @@
              (clean-up {:player-no 0}))
          {:artifacts {:horn    (assoc horn :owner 0)
                       :lantern lantern}
-          :players   [{:actions        0
-                       :coins          0
-                       :buys           0
-                       :actions-played 0
-                       :phase          :out-of-turn
-                       :triggers       [(merge {:duration :horn}
-                                               (:trigger horn))]}]})))
+          :players   [{:actions  0
+                       :coins    0
+                       :buys     0
+                       :phase    :out-of-turn
+                       :triggers [(merge {:duration :horn}
+                                         (:trigger horn))]}]})))
 
 (deftest cargo-ship-test
   (let [cargo-ship (assoc cargo-ship :id 1)
@@ -452,14 +449,13 @@
                    (choose :inventor)                       ; gain Inventor
                    (choose :inventor))                      ; put Inventor on vanished Cargo Ship
                {:supply  [{:card inventor :pile-size 10}]
-                :players [{:play-area      [{:at-start-turn [[[:put-set-aside-into-hand {:card-name :inventor}]]]
-                                             :set-aside     [inventor]}]
-                           :hand           [improve]
-                           :actions        0
-                           :coins          0
-                           :buys           0
-                           :actions-played 0
-                           :phase          :out-of-turn}]
+                :players [{:play-area [{:at-start-turn [[[:put-set-aside-into-hand {:card-name :inventor}]]]
+                                        :set-aside     [inventor]}]
+                           :hand      [improve]
+                           :actions   0
+                           :coins     0
+                           :buys      0
+                           :phase     :out-of-turn}]
                 :trash   [cargo-ship]})))
     (is (= (-> {:players [{:hand    [cargo-ship throne-room]
                            :discard [copper]
@@ -687,15 +683,14 @@
                              :triggers [(merge {:duration :flag}
                                                (:trigger flag))]}]}
                  (clean-up {:player-no 0}))
-             {:players [{:hand           (repeat 6 copper)
-                         :deck           [copper]
-                         :triggers       [(merge {:duration :flag}
-                                                 (:trigger flag))]
-                         :actions        0
-                         :coins          0
-                         :buys           0
-                         :actions-played 0
-                         :phase          :out-of-turn}]})))))
+             {:players [{:hand     (repeat 6 copper)
+                         :deck     [copper]
+                         :triggers [(merge {:duration :flag}
+                                           (:trigger flag))]
+                         :actions  0
+                         :coins    0
+                         :buys     0
+                         :phase    :out-of-turn}]})))))
 
 (deftest hideout-test
   (let [curse (assoc curse :id 1)]
@@ -1155,13 +1150,12 @@
                  (choose :estate)
                  (end-turn 0))
              {:current-player 0
-              :players        [{:hand           [copper copper copper silver silver]
-                                :play-area      [(assoc researcher :set-aside [])]
-                                :actions        1
-                                :coins          0
-                                :buys           1
-                                :actions-played 0
-                                :phase          :action}]
+              :players        [{:hand      [copper copper copper silver silver]
+                                :play-area [(assoc researcher :set-aside [])]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]
               :trash          [estate]}))
       (is (= (-> {:players [{:hand    [researcher estate silver copper throne-room]
                              :deck    [silver silver gold estate copper copper]
@@ -1172,14 +1166,13 @@
                  (choose :silver)
                  (end-turn 0))
              {:current-player 0
-              :players        [{:hand           [copper copper silver silver gold estate copper]
-                                :play-area      [throne-room
-                                                 (assoc researcher :set-aside [])]
-                                :actions        1
-                                :coins          0
-                                :buys           1
-                                :actions-played 0
-                                :phase          :action}]
+              :players        [{:hand      [copper copper silver silver gold estate copper]
+                                :play-area [throne-room
+                                            (assoc researcher :set-aside [])]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]
               :trash          [estate silver]})))))
 
 (deftest scholar-test
@@ -1469,14 +1462,13 @@
              {:artifacts      {:treasure-chest (assoc treasure-chest :owner 0)}
               :supply         [{:card gold :pile-size 29}]
               :current-player 0
-              :players        [{:hand           [gold]
-                                :actions        1
-                                :coins          0
-                                :buys           1
-                                :actions-played 0
-                                :phase          :action
-                                :triggers       [(merge {:duration :treasure-chest}
-                                                        (:trigger treasure-chest))]}]})))))
+              :players        [{:hand     [gold]
+                                :actions  1
+                                :coins    0
+                                :buys     1
+                                :phase    :action
+                                :triggers [(merge {:duration :treasure-chest}
+                                                  (:trigger treasure-chest))]}]})))))
 
 (deftest treasurer-test
   (testing "Treasurer"
@@ -1562,13 +1554,12 @@
                (end-turn 0))
            {:current-player 0
             :artifacts      {:key (assoc key :owner 0)}
-            :players        [{:actions        1
-                              :coins          1
-                              :buys           1
-                              :actions-played 0
-                              :phase          :action
-                              :triggers       [(merge {:duration :key}
-                                                      (:trigger key))]}]}))
+            :players        [{:actions  1
+                              :coins    1
+                              :buys     1
+                              :phase    :action
+                              :triggers [(merge {:duration :key}
+                                                (:trigger key))]}]}))
     (let [merchant-ship (assoc merchant-ship :id 1)]
       (is (= (-> {:players [{:hand     [merchant-ship]
                              :actions  1
@@ -1578,14 +1569,13 @@
                  (play 0 :merchant-ship)
                  (end-turn 0))
              {:current-player 0
-              :players        [{:play-area      [merchant-ship]
-                                :actions        1
-                                :coins          3
-                                :buys           1
-                                :actions-played 0
-                                :phase          :action
-                                :triggers       [(merge {:duration :key}
-                                                        (:trigger key))]}]})))))
+              :players        [{:play-area [merchant-ship]
+                                :actions   1
+                                :coins     3
+                                :buys      1
+                                :phase     :action
+                                :triggers  [(merge {:duration :key}
+                                                   (:trigger key))]}]})))))
 
 (deftest villain-test
   (testing "Villain"
