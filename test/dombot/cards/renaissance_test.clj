@@ -1043,6 +1043,64 @@
                                :coffers        2
                                :revealed-cards {:hand 5}}]}))))
 
+(deftest priest-test
+  (testing "Priest"
+    (is (= (-> {:players [{:hand    [priest copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :priest)
+               (choose :copper))
+           {:players [{:play-area [priest]
+                       :actions   0
+                       :coins     2
+                       :triggers  [priest-trigger]}]
+            :trash   [copper]}))
+    (is (= (-> {:players [{:hand     [priest copper]
+                           :actions  1
+                           :coins    0
+                           :triggers [priest-trigger]}]}
+               (play 0 :priest)
+               (choose :copper))
+           {:players [{:play-area [priest]
+                       :actions   0
+                       :coins     4
+                       :triggers  [priest-trigger priest-trigger]}]
+            :trash   [copper]}))
+    (is (= (-> {:players [{:hand     [priest copper]
+                           :actions  1
+                           :coins    0
+                           :triggers [priest-trigger priest-trigger]}]}
+               (play 0 :priest)
+               (choose :copper))
+           {:players [{:play-area [priest]
+                       :actions   0
+                       :coins     6
+                       :triggers  [priest-trigger priest-trigger priest-trigger]}]
+            :trash   [copper]}))
+    (is (= (-> {:players [{:hand    [throne-room priest copper copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :throne-room)
+               (choose :priest)
+               (choose :copper)
+               (choose :copper))
+           {:players [{:play-area [throne-room priest]
+                       :actions   0
+                       :coins     6
+                       :triggers  [priest-trigger priest-trigger]}]
+            :trash   [copper copper]}))
+    (is (= (-> {:players [{:hand    [throne-room priest copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :throne-room)
+               (choose :priest)
+               (choose :copper))
+           {:players [{:play-area [throne-room priest]
+                       :actions   0
+                       :coins     4
+                       :triggers  [priest-trigger priest-trigger]}]
+            :trash   [copper]}))))
+
 (deftest recruiter-test
   (testing "Recruiter"
     (is (= (-> {:players [{:hand    [recruiter estate estate]

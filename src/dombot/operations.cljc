@@ -382,10 +382,14 @@
                      (add-card to-path to-position card)
                      (state-maintenance player-no from to)))))
 
-(defn handle-on-trash [game {:keys [card-name] :as args}]
-  (let [{{:keys [on-trash]} :card} (ut/get-card-idx game [:trash] {:name card-name})]
+(defn handle-on-trash [game {:keys [player-no card-name] :as args}]
+  (let [{{:keys [on-trash]} :card} (ut/get-card-idx game [:trash] {:name card-name})
+        on-trash-triggers (->> (get-in game [:players player-no :triggers])
+                               (filter (comp #{:on-trash} :trigger))
+                               (mapcat :effects))
+        on-trash-effects (concat on-trash-triggers on-trash)]
     (cond-> game
-            on-trash (push-effect-stack (merge args {:effects on-trash})))))
+            (not-empty on-trash-effects) (push-effect-stack (merge args {:effects on-trash-effects})))))
 
 (defn handle-on-reveal [game {:keys [player-no card-name] :as args}]
   (let [{{:keys [on-reveal]} :card} (ut/get-card-idx game [:players player-no :revealed] {:name card-name})]

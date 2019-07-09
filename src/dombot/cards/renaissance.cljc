@@ -274,6 +274,22 @@
                          [:give-coins 2]]
              :on-reveal [[:give-coffers 1]]})
 
+(def priest-trigger {:trigger  :on-trash
+                     :duration :turn
+                     :effects  [[:give-coins 2]]})
+
+(def priest {:name    :priest
+             :set     :renaissance
+             :types   #{:action}
+             :cost    4
+             :effects [[:give-coins 2]
+                       [:give-choice {:text    "Trash a card from your hand."
+                                      :choice  :trash-from-hand
+                                      :options [:player :hand]
+                                      :min     1
+                                      :max     1}]
+                       [:add-trigger {:trigger priest-trigger}]]})
+
 (defn recruiter-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         cost (ut/get-cost game player-no card)]
@@ -524,6 +540,7 @@
                     mountain-village
                     old-witch
                     patron
+                    priest
                     recruiter
                     researcher
                     scepter
