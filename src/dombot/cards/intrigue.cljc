@@ -386,7 +386,7 @@
 
 (defn replace-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        max-cost (+ 2 (ut/get-cost game player-no card))]
+        max-cost (+ 2 (ut/get-cost game card))]
     (-> game
         (push-effect-stack {:player-no player-no
                             :effects   [[:trash-from-hand {:card-name card-name}]
@@ -485,10 +485,10 @@
                                        :min     1
                                        :max     1}]]})
 
-(defn swindler-attack [game {:keys [player-no]}]
+(defn swindler-attack [game {:keys [player-no attacking-player-no] :as args}]
   (let [{[top-card] :deck
          discard    :discard} (get-in game [:players player-no])
-        cost (ut/get-cost game player-no top-card)]
+        cost (ut/get-cost game top-card)]
     (assert (or top-card (empty? discard)) "Discard was not properly shuffled for Swindler Attack.")
     (cond-> game
             top-card (push-effect-stack {:player-no player-no

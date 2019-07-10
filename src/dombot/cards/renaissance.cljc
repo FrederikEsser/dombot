@@ -183,7 +183,7 @@
 
 (defn improve-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:name card-name})
-        cost (inc (ut/get-cost game player-no card))]
+        cost (inc (ut/get-cost game card))]
     (cond-> game
             card (push-effect-stack {:player-no player-no
                                      :effects   [[:trash-from-play-area {:card-name card-name}]
@@ -292,7 +292,7 @@
 
 (defn recruiter-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        cost (ut/get-cost game player-no card)]
+        cost (ut/get-cost game card)]
     (push-effect-stack game {:player-no player-no
                              :effects   [[:trash-from-hand {:card-name card-name}]
                                          [:give-villagers cost]]})))
@@ -323,7 +323,7 @@
 
 (defn researcher-trash [game {:keys [player-no card-name] :as args}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        cost (ut/get-cost game player-no card)]
+        cost (ut/get-cost game card)]
     (push-effect-stack game (merge args {:effects [[:trash-from-hand {:card-name card-name}]
                                                    [:set-aside {:number-of-cards cost}]
                                                    [::researcher-set-aside]]}))))
@@ -404,7 +404,7 @@
 
 (defn seer-put-in-hand [game {:keys [player-no] :as args}]
   (let [card-names (->> (get-in game [:players player-no :revealed])
-                        (filter (comp #{2 3 4} (partial ut/get-cost game player-no)))
+                        (filter (comp #{2 3 4} (partial ut/get-cost game)))
                         (map :name))]
     (move-cards game {:player-no  player-no
                       :card-names card-names
@@ -508,7 +508,7 @@
 
 (defn villain-attack [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])
-        has-eligible-card? (some (comp (partial <= 2) (partial ut/get-cost game player-no)) hand)]
+        has-eligible-card? (some (comp (partial <= 2) (partial ut/get-cost game)) hand)]
     (cond (< (count hand) 5) game
           has-eligible-card? (give-choice game {:player-no player-no
                                                 :text      "Discard a card costing $2 or more."

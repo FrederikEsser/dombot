@@ -196,7 +196,7 @@
 
 (defn mine-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        max-cost (+ 3 (ut/get-cost game player-no card))]
+        max-cost (+ 3 (ut/get-cost game card))]
     (-> game
         (push-effect-stack {:player-no player-no
                             :effects   [[:trash-from-hand {:card-name card-name}]

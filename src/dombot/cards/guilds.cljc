@@ -29,7 +29,7 @@
 
 (defn- butcher-gain [game {:keys [player-no card-name trashed-card-cost]}]
   (let [{:keys [card]} (ut/get-pile-idx game card-name)
-        cost (ut/get-cost game player-no card)]
+        cost (ut/get-cost game card)]
     (push-effect-stack game {:player-no player-no
                              :effects   [[:remove-coffers (- cost trashed-card-cost)]
                                          [:gain {:card-name card-name}]]})))
@@ -37,7 +37,7 @@
 (defn- butcher-trash [game {:keys [player-no card-name]}]
   (if card-name
     (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-          cost (ut/get-cost game player-no card)
+          cost (ut/get-cost game card)
           coffers (or (get-in game [:players player-no :coffers]) 0)]
       (push-effect-stack game {:player-no player-no
                                :effects   [[:trash-from-hand {:card-name card-name}]
@@ -254,7 +254,7 @@
 
 (defn- stonemason-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        max-cost (dec (ut/get-cost game player-no card))
+        max-cost (dec (ut/get-cost game card))
         gain-card [:give-choice {:text    (str "Gain 2 cards each costing up to $" max-cost ".")
                                  :choice  :gain
                                  :options [:supply {:max-cost max-cost}]
@@ -306,7 +306,7 @@
 (defn- taxman-trash [game {:keys [player-no card-name]}]
   (if card-name
     (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-          max-cost (+ 3 (ut/get-cost game player-no card))]
+          max-cost (+ 3 (ut/get-cost game card))]
       (-> game
           (push-effect-stack {:player-no player-no
                               :effects   [[:trash-from-hand {:card-name card-name}]

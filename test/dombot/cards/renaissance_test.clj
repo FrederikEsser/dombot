@@ -5,8 +5,9 @@
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
             [dombot.cards.dominion :refer [throne-room chapel]]
-            [dombot.cards.intrigue :refer [lurker]]
+            [dombot.cards.intrigue :refer [lurker swindler]]
             [dombot.cards.seaside :refer [merchant-ship]]
+            [dombot.cards.prosperity :refer [peddler]]
             [dombot.cards.renaissance :as renaissance :refer :all]
             [dombot.utils :as ut])
   (:refer-clojure :exclude [key]))
@@ -1234,7 +1235,11 @@
               :trash          [estate silver]})))))
 
 (deftest scepter-test
-  (let [patron (assoc patron :id 0)]
+  (let [patron (assoc patron :id 0)
+        swindler (assoc swindler :id 1)
+        curse (assoc curse :id 2)
+        peddler (assoc peddler :id 3)
+        villain (assoc villain :id 4)]
     (testing "Scepter"
       (is (= (-> {:players [{:hand  [scepter]
                              :coins 0}]}
@@ -1274,7 +1279,63 @@
                  (play 0 :scepter)
                  (choose :replay-action))
              {:players [{:play-area [cargo-ship scepter]
-                         :coins     0}]})))))
+                         :coins     0}]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}
+                            {:card peddler :pile-size 6}]
+                  :players [{:hand           [scepter]
+                             :play-area      [peddler peddler peddler swindler]
+                             :actions-played [1]
+                             :coins          5
+                             :phase          :action}
+                            {:deck [peddler]}]}
+                 (play 0 :scepter)
+                 (choose :replay-action)
+                 (choose :swindler)
+                 (choose :curse))
+             {:supply  [{:card curse :pile-size 9}
+                        {:card peddler :pile-size 6}]
+              :players [{:play-area      [peddler peddler peddler swindler scepter]
+                         :actions-played [1]
+                         :coins          7
+                         :phase          :pay}
+                        {:discard [curse]}]
+              :trash   [peddler]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}
+                            {:card peddler :pile-size 6}]
+                  :players [{:hand           [scepter]
+                             :play-area      [peddler peddler peddler swindler]
+                             :actions-played [1]
+                             :coins          5
+                             :phase          :action}
+                            {:deck [peddler]}]}
+                 (play 0 :scepter)
+                 (choose :replay-action)
+                 (choose :swindler)
+                 (choose :peddler))
+             {:supply  [{:card curse :pile-size 10}
+                        {:card peddler :pile-size 5}]
+              :players [{:play-area      [peddler peddler peddler swindler scepter]
+                         :actions-played [1]
+                         :coins          7
+                         :phase          :pay}
+                        {:discard [peddler]}]
+              :trash   [peddler]}))
+      (is (= (-> {:players [{:hand           [scepter]
+                             :play-area      [peddler peddler peddler villain]
+                             :actions-played [4]
+                             :coins          5
+                             :phase          :action}
+                            {:hand [copper copper copper copper peddler]}]}
+                 (play 0 :scepter)
+                 (choose :replay-action)
+                 (choose :villain))
+             {:players [{:play-area      [peddler peddler peddler villain scepter]
+                         :actions-played [4]
+                         :coins          5
+                         :coffers        2
+                         :phase          :pay}
+                        {:hand           [copper copper copper copper peddler]
+                         :revealed-cards {:hand 5}}]})))))
 
 (deftest scholar-test
   (testing "Scholar"

@@ -6,7 +6,7 @@
 
 (defn- dismantle-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        cost (ut/get-cost game player-no card)
+        cost (ut/get-cost game card)
         max-cost (dec cost)]
     (push-effect-stack game {:player-no player-no
                              :effects   (concat [[:trash-from-hand {:card-name card-name}]]

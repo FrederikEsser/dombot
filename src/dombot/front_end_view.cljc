@@ -17,7 +17,7 @@
        (map (fn [{{:keys [name types bane?] :as card} :card
                   number-of-cards                     :pile-size
                   :keys                               [tokens]}]
-              (let [cost (ut/get-cost game player-no card)
+              (let [cost (ut/get-cost game card)
                     buy-cost (ut/get-buy-cost game player-no card)]
                 (merge {:name            name
                         :name-ui         (ut/format-name name)

@@ -26,7 +26,7 @@
 
 (defn- bishop-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        cost (ut/get-cost game player-no card)]
+        cost (ut/get-cost game card)]
     (push-effect-stack game {:player-no player-no
                              :effects   [[:trash-from-hand {:card-name card-name}]
                                          [:give-victory-points (quot cost 2)]]})))
@@ -114,7 +114,7 @@
   (let [total-cost (->> card-names
                         (map (fn [card-name]
                                (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
-                                 (ut/get-cost game player-no card))))
+                                 (ut/get-cost game card))))
                         (apply + 0))]
     (push-effect-stack game {:player-no player-no
                              :effects   [[:trash-from-hand {:card-names card-names}]
@@ -333,7 +333,7 @@
 
 (defn- talisman-on-buy [game {:keys [player-no card-name]}]
   (let [{{:keys [types] :as card} :card} (ut/get-pile-idx game card-name)
-        cost (ut/get-cost game player-no card)]
+        cost (ut/get-cost game card)]
     (cond-> game
             (and (not (:victory types))
                  (<= cost 4)) (push-effect-stack {:player-no player-no
