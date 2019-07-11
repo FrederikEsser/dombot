@@ -1,6 +1,7 @@
 (ns dombot.cards.renaissance
   (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards card-effect]]
             [dombot.cards.common :refer [reveal-hand reveal-from-deck add-trigger give-coins give-coffers give-villagers]]
+            [dombot.cards.dominion :as dominion]
             [dombot.utils :as ut]
             [dombot.effects :as effects])
   (:refer-clojure :exclude [key]))
@@ -629,10 +630,20 @@
                 :trigger {:trigger :on-gain
                           :effects [[::guildhall-on-gain]]}})
 
+(def silos {:name    :silos
+            :set     :renaissance
+            :type    :project
+            :cost    4
+            :trigger {:trigger :at-start-turn
+                      :effects [[:give-choice {:text    "Discard any number of Coppers."
+                                               :choice  ::dominion/cellar-sift
+                                               :options [:player :hand {:name :copper}]}]]}})
+
 (def projects [academy
                barracks
                cathedral
                city-gate
                fair
-               guildhall])
+               guildhall
+               silos])
 

@@ -1940,3 +1940,23 @@
                           :coffers  1
                           :triggers [(merge {:duration :game}
                                             (:trigger guildhall))]}]})))))
+
+(deftest silos-test
+  (testing "Silos"
+    (is (= (-> {:projects [(assoc silos :participants #{0})]
+                :players  [{:deck     [copper copper estate silver estate gold gold duchy]
+                            :triggers [(merge {:duration :game}
+                                              (:trigger silos))]}]}
+               (end-turn 0)
+               (choose [:copper :copper]))
+           {:projects       [(assoc silos :participants #{0})]
+            :current-player 0
+            :players        [{:hand     [estate silver estate gold gold]
+                              :deck     [duchy]
+                              :discard  [copper copper]
+                              :actions  1
+                              :coins    0
+                              :buys     1
+                              :phase    :action
+                              :triggers [(merge {:duration :game}
+                                                (:trigger silos))]}]}))))
