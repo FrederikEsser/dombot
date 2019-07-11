@@ -1,6 +1,6 @@
 (ns dombot.cards.renaissance
   (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards card-effect]]
-            [dombot.cards.common :refer [reveal-hand reveal-from-deck add-trigger give-coins]]
+            [dombot.cards.common :refer [reveal-hand reveal-from-deck add-trigger give-coins give-villagers]]
             [dombot.utils :as ut]
             [dombot.effects :as effects])
   (:refer-clojure :exclude [key]))
@@ -564,6 +564,20 @@
 
 (effects/register {::add-artifact add-artifact})
 
+(defn academy-on-gain [game {:keys [player-no gained-card-id from]}]
+  (let [{{:keys [types]} :card} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})]
+    (cond-> game
+            (:action types) (give-villagers {:player-no player-no :arg 1}))))
+
+(effects/register {::academy-on-gain academy-on-gain})
+
+(def academy {:name    :academy
+              :set     :renaissance
+              :type    :project
+              :cost    5
+              :trigger {:trigger :on-gain
+                        :effects [[::academy-on-gain]]}})
+
 (def barracks {:name    :barracks
                :set     :renaissance
                :type    :project
@@ -578,6 +592,7 @@
            :trigger {:trigger :at-start-turn
                      :effects [[:give-buys 1]]}})
 
-(def projects [barracks
+(def projects [academy
+               barracks
                fair])
 
