@@ -610,6 +610,24 @@
                                                    :min     1
                                                    :max     1}]]}})
 
+(defn- crop-rotation-discard [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:discard-from-hand {:card-name card-name}]
+                                                    [:draw 2]]})))
+
+(effects/register {::crop-rotation-discard crop-rotation-discard})
+
+(def crop-rotation {:name    :crop-rotation
+                    :set     :renaissance
+                    :type    :project
+                    :cost    6
+                    :trigger {:trigger :at-start-turn
+                              :effects [[:give-choice {:text    "You may discard a Victory card for +2 Cards."
+                                                       :choice  ::crop-rotation-discard
+                                                       :options [:player :hand {:type :victory}]
+                                                       :max     1}]]}})
+
 (def fair {:name    :fair
            :set     :renaissance
            :type    :project
@@ -652,6 +670,7 @@
                barracks
                cathedral
                city-gate
+               crop-rotation
                fair
                guildhall
                piazza

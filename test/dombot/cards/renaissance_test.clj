@@ -1883,6 +1883,41 @@
                               :triggers [(merge {:duration :game}
                                                 (:trigger city-gate))]}]}))))
 
+(deftest crop-rotation-test
+  (testing "Crop Rotation"
+    (is (= (-> {:projects [(assoc crop-rotation :participants #{0})]
+                :players  [{:deck     [copper copper copper copper estate gold copper silver]
+                            :triggers [(merge {:duration :game}
+                                              (:trigger crop-rotation))]}]}
+               (end-turn 0)
+               (choose :estate))
+           {:projects       [(assoc crop-rotation :participants #{0})]
+            :current-player 0
+            :players        [{:hand     [copper copper copper copper gold copper]
+                              :deck     [silver]
+                              :discard  [estate]
+                              :actions  1
+                              :coins    0
+                              :buys     1
+                              :phase    :action
+                              :triggers [(merge {:duration :game}
+                                                (:trigger crop-rotation))]}]}))
+    (is (= (-> {:projects [(assoc crop-rotation :participants #{0})]
+                :players  [{:deck     [copper copper copper copper gold estate copper silver]
+                            :triggers [(merge {:duration :game}
+                                              (:trigger crop-rotation))]}]}
+               (end-turn 0))
+           {:projects       [(assoc crop-rotation :participants #{0})]
+            :current-player 0
+            :players        [{:hand     [copper copper copper copper gold]
+                              :deck     [estate copper silver]
+                              :actions  1
+                              :coins    0
+                              :buys     1
+                              :phase    :action
+                              :triggers [(merge {:duration :game}
+                                                (:trigger crop-rotation))]}]}))))
+
 (deftest fair-test
   (testing "Fair"
     (is (= (-> {:projects [fair]
