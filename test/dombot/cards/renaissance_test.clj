@@ -1864,6 +1864,25 @@
                                                 (:trigger cathedral))]}]
             :trash          [copper]}))))
 
+(deftest city-gate-test
+  (testing "City Gate"
+    (is (= (-> {:projects [(assoc city-gate :participants #{0})]
+                :players  [{:deck     [copper copper copper copper copper silver estate]
+                            :triggers [(merge {:duration :game}
+                                              (:trigger city-gate))]}]}
+               (end-turn 0)
+               (choose :copper))
+           {:projects       [(assoc city-gate :participants #{0})]
+            :current-player 0
+            :players        [{:hand     [copper copper copper copper silver]
+                              :deck     [copper estate]
+                              :actions  1
+                              :coins    0
+                              :buys     1
+                              :phase    :action
+                              :triggers [(merge {:duration :game}
+                                                (:trigger city-gate))]}]}))))
+
 (deftest fair-test
   (testing "Fair"
     (is (= (-> {:projects [fair]

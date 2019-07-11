@@ -596,6 +596,18 @@
                                                    :min     1
                                                    :max     1}]]}})
 
+(def city-gate {:name    :city-gate
+                :set     :renaissance
+                :type    :project
+                :cost    3
+                :trigger {:trigger :at-start-turn
+                          :effects [[:draw 1]
+                                    [:give-choice {:text    "Put a card from your hand onto your deck."
+                                                   :choice  :topdeck-from-hand
+                                                   :options [:player :hand]
+                                                   :min     1
+                                                   :max     1}]]}})
+
 (def fair {:name    :fair
            :set     :renaissance
            :type    :project
@@ -620,6 +632,7 @@
 (def projects [academy
                barracks
                cathedral
+               city-gate
                fair
                guildhall])
 
