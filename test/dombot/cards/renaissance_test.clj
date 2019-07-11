@@ -1960,3 +1960,41 @@
                               :phase    :action
                               :triggers [(merge {:duration :game}
                                                 (:trigger silos))]}]}))))
+
+(deftest piazza-test
+  (testing "Piazza"
+    (is (= (-> {:projects [(assoc piazza :participants #{0})]
+                :players  [{:deck     [copper copper estate silver estate patron gold]
+                            :triggers [(merge {:duration :game}
+                                              (:trigger piazza))]}]}
+               (end-turn 0))
+           {:projects       [(assoc piazza :participants #{0})]
+            :current-player 0
+            :players        [{:hand           [copper copper estate silver estate]
+                              :play-area      [patron]
+                              :deck           [gold]
+                              :revealed-cards {:play-area 1}
+                              :actions        1
+                              :coins          2
+                              :buys           1
+                              :coffers        1
+                              :villagers      1
+                              :phase          :action
+                              :triggers       [(merge {:duration :game}
+                                                      (:trigger piazza))]}]}))
+    (is (= (-> {:projects [(assoc piazza :participants #{0})]
+                :players  [{:deck     [copper copper estate silver estate gold patron]
+                            :triggers [(merge {:duration :game}
+                                              (:trigger piazza))]}]}
+               (end-turn 0))
+           {:projects       [(assoc piazza :participants #{0})]
+            :current-player 0
+            :players        [{:hand           [copper copper estate silver estate]
+                              :deck           [gold patron]
+                              :revealed-cards {:deck 1}
+                              :actions        1
+                              :coins          0
+                              :buys           1
+                              :phase          :action
+                              :triggers       [(merge {:duration :game}
+                                                      (:trigger piazza))]}]}))))

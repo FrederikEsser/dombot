@@ -2,6 +2,7 @@
   (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards card-effect]]
             [dombot.cards.common :refer [reveal-hand reveal-from-deck add-trigger give-coins give-coffers give-villagers]]
             [dombot.cards.dominion :as dominion]
+            [dombot.cards.guilds :as guilds]
             [dombot.utils :as ut]
             [dombot.effects :as effects])
   (:refer-clojure :exclude [key]))
@@ -630,6 +631,14 @@
                 :trigger {:trigger :on-gain
                           :effects [[::guildhall-on-gain]]}})
 
+(def piazza {:name    :piazza
+             :set     :renaissance
+             :type    :project
+             :cost    5
+             :trigger {:trigger :at-start-turn
+                       :effects [[:reveal-from-deck 1]
+                                 [::guilds/herald-play-action]]}})
+
 (def silos {:name    :silos
             :set     :renaissance
             :type    :project
@@ -645,5 +654,6 @@
                city-gate
                fair
                guildhall
+               piazza
                silos])
 
