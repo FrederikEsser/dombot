@@ -1809,3 +1809,27 @@
                               :phase    :action
                               :triggers [(merge {:duration :game}
                                                 (:trigger fair))]}]}))))
+
+(deftest barracks-test
+  (testing "Barracks"
+    (is (= (-> {:projects [barracks]
+                :players  [{:coins 6
+                            :buys  1}]}
+               (buy-project 0 :barracks))
+           {:projects [(assoc barracks :participants #{0})]
+            :players  [{:coins    0
+                        :buys     0
+                        :triggers [(merge {:duration :game}
+                                          (:trigger barracks))]}]}))
+    (is (= (-> {:projects [(assoc barracks :participants #{0})]
+                :players  [{:triggers [(merge {:duration :game}
+                                              (:trigger barracks))]}]}
+               (end-turn 0))
+           {:projects       [(assoc barracks :participants #{0})]
+            :current-player 0
+            :players        [{:actions  2
+                              :coins    0
+                              :buys     1
+                              :phase    :action
+                              :triggers [(merge {:duration :game}
+                                                (:trigger barracks))]}]}))))

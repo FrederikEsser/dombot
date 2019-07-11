@@ -564,6 +564,13 @@
 
 (effects/register {::add-artifact add-artifact})
 
+(def barracks {:name    :barracks
+               :set     :renaissance
+               :type    :project
+               :cost    6
+               :trigger {:trigger :at-start-turn
+                         :effects [[:give-actions 1]]}})
+
 (def fair {:name    :fair
            :set     :renaissance
            :type    :project
@@ -571,5 +578,6 @@
            :trigger {:trigger :at-start-turn
                      :effects [[:give-buys 1]]}})
 
-(def projects [fair])
+(def projects [barracks
+               fair])
 
