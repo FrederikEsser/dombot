@@ -77,6 +77,12 @@
                                             (op/buy-card current-player card-name)))
     (view)))
 
+(defn buy-project [project-name]
+  (let [{:keys [current-player] :as game} (get-game)]
+    (swap! game-state update :game conj (-> game
+                                            (op/buy-project current-player project-name)))
+    (view)))
+
 (defn spend-coffer []
   (let [{:keys [current-player] :as game} (get-game)]
     (swap! game-state update :game conj (-> game

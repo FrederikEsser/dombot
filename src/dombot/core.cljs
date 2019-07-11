@@ -36,12 +36,13 @@
   (merge {:color            (if disabled :grey :black)
           :font-weight      :bold
           :background-color (cond (:duration types) "#FF9E37"
-                                  (:reaction types) "#77ADE3"
+                                  (:reaction types) "#A8BFD3"
                                   (:action types) "#F3EEDF"
                                   (:treasure types) "#FFE64F"
                                   (:victory types) "#9FD688"
                                   (:curse types) "#B890D7"
-                                  (:artifact types) "#F9CD88")
+                                  (:artifact types) "#F9CD88"
+                                  (:project types) "#FCA19A")
           :border-color     (cond
                               (zero? number-of-cards) :red
                               (:curse types) "#9F76B8"
@@ -51,7 +52,8 @@
                               (:duration types) "#F1820E"
                               (:attack types) "#940000"
                               (:action types) "#DED7C4"
-                              (:artifacts types) "#B4763B"
+                              (:artifact types) "#B4763B"
+                              (:project types) "#EF8984"
                               :else :grey)
           :border-width     2}
          (when (:attack types)
@@ -82,13 +84,26 @@
                                          :choosable (select! name)
                                          :quick-choosable (swap! state assoc :game (cmd/choose name))
                                          :buyable (swap! state assoc :game (cmd/buy name)))))}
-           (str (when tokens (->> tokens (map ut/format-token) (string/join " ")))
+           (str (when tokens (str (->> tokens (map ut/format-token) (string/join " ")) " "))
                 name-ui
                 (when bane? " - Bane")
                 (when cost (str " ($" cost (when buy-cost (str "/" buy-cost)) ")"))
                 (when set-aside (str " (" (string/join ", " set-aside) ")"))
                 (when number-of-cards (str " x" number-of-cards)))]]))
      card)))
+
+(defn view-project
+  [{:keys [name name-ui type cost interaction participants]}]
+  (let [disabled (nil? interaction)]
+    [:div
+     [:button {:style    (button-style disabled #{type} 1)
+               :disabled disabled
+               :on-click (when interaction
+                           (fn [] (case interaction
+                                    :buyable (swap! state assoc :game (cmd/buy-project name)))))}
+      (str name-ui
+           (when cost (str " ($" cost ")"))
+           (when participants (str " " (->> participants (string/join " ")))))]]))
 
 (defn mapk [f coll]
   (->> coll
@@ -194,6 +209,14 @@
             (view-row (concat [nil] row2))
             (view-row row3)
             (view-row row4)]])]
+       (let [projects (-> (:game @state) :projects)]
+         (when projects
+           [:div "Projects"
+            [:table
+             [:tbody
+              [:tr (->> projects
+                        (map view-project)
+                        (mapk (fn [project] [:td project])))]]]]))
        (when (-> @state :game :trade-route-mat)
          [:div "Trade Route Mat: " (-> @state :game :trade-route-mat)])
        [:div "Players"

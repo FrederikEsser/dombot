@@ -5,7 +5,7 @@
 
 (s/def ::name-ui string?)
 
-(s/def ::type #{:curse :victory :treasure :action :attack :reaction :duration :artifact :prize})
+(s/def ::type #{:curse :victory :treasure :action :attack :reaction :duration :artifact :prize :project})
 
 (s/def ::types (s/coll-of ::type :distinct true))
 
@@ -35,6 +35,15 @@
 (s/def ::cards (s/coll-of ::card))
 
 (s/def ::supply ::cards)
+
+(s/def ::participants (s/coll-of string?))
+
+(s/def ::projects (s/coll-of (s/keys :req-un [::name
+                                              ::name-ui
+                                              ::type
+                                              ::cost]
+                                     :opt-un [::interaction
+                                              ::participants])))
 
 (s/def ::prosperity? boolean?)
 
@@ -166,4 +175,5 @@
                                ::players
                                ::trash
                                ::commands]
-                      :opt-un [::trade-route-mat]))
+                      :opt-un [::projects
+                               ::trade-route-mat]))

@@ -38,6 +38,27 @@
                        (when bane?
                          {:bane? true})))))))
 
+(defn view-projects [{projects                       :projects
+                      {:keys [coins buys player-no]} :player
+                      choice                         :choice
+                      :as                            game}]
+  (->> projects
+       (map (fn [{:keys [name type cost participants] :as project}]
+              (merge {:name    name
+                      :name-ui (ut/format-name name)
+                      :type    type
+                      :cost    cost}
+                     (when (not-empty participants)
+                       {:participants (->> participants
+                                           (map (fn [n]
+                                                  (-> (get-in game [:players n :name])
+                                                      ut/format-name-short))))})
+                     (when (and (not choice)                ; todo: check phase
+                                (not (contains? participants player-no))
+                                buys (pos? buys)
+                                coins (<= cost coins))
+                       {:interaction :buyable}))))))
+
 (defn view-area [area {{:keys [phase actions] :as player} :player
                        choice                             :choice
                        active?                            :active-player?}
@@ -237,7 +258,7 @@
                                 (and (pos? buys)
                                      (<= 3 potential-coins)) "You can buy a card.")}))
 
-(defn view-game [{:keys [supply artifacts trade-route-mat players trash effect-stack current-player] :as game}]
+(defn view-game [{:keys [supply artifacts projects trade-route-mat players trash effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
     (->> (merge
@@ -259,5 +280,8 @@
                           :full    (view-trash {:trash trash :choice choice} :full)}
             :commands    (view-commands game)}
            (when trade-route-mat
-             {:trade-route-mat trade-route-mat}))
+             {:trade-route-mat trade-route-mat})
+           (when projects
+             {:projects (view-projects (merge game {:player (assoc player :player-no current-player)
+                                                    :choice choice}))}))
          (s/assert* ::specs/game))))

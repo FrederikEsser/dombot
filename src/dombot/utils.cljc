@@ -21,6 +21,15 @@
       (->> (map s/capitalize)
            (s/join " "))))
 
+(defn format-name-short [n]
+  (str "["
+       (-> n
+           name
+           (s/split #"[- ]")
+           (->> (map (comp first s/capitalize))
+                s/join))
+       "]"))
+
 (defn format-token [{:keys [token-type]}]
   (str "("
        (-> token-type
@@ -97,6 +106,12 @@
                                     (when ((match criteria) card) {:idx idx :card card})))
                     first)]
     result))
+
+(defn get-project-idx [{:keys [projects]} project-name]
+  (->> projects
+       (keep-indexed (fn [idx {:keys [name] :as project}]
+                       (when (= project-name name) {:idx idx :project project})))
+       first))
 
 (defn update-in-vec [game path criteria f & args]
   (let [{:keys [idx]} (get-card-idx game path criteria)]

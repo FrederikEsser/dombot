@@ -1785,3 +1785,27 @@
                        :coffers   2}
                       {:hand           [copper copper copper copper copper]
                        :revealed-cards {:hand 5}}]}))))
+
+(deftest fair-test
+  (testing "Fair"
+    (is (= (-> {:projects [fair]
+                :players  [{:coins 4
+                            :buys  1}]}
+               (buy-project 0 :fair))
+           {:projects [(assoc fair :participants #{0})]
+            :players  [{:coins    0
+                        :buys     0
+                        :triggers [(merge {:duration :game}
+                                          (:trigger fair))]}]}))
+    (is (= (-> {:projects [(assoc fair :participants #{0})]
+                :players  [{:triggers [(merge {:duration :game}
+                                              (:trigger fair))]}]}
+               (end-turn 0))
+           {:projects       [(assoc fair :participants #{0})]
+            :current-player 0
+            :players        [{:actions  1
+                              :coins    0
+                              :buys     2
+                              :phase    :action
+                              :triggers [(merge {:duration :game}
+                                                (:trigger fair))]}]}))))

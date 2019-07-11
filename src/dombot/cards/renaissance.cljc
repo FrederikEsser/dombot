@@ -564,3 +564,12 @@
 
 (effects/register {::add-artifact add-artifact})
 
+(def fair {:name    :fair
+           :set     :renaissance
+           :type    :project
+           :cost    4
+           :trigger {:trigger :at-start-turn
+                     :effects [[:give-buys 1]]}})
+
+(def projects [fair])
+

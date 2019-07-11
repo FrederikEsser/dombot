@@ -44,6 +44,15 @@
               (let [pile-size (if (:victory types) victory-pile-size 10)]
                 {:card card :pile-size pile-size})))))
 
+(def event-landmark-project-list (concat
+                                   renaissance/projects))
+
+(defn random-elps [[set number]]
+  (->> event-landmark-project-list
+       (filter (comp #{set} :set))
+       shuffle
+       (take number)))
+
 (defn create-player [name]
   {:name                name
    :hand                []
@@ -79,16 +88,32 @@
                             3 12
                             4 12)
         starting-player (rand-int number-of-players)
-        kingdom (random-kingdom sets)]
+        kingdom (random-kingdom sets)
+        elps (->> kingdom
+                  (take 10)
+                  (drop 2)
+                  (split-at 4)
+                  (keep (fn [cards]
+                          (->> cards
+                               (keep (comp #{:renaissance} :set))
+                               first)))
+                  frequencies
+                  (mapcat random-elps))
+        projects (->> elps
+                      (filter (comp #{:project} :type))
+                      vec)]
     (ut/reset-ids!)
-    (as-> {:mode                  mode
-           :supply                (vec (concat (base/supply number-of-players victory-pile-size
-                                                            {:prosperity? (-> kingdom first :set #{:prosperity})})
-                                               (create-kingdom-supply kingdom victory-pile-size)))
-           :players               (vec (map create-player player-names))
-           :track-gained-cards?   true
-           :track-played-actions? true
-           :current-player        starting-player
-           :starting-player       starting-player} game
+    (as-> (merge
+            {:mode                  mode
+             :supply                (vec (concat (base/supply number-of-players victory-pile-size
+                                                              {:prosperity? (-> kingdom first :set #{:prosperity})})
+                                                 (create-kingdom-supply kingdom victory-pile-size)))
+             :players               (vec (map create-player player-names))
+             :track-gained-cards?   true
+             :track-played-actions? true
+             :current-player        starting-player
+             :starting-player       starting-player}
+            (when (not-empty projects)
+              {:projects projects})) game
           (-> (reduce prepare-cards game (range number-of-players))
               setup-game))))
