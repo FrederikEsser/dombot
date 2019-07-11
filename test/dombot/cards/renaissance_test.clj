@@ -1845,6 +1845,25 @@
                               :triggers [(merge {:duration :game}
                                                 (:trigger barracks))]}]}))))
 
+(deftest cathedral-test
+  (testing "Cathedral"
+    (is (= (-> {:projects [(assoc cathedral :participants #{0})]
+                :players  [{:deck     [copper copper copper copper copper]
+                            :triggers [(merge {:duration :game}
+                                              (:trigger cathedral))]}]}
+               (end-turn 0)
+               (choose :copper))
+           {:projects       [(assoc cathedral :participants #{0})]
+            :current-player 0
+            :players        [{:hand     [copper copper copper copper]
+                              :actions  1
+                              :coins    0
+                              :buys     1
+                              :phase    :action
+                              :triggers [(merge {:duration :game}
+                                                (:trigger cathedral))]}]
+            :trash          [copper]}))))
+
 (deftest fair-test
   (testing "Fair"
     (is (= (-> {:projects [fair]

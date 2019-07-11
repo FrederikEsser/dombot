@@ -585,6 +585,17 @@
                :trigger {:trigger :at-start-turn
                          :effects [[:give-actions 1]]}})
 
+(def cathedral {:name    :cathedral
+                :set     :renaissance
+                :type    :project
+                :cost    3
+                :trigger {:trigger :at-start-turn
+                          :effects [[:give-choice {:text    "Trash a card from your hand."
+                                                   :choice  :trash-from-hand
+                                                   :options [:player :hand]
+                                                   :min     1
+                                                   :max     1}]]}})
+
 (def fair {:name    :fair
            :set     :renaissance
            :type    :project
@@ -608,6 +619,7 @@
 
 (def projects [academy
                barracks
+               cathedral
                fair
                guildhall])
 
