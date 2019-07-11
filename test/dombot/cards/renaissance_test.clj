@@ -1868,3 +1868,37 @@
                               :phase    :action
                               :triggers [(merge {:duration :game}
                                                 (:trigger fair))]}]}))))
+
+(deftest guildhall-test
+  (let [silver (assoc silver :id 0)
+        mountain-village (assoc mountain-village :id 1)]
+    (testing "Guildhall"
+      (is (= (-> {:projects [(assoc guildhall :participants #{0})]
+                  :supply   [{:card mountain-village :pile-size 10}]
+                  :players  [{:coins    4
+                              :buys     1
+                              :triggers [(merge {:duration :game}
+                                                (:trigger guildhall))]}]}
+                 (buy-card 0 :mountain-village))
+             {:projects [(assoc guildhall :participants #{0})]
+              :supply   [{:card mountain-village :pile-size 9}]
+              :players  [{:discard  [mountain-village]
+                          :coins    0
+                          :buys     0
+                          :triggers [(merge {:duration :game}
+                                            (:trigger guildhall))]}]}))
+      (is (= (-> {:projects [(assoc guildhall :participants #{0})]
+                  :supply   [{:card silver :pile-size 40}]
+                  :players  [{:coins    3
+                              :buys     1
+                              :triggers [(merge {:duration :game}
+                                                (:trigger guildhall))]}]}
+                 (buy-card 0 :silver))
+             {:projects [(assoc guildhall :participants #{0})]
+              :supply   [{:card silver :pile-size 39}]
+              :players  [{:discard  [silver]
+                          :coins    0
+                          :buys     0
+                          :coffers  1
+                          :triggers [(merge {:duration :game}
+                                            (:trigger guildhall))]}]})))))

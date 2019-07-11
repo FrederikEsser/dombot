@@ -1,6 +1,6 @@
 (ns dombot.cards.renaissance
   (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards card-effect]]
-            [dombot.cards.common :refer [reveal-hand reveal-from-deck add-trigger give-coins give-villagers]]
+            [dombot.cards.common :refer [reveal-hand reveal-from-deck add-trigger give-coins give-coffers give-villagers]]
             [dombot.utils :as ut]
             [dombot.effects :as effects])
   (:refer-clojure :exclude [key]))
@@ -592,7 +592,22 @@
            :trigger {:trigger :at-start-turn
                      :effects [[:give-buys 1]]}})
 
+(defn guildhall-on-gain [game {:keys [player-no gained-card-id from]}]
+  (let [{{:keys [types]} :card} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})]
+    (cond-> game
+            (:treasure types) (give-coffers {:player-no player-no :arg 1}))))
+
+(effects/register {::guildhall-on-gain guildhall-on-gain})
+
+(def guildhall {:name    :guildhall
+                :set     :renaissance
+                :type    :project
+                :cost    5
+                :trigger {:trigger :on-gain
+                          :effects [[::guildhall-on-gain]]}})
+
 (def projects [academy
                barracks
-               fair])
+               fair
+               guildhall])
 

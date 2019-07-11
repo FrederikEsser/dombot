@@ -98,7 +98,8 @@
                                (keep (comp #{:renaissance} :set))
                                first)))
                   frequencies
-                  (mapcat random-elps))
+                  (mapcat random-elps)
+                  (sort-by (juxt :cost :name)))
         projects (->> elps
                       (filter (comp #{:project} :type))
                       vec)]
