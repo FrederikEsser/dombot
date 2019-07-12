@@ -1791,53 +1791,47 @@
   (let [silver (assoc silver :id 0)
         mountain-village (assoc mountain-village :id 1)]
     (testing "Academy"
-      (is (= (-> {:projects [(assoc academy :participants #{0})]
-                  :supply   [{:card mountain-village :pile-size 10}]
-                  :players  [{:coins    4
-                              :buys     1
-                              :triggers [(merge {:duration :game}
-                                                (:trigger academy))]}]}
+      (is (= (-> {:supply  [{:card mountain-village :pile-size 10}]
+                  :players [{:coins    4
+                             :buys     1
+                             :triggers [(merge {:duration :game}
+                                               (:trigger academy))]}]}
                  (buy-card 0 :mountain-village))
-             {:projects [(assoc academy :participants #{0})]
-              :supply   [{:card mountain-village :pile-size 9}]
-              :players  [{:discard   [mountain-village]
-                          :coins     0
-                          :buys      0
-                          :villagers 1
-                          :triggers  [(merge {:duration :game}
-                                             (:trigger academy))]}]}))
-      (is (= (-> {:projects [(assoc academy :participants #{0})]
-                  :supply   [{:card silver :pile-size 40}]
-                  :players  [{:coins    3
-                              :buys     1
-                              :triggers [(merge {:duration :game}
-                                                (:trigger academy))]}]}
+             {:supply  [{:card mountain-village :pile-size 9}]
+              :players [{:discard   [mountain-village]
+                         :coins     0
+                         :buys      0
+                         :villagers 1
+                         :triggers  [(merge {:duration :game}
+                                            (:trigger academy))]}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:coins    3
+                             :buys     1
+                             :triggers [(merge {:duration :game}
+                                               (:trigger academy))]}]}
                  (buy-card 0 :silver))
-             {:projects [(assoc academy :participants #{0})]
-              :supply   [{:card silver :pile-size 39}]
-              :players  [{:discard  [silver]
-                          :coins    0
-                          :buys     0
-                          :triggers [(merge {:duration :game}
-                                            (:trigger academy))]}]})))))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:discard  [silver]
+                         :coins    0
+                         :buys     0
+                         :triggers [(merge {:duration :game}
+                                           (:trigger academy))]}]})))))
 
 (deftest barracks-test
   (testing "Barracks"
-    (is (= (-> {:projects [barracks]
+    (is (= (-> {:projects {:barracks barracks}
                 :players  [{:coins 6
                             :buys  1}]}
                (buy-project 0 :barracks))
-           {:projects [(assoc barracks :participants #{0})]
+           {:projects {:barracks (assoc barracks :participants [{:player-no 0}])}
             :players  [{:coins    0
                         :buys     0
                         :triggers [(merge {:duration :game}
                                           (:trigger barracks))]}]}))
-    (is (= (-> {:projects [(assoc barracks :participants #{0})]
-                :players  [{:triggers [(merge {:duration :game}
-                                              (:trigger barracks))]}]}
+    (is (= (-> {:players [{:triggers [(merge {:duration :game}
+                                             (:trigger barracks))]}]}
                (end-turn 0))
-           {:projects       [(assoc barracks :participants #{0})]
-            :current-player 0
+           {:current-player 0
             :players        [{:actions  2
                               :coins    0
                               :buys     1
@@ -1847,14 +1841,12 @@
 
 (deftest cathedral-test
   (testing "Cathedral"
-    (is (= (-> {:projects [(assoc cathedral :participants #{0})]
-                :players  [{:deck     [copper copper copper copper copper]
-                            :triggers [(merge {:duration :game}
-                                              (:trigger cathedral))]}]}
+    (is (= (-> {:players [{:deck     [copper copper copper copper copper]
+                           :triggers [(merge {:duration :game}
+                                             (:trigger cathedral))]}]}
                (end-turn 0)
                (choose :copper))
-           {:projects       [(assoc cathedral :participants #{0})]
-            :current-player 0
+           {:current-player 0
             :players        [{:hand     [copper copper copper copper]
                               :actions  1
                               :coins    0
@@ -1866,14 +1858,12 @@
 
 (deftest city-gate-test
   (testing "City Gate"
-    (is (= (-> {:projects [(assoc city-gate :participants #{0})]
-                :players  [{:deck     [copper copper copper copper copper silver estate]
-                            :triggers [(merge {:duration :game}
-                                              (:trigger city-gate))]}]}
+    (is (= (-> {:players [{:deck     [copper copper copper copper copper silver estate]
+                           :triggers [(merge {:duration :game}
+                                             (:trigger city-gate))]}]}
                (end-turn 0)
                (choose :copper))
-           {:projects       [(assoc city-gate :participants #{0})]
-            :current-player 0
+           {:current-player 0
             :players        [{:hand     [copper copper copper copper silver]
                               :deck     [copper estate]
                               :actions  1
@@ -1885,14 +1875,12 @@
 
 (deftest crop-rotation-test
   (testing "Crop Rotation"
-    (is (= (-> {:projects [(assoc crop-rotation :participants #{0})]
-                :players  [{:deck     [copper copper copper copper estate gold copper silver]
-                            :triggers [(merge {:duration :game}
-                                              (:trigger crop-rotation))]}]}
+    (is (= (-> {:players [{:deck     [copper copper copper copper estate gold copper silver]
+                           :triggers [(merge {:duration :game}
+                                             (:trigger crop-rotation))]}]}
                (end-turn 0)
                (choose :estate))
-           {:projects       [(assoc crop-rotation :participants #{0})]
-            :current-player 0
+           {:current-player 0
             :players        [{:hand     [copper copper copper copper gold copper]
                               :deck     [silver]
                               :discard  [estate]
@@ -1902,13 +1890,11 @@
                               :phase    :action
                               :triggers [(merge {:duration :game}
                                                 (:trigger crop-rotation))]}]}))
-    (is (= (-> {:projects [(assoc crop-rotation :participants #{0})]
-                :players  [{:deck     [copper copper copper copper gold estate copper silver]
-                            :triggers [(merge {:duration :game}
-                                              (:trigger crop-rotation))]}]}
+    (is (= (-> {:players [{:deck     [copper copper copper copper gold estate copper silver]
+                           :triggers [(merge {:duration :game}
+                                             (:trigger crop-rotation))]}]}
                (end-turn 0))
-           {:projects       [(assoc crop-rotation :participants #{0})]
-            :current-player 0
+           {:current-player 0
             :players        [{:hand     [copper copper copper copper gold]
                               :deck     [estate copper silver]
                               :actions  1
@@ -1920,21 +1906,19 @@
 
 (deftest fair-test
   (testing "Fair"
-    (is (= (-> {:projects [fair]
+    (is (= (-> {:projects {:fair fair}
                 :players  [{:coins 4
                             :buys  1}]}
                (buy-project 0 :fair))
-           {:projects [(assoc fair :participants #{0})]
+           {:projects {:fair (assoc fair :participants [{:player-no 0}])}
             :players  [{:coins    0
                         :buys     0
                         :triggers [(merge {:duration :game}
                                           (:trigger fair))]}]}))
-    (is (= (-> {:projects [(assoc fair :participants #{0})]
-                :players  [{:triggers [(merge {:duration :game}
-                                              (:trigger fair))]}]}
+    (is (= (-> {:players [{:triggers [(merge {:duration :game}
+                                             (:trigger fair))]}]}
                (end-turn 0))
-           {:projects       [(assoc fair :participants #{0})]
-            :current-player 0
+           {:current-player 0
             :players        [{:actions  1
                               :coins    0
                               :buys     2
@@ -1946,46 +1930,40 @@
   (let [silver (assoc silver :id 0)
         mountain-village (assoc mountain-village :id 1)]
     (testing "Guildhall"
-      (is (= (-> {:projects [(assoc guildhall :participants #{0})]
-                  :supply   [{:card mountain-village :pile-size 10}]
-                  :players  [{:coins    4
-                              :buys     1
-                              :triggers [(merge {:duration :game}
-                                                (:trigger guildhall))]}]}
+      (is (= (-> {:supply  [{:card mountain-village :pile-size 10}]
+                  :players [{:coins    4
+                             :buys     1
+                             :triggers [(merge {:duration :game}
+                                               (:trigger guildhall))]}]}
                  (buy-card 0 :mountain-village))
-             {:projects [(assoc guildhall :participants #{0})]
-              :supply   [{:card mountain-village :pile-size 9}]
-              :players  [{:discard  [mountain-village]
-                          :coins    0
-                          :buys     0
-                          :triggers [(merge {:duration :game}
-                                            (:trigger guildhall))]}]}))
-      (is (= (-> {:projects [(assoc guildhall :participants #{0})]
-                  :supply   [{:card silver :pile-size 40}]
-                  :players  [{:coins    3
-                              :buys     1
-                              :triggers [(merge {:duration :game}
-                                                (:trigger guildhall))]}]}
+             {:supply  [{:card mountain-village :pile-size 9}]
+              :players [{:discard  [mountain-village]
+                         :coins    0
+                         :buys     0
+                         :triggers [(merge {:duration :game}
+                                           (:trigger guildhall))]}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:coins    3
+                             :buys     1
+                             :triggers [(merge {:duration :game}
+                                               (:trigger guildhall))]}]}
                  (buy-card 0 :silver))
-             {:projects [(assoc guildhall :participants #{0})]
-              :supply   [{:card silver :pile-size 39}]
-              :players  [{:discard  [silver]
-                          :coins    0
-                          :buys     0
-                          :coffers  1
-                          :triggers [(merge {:duration :game}
-                                            (:trigger guildhall))]}]})))))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:discard  [silver]
+                         :coins    0
+                         :buys     0
+                         :coffers  1
+                         :triggers [(merge {:duration :game}
+                                           (:trigger guildhall))]}]})))))
 
 (deftest silos-test
   (testing "Silos"
-    (is (= (-> {:projects [(assoc silos :participants #{0})]
-                :players  [{:deck     [copper copper estate silver estate gold gold duchy]
-                            :triggers [(merge {:duration :game}
-                                              (:trigger silos))]}]}
+    (is (= (-> {:players [{:deck     [copper copper estate silver estate gold gold duchy]
+                           :triggers [(merge {:duration :game}
+                                             (:trigger silos))]}]}
                (end-turn 0)
                (choose [:copper :copper]))
-           {:projects       [(assoc silos :participants #{0})]
-            :current-player 0
+           {:current-player 0
             :players        [{:hand     [estate silver estate gold gold]
                               :deck     [duchy]
                               :discard  [copper copper]
@@ -1998,13 +1976,11 @@
 
 (deftest piazza-test
   (testing "Piazza"
-    (is (= (-> {:projects [(assoc piazza :participants #{0})]
-                :players  [{:deck     [copper copper estate silver estate patron gold]
-                            :triggers [(merge {:duration :game}
-                                              (:trigger piazza))]}]}
+    (is (= (-> {:players [{:deck     [copper copper estate silver estate patron gold]
+                           :triggers [(merge {:duration :game}
+                                             (:trigger piazza))]}]}
                (end-turn 0))
-           {:projects       [(assoc piazza :participants #{0})]
-            :current-player 0
+           {:current-player 0
             :players        [{:hand           [copper copper estate silver estate]
                               :play-area      [patron]
                               :deck           [gold]
@@ -2017,13 +1993,11 @@
                               :phase          :action
                               :triggers       [(merge {:duration :game}
                                                       (:trigger piazza))]}]}))
-    (is (= (-> {:projects [(assoc piazza :participants #{0})]
-                :players  [{:deck     [copper copper estate silver estate gold patron]
-                            :triggers [(merge {:duration :game}
-                                              (:trigger piazza))]}]}
+    (is (= (-> {:players [{:deck     [copper copper estate silver estate gold patron]
+                           :triggers [(merge {:duration :game}
+                                             (:trigger piazza))]}]}
                (end-turn 0))
-           {:projects       [(assoc piazza :participants #{0})]
-            :current-player 0
+           {:current-player 0
             :players        [{:hand           [copper copper estate silver estate]
                               :deck           [gold patron]
                               :revealed-cards {:deck 1}
@@ -2033,3 +2007,74 @@
                               :phase          :action
                               :triggers       [(merge {:duration :game}
                                                       (:trigger piazza))]}]}))))
+
+(deftest sinister-plot-test
+  (testing "Sinister Plot"
+    (is (= (-> {:projects {:sinister-plot (assoc fair :participants [{:player-no 0}])}
+                :players  [{:deck     [copper copper estate silver estate gold gold duchy]
+                            :triggers [(merge {:duration :game}
+                                              (:trigger sinister-plot))]}]}
+               (end-turn 0)
+               (choose :add-token))
+           {:projects       {:sinister-plot (assoc fair :participants [{:player-no 0
+                                                                        :tokens    1}])}
+            :current-player 0
+            :players        [{:hand     [copper copper estate silver estate]
+                              :deck     [gold gold duchy]
+                              :actions  1
+                              :coins    0
+                              :buys     1
+                              :phase    :action
+                              :triggers [(merge {:duration :game}
+                                                (:trigger sinister-plot))]}]}))
+    (is (= (-> {:projects {:sinister-plot (assoc fair :participants [{:player-no 0
+                                                                      :tokens    1}])}
+                :players  [{:deck     [copper copper estate silver estate gold gold duchy]
+                            :triggers [(merge {:duration :game}
+                                              (:trigger sinister-plot))]}]}
+               (end-turn 0)
+               (choose :add-token))
+           {:projects       {:sinister-plot (assoc fair :participants [{:player-no 0
+                                                                        :tokens    2}])}
+            :current-player 0
+            :players        [{:hand     [copper copper estate silver estate]
+                              :deck     [gold gold duchy]
+                              :actions  1
+                              :coins    0
+                              :buys     1
+                              :phase    :action
+                              :triggers [(merge {:duration :game}
+                                                (:trigger sinister-plot))]}]}))
+    (is (= (-> {:projects {:sinister-plot (assoc fair :participants [{:player-no 0
+                                                                      :tokens    2}])}
+                :players  [{:deck     [copper copper estate silver estate gold gold duchy]
+                            :triggers [(merge {:duration :game}
+                                              (:trigger sinister-plot))]}]}
+               (end-turn 0)
+               (choose :remove-tokens))
+           {:projects       {:sinister-plot (assoc fair :participants [{:player-no 0}])}
+            :current-player 0
+            :players        [{:hand     [copper copper estate silver estate gold gold]
+                              :deck     [duchy]
+                              :actions  1
+                              :coins    0
+                              :buys     1
+                              :phase    :action
+                              :triggers [(merge {:duration :game}
+                                                (:trigger sinister-plot))]}]}))
+    (is (= (-> {:projects {:sinister-plot (assoc fair :participants [{:player-no 0}])}
+                :players  [{:deck     [copper copper estate silver estate gold gold duchy]
+                            :triggers [(merge {:duration :game}
+                                              (:trigger sinister-plot))]}]}
+               (end-turn 0)
+               (choose :remove-tokens))
+           {:projects       {:sinister-plot (assoc fair :participants [{:player-no 0}])}
+            :current-player 0
+            :players        [{:hand     [copper copper estate silver estate]
+                              :deck     [gold gold duchy]
+                              :actions  1
+                              :coins    0
+                              :buys     1
+                              :phase    :action
+                              :triggers [(merge {:duration :game}
+                                                (:trigger sinister-plot))]}]}))))

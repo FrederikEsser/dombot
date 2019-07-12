@@ -102,7 +102,9 @@
                   (sort-by (juxt :cost :name)))
         projects (->> elps
                       (filter (comp #{:project} :type))
-                      vec)]
+                      (map (fn [{:keys [name] :as elp}]
+                             [name elp]))
+                      (into {}))]
     (ut/reset-ids!)
     (as-> (merge
             {:mode                  mode

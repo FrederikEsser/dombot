@@ -666,6 +666,45 @@
                                                :choice  ::dominion/cellar-sift
                                                :options [:player :hand {:name :copper}]}]]}})
 
+(defn- sinister-plot-choice [game {:keys [player-no choice]}]
+  (let [{:keys [tokens idx]} (->> (get-in game [:projects :sinister-plot :participants])
+                                  (keep-indexed (fn [idx participant]
+                                                  (when (= player-no (:player-no participant))
+                                                    {:idx    idx
+                                                     :tokens (:tokens participant)})))
+                                  first)]
+    (case choice
+      :add-token (update-in game [:projects :sinister-plot :participants idx :tokens] ut/plus 1)
+      :remove-tokens (-> game
+                         (update-in [:projects :sinister-plot :participants idx] dissoc :tokens)
+                         (cond-> tokens (draw {:player-no player-no :arg tokens}))))))
+
+(defn- sinister-plot-give-choice [game {:keys [player-no]}]
+  (let [tokens (or (->> (get-in game [:projects :sinister-plot :participants])
+                        (keep-indexed (fn [idx participant]
+                                        (when (= player-no (:player-no participant))
+                                          (:tokens participant))))
+                        first)
+                   0)]
+    (give-choice game {:player-no player-no
+                       :text      (str "Add a token to Sinister Plot, or remove your tokens for +" tokens " Card" (when (not= 1 tokens) "s") ".")
+                       :choice    ::sinister-plot-choice
+                       :options   [:special
+                                   {:option :add-token :text "Add a token."}
+                                   {:option :remove-tokens :text (str "Remove tokens, +" tokens " Card" (when (not= 1 tokens) "s"))}]
+                       :min       1
+                       :max       1})))
+
+(effects/register {::sinister-plot-choice      sinister-plot-choice
+                   ::sinister-plot-give-choice sinister-plot-give-choice})
+
+(def sinister-plot {:name    :sinister-plot
+                    :set     :renaissance
+                    :type    :project
+                    :cost    4
+                    :trigger {:trigger :at-start-turn
+                              :effects [[::sinister-plot-give-choice]]}})
+
 (def projects [academy
                barracks
                cathedral
@@ -674,5 +713,6 @@
                fair
                guildhall
                piazza
-               silos])
+               silos
+               sinister-plot])
 

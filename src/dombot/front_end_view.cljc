@@ -43,18 +43,22 @@
                       choice                         :choice
                       :as                            game}]
   (->> projects
-       (map (fn [{:keys [name type cost participants] :as project}]
+       vals
+       (map (fn [{:keys [name type cost participants]}]
               (merge {:name    name
                       :name-ui (ut/format-name name)
                       :type    type
                       :cost    cost}
                      (when (not-empty participants)
                        {:participants (->> participants
-                                           (map (fn [n]
-                                                  (-> (get-in game [:players n :name])
-                                                      ut/format-name-short))))})
+                                           (map (fn [{:keys [player-no tokens]}]
+                                                  (str "["
+                                                       (-> (get-in game [:players player-no :name])
+                                                           ut/format-name-short)
+                                                       (when tokens (str ":" tokens))
+                                                       "]"))))})
                      (when (and (not choice)                ; todo: check phase
-                                (not (contains? participants player-no))
+                                (not-any? (comp #{player-no} :player-no) participants)
                                 buys (pos? buys)
                                 coins (<= cost coins))
                        {:interaction :buyable}))))))

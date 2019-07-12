@@ -9,7 +9,9 @@
 ; view card images
 ; store commands in history
 ; save / load game
+; handle simultaneous effects at-start-turn
 ; fix play-treasures / Scepter replay Priest (or any treasure trasher)
+; fix Scepter on duration stays in play
 ; fix Throne Room / Improve
 ; fix Improve / double Border Guard bug
 ; fix 2x Cargo Ship / buy Experiment bug

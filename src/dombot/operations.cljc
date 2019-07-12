@@ -338,19 +338,18 @@
 
 (defn buy-project [{:keys [effect-stack] :as game} player-no project-name]
   (let [{:keys [buys coins phase]} (get-in game [:players player-no])
-        {:keys [project idx]} (ut/get-project-idx game project-name)
-        {:keys [cost trigger participants]} project]
+        {:keys [cost trigger participants] :as project} (get-in game [:projects project-name])]
     (assert (empty? effect-stack) "You can't buy cards when you have a choice to make.")
     (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
     (assert project (str "Buy error: The project " (ut/format-name project-name) " isn't in the game."))
     (assert (and coins cost (>= coins cost)) (str "Buy error: " (ut/format-name project-name) " costs " cost " and you only have " coins " coins."))
-    (assert (not (contains? participants player-no)) (str "Buy error: You already participate in the project " (ut/format-name project-name) "."))
+    (assert (not-any? (comp #{player-no} :player-no) participants) (str "Buy error: You already participate in the project " (ut/format-name project-name) "."))
     (when phase
       (assert (#{:action :pay :buy} phase) (str "You can't buy projects when you're in the " (ut/format-name phase) " phase.")))
     (-> game
         (update-in [:players player-no :coins] - cost)
         (update-in [:players player-no :buys] - 1)
-        (update-in [:projects idx :participants] (comp set conj) player-no)
+        (update-in [:projects project-name :participants] (comp vec conj) {:player-no player-no})
         (update-in [:players player-no :triggers] concat [(assoc trigger :duration :game)]))))
 
 (defn do-shuffle
