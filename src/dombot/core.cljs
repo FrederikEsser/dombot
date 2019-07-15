@@ -100,7 +100,8 @@
                :disabled disabled
                :on-click (when interaction
                            (fn [] (case interaction
-                                    :buyable (swap! state assoc :game (cmd/buy-project name)))))}
+                                    :buyable (swap! state assoc :game (cmd/buy-project name))
+                                    :quick-choosable (swap! state assoc :game (cmd/choose name)))))}
       (str name-ui
            (when cost (str " ($" cost ")"))
            (when participants (str " " (->> participants (string/join " ")))))]]))

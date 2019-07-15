@@ -61,7 +61,8 @@
                                 (not-any? (comp #{player-no} :player-no) participants)
                                 buys (pos? buys)
                                 coins (<= cost coins))
-                       {:interaction :buyable}))))))
+                       {:interaction :buyable})
+                     (choice-interaction name :mixed choice))))))
 
 (defn view-area [area {{:keys [phase actions] :as player} :player
                        choice                             :choice

@@ -54,12 +54,33 @@
                                    :args      args})
                        check-stack))))
 
+(defn- get-trigger-effects [triggers]
+  (if (< 1 (count triggers))
+    [[:give-choice {:text    "Multiple things happen at the start of your turn. Select which one happens next."
+                    :choice  [:simultaneous-effects-choice {:triggers triggers}]
+                    :options (concat [:mixed]
+                                     (map :name triggers))
+                    :min     1
+                    :max     1}]]
+    (mapcat :effects triggers)))
+
+(defn simultaneous-effects-choice [game {:keys [player-no triggers choice]}]
+  (let [[{:keys [effects]} & more-triggers] (->> triggers
+                                                 (sort-by (comp not #{choice} :name)))]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (concat effects
+                                                (get-trigger-effects more-triggers))})))
+
+(effects/register {:simultaneous-effects-choice simultaneous-effects-choice})
+
 (defn at-start-turn-effects [game {:keys [player-no]}]
   (let [duration-cards (->> (get-in game [:players player-no :play-area])
                             (filter (comp not-empty :at-start-turn)))
-        start-turn-effects (->> (get-in game [:players player-no :triggers])
-                                (filter (comp #{:at-start-turn} :trigger))
-                                (mapcat :effects))
+        start-turn-triggers (->> (get-in game [:players player-no :triggers])
+                                 (filter (comp #{:at-start-turn} :trigger))
+                                 (group-by :sim-eff-code))
+        auto-triggers (:auto start-turn-triggers)
+        sim-eff-triggers (:manual start-turn-triggers)
         do-duration-effect (fn [game {:keys [id at-start-turn]}]
                              (-> game
                                  (ut/update-in-vec [:players player-no :play-area] {:id id} dissoc :at-start-turn)
@@ -67,8 +88,11 @@
                                                                            :card-id   id
                                                                            :effects   (apply concat at-start-turn)}))))]
     (-> (reduce do-duration-effect game (reverse duration-cards))
-        (push-effect-stack {:player-no player-no
-                            :effects   start-turn-effects}))))
+        (as-> game
+              (push-effect-stack game {:player-no player-no
+                                       :effects   (concat
+                                                    (mapcat :effects auto-triggers)
+                                                    (get-trigger-effects sim-eff-triggers))})))))
 
 (effects/register {:at-start-turn at-start-turn-effects})
 
@@ -350,7 +374,9 @@
         (update-in [:players player-no :coins] - cost)
         (update-in [:players player-no :buys] - 1)
         (update-in [:projects project-name :participants] (comp vec conj) {:player-no player-no})
-        (update-in [:players player-no :triggers] concat [(assoc trigger :duration :game)]))))
+        (update-in [:players player-no :triggers] concat [(merge {:name     project-name
+                                                                  :duration :game}
+                                                                 trigger)]))))
 
 (defn do-shuffle
   ([{:keys [discard] :as player}]
@@ -523,6 +549,7 @@
                    :deck-position :position
                    :overpay :amount
                    :special :choice
+                   :mixed :choice
                    :card-name)
         single-selection (if (coll? selection)
                            (first selection)
@@ -575,7 +602,11 @@
 (defn choose [game selection]
   (let [[{:keys [choice options min max]}] (get game :effect-stack)
         choose-fn (if (= max 1) choose-single choose-multi)
-        valid-choices (->> options (map (fn [{:keys [option] :as option-data}] (or option option-data))) set)]
+        valid-choices (->> options
+                           (map (fn [{:keys [option] :as option-data}]
+                                  (or option
+                                      option-data)))
+                           set)]
     (assert choice "Choose error: You don't have a choice to make.")
     (assert (not-empty options) "Choose error: Choice has no options")
     (assert (or (nil? min) (nil? max) (<= min max)))

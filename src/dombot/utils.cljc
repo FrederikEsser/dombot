@@ -214,7 +214,8 @@
 (defn special-options [game player-no card-id & options]
   options)
 
-(effects/register-options {:special special-options})
+(effects/register-options {:special special-options
+                           :mixed   special-options})
 
 (defn empty-supply-piles [{:keys [supply] :as game}]
   (->> supply

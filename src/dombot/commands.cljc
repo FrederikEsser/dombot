@@ -9,7 +9,7 @@
 ; view card images
 ; store commands in history
 ; save / load game
-; handle simultaneous effects at-start-turn
+; handle simultaneous duration effects at-start-turn
 ; fix play-treasures / Scepter replay Priest (or any treasure trasher)
 ; fix Scepter on duration stays in play
 ; fix Throne Room / Improve
