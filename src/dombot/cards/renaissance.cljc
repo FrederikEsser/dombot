@@ -633,6 +633,24 @@
                                                                  :options [:player :hand {:type :victory}]
                                                                  :max     1}]]}})
 
+(defn- exploration-at-end-buy [game {:keys [player-no]}]
+  (let [bought-cards? (->> (get-in game [:players player-no :gained-cards])
+                           (filter :bought)
+                           not-empty)]
+    (cond-> game
+            (not bought-cards?) (push-effect-stack {:player-no player-no
+                                                    :effects   [[:give-coffers 1]
+                                                                [:give-villagers 1]]}))))
+
+(effects/register {::exploration-at-end-buy exploration-at-end-buy})
+
+(def exploration {:name    :exploration
+                  :set     :renaissance
+                  :type    :project
+                  :cost    4
+                  :trigger {:trigger :at-end-buy
+                            :effects [[::exploration-at-end-buy]]}})
+
 (def fair {:name    :fair
            :set     :renaissance
            :type    :project
@@ -769,6 +787,7 @@
                cathedral
                city-gate
                crop-rotation
+               exploration
                fair
                guildhall
                pageant

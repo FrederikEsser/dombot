@@ -1877,6 +1877,41 @@
                               :phase    :action
                               :triggers [(get-trigger crop-rotation)]}]}))))
 
+(deftest exploration-test
+  (testing "Exploration"
+    (is (= (-> {:players [{:phase    :buy
+                           :triggers [(get-trigger exploration)]}]}
+               (clean-up {:player-no 0}))
+           {:players [{:actions   0
+                       :coins     0
+                       :buys      0
+                       :villagers 1
+                       :coffers   1
+                       :phase     :out-of-turn
+                       :triggers  [(get-trigger exploration)]}]}))
+    (is (= (-> {:players [{:gained-cards [{:name :silver :bought false}]
+                           :phase        :buy
+                           :triggers     [(get-trigger exploration)]}]}
+               (clean-up {:player-no 0}))
+           {:players [{:gained-cards [{:name :silver :bought false}]
+                       :actions      0
+                       :coins        0
+                       :buys         0
+                       :villagers    1
+                       :coffers      1
+                       :phase        :out-of-turn
+                       :triggers     [(get-trigger exploration)]}]}))
+    (is (= (-> {:players [{:gained-cards [{:name :silver :bought true}]
+                           :phase        :buy
+                           :triggers     [(get-trigger exploration)]}]}
+               (clean-up {:player-no 0}))
+           {:players [{:gained-cards [{:name :silver :bought true}]
+                       :actions      0
+                       :coins        0
+                       :buys         0
+                       :phase        :out-of-turn
+                       :triggers     [(get-trigger exploration)]}]}))))
+
 (deftest fair-test
   (testing "Fair"
     (is (= (-> {:players [{:phase    :out-of-turn
