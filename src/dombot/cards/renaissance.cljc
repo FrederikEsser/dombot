@@ -655,6 +655,34 @@
                 :trigger {:trigger :on-gain
                           :effects [[::guildhall-on-gain]]}})
 
+(defn- pageant-pay-for-coffers [game {:keys [player-no choice] :as args}]
+  (cond-> game
+          (= :get-coffers choice) (push-effect-stack {:player-no player-no
+                                                      :effects   [[:give-coins -1]
+                                                                  [:give-coffers 1]]})))
+
+(defn pageant-give-choice [game {:keys [player-no]}]
+  (let [coins (get-in game [:players player-no :coins])]
+    (cond-> game
+            (pos? coins) (give-choice {:player-no player-no
+                                       :text      "You may pay $1 for +1 Coffers."
+                                       :choice    ::pageant-pay-for-coffers
+                                       :options   [:special
+                                                   {:option :get-coffers :text "+1 Coffers"}
+                                                   {:option :decline :text "Decline"}]
+                                       :min       1
+                                       :max       1}))))
+
+(effects/register {::pageant-pay-for-coffers pageant-pay-for-coffers
+                   ::pageant-give-choice     pageant-give-choice})
+
+(def pageant {:name    :pageant
+              :set     :renaissance
+              :type    :project
+              :cost    3
+              :trigger {:trigger :at-end-buy
+                        :effects [[::pageant-give-choice]]}})
+
 (def piazza {:name    :piazza
              :set     :renaissance
              :type    :project
@@ -743,6 +771,7 @@
                crop-rotation
                fair
                guildhall
+               pageant
                piazza
                road-network
                silos

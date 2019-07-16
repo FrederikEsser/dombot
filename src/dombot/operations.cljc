@@ -97,17 +97,37 @@
 
 (effects/register {:at-start-turn at-start-turn-effects})
 
+(def phase-order [:out-of-turn
+                  :action
+                  :pay
+                  :buy
+                  :clean-up
+                  :out-of-turn])
+
+(defn next-phase [phase]
+  (let [phase-index (->> phase-order
+                         (keep-indexed (fn [idx p]
+                                         (when (= p phase) idx)))
+                         first)]
+    (assert phase-index (str "Phase " phase " is not placed in the phase order."))
+    (get phase-order (inc phase-index))))
+
 (defn set-phase [game {:keys [player-no phase]}]
-  (let [current-phase (get-in game [:players player-no :phase])
-        phase-change (cond (and (#{:action} current-phase)
-                                (#{:pay :buy :clean-up} phase)) :at-start-buy)
-        phase-change-effects (->> (get-in game [:players player-no :triggers])
-                                  (filter (comp #{phase-change} :trigger))
-                                  (mapcat :effects))]
-    (cond-> game
-            current-phase (assoc-in [:players player-no :phase] phase)
-            phase-change-effects (push-effect-stack {:player-no player-no
-                                                     :effects   phase-change-effects}))))
+  (let [current-phase (get-in game [:players player-no :phase])]
+    (if (and current-phase (not= current-phase phase))
+      (let [next-phase (next-phase current-phase)
+            phase-change (cond (#{:pay} next-phase) :at-start-buy
+                               (#{:buy} current-phase) :at-end-buy)
+            phase-change-effects (->> (get-in game [:players player-no :triggers])
+                                      (filter (comp #{phase-change} :trigger))
+                                      (mapcat :effects))]
+        (-> game
+            (assoc-in [:players player-no :phase] next-phase)
+            (push-effect-stack {:player-no player-no
+                                :effects   (concat phase-change-effects
+                                                   (when (not= next-phase phase)
+                                                     [[:set-phase {:phase phase}]]))})))
+      game)))
 
 (effects/register {:set-phase set-phase})
 

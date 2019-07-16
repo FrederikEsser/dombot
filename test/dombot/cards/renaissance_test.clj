@@ -1915,6 +1915,41 @@
                          :coffers  1
                          :triggers [(get-trigger guildhall)]}]})))))
 
+(deftest pageant-test
+  (testing "Pageant"
+    (is (= (-> {:players [{:coins    1
+                           :phase    :buy
+                           :triggers [(get-trigger pageant)]}]}
+               (clean-up {:player-no 0})
+               (choose :get-coffers))
+           {:players [{:actions  0
+                       :coins    0
+                       :buys     0
+                       :coffers  1
+                       :phase    :out-of-turn
+                       :triggers [(get-trigger pageant)]}]}))
+    (is (= (-> {:players [{:coins    1
+                           :phase    :action
+                           :triggers [(get-trigger pageant)]}]}
+               (clean-up {:player-no 0})
+               (choose :get-coffers))
+           {:players [{:actions  0
+                       :coins    0
+                       :buys     0
+                       :coffers  1
+                       :phase    :out-of-turn
+                       :triggers [(get-trigger pageant)]}]}))
+    (is (= (-> {:players [{:coins    1
+                           :phase    :buy
+                           :triggers [(get-trigger pageant)]}]}
+               (clean-up {:player-no 0})
+               (choose :decline))
+           {:players [{:actions  0
+                       :coins    0
+                       :buys     0
+                       :phase    :out-of-turn
+                       :triggers [(get-trigger pageant)]}]}))))
+
 (deftest piazza-test
   (testing "Piazza"
     (is (= (-> {:players [{:hand     [copper copper estate silver estate]
