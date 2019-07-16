@@ -472,9 +472,9 @@
                    :setup   [[::add-artifact {:artifact-name :treasure-chest}]]})
 
 (def key {:name    :key
-          :trigger {:trigger      :at-start-turn
-                    :sim-eff-code :auto
-                    :effects      [[:give-coins 1]]}})
+          :trigger {:trigger           :at-start-turn
+                    :simultaneous-mode :auto
+                    :effects           [[:give-coins 1]]}})
 
 (defn treasurer-choice [game {:keys [player-no choice]}]
   (case choice
@@ -585,34 +585,34 @@
                :set     :renaissance
                :type    :project
                :cost    6
-               :trigger {:trigger      :at-start-turn
-                         :sim-eff-code :auto
-                         :effects      [[:give-actions 1]]}})
+               :trigger {:trigger           :at-start-turn
+                         :simultaneous-mode :auto
+                         :effects           [[:give-actions 1]]}})
 
 (def cathedral {:name    :cathedral
                 :set     :renaissance
                 :type    :project
                 :cost    3
-                :trigger {:trigger      :at-start-turn
-                          :sim-eff-code :manual
-                          :effects      [[:give-choice {:text    "Trash a card from your hand."
-                                                        :choice  :trash-from-hand
-                                                        :options [:player :hand]
-                                                        :min     1
-                                                        :max     1}]]}})
+                :trigger {:trigger           :at-start-turn
+                          :simultaneous-mode :manual
+                          :effects           [[:give-choice {:text    "Trash a card from your hand."
+                                                             :choice  :trash-from-hand
+                                                             :options [:player :hand]
+                                                             :min     1
+                                                             :max     1}]]}})
 
 (def city-gate {:name    :city-gate
                 :set     :renaissance
                 :type    :project
                 :cost    3
-                :trigger {:trigger      :at-start-turn
-                          :sim-eff-code :manual
-                          :effects      [[:draw 1]
-                                         [:give-choice {:text    "Put a card from your hand onto your deck."
-                                                        :choice  :topdeck-from-hand
-                                                        :options [:player :hand]
-                                                        :min     1
-                                                        :max     1}]]}})
+                :trigger {:trigger           :at-start-turn
+                          :simultaneous-mode :manual
+                          :effects           [[:draw 1]
+                                              [:give-choice {:text    "Put a card from your hand onto your deck."
+                                                             :choice  :topdeck-from-hand
+                                                             :options [:player :hand]
+                                                             :min     1
+                                                             :max     1}]]}})
 
 (defn- crop-rotation-discard [game {:keys [player-no card-name]}]
   (cond-> game
@@ -626,20 +626,20 @@
                     :set     :renaissance
                     :type    :project
                     :cost    6
-                    :trigger {:trigger      :at-start-turn
-                              :sim-eff-code :manual
-                              :effects      [[:give-choice {:text    "You may discard a Victory card for +2 Cards."
-                                                            :choice  ::crop-rotation-discard
-                                                            :options [:player :hand {:type :victory}]
-                                                            :max     1}]]}})
+                    :trigger {:trigger           :at-start-turn
+                              :simultaneous-mode :manual
+                              :effects           [[:give-choice {:text    "You may discard a Victory card for +2 Cards."
+                                                                 :choice  ::crop-rotation-discard
+                                                                 :options [:player :hand {:type :victory}]
+                                                                 :max     1}]]}})
 
 (def fair {:name    :fair
            :set     :renaissance
            :type    :project
            :cost    4
-           :trigger {:trigger      :at-start-turn
-                     :sim-eff-code :auto
-                     :effects      [[:give-buys 1]]}})
+           :trigger {:trigger           :at-start-turn
+                     :simultaneous-mode :auto
+                     :effects           [[:give-buys 1]]}})
 
 (defn guildhall-on-gain [game {:keys [player-no gained-card-id from]}]
   (let [{{:keys [types]} :card} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})]
@@ -659,10 +659,10 @@
              :set     :renaissance
              :type    :project
              :cost    5
-             :trigger {:trigger      :at-start-turn
-                       :sim-eff-code :manual
-                       :effects      [[:reveal-from-deck 1]
-                                      [::guilds/herald-play-action]]}})
+             :trigger {:trigger           :at-start-turn
+                       :simultaneous-mode :manual
+                       :effects           [[:reveal-from-deck 1]
+                                           [::guilds/herald-play-action]]}})
 
 (defn- road-network-on-gain [game {:keys [player-no card-name] :as args}]
   (let [{{:keys [types]} :card} (ut/get-pile-idx game card-name)]
@@ -690,11 +690,11 @@
             :set     :renaissance
             :type    :project
             :cost    4
-            :trigger {:trigger      :at-start-turn
-                      :sim-eff-code :manual
-                      :effects      [[:give-choice {:text    "Discard any number of Coppers."
-                                                    :choice  ::dominion/cellar-sift
-                                                    :options [:player :hand {:name :copper}]}]]}})
+            :trigger {:trigger           :at-start-turn
+                      :simultaneous-mode :manual
+                      :effects           [[:give-choice {:text    "Discard any number of Coppers."
+                                                         :choice  ::dominion/cellar-sift
+                                                         :options [:player :hand {:name :copper}]}]]}})
 
 (defn- sinister-plot-choice [game {:keys [player-no choice]}]
   (let [{:keys [tokens idx]} (->> (get-in game [:projects :sinister-plot :participants])
@@ -711,9 +711,9 @@
 
 (defn- sinister-plot-give-choice [game {:keys [player-no]}]
   (let [tokens (or (->> (get-in game [:projects :sinister-plot :participants])
-                        (keep-indexed (fn [idx participant]
-                                        (when (= player-no (:player-no participant))
-                                          (:tokens participant))))
+                        (keep (fn [participant]
+                                (when (= player-no (:player-no participant))
+                                  (:tokens participant))))
                         first)
                    0)]
     (give-choice game {:player-no player-no
@@ -732,9 +732,9 @@
                     :set     :renaissance
                     :type    :project
                     :cost    4
-                    :trigger {:trigger      :at-start-turn
-                              :sim-eff-code :manual
-                              :effects      [[::sinister-plot-give-choice]]}})
+                    :trigger {:trigger           :at-start-turn
+                              :simultaneous-mode :manual
+                              :effects           [[::sinister-plot-give-choice]]}})
 
 (def projects [academy
                barracks

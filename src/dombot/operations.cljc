@@ -78,22 +78,22 @@
                             (filter (comp not-empty :at-start-turn)))
         start-turn-triggers (->> (get-in game [:players player-no :triggers])
                                  (filter (comp #{:at-start-turn} :trigger)))
-        auto-triggers (filter (comp #{:auto} :sim-eff-code) start-turn-triggers)
-        sim-eff-triggers (filter (comp #{:manual} :sim-eff-code) start-turn-triggers)
+        auto-triggers (filter (comp #{:auto} :simultaneous-mode) start-turn-triggers)
+        manual-triggers (filter (comp #{:manual} :simultaneous-mode) start-turn-triggers)
         do-duration-effect (fn [game {:keys [id at-start-turn]}]
                              (-> game
                                  (ut/update-in-vec [:players player-no :play-area] {:id id} dissoc :at-start-turn)
                                  (cond-> at-start-turn (push-effect-stack {:player-no player-no
                                                                            :card-id   id
                                                                            :effects   (apply concat at-start-turn)}))))]
-   (assert (every? :sim-eff-code start-turn-triggers) (str "Trigger error: Some triggers miss a :sim-eff-code: "
-                                                           (->> start-turn-triggers (remove :sim-eff-code) (map :name) (clojure.string/join ", "))))
+    (assert (every? :simultaneous-mode start-turn-triggers) (str "Trigger error: Some triggers miss a simultaneous mode: "
+                                                                 (->> start-turn-triggers (remove :simultaneous-mode) (map :name) (clojure.string/join ", "))))
     (-> (reduce do-duration-effect game (reverse duration-cards))
         (as-> game
               (push-effect-stack game {:player-no player-no
                                        :effects   (concat
                                                     (mapcat :effects auto-triggers)
-                                                    (get-trigger-effects sim-eff-triggers))})))))
+                                                    (get-trigger-effects manual-triggers))})))))
 
 (effects/register {:at-start-turn at-start-turn-effects})
 
