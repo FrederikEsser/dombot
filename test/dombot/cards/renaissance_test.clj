@@ -1915,24 +1915,6 @@
                          :coffers  1
                          :triggers [(get-trigger guildhall)]}]})))))
 
-(deftest silos-test
-  (testing "Silos"
-    (is (= (-> {:players [{:hand     [copper copper estate silver estate]
-                           :deck     [gold gold duchy]
-                           :phase    :out-of-turn
-                           :triggers [(get-trigger silos)]}]}
-               (start-turn {:player-no 0})
-               (choose [:copper :copper]))
-           {:current-player 0
-            :players        [{:hand     [estate silver estate gold gold]
-                              :deck     [duchy]
-                              :discard  [copper copper]
-                              :actions  1
-                              :coins    0
-                              :buys     1
-                              :phase    :action
-                              :triggers [(get-trigger silos)]}]}))))
-
 (deftest piazza-test
   (testing "Piazza"
     (is (= (-> {:players [{:hand     [copper copper estate silver estate]
@@ -1966,6 +1948,149 @@
                               :buys           1
                               :phase          :action
                               :triggers       [(get-trigger piazza)]}]}))))
+
+(deftest road-network-test
+  (let [duchy (assoc duchy :id 0)
+        silver (assoc silver :id 1)]
+    (testing "Road Network"
+      (is (= (-> {:projects {:road-network road-network}
+                  :players  [{:coins 5
+                              :buys  1}
+                             {}]}
+                 (buy-project 0 :road-network))
+             {:projects {:road-network (assoc road-network :participants [{:player-no 0}])}
+              :players  [{:coins 0
+                          :buys  0}
+                         {:triggers [{:name     :road-network
+                                      :duration :game
+                                      :trigger  :on-gain
+                                      :effects  [[::renaissance/road-network-on-gain {:player-no 0}]]}]}]}))
+      (is (= (-> {:projects {:road-network (assoc road-network :participants [{:player-no 1}])}
+                  :players  [{:coins    5
+                              :buys     1
+                              :triggers [{:name     :road-network
+                                          :duration :game
+                                          :trigger  :on-gain
+                                          :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}]}
+                             {}
+                             {:triggers [{:name     :road-network
+                                          :duration :game
+                                          :trigger  :on-gain
+                                          :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}]}]}
+                 (buy-project 0 :road-network))
+             {:projects {:road-network (assoc road-network :participants [{:player-no 1} {:player-no 0}])}
+              :players  [{:coins    0
+                          :buys     0
+                          :triggers [{:name     :road-network
+                                      :duration :game
+                                      :trigger  :on-gain
+                                      :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}]}
+                         {:triggers [{:name     :road-network
+                                      :duration :game
+                                      :trigger  :on-gain
+                                      :effects  [[::renaissance/road-network-on-gain {:player-no 0}]]}]}
+                         {:triggers [{:name     :road-network
+                                      :duration :game
+                                      :trigger  :on-gain
+                                      :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}
+                                     {:name     :road-network
+                                      :duration :game
+                                      :trigger  :on-gain
+                                      :effects  [[::renaissance/road-network-on-gain {:player-no 0}]]}]}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:coins    3
+                             :buys     1
+                             :triggers [{:name     :road-network
+                                         :duration :game
+                                         :trigger  :on-gain
+                                         :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}]}
+                            {:hand [copper copper copper copper copper]
+                             :deck [silver silver]}]}
+                 (buy-card 0 :silver))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:discard  [silver]
+                         :coins    0
+                         :buys     0
+                         :triggers [{:name     :road-network
+                                     :duration :game
+                                     :trigger  :on-gain
+                                     :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}]}
+                        {:hand [copper copper copper copper copper]
+                         :deck [silver silver]}]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:coins    5
+                             :buys     1
+                             :triggers [{:name     :road-network
+                                         :duration :game
+                                         :trigger  :on-gain
+                                         :effects  [[::renaissance/road-network-on-gain {:player-no 2}]]}]}
+                            {:hand [copper copper copper copper copper]
+                             :deck [silver silver]}
+                            {:hand [copper copper copper copper copper]
+                             :deck [silver silver]}]}
+                 (buy-card 0 :duchy))
+             {:supply  [{:card duchy :pile-size 7}]
+              :players [{:discard  [duchy]
+                         :coins    0
+                         :buys     0
+                         :triggers [{:name     :road-network
+                                     :duration :game
+                                     :trigger  :on-gain
+                                     :effects  [[::renaissance/road-network-on-gain {:player-no 2}]]}]}
+                        {:hand [copper copper copper copper copper]
+                         :deck [silver silver]}
+                        {:hand [copper copper copper copper copper silver]
+                         :deck [silver]}]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:coins    5
+                             :buys     1
+                             :triggers [{:name     :road-network
+                                         :duration :game
+                                         :trigger  :on-gain
+                                         :effects  [[::renaissance/road-network-on-gain {:player-no 2}]]}
+                                        {:name     :road-network
+                                         :duration :game
+                                         :trigger  :on-gain
+                                         :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}]}
+                            {:hand [copper copper copper copper copper]
+                             :deck [silver silver]}
+                            {:hand [copper copper copper copper copper]
+                             :deck [silver silver]}]}
+                 (buy-card 0 :duchy))
+             {:supply  [{:card duchy :pile-size 7}]
+              :players [{:discard  [duchy]
+                         :coins    0
+                         :buys     0
+                         :triggers [{:name     :road-network
+                                     :duration :game
+                                     :trigger  :on-gain
+                                     :effects  [[::renaissance/road-network-on-gain {:player-no 2}]]}
+                                    {:name     :road-network
+                                     :duration :game
+                                     :trigger  :on-gain
+                                     :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}]}
+                        {:hand [copper copper copper copper copper silver]
+                         :deck [silver]}
+                        {:hand [copper copper copper copper copper silver]
+                         :deck [silver]}]})))))
+
+(deftest silos-test
+  (testing "Silos"
+    (is (= (-> {:players [{:hand     [copper copper estate silver estate]
+                           :deck     [gold gold duchy]
+                           :phase    :out-of-turn
+                           :triggers [(get-trigger silos)]}]}
+               (start-turn {:player-no 0})
+               (choose [:copper :copper]))
+           {:current-player 0
+            :players        [{:hand     [estate silver estate gold gold]
+                              :deck     [duchy]
+                              :discard  [copper copper]
+                              :actions  1
+                              :coins    0
+                              :buys     1
+                              :phase    :action
+                              :triggers [(get-trigger silos)]}]}))))
 
 (deftest sinister-plot-test
   (testing "Sinister Plot"

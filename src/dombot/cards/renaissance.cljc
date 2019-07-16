@@ -1,5 +1,5 @@
 (ns dombot.cards.renaissance
-  (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards card-effect]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards card-effect affect-other-players]]
             [dombot.cards.common :refer [reveal-hand reveal-from-deck add-trigger give-coins give-coffers give-villagers]]
             [dombot.cards.dominion :as dominion]
             [dombot.cards.guilds :as guilds]
@@ -664,6 +664,28 @@
                        :effects      [[:reveal-from-deck 1]
                                       [::guilds/herald-play-action]]}})
 
+(defn- road-network-on-gain [game {:keys [player-no card-name] :as args}]
+  (let [{{:keys [types]} :card} (ut/get-pile-idx game card-name)]
+    (cond-> game
+            (:victory types) (draw {:player-no player-no
+                                    :arg       1}))))
+
+(defn- road-network-add-triggers [game {:keys [player-no]}]
+  (affect-other-players game {:player-no player-no
+                              :effects   [[:add-trigger {:trigger {:name     :road-network
+                                                                   :duration :game
+                                                                   :trigger  :on-gain
+                                                                   :effects  [[::road-network-on-gain {:player-no player-no}]]}}]]}))
+
+(effects/register {::road-network-on-gain      road-network-on-gain
+                   ::road-network-add-triggers road-network-add-triggers})
+
+(def road-network {:name   :road-network
+                   :set    :renaissance
+                   :type   :project
+                   :cost   5
+                   :on-buy [[::road-network-add-triggers]]})
+
 (def silos {:name    :silos
             :set     :renaissance
             :type    :project
@@ -722,6 +744,7 @@
                fair
                guildhall
                piazza
+               road-network
                silos
                sinister-plot])
 

@@ -77,16 +77,17 @@
   (let [duration-cards (->> (get-in game [:players player-no :play-area])
                             (filter (comp not-empty :at-start-turn)))
         start-turn-triggers (->> (get-in game [:players player-no :triggers])
-                                 (filter (comp #{:at-start-turn} :trigger))
-                                 (group-by :sim-eff-code))
-        auto-triggers (:auto start-turn-triggers)
-        sim-eff-triggers (:manual start-turn-triggers)
+                                 (filter (comp #{:at-start-turn} :trigger)))
+        auto-triggers (filter (comp #{:auto} :sim-eff-code) start-turn-triggers)
+        sim-eff-triggers (filter (comp #{:manual} :sim-eff-code) start-turn-triggers)
         do-duration-effect (fn [game {:keys [id at-start-turn]}]
                              (-> game
                                  (ut/update-in-vec [:players player-no :play-area] {:id id} dissoc :at-start-turn)
                                  (cond-> at-start-turn (push-effect-stack {:player-no player-no
                                                                            :card-id   id
                                                                            :effects   (apply concat at-start-turn)}))))]
+   (assert (every? :sim-eff-code start-turn-triggers) (str "Trigger error: Some triggers miss a :sim-eff-code: "
+                                                           (->> start-turn-triggers (remove :sim-eff-code) (map :name) (clojure.string/join ", "))))
     (-> (reduce do-duration-effect game (reverse duration-cards))
         (as-> game
               (push-effect-stack game {:player-no player-no
@@ -362,7 +363,7 @@
 
 (defn buy-project [{:keys [effect-stack] :as game} player-no project-name]
   (let [{:keys [buys coins phase]} (get-in game [:players player-no])
-        {:keys [cost trigger participants] :as project} (get-in game [:projects project-name])]
+        {:keys [cost trigger on-buy participants] :as project} (get-in game [:projects project-name])]
     (assert (empty? effect-stack) "You can't buy cards when you have a choice to make.")
     (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
     (assert project (str "Buy error: The project " (ut/format-name project-name) " isn't in the game."))
@@ -374,9 +375,12 @@
         (update-in [:players player-no :coins] - cost)
         (update-in [:players player-no :buys] - 1)
         (update-in [:projects project-name :participants] (comp vec conj) {:player-no player-no})
-        (update-in [:players player-no :triggers] concat [(merge {:name     project-name
-                                                                  :duration :game}
-                                                                 trigger)]))))
+        (cond-> trigger (update-in [:players player-no :triggers] concat [(merge {:name     project-name
+                                                                                  :duration :game}
+                                                                                 trigger)])
+                on-buy (push-effect-stack {:player-no player-no
+                                           :effects   on-buy}))
+        check-stack)))
 
 (defn do-shuffle
   ([{:keys [discard] :as player}]
