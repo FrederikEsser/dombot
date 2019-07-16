@@ -673,6 +673,39 @@
                 :trigger {:trigger :on-gain
                           :effects [[::guildhall-on-gain]]}})
 
+(defn- innovation-play-action [game {:keys [player-no card-name gained-card-id from]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})]
+    (cond-> game
+            card-name (push-effect-stack {:player-no player-no
+                                          :effects   [[:move-card {:move-card-id gained-card-id
+                                                                   :from         from
+                                                                   :to           :play-area}]
+                                                      [:card-effect {:card card}]]}))))
+
+(defn- innovation-on-gain [game {:keys [player-no gained-card-id from] :as args}]
+  (let [{{:keys [name types]} :card} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})
+        gained-actions (->> (get-in game [:players player-no :gained-cards])
+                            (filter (comp :action :types))
+                            count)]
+    (cond-> game
+            (and (:action types)
+                 (<= gained-actions 1)) (give-choice {:player-no player-no
+                                                      :text      (str "You may play the gained " (ut/format-name name) ".")
+                                                      :choice    [::innovation-play-action {:gained-card-id gained-card-id
+                                                                                            :from           from}]
+                                                      :options   [:player from {:id gained-card-id}]
+                                                      :max       1}))))
+
+(effects/register {::innovation-play-action innovation-play-action
+                   ::innovation-on-gain     innovation-on-gain})
+
+(def innovation {:name    :innovation
+                 :set     :renaissance
+                 :type    :project
+                 :cost    6
+                 :trigger {:trigger :on-gain
+                           :effects [[::innovation-on-gain]]}})
+
 (defn- pageant-pay-for-coffers [game {:keys [player-no choice] :as args}]
   (cond-> game
           (= :get-coffers choice) (push-effect-stack {:player-no player-no
@@ -790,6 +823,7 @@
                exploration
                fair
                guildhall
+               innovation
                pageant
                piazza
                road-network

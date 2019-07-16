@@ -1950,6 +1950,71 @@
                          :coffers  1
                          :triggers [(get-trigger guildhall)]}]})))))
 
+(deftest innovation-test
+  (let [silver (assoc silver :id 0)
+        mountain-village (assoc mountain-village :id 1)]
+    (testing "Innovation"
+      (is (= (-> {:current-player      0
+                  :track-gained-cards? true
+                  :supply              [{:card mountain-village :pile-size 10}]
+                  :players             [{:deck     [silver silver]
+                                         :actions  0
+                                         :triggers [(get-trigger innovation)]}]}
+                 (gain {:player-no 0 :card-name :mountain-village})
+                 (choose :mountain-village))
+             {:current-player      0
+              :track-gained-cards? true
+              :supply              [{:card mountain-village :pile-size 9}]
+              :players             [{:hand         [silver]
+                                     :play-area    [mountain-village]
+                                     :deck         [silver]
+                                     :actions      2
+                                     :gained-cards [{:cost  4
+                                                     :name  :mountain-village
+                                                     :types #{:action}}]
+                                     :triggers     [(get-trigger innovation)]}]}))
+      (is (= (-> {:current-player      0
+                  :track-gained-cards? true
+                  :supply              [{:card mountain-village :pile-size 9}]
+                  :players             [{:hand         [silver]
+                                         :play-area    [mountain-village]
+                                         :deck         [silver]
+                                         :gained-cards [{:cost  4
+                                                         :name  :mountain-village
+                                                         :types #{:action}}]
+                                         :triggers     [(get-trigger innovation)]}]}
+                 (gain {:player-no 0 :card-name :mountain-village}))
+             {:current-player      0
+              :track-gained-cards? true
+              :supply              [{:card mountain-village :pile-size 8}]
+              :players             [{:hand         [silver]
+                                     :play-area    [mountain-village]
+                                     :deck         [silver]
+                                     :discard      [mountain-village]
+                                     :gained-cards [{:cost  4
+                                                     :name  :mountain-village
+                                                     :types #{:action}}
+                                                    {:cost  4
+                                                     :name  :mountain-village
+                                                     :types #{:action}}]
+                                     :triggers     [(get-trigger innovation)]}]}))
+      (is (= (-> {:current-player      0
+                  :track-gained-cards? true
+                  :supply              [{:card mountain-village :pile-size 10}]
+                  :players             [{:deck     [silver silver]
+                                         :triggers [(get-trigger innovation)]}]}
+                 (gain {:player-no 0 :card-name :mountain-village})
+                 (choose nil))
+             {:current-player      0
+              :track-gained-cards? true
+              :supply              [{:card mountain-village :pile-size 9}]
+              :players             [{:deck         [silver silver]
+                                     :discard      [mountain-village]
+                                     :gained-cards [{:cost  4
+                                                     :name  :mountain-village
+                                                     :types #{:action}}]
+                                     :triggers     [(get-trigger innovation)]}]})))))
+
 (deftest pageant-test
   (testing "Pageant"
     (is (= (-> {:players [{:coins    1
