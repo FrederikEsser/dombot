@@ -415,14 +415,16 @@
 (defn shuffle-discard [game {:keys [player-no]}]
   (let [discard (get-in game [:players player-no :discard])
         before (->> discard
-                    (keep (comp :shuffle :before-triggers))
-                    (apply concat))
+                    (mapcat :before-shuffle))
         after (->> discard
-                   (keep (comp :shuffle :after-triggers))
-                   (apply concat))]
+                   (mapcat :after-shuffle))
+        on-shuffle (->> (get-in game [:players player-no :triggers])
+                        (filter (comp #{:on-shuffle} :trigger))
+                        (mapcat :effects))]
     (push-effect-stack game {:player-no player-no
                              :effects   (concat before
                                                 [[:do-shuffle]]
+                                                on-shuffle
                                                 after)})))
 
 (effects/register {:do-shuffle do-shuffle
@@ -435,7 +437,7 @@
 
 (effects/register {:peek-deck peek-deck})
 
-(defn do-move-card [game {:keys [player-no card-name move-card-id from to to-position to-player] :as args}]
+(defn do-move-card [game {:keys [player-no card-name from to to-position to-player] :as args}]
   (let [{:keys [card from-path idx]} (get-card game args)
         to-path (case to
                   :trash [:trash]

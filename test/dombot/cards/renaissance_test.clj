@@ -8,9 +8,15 @@
             [dombot.cards.intrigue :refer [lurker swindler]]
             [dombot.cards.seaside :refer [merchant-ship]]
             [dombot.cards.prosperity :refer [peddler]]
+            [dombot.cards.promos :refer [stash]]
             [dombot.cards.renaissance :as renaissance :refer :all]
             [dombot.utils :as ut])
   (:refer-clojure :exclude [key]))
+
+(defn fixture [f]
+  (with-rand-seed 123 (f)))
+
+(use-fixtures :each fixture)
 
 (defn get-trigger [{:keys [name type trigger]}]
   (merge (if (= :project type)
@@ -2312,6 +2318,54 @@
                               :buys     1
                               :phase    :action
                               :triggers [(get-trigger sinister-plot)]}]}))))
+
+(deftest star-chart-test
+  (testing "Star Chart"
+    (is (= (-> {:players [{:hand     [lackeys]
+                           :discard  [silver copper copper copper]
+                           :actions  1
+                           :triggers [(get-trigger star-chart)]}]}
+               (play 0 :lackeys)
+               (choose :silver))
+           {:players [{:hand      [silver copper]
+                       :play-area [lackeys]
+                       :deck      [copper copper]
+                       :actions   0
+                       :triggers  [(get-trigger star-chart)]}]}))
+    (is (= (-> {:players [{:hand     [lackeys]
+                           :discard  [silver copper copper copper]
+                           :actions  1
+                           :triggers [(get-trigger star-chart)]}]}
+               (play 0 :lackeys)
+               (choose :copper))
+           {:players [{:hand      [copper copper]
+                       :play-area [lackeys]
+                       :deck      [copper silver]
+                       :actions   0
+                       :triggers  [(get-trigger star-chart)]}]}))
+    (is (= (-> {:players [{:hand     [lackeys]
+                           :discard  [silver copper copper copper]
+                           :actions  1
+                           :triggers [(get-trigger star-chart)]}]}
+               (play 0 :lackeys)
+               (choose nil))
+           {:players [{:hand      [copper silver]
+                       :play-area [lackeys]
+                       :deck      [copper copper]
+                       :actions   0
+                       :triggers  [(get-trigger star-chart)]}]}))
+    (is (= (-> {:players [{:hand     [lackeys]
+                           :discard  [silver copper stash copper copper]
+                           :actions  1
+                           :triggers [(get-trigger star-chart)]}]}
+               (play 0 :lackeys)
+               (choose :silver)
+               (choose 1))
+           {:players [{:hand      [silver stash]
+                       :play-area [lackeys]
+                       :deck      [copper copper copper]
+                       :actions   0
+                       :triggers  [(get-trigger star-chart)]}]}))))
 
 (deftest simultaneous-effects-test
   (testing "Simultaneous effects"

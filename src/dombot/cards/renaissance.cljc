@@ -688,7 +688,7 @@
                                                                    :to           :play-area}]
                                                       [:card-effect {:card card}]]}))))
 
-(defn- innovation-on-gain [game {:keys [player-no gained-card-id from] :as args}]
+(defn- innovation-on-gain [game {:keys [player-no gained-card-id from]}]
   (let [{{:keys [name types]} :card} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})
         gained-actions (->> (get-in game [:players player-no :gained-cards])
                             (filter (comp :action :types))
@@ -712,7 +712,7 @@
                  :trigger {:trigger :on-gain
                            :effects [[::innovation-on-gain]]}})
 
-(defn- pageant-pay-for-coffers [game {:keys [player-no choice] :as args}]
+(defn- pageant-pay-for-coffers [game {:keys [player-no choice]}]
   (cond-> game
           (= :get-coffers choice) (push-effect-stack {:player-no player-no
                                                       :effects   [[:give-coins -1]
@@ -821,6 +821,32 @@
                               :simultaneous-mode :manual
                               :effects           [[::sinister-plot-give-choice]]}})
 
+(defn- star-chart-on-shuffle [game {:keys [player-no card-name]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (if card-name
+                                        [[:move-card {:card-name card-name
+                                                      :from      :discard
+                                                      :to        :star-chart}]
+                                         [:do-shuffle]
+                                         [:move-card {:card-name   card-name
+                                                      :from        :star-chart
+                                                      :to          :deck
+                                                      :to-position :top}]]
+                                        [[:do-shuffle]])}))
+
+(effects/register {::star-chart-on-shuffle star-chart-on-shuffle})
+
+(def star-chart {:name    :star-chart
+                 :set     :renaissance
+                 :type    :project
+                 :cost    3
+                 :trigger {:trigger :on-shuffle
+                           :effects [[:put-deck-into-discard]
+                                     [:give-choice {:text    "You may pick one card to go on top of your deck."
+                                                    :choice  ::star-chart-on-shuffle
+                                                    :options [:player :discard]
+                                                    :max     1}]]}})
+
 (def projects [academy
                barracks
                canal
@@ -835,7 +861,8 @@
                piazza
                road-network
                silos
-               sinister-plot])
+               sinister-plot
+               star-chart])
 
 (comment
   ; Capitalism cards:

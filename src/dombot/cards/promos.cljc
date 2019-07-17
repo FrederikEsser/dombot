@@ -43,7 +43,7 @@
                                      :hide-hand? true}]
                       [:put-all-revealed-into-hand]]})
 
-(defn stash-put [game {:keys [player-no card-id position]}]
+(defn stash-put [game {:keys [player-no position]}]
   (move-card game {:player-no   player-no
                    :card-name   :stash
                    :from        :stash
@@ -52,19 +52,19 @@
 
 (effects/register {::stash-put stash-put})
 
-(def stash {:name            :stash
-            :set             :promos
-            :types           #{:treasure}
-            :cost            5
-            :coin-value      2
-            :before-triggers {:shuffle [[:move-card {:card-name :stash
-                                                     :from      :discard
-                                                     :to        :stash}]]}
-            :after-triggers  {:shuffle [[:give-choice {:text    "Put the Stash anywhere in your deck."
-                                                       :choice  ::stash-put
-                                                       :options [:deck-position]
-                                                       :min     1
-                                                       :max     1}]]}})
+(def stash {:name           :stash
+            :set            :promos
+            :types          #{:treasure}
+            :cost           5
+            :coin-value     2
+            :before-shuffle [[:move-card {:card-name :stash
+                                          :from      :discard
+                                          :to        :stash}]]
+            :after-shuffle  [[:give-choice {:text    "Put the Stash anywhere in your deck."
+                                            :choice  ::stash-put
+                                            :options [:deck-position]
+                                            :min     1
+                                            :max     1}]]})
 
 (def kingdom-cards [dismantle
                     envoy
