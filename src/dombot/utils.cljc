@@ -124,7 +124,8 @@
 (defn- get-cost-with-reduction [game player-no card]
   (let [cost-reductions (->> (get-in game [:players player-no :play-area])
                              (mapcat (comp :cost-reductions :while-in-play))
-                             (concat (:cost-reductions game)))]
+                             (concat (:cost-reductions game)
+                                     (get-in game [:players player-no :cost-reductions])))]
     (-> (reduce (fn [card {:keys [reduction] :as reduction-data}]
                   (cond-> card
                           (reduction-matches-card reduction-data card) (update :cost minus-cost reduction)))

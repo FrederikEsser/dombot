@@ -589,6 +589,12 @@
                          :simultaneous-mode :auto
                          :effects           [[:give-actions 1]]}})
 
+(def canal {:name   :canal
+            :set    :renaissance
+            :type   :project
+            :cost   7
+            :on-buy [[:add-player-cost-reduction 1]]})
+
 (def cathedral {:name    :cathedral
                 :set     :renaissance
                 :type    :project
@@ -817,6 +823,7 @@
 
 (def projects [academy
                barracks
+               canal
                cathedral
                city-gate
                crop-rotation

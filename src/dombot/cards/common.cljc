@@ -451,7 +451,11 @@
 (defn add-cost-reduction [game {:keys [arg]}]
   (update game :cost-reductions concat [{:reduction arg}]))
 
-(effects/register {:add-cost-reduction add-cost-reduction})
+(defn add-player-cost-reduction [game {:keys [player-no arg]}]
+  (update-in game [:players player-no :cost-reductions] concat [{:reduction arg}]))
+
+(effects/register {:add-cost-reduction        add-cost-reduction
+                   :add-player-cost-reduction add-player-cost-reduction})
 
 (defn upgrade-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})

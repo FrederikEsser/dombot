@@ -1813,6 +1813,21 @@
                               :phase    :action
                               :triggers [(get-trigger barracks)]}]}))))
 
+(deftest canal-test
+  (testing "Canal"
+    (is (= (-> {:projects {:canal canal}
+                :players  [{:coins 7
+                            :buys  1}]}
+               (buy-project 0 :canal))
+           {:projects {:canal (assoc canal :participants [{:player-no 0}])}
+            :players  [{:coins           0
+                        :buys            0
+                        :cost-reductions [{:reduction 1}]}]}))
+    {:projects {:canal (assoc canal :participants [{:player-no 0}])}
+     :players  [{:coins           0
+                 :buys            0
+                 :cost-reductions [{:reduction 1}]}]}))
+
 (deftest cathedral-test
   (testing "Cathedral"
     (is (= (-> {:players [{:hand     [copper copper copper copper copper]

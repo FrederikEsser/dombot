@@ -124,7 +124,17 @@
               :players         [{:discard [{:name :silver :cost 3 :id 6}
                                            {:name :silver :cost 3 :id 7}]
                                  :coins   0
-                                 :buys    0}]})))))
+                                 :buys    0}]}))
+      (is (= (-> {:supply  [{:card {:name :silver :cost 3} :pile-size 3}]
+                  :players [{:coins           4
+                             :buys            2
+                             :cost-reductions [{:reduction 1}]}]}
+                 (buy-card 0 :silver))
+             {:supply          [{:card {:name :silver :cost 3} :pile-size 2}]
+              :players         [{:discard [{:name :silver :cost 3 :id 8}]
+                                 :coins   2
+                                 :buys    1
+                                 :cost-reductions [{:reduction 1}]}]})))))
 
 (deftest shuffle-test
   (testing "Shuffle discard"
