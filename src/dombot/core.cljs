@@ -18,7 +18,7 @@
                         :selection       []
                         :trash-unfolded? false
                         :num-players     2
-                        :players         []}))
+                        :players         ["Big Johnny" "Ivor the Engine Driver" "Mr Evil"]}))
 
 (defn select! [option]
   (swap! state update :selection conj option))
