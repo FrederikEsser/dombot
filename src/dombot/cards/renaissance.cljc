@@ -771,6 +771,23 @@
                    :cost   5
                    :on-buy [[::road-network-add-triggers]]})
 
+(defn- sewers-on-trash [game {:keys [player-no trashed-by]}]
+  (cond-> game
+          (not= trashed-by :sewers) (give-choice {:player-no player-no
+                                                  :text      "You may trash a card from your hand to the Sewers."
+                                                  :choice    [:trash-from-hand {:trashed-by :sewers}]
+                                                  :options   [:player :hand]
+                                                  :max       1})))
+
+(effects/register {::sewers-on-trash sewers-on-trash})
+
+(def sewers {:name    :sewers
+             :set     :renaissance
+             :type    :project
+             :cost    3
+             :trigger {:trigger :on-trash
+                       :effects [[::sewers-on-trash]]}})
+
 (def silos {:name    :silos
             :set     :renaissance
             :type    :project
@@ -860,6 +877,7 @@
                pageant
                piazza
                road-network
+               sewers
                silos
                sinister-plot
                star-chart])

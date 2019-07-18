@@ -454,7 +454,8 @@
   (let [{{:keys [on-trash]} :card} (ut/get-card-idx game [:trash] {:name card-name})
         on-trash-triggers (->> (get-in game [:players player-no :triggers])
                                (filter (comp #{:on-trash} :trigger))
-                               (mapcat :effects))
+                               (mapcat :effects)
+                               (map (partial add-effect-args args)))
         on-trash-effects (concat on-trash-triggers on-trash)]
     (cond-> game
             (not-empty on-trash-effects) (push-effect-stack (merge args {:effects on-trash-effects})))))
@@ -475,7 +476,7 @@
           (push-effect-stack {:player-no player-no
                               :effects   [[:do-move-card args]
                                           (when (= to :trash)
-                                            [:on-trash {:card-name card-name}])
+                                            [:on-trash args])
                                           (when (= to :revealed)
                                             [:on-reveal {:card-name card-name}])]})
           check-stack))))

@@ -2248,6 +2248,34 @@
                               :phase    :action
                               :triggers [(get-trigger silos)]}]}))))
 
+(deftest sewers-test
+  (testing "Sewers"
+    (is (= (-> {:players [{:hand     [researcher copper estate copper]
+                           :actions  1
+                           :triggers [(get-trigger sewers)]}]}
+               (play 0 :researcher)
+               (choose :copper)
+               (choose :estate))
+           {:players [{:hand      [copper]
+                       :play-area [researcher]
+                       :actions   1
+                       :triggers  [(get-trigger sewers)]}]
+            :trash   [copper estate]}))
+    (is (= (-> {:players [{:hand     [priest copper estate copper]
+                           :actions  1
+                           :coins    0
+                           :triggers [(get-trigger sewers)]}]}
+               (play 0 :priest)
+               (choose :copper)
+               (choose :estate))
+           {:players [{:hand      [copper]
+                       :play-area [priest]
+                       :actions   0
+                       :coins     2                         ; up for discussion; does Priest's on-trash apply to Sewers trash?
+                       :triggers  [(get-trigger sewers)
+                                   priest-trigger]}]
+            :trash   [copper estate]}))))
+
 (deftest sinister-plot-test
   (testing "Sinister Plot"
     (is (= (-> {:projects {:sinister-plot (assoc fair :participants [{:player-no 0}])}
