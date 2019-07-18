@@ -1883,6 +1883,54 @@
                               :triggers [(get-trigger cathedral)]}]
             :trash          [copper]}))))
 
+(deftest citadel-test
+  (let [patron (assoc patron :id 0)
+        throne-room (assoc throne-room :id 1)
+        flag-bearer (assoc flag-bearer :id 2)]
+    (testing "Citadel"
+      (is (= (-> {:track-played-actions? true
+                  :players               [{:hand     [patron]
+                                           :actions  1
+                                           :coins    0
+                                           :triggers [(get-trigger citadel)]}]}
+                 (play 0 :patron))
+             {:track-played-actions? true
+              :players               [{:play-area      [patron]
+                                       :actions        0
+                                       :coins          4
+                                       :villagers      2
+                                       :actions-played [0 0]
+                                       :triggers       [(get-trigger citadel)]}]}))
+      (is (= (-> {:track-played-actions? true
+                  :players               [{:hand           [patron]
+                                           :actions        1
+                                           :coins          0
+                                           :actions-played [0]
+                                           :triggers       [(get-trigger citadel)]}]}
+                 (play 0 :patron))
+             {:track-played-actions? true
+              :players               [{:play-area      [patron]
+                                       :actions        0
+                                       :coins          2
+                                       :villagers      1
+                                       :actions-played [0 0]
+                                       :triggers       [(get-trigger citadel)]}]}))
+      (is (= (-> {:track-played-actions? true
+                  :players               [{:hand     [throne-room patron flag-bearer]
+                                           :actions  1
+                                           :coins    0
+                                           :triggers [(get-trigger citadel)]}]}
+                 (play 0 :throne-room)
+                 (choose :patron)
+                 (choose :flag-bearer))
+             {:track-played-actions? true
+              :players               [{:play-area      [throne-room patron flag-bearer]
+                                       :actions        0
+                                       :coins          8
+                                       :villagers      2
+                                       :actions-played [1 0 0 1 2 2]
+                                       :triggers       [(get-trigger citadel)]}]})))))
+
 (deftest city-gate-test
   (testing "City Gate"
     (is (= (-> {:players [{:hand     [copper copper copper copper copper]

@@ -163,7 +163,7 @@
                                        :play-area      [throne-room conspirator]
                                        :deck           [copper]
                                        :actions        1
-                                       :actions-played [0 0 1]
+                                       :actions-played [1 0 0]
                                        :coins          4}]})))))
 
 (deftest courtier-test

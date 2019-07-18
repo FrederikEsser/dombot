@@ -615,6 +615,13 @@
                                                              :min     1
                                                              :max     1}]]}})
 
+(def citadel {:name    :citadel
+              :set     :renaissance
+              :type    :project
+              :cost    8
+              :trigger {:trigger :play-first-action
+                        :effects [[:card-effect]]}})
+
 (def city-gate {:name    :city-gate
                 :set     :renaissance
                 :type    :project
@@ -876,6 +883,7 @@
                barracks
                canal
                cathedral
+               citadel
                city-gate
                crop-rotation
                exploration

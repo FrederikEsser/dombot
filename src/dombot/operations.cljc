@@ -183,8 +183,8 @@
       (update-in [:players player-no] ut/dissoc-if-empty :triggers)))
 
 (defn- apply-triggers
-  ([game {:keys [player-no trigger]}]
-   (apply-triggers game player-no trigger))
+  ([game {:keys [player-no trigger] :as args}]
+   (apply-triggers game player-no trigger args))
   ([game player-no trigger & [args]]
    (let [triggers (get-in game [:players player-no :triggers])
          apply-trigger (fn [game {:keys [card-id effects]}] (push-effect-stack game {:player-no player-no
@@ -706,7 +706,7 @@
                     {:keys [id types effects coin-value duration]} :card}]
   (cond-> game
           (and (:action types)
-               track-played-actions?) (update-in [:players player-no :actions-played] conj id)
+               track-played-actions?) (update-in [:players player-no :actions-played] concat [id])
           (:attack types) (affect-other-players {:player-no player-no
                                                  :effects   [[:clear-unaffected {:works :once}]]})
           :always (push-effect-stack {:player-no player-no
@@ -724,7 +724,7 @@
   ([game {:keys [player-no card-name]}]
    (play game player-no card-name))
   ([{:keys [effect-stack] :as game} player-no card-name]
-   (let [{:keys [phase actions triggers]} (get-in game [:players player-no])
+   (let [{:keys [phase actions actions-played triggers]} (get-in game [:players player-no])
          {{:keys [types effects coin-value] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
      (assert (-> effect-stack first :choice not) "You can't play cards when you have a choice to make.")
      (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
@@ -750,7 +750,12 @@
                                                               :to        :play-area}]
                                                  [:card-effect {:card card}]]
                                                 (when (some (comp #{[:play card-name]} :trigger) triggers)
-                                                  [[:apply-triggers {:trigger [:play card-name]}]]))})
+                                                  [[:apply-triggers {:trigger [:play card-name]}]])
+                                                (when (and (:action types)
+                                                           (empty? actions-played)
+                                                           (some (comp #{:play-first-action} :trigger) triggers))
+                                                  [[:apply-triggers {:trigger :play-first-action
+                                                                     :card    card}]]))})
          check-stack))))
 
 (effects/register {:play play})
