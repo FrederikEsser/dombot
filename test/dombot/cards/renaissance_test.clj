@@ -299,7 +299,8 @@
         border-guard-4 (assoc border-guard :id 4)
         gold (assoc gold :id 5)
         inventor (assoc inventor :id 6)
-        improve (assoc improve :id 7)]
+        improve (assoc improve :id 7)
+        experiment (assoc experiment :id 8)]
     (testing "Cargo Ship"
       (is (= (-> {:players [{:hand    [cargo-ship]
                              :actions 1
@@ -541,7 +542,26 @@
                                                      :set-aside [gold border-guard])]
                        :discard   [copper]
                        :actions   0
-                       :coins     4}]}))))
+                       :coins     4}]}))
+    (is (= (-> {:supply  [{:card experiment :pile-size 10}]
+                :players [{:hand    [cargo-ship throne-room]
+                           :actions 1
+                           :coins   0
+                           :buys    1}]}
+               (play 0 :throne-room)
+               (choose :cargo-ship)
+               (buy-card 0 :experiment)
+               (choose :experiment)
+               (choose :experiment))
+           {:supply  [{:card experiment :pile-size 8}]
+            :players [{:play-area [throne-room
+                                   (assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :experiment}]]
+                                                                     [[:put-set-aside-into-hand {:card-name :experiment}]]]
+                                                     :set-aside [experiment experiment])]
+                       :discard   []
+                       :actions   0
+                       :coins     1
+                       :buys      0}]}))))
 
 (deftest ducat-test
   (let [ducat (assoc ducat :id 1)]
@@ -563,6 +583,7 @@
                               :discard [ducat]}]
               :effect-stack [{:text      "You may trash a Copper from your hand."
                               :player-no 0
+                              :card-name :ducat
                               :choice    :trash-from-hand
                               :source    :hand
                               :options   [:copper :copper]
@@ -1775,7 +1796,8 @@
 
 (deftest academy-test
   (let [silver (assoc silver :id 0)
-        mountain-village (assoc mountain-village :id 1)]
+        mountain-village (assoc mountain-village :id 1)
+        experiment (assoc experiment :id 2)]
     (testing "Academy"
       (is (= (-> {:projects {:academy academy}
                   :players  [{:coins 5
@@ -1805,7 +1827,18 @@
               :players [{:discard  [silver]
                          :coins    0
                          :buys     0
-                         :triggers [(get-trigger academy)]}]})))))
+                         :triggers [(get-trigger academy)]}]}))
+      (is (= (-> {:supply  [{:card experiment :pile-size 10}]
+                  :players [{:coins    3
+                             :buys     1
+                             :triggers [(get-trigger academy)]}]}
+                 (buy-card 0 :experiment))
+             {:supply  [{:card experiment :pile-size 8}]
+              :players [{:discard   [experiment experiment]
+                         :coins     0
+                         :buys      0
+                         :villagers 2
+                         :triggers  [(get-trigger academy)]}]})))))
 
 (deftest barracks-test
   (testing "Barracks"

@@ -1,5 +1,5 @@
 (ns dombot.cards.renaissance
-  (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards card-effect affect-other-players]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards gain card-effect affect-other-players]]
             [dombot.cards.common :refer [reveal-hand reveal-from-deck add-trigger give-coins give-coffers give-villagers]]
             [dombot.cards.dominion :as dominion]
             [dombot.cards.guilds :as guilds]
@@ -141,6 +141,14 @@
                                         :options [:player :hand {:name :copper}]
                                         :max     1}]]})
 
+(defn- experiment-on-gain [game {:keys [player-no gained-by]}]
+  (cond-> game
+          (not= gained-by :experiment) (gain {:player-no player-no
+                                              :card-name :experiment
+                                              :gained-by :experiment})))
+
+(effects/register {::experiment-on-gain experiment-on-gain})
+
 (def experiment {:name    :experiment
                  :set     :renaissance
                  :types   #{:action}
@@ -148,7 +156,7 @@
                  :effects [[:draw 2]
                            [:give-actions 1]
                            [:return-this-to-supply]]
-                 :on-gain [[:do-gain {:card-name :experiment}]]}) ; todo: Handle other on-gain effects
+                 :on-gain [[::experiment-on-gain]]})
 
 (def flag {:name    :flag
            :trigger {:trigger :at-draw-hand

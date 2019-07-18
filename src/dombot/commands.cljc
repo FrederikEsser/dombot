@@ -14,7 +14,6 @@
 ; fix Scepter on duration stays in play
 ; fix Throne Room / Improve
 ; fix Improve / double Border Guard bug
-; fix 2x Cargo Ship / buy Experiment bug
 ; fix Improve / Cargo Ship bug
 ; fix Throne Room / Cargo Ship - both stay in play
 ; fix Torturer / Masquerade (empty hand)

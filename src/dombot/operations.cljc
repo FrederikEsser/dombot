@@ -305,7 +305,7 @@
                 on-gain
                 (not-empty token-effects)
                 (not-empty while-in-play-effects)) (push-effect-stack (merge args {:effects (concat reaction-effects
-                                                                                                    on-gain
+                                                                                                    (map (partial add-effect-args args) on-gain)
                                                                                                     token-effects
                                                                                                     while-in-play-effects)}))
             (and track-gained-cards?
