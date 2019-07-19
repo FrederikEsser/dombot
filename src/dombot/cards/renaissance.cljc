@@ -320,37 +320,37 @@
                                          :min     1
                                          :max     1}]]})
 
-(defn researcher-set-aside [game {:keys [player-no card-id]}]
+(defn research-set-aside [game {:keys [player-no card-id]}]
   (let [set-aside (get-in game [:players player-no :set-aside])]
     (-> game
         (cond-> (not-empty set-aside) (ut/update-in-vec [:players player-no :play-area] {:id card-id}
-                                                        (fn [researcher]
-                                                          (-> researcher
+                                                        (fn [research]
+                                                          (-> research
                                                               (update :set-aside concat set-aside)
                                                               (update :at-start-turn concat [(for [card-name (map :name set-aside)]
                                                                                                [:put-set-aside-into-hand {:card-name card-name}])])))))
         (update-in [:players player-no] dissoc :set-aside))))
 
-(defn researcher-trash [game {:keys [player-no card-name] :as args}]
+(defn research-trash [game {:keys [player-no card-name] :as args}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         cost (ut/get-cost game card)]
     (push-effect-stack game (merge args {:effects [[:trash-from-hand {:card-name card-name}]
                                                    [:set-aside {:number-of-cards cost}]
-                                                   [::researcher-set-aside]]}))))
+                                                   [::research-set-aside]]}))))
 
-(effects/register {::researcher-set-aside researcher-set-aside
-                   ::researcher-trash     researcher-trash})
+(effects/register {::research-set-aside research-set-aside
+                   ::research-trash     research-trash})
 
-(def researcher {:name    :researcher
-                 :set     :renaissance
-                 :types   #{:action :duration}
-                 :cost    4
-                 :effects [[:give-actions 1]
-                           [:give-choice {:text    "Trash a card from your hand."
-                                          :choice  ::researcher-trash
-                                          :options [:player :hand]
-                                          :min     1
-                                          :max     1}]]})
+(def research {:name    :research
+               :set     :renaissance
+               :types   #{:action :duration}
+               :cost    4
+               :effects [[:give-actions 1]
+                         [:give-choice {:text    "Trash a card from your hand."
+                                        :choice  ::research-trash
+                                        :options [:player :hand]
+                                        :min     1
+                                        :max     1}]]})
 
 (defn- scepter-replay [game {:keys [player-no card-name]}]
   (let [played-card-ids (set (get-in game [:players player-no :actions-played]))
@@ -553,7 +553,7 @@
                     patron
                     priest
                     recruiter
-                    researcher
+                    research
                     scepter
                     scholar
                     sculptor

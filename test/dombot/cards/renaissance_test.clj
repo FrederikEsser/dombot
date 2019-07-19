@@ -805,12 +805,12 @@
                               :effect    [:draw 5]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
-      (is (= (-> {:players [{:play-area [(assoc researcher :at-start-turn [[:some-effects]])
+      (is (= (-> {:players [{:play-area [(assoc research :at-start-turn [[:some-effects]])
                                          (assoc improve :at-clean-up [[::renaissance/improve-give-choice]])
                                          copper]}]}
                  (clean-up {:player-no 0})
                  (choose :improve))
-             {:players      [{:play-area [(assoc researcher :at-start-turn [[:some-effects]])
+             {:players      [{:play-area [(assoc research :at-start-turn [[:some-effects]])
                                           improve copper]}]
               :effect-stack [{:text      "You may trash an Action card you would discard this turn to gain a card costing exactly $1 more than it."
                               :player-no 0
@@ -1180,74 +1180,74 @@
                               (choose :copper)
                               (spend-villager 0))))))
 
-(deftest researcher-test
-  (let [researcher (assoc researcher :id 1)
+(deftest research-test
+  (let [research (assoc research :id 1)
         throne-room (assoc throne-room :id 2)]
-    (testing "Researcher"
-      (is (= (-> {:players [{:hand    [researcher estate copper copper]
+    (testing "research"
+      (is (= (-> {:players [{:hand    [research estate copper copper]
                              :deck    [silver silver copper]
                              :actions 1}]}
-                 (play 0 :researcher))
+                 (play 0 :research))
              {:players      [{:hand      [estate copper copper]
-                              :play-area [researcher]
+                              :play-area [research]
                               :deck      [silver silver copper]
                               :actions   1}]
               :effect-stack [{:text      "Trash a card from your hand."
                               :player-no 0
                               :card-id   1
-                              :choice    ::renaissance/researcher-trash
+                              :choice    ::renaissance/research-trash
                               :source    :hand
                               :options   [:estate :copper :copper]
                               :min       1
                               :max       1}]}))
-      (is (= (-> {:players [{:hand    [researcher estate copper copper]
+      (is (= (-> {:players [{:hand    [research estate copper copper]
                              :deck    [silver silver copper]
                              :actions 1}]}
-                 (play 0 :researcher)
+                 (play 0 :research)
                  (choose :copper))
              {:players [{:hand      [estate copper]
-                         :play-area [researcher]
+                         :play-area [research]
                          :deck      [silver silver copper]
                          :actions   1}]
               :trash   [copper]}))
-      (is (= (-> {:players [{:hand    [researcher estate copper copper]
+      (is (= (-> {:players [{:hand    [research estate copper copper]
                              :deck    [silver silver copper]
                              :actions 1}]}
-                 (play 0 :researcher)
+                 (play 0 :research)
                  (choose :estate))
              {:players [{:hand      [copper copper]
-                         :play-area [(assoc researcher :at-start-turn [[[:put-set-aside-into-hand {:card-name :silver}]
+                         :play-area [(assoc research :at-start-turn [[[:put-set-aside-into-hand {:card-name :silver}]
                                                                         [:put-set-aside-into-hand {:card-name :silver}]]]
                                                        :set-aside [silver silver])]
                          :deck      [copper]
                          :actions   1}]
               :trash   [estate]}))
-      (is (= (-> {:players [{:hand    [researcher estate copper copper]
+      (is (= (-> {:players [{:hand    [research estate copper copper]
                              :deck    [silver silver copper]
                              :actions 1}]}
-                 (play 0 :researcher)
+                 (play 0 :research)
                  (choose :estate)
                  (end-turn 0))
              {:current-player 0
               :players        [{:hand      [copper copper copper silver silver]
-                                :play-area [(assoc researcher :set-aside [])]
+                                :play-area [(assoc research :set-aside [])]
                                 :actions   1
                                 :coins     0
                                 :buys      1
                                 :phase     :action}]
               :trash          [estate]}))
-      (is (= (-> {:players [{:hand    [researcher estate silver copper throne-room]
+      (is (= (-> {:players [{:hand    [research estate silver copper throne-room]
                              :deck    [silver silver gold estate copper copper]
                              :actions 1}]}
                  (play 0 :throne-room)
-                 (choose :researcher)
+                 (choose :research)
                  (choose :estate)
                  (choose :silver)
                  (end-turn 0))
              {:current-player 0
               :players        [{:hand      [copper copper silver silver gold estate copper]
                                 :play-area [throne-room
-                                            (assoc researcher :set-aside [])]
+                                            (assoc research :set-aside [])]
                                 :actions   1
                                 :coins     0
                                 :buys      1
@@ -2331,14 +2331,14 @@
 
 (deftest sewers-test
   (testing "Sewers"
-    (is (= (-> {:players [{:hand     [researcher copper estate copper]
+    (is (= (-> {:players [{:hand     [research copper estate copper]
                            :actions  1
                            :triggers [(get-trigger sewers)]}]}
-               (play 0 :researcher)
+               (play 0 :research)
                (choose :copper)
                (choose :estate))
            {:players [{:hand      [copper]
-                       :play-area [researcher]
+                       :play-area [research]
                        :actions   1
                        :triggers  [(get-trigger sewers)]}]
             :trash   [copper estate]}))
