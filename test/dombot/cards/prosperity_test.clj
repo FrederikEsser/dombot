@@ -676,7 +676,7 @@
     (is (= (-> {:players [{:hand  [loan copper]
                            :deck  [copper estate]
                            :coins 0}]}
-               (play-treasures 0)
+               (play-treasures {:player-no 0})
                (choose :copper))
            {:players [{:play-area [loan copper]
                        :deck      [estate]
@@ -1281,7 +1281,7 @@
     (is (= (-> {:players [{:hand  [venture copper]
                            :deck  [copper estate]
                            :coins 0}]}
-               (play-treasures 0))
+               (play-treasures {:player-no 0}))
            {:players [{:play-area      [copper venture copper]
                        :deck           [estate]
                        :revealed-cards {:play-area 1}
@@ -1302,7 +1302,7 @@
     (is (= (-> {:players [{:hand  [venture loan]
                            :deck  [copper gold]
                            :coins 0}]}
-               (play-treasures 0)
+               (play-treasures {:player-no 0})
                (choose :copper))
            {:players [{:play-area      [loan venture gold]
                        :revealed-cards {:play-area 1}

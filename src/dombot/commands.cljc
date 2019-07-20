@@ -10,7 +10,6 @@
 ; store commands in history
 ; save / load game
 ; handle simultaneous duration effects at-start-turn
-; fix play-treasures / Scepter replay Priest (or any treasure trasher)
 ; fix Scepter on duration stays in play
 ; fix Throne Room / Improve
 ; fix Improve / double Border Guard bug
@@ -58,7 +57,7 @@
 (defn play-treasures []
   (let [{:keys [current-player] :as game} (get-game)]
     (swap! game-state update :game conj (-> game
-                                            (op/play-treasures current-player)))
+                                            (op/play-treasures {:player-no current-player})))
     (view)))
 
 (defn play [card-name]

@@ -760,18 +760,22 @@
 
 (effects/register {:play play})
 
-(defn play-treasures [game player-no]
+(defn play-treasures [game {:keys [player-no]}]
   (let [{:keys [hand]} (get-in game [:players player-no])
         treasures (->> hand
-                       (filter (comp :treasure :types))
+                       (filter (comp :treasure (partial ut/get-types game)))
                        (sort-by (fn [{:keys [auto-play-index]}] (or auto-play-index 0)))
                        (map :name))]
+    (if (not-empty treasures)
     (-> game
         (push-effect-stack {:player-no player-no
-                            :effects   (->> treasures
-                                            (map (fn [treasure]
-                                                   [:play {:card-name treasure}])))})
-        check-stack)))
+                              :effects   [[:set-phase {:phase :pay}]
+                                          [:play {:card-name (first treasures)}]
+                                          [:play-treasures]]})
+          check-stack)
+      game)))
+
+(effects/register {:play-treasures play-treasures})
 
 (defn- all-cards [{:keys [deck discard hand play-area island-mat native-village-mat]}]
   (let [cards (concat deck discard hand play-area island-mat native-village-mat)

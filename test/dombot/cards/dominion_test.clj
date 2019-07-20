@@ -1573,7 +1573,7 @@
                  (choose :throne-room)
                  (choose :merchant)
                  (choose :witch)
-                 (play-treasures 0))
+                 (play-treasures {:player-no 0}))
              {:supply  [{:card curse :pile-size 8}]
               :players [{:play-area [throne-room throne-room merchant witch copper copper silver]
                          :actions   2

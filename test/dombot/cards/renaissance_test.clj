@@ -1259,7 +1259,9 @@
         swindler (assoc swindler :id 1)
         curse (assoc curse :id 2)
         peddler (assoc peddler :id 3)
-        villain (assoc villain :id 4)]
+        villain (assoc villain :id 4)
+        priest (assoc priest :id 5)
+        priest-trigger (assoc priest-trigger :card-id 5)]
     (testing "Scepter"
       (is (= (-> {:players [{:hand  [scepter]
                              :coins 0}]}
@@ -1355,7 +1357,23 @@
                          :coffers        2
                          :phase          :pay}
                         {:hand           [copper copper copper copper peddler]
-                         :revealed-cards {:hand 5}}]})))))
+                         :revealed-cards {:hand 5}}]}))
+      (is (= (-> {:players [{:hand           [scepter copper]
+                             :play-area      [priest]
+                             :actions-played [5]
+                             :coins          2
+                             :phase          :action
+                             :triggers       [priest-trigger]}]}
+                 (play-treasures {:player-no 0})
+                 (choose :replay-action)
+                 (choose :priest)
+                 (choose :copper))
+             {:players [{:play-area      [priest scepter]
+                         :actions-played [5]
+                         :coins          6
+                         :phase          :pay
+                         :triggers       [priest-trigger priest-trigger]}]
+              :trash   [copper]})))))
 
 (deftest scholar-test
   (testing "Scholar"

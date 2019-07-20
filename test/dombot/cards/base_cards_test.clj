@@ -27,7 +27,7 @@
   (testing "All treasures"
     (is (= (play-treasures {:players [{:hand  [gold silver copper {:name :smithy} copper]
                                        :coins 0}]}
-                           0)
+                           {:player-no 0})
            {:players [{:hand      [{:name :smithy}]
                        :play-area [gold silver copper copper]
                        :coins     7}]}))))
