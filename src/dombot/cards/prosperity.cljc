@@ -4,9 +4,15 @@
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
-(def colony {:name :colony :types #{:victory} :cost 11 :victory-points 10})
+(def colony {:name           :colony
+             :types          #{:victory}
+             :cost           11
+             :victory-points 10})
 
-(def platinum {:name :platinum :types #{:treasure} :cost 9 :coin-value 5})
+(def platinum {:name       :platinum
+               :types      #{:treasure}
+               :cost       9
+               :coin-value 5})
 
 (defn- bank-give-coins [game {:keys [player-no]}]
   (let [number-of-treasures-in-play (->> (get-in game [:players player-no :play-area])
@@ -20,7 +26,6 @@
            :set             :prosperity
            :types           #{:treasure}
            :cost            7
-           :coin-value      0
            :effects         [[::bank-give-coins]]
            :auto-play-index 2})
 

@@ -129,17 +129,16 @@
                  :effects [[:give-coins 2]
                            [:add-trigger {:trigger cargo-ship-trigger}]]})
 
-(def ducat {:name       :ducat
-            :set        :renaissance
-            :types      #{:treasure}
-            :cost       2
-            :coin-value 0
-            :effects    [[:give-coffers 1]
-                         [:give-buys 1]]
-            :on-gain    [[:give-choice {:text    "You may trash a Copper from your hand."
-                                        :choice  :trash-from-hand
-                                        :options [:player :hand {:name :copper}]
-                                        :max     1}]]})
+(def ducat {:name    :ducat
+            :set     :renaissance
+            :types   #{:treasure}
+            :cost    2
+            :effects [[:give-coffers 1]
+                      [:give-buys 1]]
+            :on-gain [[:give-choice {:text    "You may trash a Copper from your hand."
+                                     :choice  :trash-from-hand
+                                     :options [:player :hand {:name :copper}]
+                                     :max     1}]]})
 
 (defn- experiment-on-gain [game {:keys [player-no gained-by]}]
   (cond-> game
@@ -375,18 +374,17 @@
 (effects/register {::scepter-replay scepter-replay
                    ::scepter-choice scepter-choice})
 
-(def scepter {:name       :scepter
-              :set        :renaissance
-              :types      #{:treasure}
-              :cost       5
-              :coin-value 0
-              :effects    [[:give-choice {:text    "Choose one:"
-                                          :choice  ::scepter-choice
-                                          :options [:special
-                                                    {:option :coins :text "+$2"}
-                                                    {:option :replay-action :text "Replay an Action card."}]
-                                          :min     1
-                                          :max     1}]]})
+(def scepter {:name    :scepter
+              :set     :renaissance
+              :types   #{:treasure}
+              :cost    5
+              :effects [[:give-choice {:text    "Choose one:"
+                                       :choice  ::scepter-choice
+                                       :options [:special
+                                                 {:option :coins :text "+$2"}
+                                                 {:option :replay-action :text "Replay an Action card."}]
+                                       :min     1
+                                       :max     1}]]})
 
 (def scholar {:name    :scholar
               :set     :renaissance

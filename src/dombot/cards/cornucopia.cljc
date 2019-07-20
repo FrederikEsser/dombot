@@ -141,7 +141,6 @@
                      :set             :cornucopia
                      :types           #{:treasure}
                      :cost            5
-                     :coin-value      0
                      :effects         [[::horn-of-plenty-give-choice]]
                      :auto-play-index 2})
 
