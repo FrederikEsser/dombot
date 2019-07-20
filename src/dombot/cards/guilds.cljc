@@ -135,7 +135,8 @@
 
 (defn- herald-play-action [game {:keys [player-no]}]
   (let [revealed (get-in game [:players player-no :revealed])
-        {:keys [name types] :as card} (first revealed)]
+        {:keys [name] :as card} (first revealed)
+        types (ut/get-types game card)]
     (assert (= 1 (count revealed)) "Herald error: Number of revealed cards is not 1.")
     (push-effect-stack game {:player-no player-no
                              :effects   (if (:action types)

@@ -284,7 +284,7 @@
                        :as   args}]
   (let [new-args (merge args {:from          to
                               :from-position to-position})
-        {{:keys [on-gain id] :as card} :card} (get-card game new-args)
+        {{:keys [on-gain id cost] :as card} :card} (get-card game new-args)
         {:keys [hand play-area]} (get-in game [:players player-no])
         reaction-effects (->> hand
                               (mapcat (comp :on-gain :reaction))
@@ -310,7 +310,9 @@
                                                                                                     while-in-play-effects)}))
             (and track-gained-cards?
                  (= current-player player-no)) (update-in [:players player-no :gained-cards]
-                                                          concat [(merge (select-keys card [:name :types :cost])
+                                                          concat [(merge {:name  card-name
+                                                                          :cost  cost
+                                                                          :types (ut/get-types game card)}
                                                                          (when bought {:bought true}))]))))
 
 (defn do-gain [game {:keys [player-no card-name from to to-position]
@@ -701,22 +703,22 @@
 
 (effects/register {:reveal-reaction reveal-reaction})
 
-(defn card-effect [{:keys [track-played-actions?] :as game}
-                   {:keys                                          [player-no]
-                    {:keys [id types effects coin-value duration]} :card}]
-  (cond-> game
-          (and (:action types)
-               track-played-actions?) (update-in [:players player-no :actions-played] concat [id])
-          (:attack types) (affect-other-players {:player-no player-no
-                                                 :effects   [[:clear-unaffected {:works :once}]]})
-          :always (push-effect-stack {:player-no player-no
-                                      :card-id   id
-                                      :effects   (concat (when coin-value
-                                                           [[:give-coins coin-value]])
-                                                         effects)})
-          (:attack types) (affect-other-players {:player-no player-no
-                                                 :effects   reaction-choice})
-          duration (ut/update-in-vec [:players player-no :play-area] {:id id} update :at-start-turn concat [duration])))
+(defn card-effect [{:keys [track-played-actions?] :as game} {:keys [player-no card]}]
+  (let [{:keys [id effects coin-value duration]} card
+        types (ut/get-types game card)]
+    (cond-> game
+            (and (:action types)
+                 track-played-actions?) (update-in [:players player-no :actions-played] concat [id])
+            (:attack types) (affect-other-players {:player-no player-no
+                                                   :effects   [[:clear-unaffected {:works :once}]]})
+            :always (push-effect-stack {:player-no player-no
+                                        :card-id   id
+                                        :effects   (concat (when coin-value
+                                                             [[:give-coins coin-value]])
+                                                           effects)})
+            (:attack types) (affect-other-players {:player-no player-no
+                                                   :effects   reaction-choice})
+            duration (ut/update-in-vec [:players player-no :play-area] {:id id} update :at-start-turn concat [duration]))))
 
 (effects/register {:card-effect card-effect})
 
@@ -724,27 +726,29 @@
   ([game {:keys [player-no card-name]}]
    (play game player-no card-name))
   ([{:keys [effect-stack] :as game} player-no card-name]
-   (let [{:keys [phase actions actions-played triggers]} (get-in game [:players player-no])
-         {{:keys [types effects coin-value] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
+   (let [{:keys [phase actions actions-played triggers]
+          :or   {phase :action}} (get-in game [:players player-no])
+         {{:keys [effects coin-value] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+         types (ut/get-types game card)
+         play-type (cond
+                     (and (#{:action} phase) (:action types) (pos? actions)) :action
+                     (and (#{:action :pay} phase) (:treasure types)) :treasure)]
      (assert (-> effect-stack first :choice not) "You can't play cards when you have a choice to make.")
      (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
      (assert types (str "Play error: " (ut/format-name card-name) " has no types."))
-     (cond
-       (:action types) (do (assert effects (str "Play error: " (ut/format-name card-name) " has no effect."))
-                           (assert (and actions (pos? actions)) "Play error: You have no more actions."))
-       (:treasure types) (assert coin-value (str "Play error: " (ut/format-name card-name) " has no coin value"))
-       :else (assert false (str "Play error: " (ut/format-types types) " cards cannot be played.")))
-     (when phase
-       (assert (or (and (:action types)
-                        (#{:action} phase))
-                   (and (:treasure types)
-                        (#{:action :pay} phase)))
-               (str "You can't play " (ut/format-types types) " cards when you're in the " (ut/format-name phase) " phase.")))
+     (case play-type
+       :action (assert effects (str "Play error: " (ut/format-name card-name) " has no effect."))
+       :treasure (assert (or coin-value effects) (str "Play error: " (ut/format-name card-name) " has no coin value or effects."))
+       (assert false (str "Play error: You can't play " (ut/format-types types) " cards"
+                          " when you're in the " (ut/format-name phase) " phase"
+                          (when (and (#{:action} phase) (:action types))
+                            (str " and have " actions " actions left"))
+                          ".")))
      (-> game
-         (cond-> (:action types) (update-in [:players player-no :actions] - 1))
+         (cond-> (= :action play-type) (update-in [:players player-no :actions] - 1))
          (push-effect-stack {:player-no player-no
-                             :effects   (concat [[:set-phase {:phase (cond (:action types) :action
-                                                                           (:treasure types) :pay)}]
+                             :effects   (concat [(when (= :treasure play-type)
+                                                   [:set-phase {:phase :pay}])
                                                  [:move-card {:card-name card-name
                                                               :from      :hand
                                                               :to        :play-area}]
@@ -767,8 +771,8 @@
                        (sort-by (fn [{:keys [auto-play-index]}] (or auto-play-index 0)))
                        (map :name))]
     (if (not-empty treasures)
-    (-> game
-        (push-effect-stack {:player-no player-no
+      (-> game
+          (push-effect-stack {:player-no player-no
                               :effects   [[:set-phase {:phase :pay}]
                                           [:play {:card-name (first treasures)}]
                                           [:play-treasures]]})

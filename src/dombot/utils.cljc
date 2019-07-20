@@ -117,18 +117,43 @@
 (defn- minus-cost [cost reduction]
   (if (< cost reduction) 0 (- cost reduction)))
 
-(defn- reduction-matches-card [{reduction-type :type}
-                               {card-types :types}]
+(defn- capitalism-get-types [{:keys [name types effects] :as card}]
+  (if (and
+        (:action types)
+        (or (some (fn [[effect {:keys [text options]}]]
+                    (or (= :give-coins effect)
+                        (and text (re-find #"\+\$" text))
+                        (some (fn [{:keys [text]}]
+                                (and text (re-find #"\+\$" text)))
+                              options)))
+                  effects)
+            (contains? #{:merchant
+                         :baron :ironworks :courtier
+                         :pirate-ship :salvager
+                         :trade-route :city
+                         :harvest :tournament :trusty-steed} name)))
+    (conj types :treasure)
+    types))
+
+(defn get-types [{:keys [current-player] :as game} {:keys [types] :as card}]
+  (let [player-no (or current-player 0)]
+    (if (->> (get-in game [:projects :capitalism :participants])
+             (some (comp #{player-no} :player-no)))
+      (capitalism-get-types card)
+      types)))
+
+(defn- reduction-matches-card-types [{reduction-type :type} card-types]
   (or (nil? reduction-type) (reduction-type card-types)))
 
 (defn- get-cost-with-reduction [game player-no card]
   (let [cost-reductions (->> (get-in game [:players player-no :play-area])
                              (mapcat (comp :cost-reductions :while-in-play))
                              (concat (:cost-reductions game)
-                                     (get-in game [:players player-no :cost-reductions])))]
+                                     (get-in game [:players player-no :cost-reductions])))
+        card-types (get-types game card)]
     (-> (reduce (fn [card {:keys [reduction] :as reduction-data}]
                   (cond-> card
-                          (reduction-matches-card reduction-data card) (update :cost minus-cost reduction)))
+                          (reduction-matches-card-types reduction-data card-types) (update :cost minus-cost reduction)))
                 card cost-reductions)
         :cost)))
 
@@ -172,7 +197,7 @@
             name (filter (comp #{name} :name))
             names (filter (comp names :name))
             not-name (remove (comp #{not-name} :name))
-            type (filter (comp type :types))
+            type (filter (comp type (partial get-types game)))
             reacts-to (filter (every-pred (comp #{reacts-to} :reacts-to)
                                           (partial can-react? game player-no)))
             min-cost (filter (comp (partial <= min-cost) (partial get-cost game)))
@@ -186,7 +211,7 @@
   (cond->> supply
            max-cost (filter (comp (partial >= max-cost) (partial get-cost game) :card))
            cost (filter (comp #{cost} (partial get-cost game) :card))
-           type (filter (comp type :types :card))
+           type (filter (comp type (partial get-types game) :card))
            names (filter (comp names :name :card))
            (not all) (filter (comp pos? :pile-size))
            :always (map (comp :name :card))))
@@ -205,9 +230,9 @@
 
 (effects/register-options {:overpay options-from-overbuy})
 
-(defn options-from-trash [{:keys [trash]} player-no card-id {:keys [type]}]
+(defn options-from-trash [{:keys [trash] :as game} player-no card-id {:keys [type]}]
   (cond->> trash
-           type (filter (comp type :types))
+           type (filter (comp type (partial get-types game)))
            :always (map :name)))
 
 (effects/register-options {:trash options-from-trash})

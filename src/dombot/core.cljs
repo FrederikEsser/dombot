@@ -35,22 +35,23 @@
 (defn button-style [& [disabled types number-of-cards]]
   (merge {:color            (if disabled :grey :black)
           :font-weight      :bold
-          :background-color (cond (:duration types) "#FF9E37"
-                                  (:reaction types) "#A8BFD3"
-                                  (:action types) "#F3EEDF"
-                                  (:treasure types) "#FFE64F"
-                                  (:victory types) "#9FD688"
-                                  (:curse types) "#B890D7"
-                                  (:artifact types) "#F9CD88"
-                                  (:project types) "#FCA19A")
+          :background-color (cond
+                              (:duration types) "#FF9E37"
+                              (:reaction types) "#A8BFD3"
+                              (:action types) "#F3EEDF"
+                              (:treasure types) "#FFE64F"
+                              (:victory types) "#9FD688"
+                              (:curse types) "#B890D7"
+                              (:artifact types) "#F9CD88"
+                              (:project types) "#FCA19A")
           :border-color     (cond
                               (zero? number-of-cards) :red
                               (:curse types) "#9F76B8"
                               (:victory types) "#6DB954"
-                              (:reaction types) "#6295CE"
                               (:treasure types) "#EFD34E"
-                              (:duration types) "#F1820E"
                               (:attack types) "#940000"
+                              (:reaction types) "#6295CE"
+                              (:duration types) "#F1820E"
                               (:action types) "#DED7C4"
                               (:artifact types) "#B4763B"
                               (:project types) "#EF8984"

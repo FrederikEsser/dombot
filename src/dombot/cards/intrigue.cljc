@@ -70,7 +70,7 @@
 
 (defn courtier-reveal [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        num-types (-> card :types count)]
+        num-types (count (ut/get-types game card))]
     (push-effect-stack game {:player-no player-no
                              :effects   [[:reveal {:card-name card-name}]
                                          [:give-choice {:text    (str "Choose " (ut/number->text num-types) ":")
@@ -155,7 +155,8 @@
             :victory-points 2})
 
 (defn ironworks-gain [game {:keys [player-no card-name]}]
-  (let [{{:keys [types]} :card} (ut/get-pile-idx game card-name)]
+  (let [{:keys [card]} (ut/get-pile-idx game card-name)
+        types (ut/get-types game card)]
     (push-effect-stack game {:player-no player-no
                              :effects   [[:gain {:card-name card-name}]
                                          (when (:action types) [:give-actions 1])
@@ -375,7 +376,8 @@
                                     :max     2}]]})
 
 (defn replace-gain [game {:keys [player-no card-name]}]
-  (let [{{:keys [types]} :card} (ut/get-pile-idx game card-name)]
+  (let [{:keys [card]} (ut/get-pile-idx game card-name)
+        types (ut/get-types game card)]
     (-> game
         (push-effect-stack {:player-no player-no
                             :effects   [(if (some #{:action :treasure} types)
@@ -446,7 +448,7 @@
   (let [hand (get-in game [:players player-no :hand])]
     (push-effect-stack game {:player-no player-no
                              :effects   [[:reveal-hand]
-                                         (when-not (some (comp :action :types) hand)
+                                         (when-not (some (comp :action (partial ut/get-types game)) hand)
                                            [:draw 2])]})))
 
 (effects/register {::shanty-town-draw shanty-town-draw})

@@ -53,7 +53,7 @@
   (let [revealed (get-in game [:players player-no :revealed])
         may-take-artifact? (and (= (border-guard-number-of-revealed-cards game player-no)
                                    (count revealed))
-                                (every? :action (map :types revealed)))]
+                                (every? :action (map (partial ut/get-types game) revealed)))]
     (push-effect-stack game {:player-no player-no
                              :effects   (concat [[:put-revealed-into-hand args]]
                                                 (when may-take-artifact?
@@ -172,7 +172,8 @@
                   :setup    [[::add-artifact {:artifact-name :flag}]]})
 
 (defn hideout-trash [game {:keys [player-no card-name] :as args}]
-  (let [{{:keys [types]} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        types (ut/get-types game card)]
     (push-effect-stack game (merge args {:effects (concat [[:trash-from-hand {:card-name card-name}]]
                                                           (when (:victory types)
                                                             [[:gain {:card-name :curse}]]))}))))
@@ -395,7 +396,8 @@
                         [:draw 7]]})
 
 (defn sculptor-gain [game {:keys [player-no card-name]}]
-  (let [{{:keys [types]} :card} (ut/get-pile-idx game card-name)]
+  (let [{:keys [card]} (ut/get-pile-idx game card-name)
+        types (ut/get-types game card)]
     (push-effect-stack game {:player-no player-no
                              :effects   [[:gain-to-hand {:card-name card-name}]
                                          (when (:treasure types) [:give-villagers 1])]})))
@@ -576,7 +578,8 @@
 (effects/register {::add-artifact add-artifact})
 
 (defn academy-on-gain [game {:keys [player-no gained-card-id from]}]
-  (let [{{:keys [types]} :card} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})
+        types (ut/get-types game card)]
     (cond-> game
             (:action types) (give-villagers {:player-no player-no :arg 1}))))
 
@@ -602,6 +605,11 @@
             :type   :project
             :cost   7
             :on-buy [[:add-player-cost-reduction 1]]})
+
+(def capitalism {:name :capitalism
+                 :set  :renaissance
+                 :type :project
+                 :cost 5})
 
 (def cathedral {:name    :cathedral
                 :set     :renaissance
@@ -681,7 +689,8 @@
                      :effects           [[:give-buys 1]]}})
 
 (defn guildhall-on-gain [game {:keys [player-no gained-card-id from]}]
-  (let [{{:keys [types]} :card} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})
+        types (ut/get-types game card)]
     (cond-> game
             (:treasure types) (give-coffers {:player-no player-no :arg 1}))))
 
@@ -704,9 +713,10 @@
                                                       [:card-effect {:card card}]]}))))
 
 (defn- innovation-on-gain [game {:keys [player-no gained-card-id from]}]
-  (let [{{:keys [name types]} :card} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})
+  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})
+        types (ut/get-types game card)
         gained-actions (->> (get-in game [:players player-no :gained-cards])
-                            (filter (comp :action :types))
+                            (filter (comp :action (partial ut/get-types game)))
                             count)]
     (cond-> game
             (and (:action types)
@@ -765,7 +775,8 @@
                                            [::guilds/herald-play-action]]}})
 
 (defn- road-network-on-gain [game {:keys [player-no card-name] :as args}]
-  (let [{{:keys [types]} :card} (ut/get-pile-idx game card-name)]
+  (let [{:keys [card]} (ut/get-pile-idx game card-name)
+        types (ut/get-types game card)]
     (cond-> game
             (:victory types) (draw {:player-no player-no
                                     :arg       1}))))
@@ -882,6 +893,7 @@
 (def projects [academy
                barracks
                canal
+               capitalism
                cathedral
                citadel
                city-gate
@@ -897,20 +909,3 @@
                silos
                sinister-plot
                star-chart])
-
-(comment
-  ; Capitalism cards:
-  (->> kingdom-cards
-       (sort-by (juxt :set :cost :name))
-       (keep (fn [{:keys [name types set effects]}]
-               (when (and
-                       (:action types)
-                       (some (fn [[effect {:keys [text options]}]]
-                               (or (= :give-coins effect)
-                                   (and text (re-find #"\+\$" text))
-                                   (some (fn [{:keys [text]}]
-                                           (and text (re-find #"\+\$" text)))
-                                         options)))
-                             effects))
-                 [set name])))))
-

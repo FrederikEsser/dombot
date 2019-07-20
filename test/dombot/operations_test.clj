@@ -130,11 +130,11 @@
                              :buys            2
                              :cost-reductions [{:reduction 1}]}]}
                  (buy-card 0 :silver))
-             {:supply          [{:card {:name :silver :cost 3} :pile-size 2}]
-              :players         [{:discard [{:name :silver :cost 3 :id 8}]
-                                 :coins   2
-                                 :buys    1
-                                 :cost-reductions [{:reduction 1}]}]})))))
+             {:supply  [{:card {:name :silver :cost 3} :pile-size 2}]
+              :players [{:discard         [{:name :silver :cost 3 :id 8}]
+                         :coins           2
+                         :buys            1
+                         :cost-reductions [{:reduction 1}]}]})))))
 
 (deftest shuffle-test
   (testing "Shuffle discard"
@@ -364,7 +364,7 @@
       (is (thrown-with-msg? AssertionError #"Play error: No Card has no types"
                             (play {:players [{:hand [{:name :no-card}]}]}
                                   0 :no-card)))
-      (is (thrown-with-msg? AssertionError #"Play error: Victory cards cannot be played."
+      (is (thrown-with-msg? AssertionError #"Play error: You can't play Victory cards when you're in the Action phase."
                             (play {:players [{:hand [{:name :estate :types #{:victory}}]}]}
                                   0 :estate))))
     (testing "player has no cards in hand"
@@ -380,7 +380,7 @@
   (testing "Playing action"
     (testing "is impossible because"
       (testing "player has no more actions"
-        (is (thrown-with-msg? AssertionError #"Play error: You have no more actions."
+        (is (thrown-with-msg? AssertionError #"Play error: You can't play Action cards when you're in the Action phase and have 0 actions left."
                               (play {:players [{:hand    [{:name :village :types #{:action} :effects []}]
                                                 :actions 0}]}
                                     0 :village))))

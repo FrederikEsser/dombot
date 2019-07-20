@@ -9,6 +9,7 @@
 ; view card images
 ; store commands in history
 ; save / load game
+; UI button for jumping to next phase
 ; handle simultaneous duration effects at-start-turn
 ; fix Scepter on duration stays in play
 ; fix Throne Room / Improve

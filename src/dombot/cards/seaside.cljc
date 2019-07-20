@@ -473,7 +473,7 @@
 (defn treasury-can-topdeck? [game player-no]
   (let [bought-victory-cards (->> (get-in game [:players player-no :gained-cards])
                                   (filter :bought)
-                                  (filter (comp :victory :types)))]
+                                  (filter (comp :victory (partial ut/get-types game))))]
     (empty? bought-victory-cards)))
 
 (defn treasury-clean-up [game {:keys [player-no card-id]}]

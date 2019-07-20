@@ -14,10 +14,11 @@
                     choice                         :choice
                     :as                            game}]
   (->> supply
-       (map (fn [{{:keys [name types bane?] :as card} :card
-                  number-of-cards                     :pile-size
-                  :keys                               [tokens]}]
-              (let [cost (ut/get-cost game card)
+       (map (fn [{{:keys [name bane?] :as card} :card
+                  number-of-cards               :pile-size
+                  :keys                         [tokens]}]
+              (let [types (ut/get-types game card)
+                    cost (ut/get-cost game card)
                     buy-cost (ut/get-buy-cost game player-no card)]
                 (merge {:name            name
                         :name-ui         (ut/format-name name)
@@ -66,35 +67,37 @@
 
 (defn view-area [area {{:keys [phase actions] :as player} :player
                        choice                             :choice
-                       active?                            :active-player?}
+                       active?                            :active-player?
+                       :as                                game}
                  & [position number-of-cards]]
   (let [take-fn (if (= :bottom position) take-last take)
         cards (cond->> (get player area)
                        number-of-cards (take-fn number-of-cards))]
     (-> cards
         (->>
-          (map (fn [{:keys [name types set-aside] :as card}]
-                 (merge {:name    name
-                         :name-ui (ut/format-name name)
-                         :types   types}
-                        (when (ut/stay-in-play card)
-                          {:stay-in-play true})
-                        (when (and (= :hand area)
-                                   (not choice)
-                                   (or (and (:action types)
-                                            (#{:action} phase)
-                                            (pos? actions))
-                                       (and (:treasure types)
-                                            (#{:action :pay} phase))))
-                          {:interaction :playable})
-                        (choice-interaction name area choice)
-                        (when (not-empty set-aside)
-                          {:set-aside (map (if active? (comp ut/format-name :name) (constantly "Card")) set-aside)}))))
+          (map (fn [{:keys [name set-aside] :as card}]
+                 (let [types (ut/get-types game card)]
+                   (merge {:name    name
+                           :name-ui (ut/format-name name)
+                           :types   types}
+                          (when (ut/stay-in-play card)
+                            {:stay-in-play true})
+                          (when (and (= :hand area)
+                                     (not choice)
+                                     (or (and (:action types)
+                                              (#{:action} phase)
+                                              (pos? actions))
+                                         (and (:treasure types)
+                                              (#{:action :pay} phase))))
+                            {:interaction :playable})
+                          (choice-interaction name area choice)
+                          (when (not-empty set-aside)
+                            {:set-aside (map (if active? (comp ut/format-name :name) (constantly "Card")) set-aside)})))))
           frequencies
           (map (fn [[card number-of-cards]]
                  (cond-> card
                          (< 1 number-of-cards) (assoc :number-of-cards number-of-cards)))))
-        (cond->> (not number-of-cards) (sort-by (juxt (comp first (partial remove nil?) (juxt :action :treasure :curse :victory) :types)
+        (cond->> (not number-of-cards) (sort-by (juxt (comp first (partial remove nil?) (juxt :action :treasure :curse :victory) (partial ut/get-types game))
                                                       :name))))))
 
 (defn view-hand [{active-player?                      :active-player?
@@ -223,11 +226,12 @@
          (when-not (nil? winner)
            {:winner? winner})))
 
-(defn view-trash [{:keys [trash choice]} mode]
+(defn view-trash [{:keys [trash choice] :as game} mode]
   (case mode
     :compact (if (empty? trash)
                {}
-               (let [{:keys [name types]} (last trash)]
+               (let [{:keys [name] :as card} (last trash)
+                     types (ut/get-types game card)]
                  {:visible-cards   [{:name    name
                                      :name-ui (ut/format-name name)
                                      :types   types}]
@@ -235,11 +239,12 @@
     :full (if (empty? trash)
             []
             (->> trash
-                 (map (fn [{:keys [name types]}]
-                        (merge {:name    name
-                                :name-ui (ut/format-name name)
-                                :types   types}
-                               (choice-interaction name :trash choice))))
+                 (map (fn [{:keys [name] :as card}]
+                        (let [types (ut/get-types game card)]
+                          (merge {:name    name
+                                  :name-ui (ut/format-name name)
+                                  :types   types}
+                                 (choice-interaction name :trash choice)))))
                  frequencies
                  (map (fn [[card number-of-cards]]
                         (cond-> card
@@ -250,7 +255,7 @@
         [choice] effect-stack
         can-play-treasures? (boolean (and (not choice)
                                           (#{:action :pay} phase)
-                                          (some (comp :treasure :types) hand)))
+                                          (some (comp :treasure (partial ut/get-types game)) hand)))
         potential-coins (cond-> coins
                                 can-play-treasures? (+ (->> hand (keep :coin-value) (apply +))))]
     {:can-undo?           (boolean can-undo?)
@@ -259,7 +264,7 @@
                                (not= phase :end-of-game))
      :confirm-end-turn    (cond (and (= :action phase)
                                      (pos? actions)
-                                     (some (comp :action :types) hand)) "You can still play actions."
+                                     (some (comp :action (partial ut/get-types game)) hand)) "You can still play actions."
                                 (and (pos? buys)
                                      (<= 3 potential-coins)) "You can buy a card.")}))
 
@@ -276,13 +281,13 @@
                                                                        (or (nil? choice)
                                                                            (= idx player-no))
                                                                        (not= phase :end-of-game))]
-                                               (view-player (merge {:active-player? active-player?
-                                                                    :player         player
-                                                                    :artifacts      (->> artifacts vals (filter (comp #{idx} :owner)))}
+                                               (view-player (merge game {:active-player? active-player?
+                                                                         :player         player
+                                                                         :artifacts      (->> artifacts vals (filter (comp #{idx} :owner)))}
                                                                    (when (= idx player-no)
                                                                      {:choice choice})))))))
-            :trash       {:compact (view-trash {:trash trash :choice choice} :compact)
-                          :full    (view-trash {:trash trash :choice choice} :full)}
+            :trash       {:compact (view-trash (merge game {:choice choice}) :compact)
+                          :full    (view-trash (merge game {:choice choice}) :full)}
             :commands    (view-commands game)}
            (when trade-route-mat
              {:trade-route-mat trade-route-mat})

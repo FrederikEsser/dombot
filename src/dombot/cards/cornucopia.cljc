@@ -22,7 +22,8 @@
 
 (defn- farming-village-reveal [game {:keys [player-no]}]
   (let [{:keys [revealed deck discard]} (get-in game [:players player-no])
-        {:keys [types name] :as card} (last revealed)]
+        {:keys [name] :as card} (last revealed)
+        types (ut/get-types game card)]
     (cond (or (:treasure types)
               (:action types)) (push-effect-stack game {:player-no player-no
                                                         :effects   [[:move-card {:card-name name
@@ -45,7 +46,8 @@
 
 (defn- fortune-teller-reveal [game {:keys [player-no]}]
   (let [{:keys [revealed deck discard]} (get-in game [:players player-no])
-        {:keys [types name] :as card} (last revealed)]
+        {:keys [name] :as card} (last revealed)
+        types (ut/get-types game card)]
     (cond (or (:victory types)
               (:curse types)) (push-effect-stack game {:player-no player-no
                                                        :effects   [[:move-card {:card-name   name
@@ -112,7 +114,8 @@
                         [:discard-all-revealed]]})
 
 (defn- horn-of-plenty-gain [game {:keys [player-no card-id card-name]}]
-  (let [{{:keys [types]} :card} (ut/get-pile-idx game card-name)]
+  (let [{:keys [card]} (ut/get-pile-idx game card-name)
+        types (ut/get-types game card)]
     (push-effect-stack game {:player-no player-no
                              :effects   (concat [[:gain {:card-name card-name}]]
                                                 (when (:victory types)
@@ -202,7 +205,8 @@
               :card-name card-name}))
 
 (defn- jester-give-choice [game {:keys [player-no attacking-player-no]}]
-  (let [{:keys [name types] :as card} (last (get-in game [:players player-no :discard]))]
+  (let [{:keys [name] :as card} (last (get-in game [:players player-no :discard]))
+        types (ut/get-types game card)]
     (if (:victory types)
       (gain game {:player-no player-no
                   :card-name :curse})
@@ -331,7 +335,7 @@
 
 (defn- tournament-choose-prize [{:keys [extra-cards] :as game} {:keys [player-no]}]
   (let [prize-options (->> extra-cards
-                           (filter (comp :prize :types :card))
+                           (filter (comp :prize (partial ut/get-types game) :card))
                            (filter (comp pos? :pile-size))
                            (map (fn create-prize-option [{{:keys [name]} :card}]
                                   {:option name :text (ut/format-name name)})))

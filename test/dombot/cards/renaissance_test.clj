@@ -4,10 +4,10 @@
             [dombot.operations :refer :all]
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
-            [dombot.cards.dominion :refer [throne-room chapel]]
-            [dombot.cards.intrigue :refer [lurker swindler]]
+            [dombot.cards.dominion :refer [mine throne-room chapel]]
+            [dombot.cards.intrigue :as intrigue :refer [courtier ironworks lurker swindler]]
             [dombot.cards.seaside :refer [merchant-ship]]
-            [dombot.cards.prosperity :refer [peddler]]
+            [dombot.cards.prosperity :refer [bank loan mint peddler venture]]
             [dombot.cards.promos :refer [stash]]
             [dombot.cards.renaissance :as renaissance :refer :all]
             [dombot.utils :as ut])
@@ -1217,8 +1217,8 @@
                  (choose :estate))
              {:players [{:hand      [copper copper]
                          :play-area [(assoc research :at-start-turn [[[:put-set-aside-into-hand {:card-name :silver}]
-                                                                        [:put-set-aside-into-hand {:card-name :silver}]]]
-                                                       :set-aside [silver silver])]
+                                                                      [:put-set-aside-into-hand {:card-name :silver}]]]
+                                                     :set-aside [silver silver])]
                          :deck      [copper]
                          :actions   1}]
               :trash   [estate]}))
@@ -1879,11 +1879,244 @@
            {:projects {:canal (assoc canal :participants [{:player-no 0}])}
             :players  [{:coins           0
                         :buys            0
-                        :cost-reductions [{:reduction 1}]}]}))
-    {:projects {:canal (assoc canal :participants [{:player-no 0}])}
-     :players  [{:coins           0
-                 :buys            0
-                 :cost-reductions [{:reduction 1}]}]}))
+                        :cost-reductions [{:reduction 1}]}]}))))
+
+(deftest capitalism-test
+  (let [patron (assoc patron :id 0)
+        mint (assoc mint :id 1)]
+    (testing "Capitalism"
+      (testing "get-types"
+        (is (= (-> {:projects {:capitalism capitalism}
+                    :players  [{:coins 7
+                                :buys  1}]}
+                   (ut/get-types priest))
+               #{:action}))
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :players  [{:coins 7
+                                :buys  1}]}
+                   (ut/get-types priest))
+               #{:action :treasure}))
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :players  [{:coins 7
+                                :buys  1}]}
+                   (ut/get-types villain))
+               #{:action :attack})))
+      (testing "playing Actions as Treasures"
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :players  [{:hand    [patron]
+                                :actions 1
+                                :coins   0
+                                :phase   :action}]}
+                   (play 0 :patron))
+               {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                :players  [{:play-area [patron]
+                            :actions   0
+                            :coins     2
+                            :villagers 1
+                            :phase     :action}]}))
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :players  [{:hand    [patron]
+                                :actions 1
+                                :coins   0
+                                :phase   :pay}]}
+                   (play 0 :patron))
+               {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                :players  [{:play-area [patron]
+                            :actions   1
+                            :coins     2
+                            :villagers 1
+                            :phase     :pay}]}))
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :players  [{:hand    [patron]
+                                :actions 0
+                                :coins   0
+                                :phase   :action}]}
+                   (play 0 :patron))
+               {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                :players  [{:play-area [patron]
+                            :actions   0
+                            :coins     2
+                            :villagers 1
+                            :phase     :pay}]}))
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :players  [{:hand    [patron copper]
+                                :actions 1
+                                :coins   0
+                                :phase   :action}]}
+                   (play-treasures {:player-no 0}))
+               {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                :players  [{:play-area [patron copper]
+                            :actions   1
+                            :coins     3
+                            :villagers 1
+                            :phase     :pay}]}))
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :players  [{:hand    [priest copper]
+                                :actions 0
+                                :coins   0
+                                :phase   :action}]}
+                   (play-treasures {:player-no 0})
+                   (choose :copper))
+               {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                :players  [{:play-area [priest]
+                            :actions   0
+                            :coins     2
+                            :phase     :pay
+                            :triggers  [priest-trigger]}]
+                :trash    [copper]})))
+      (testing "with Sculptor"
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :supply   [{:card patron :pile-size 10}]
+                    :players  [{:hand    [sculptor]
+                                :actions 1}]}
+                   (play 0 :sculptor)
+                   (choose :patron))
+               {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                :supply   [{:card patron :pile-size 9}]
+                :players  [{:hand      [patron]
+                            :play-area [sculptor]
+                            :actions   0
+                            :villagers 1}]})))
+      (testing "with Guildhall"
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :supply   [{:card patron :pile-size 10}]
+                    :players  [{:coins    4
+                                :buys     1
+                                :triggers [(get-trigger guildhall)]}]}
+                   (buy-card 0 :patron))
+               {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                :supply   [{:card patron :pile-size 9}]
+                :players  [{:discard  [patron]
+                            :coins    0
+                            :buys     0
+                            :coffers  1
+                            :triggers [(get-trigger guildhall)]}]})))
+      (testing "with Loan"
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :players  [{:hand  [loan]
+                                :deck  [patron estate]
+                                :coins 0}]}
+                   (play 0 :loan)
+                   (choose nil))
+               {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                :players  [{:play-area      [loan]
+                            :deck           [estate]
+                            :discard        [patron]
+                            :revealed-cards {:discard 1}
+                            :coins          1
+                            :coffers        1}]})))
+      (testing "with Venture"
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :players  [{:hand  [venture]
+                                :deck  [patron estate]
+                                :coins 0}]}
+                   (play 0 :venture))
+               {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                :players  [{:play-area      [venture patron]
+                            :deck           [estate]
+                            :revealed-cards {:play-area 1}
+                            :coins          3
+                            :coffers        1
+                            :villagers      1}]})))
+      (testing "with Courtier"
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :players  [{:hand    [courtier copper patron]
+                                :actions 1}]}
+                   (play 0 :courtier)
+                   (choose :patron))
+               {:projects     {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                :players      [{:hand           [copper patron]
+                                :play-area      [courtier]
+                                :revealed-cards {:hand 1}
+                                :actions        0
+                                :coffers        1}]
+                :effect-stack [{:text      "Choose three:"
+                                :player-no 0
+                                :choice    ::intrigue/courtier-choices
+                                :source    :special
+                                :options   [{:option :action :text "+1 Action"}
+                                            {:option :buy :text "+1 Buy"}
+                                            {:option :coins :text "+$3"}
+                                            {:option :gold :text "Gain a Gold."}]
+                                :min       3
+                                :max       3}]})))
+      (testing "with Ironworks"
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :supply   [{:card patron :pile-size 10}]
+                    :players  [{:hand    [ironworks]
+                                :actions 1
+                                :coins   0}]}
+                   (play 0 :ironworks)
+                   (choose :patron))
+               {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                :supply   [{:card patron :pile-size 9}]
+                :players  [{:play-area [ironworks]
+                            :discard   [patron]
+                            :actions   1
+                            :coins     1}]})))
+      (testing "with Mine"
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :supply   [{:card patron :pile-size 10}]
+                    :players  [{:hand    [mine silver estate]
+                                :actions 1}]}
+                   (play 0 :mine)
+                   (choose :silver)
+                   (choose :patron))
+               {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                :supply   [{:card patron :pile-size 9}]
+                :players  [{:hand      [estate patron]
+                            :play-area [mine]
+                            :actions   0}]
+                :trash    [silver]})))
+      (testing "with Treasurer"
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :players  [{:hand    [treasurer patron]
+                                :actions 1
+                                :coins   0}]}
+                   (play 0 :treasurer)
+                   (choose :trash)
+                   (choose :patron))
+               {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                :players  [{:play-area [treasurer]
+                            :actions   0
+                            :coins     3}]
+                :trash    [patron]}))
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :players  [{:hand    [treasurer]
+                                :actions 1
+                                :coins   0}]
+                    :trash    [patron]}
+                   (play 0 :treasurer)
+                   (choose :gain)
+                   (choose :patron))
+               {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                :players  [{:hand      [patron]
+                            :play-area [treasurer]
+                            :actions   0
+                            :coins     3}]
+                :trash    []})))
+      (testing "with Mint"
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :supply   [{:card mint :pile-size 10}]
+                    :players  [{:play-area [patron copper copper copper]
+                                :coins     5
+                                :buys      1}]}
+                   (buy-card 0 :mint))
+               {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                :supply   [{:card mint :pile-size 9}]
+                :players  [{:discard [mint]
+                            :coins   0
+                            :buys    0}]
+                :trash    [patron copper copper copper]})))
+      (testing "with Bank"
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :players  [{:hand      [bank]
+                                :play-area [patron]
+                                :coins     2}]}
+                   (play 0 :bank))
+               {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                :players  [{:play-area [patron bank]
+                            :coins     4}]}))))))
 
 (deftest cathedral-test
   (testing "Cathedral"

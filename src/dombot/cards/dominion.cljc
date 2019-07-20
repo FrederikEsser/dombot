@@ -40,7 +40,7 @@
 
 (defn bureaucrat-attack [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])]
-    (if (some (comp :victory :types) hand)
+    (if (some (comp :victory (partial ut/get-types game)) hand)
       (give-choice game {:player-no player-no
                          :text      "Reveal a Victory card from your hand and put it onto your deck."
                          :choice    ::bureaucrat-topdeck-victory
@@ -138,7 +138,8 @@
 
 (defn library-check-for-action [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])
-        {:keys [types name]} (last hand)]
+        {:keys [name] :as card} (last hand)
+        types (ut/get-types game card)]
     (cond-> game
             (:action types) (give-choice {:player-no player-no
                                           :text      (str "You may skip the " (ut/format-name name) "; set it aside, discarding it afterwards.")
@@ -252,11 +253,11 @@
   (let [empty-piles (ut/empty-supply-piles game)]
     (cond-> game
             (pos? empty-piles) (give-choice {:player-no player-no
-                                            :text      (str "Discard a card per empty supply pile [" empty-piles "].")
-                                            :choice    :discard-from-hand
-                                            :options   [:player :hand]
-                                            :min       empty-piles
-                                            :max       empty-piles}))))
+                                             :text      (str "Discard a card per empty supply pile [" empty-piles "].")
+                                             :choice    :discard-from-hand
+                                             :options   [:player :hand]
+                                             :min       empty-piles
+                                             :max       empty-piles}))))
 
 (effects/register {::poacher-discard poacher-discard})
 

@@ -85,7 +85,8 @@
 (effects/register {:play-from-revealed play-from-revealed})
 
 (defn check-stay-in-play [game {:keys [player-no card-id target-id]}]
-  (let [{{:keys [types] :as card} :card} (ut/get-card-idx game [:players player-no :play-area] {:id target-id})]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id target-id})
+        types (ut/get-types game card)]
     (cond-> game
             (and (:duration types) (ut/stay-in-play card)) (ut/update-in-vec [:players player-no :play-area] {:id card-id} update :at-start-turn concat [[]]))))
 
@@ -282,7 +283,7 @@
 (defn trash-from-play-area [game {:keys [player-no card-name type] :as args}]
   (let [card-names (and type
                         (->> (get-in game [:players player-no :play-area])
-                             (filter (comp type :types))
+                             (filter (comp type (partial ut/get-types game)))
                              (map :name)))]
     (cond-> game
             card-name (move-card (merge args {:from :play-area
@@ -394,7 +395,7 @@
 
 (defn put-revealed-types-into-hand [game {:keys [player-no types]}]
   (let [card-names (->> (get-in game [:players player-no :revealed])
-                        (filter (comp (partial some types) :types))
+                        (filter (comp (partial some types) (partial ut/get-types game)))
                         (map :name))]
     (move-cards game {:player-no  player-no
                       :card-names card-names

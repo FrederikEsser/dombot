@@ -10,7 +10,7 @@
 
 (defn- bank-give-coins [game {:keys [player-no]}]
   (let [number-of-treasures-in-play (->> (get-in game [:players player-no :play-area])
-                                         (filter (comp :treasure :types))
+                                         (filter (comp :treasure (partial ut/get-types game)))
                                          count)]
     (give-coins game {:player-no player-no :arg number-of-treasures-in-play})))
 
@@ -161,7 +161,8 @@
                    :buyable? ::grand-market-buyable?})
 
 (defn- hoard-on-buy [game {:keys [player-no card-name]}]
-  (let [{{:keys [types]} :card} (ut/get-pile-idx game card-name)]
+  (let [{:keys [card]} (ut/get-pile-idx game card-name)
+        types (ut/get-types game card)]
     (cond-> game
             (:victory types) (push-effect-stack {:player-no player-no
                                                  :effects   [[:gain {:card-name :gold}]]}))))
@@ -186,7 +187,8 @@
 
 (defn- loan-reveal [game {:keys [player-no]}]
   (let [{:keys [revealed deck discard]} (get-in game [:players player-no])
-        {:keys [types name]} (last revealed)]
+        {:keys [name] :as card} (last revealed)
+        types (ut/get-types game card)]
     (cond (:treasure types) (give-choice game {:player-no player-no
                                                :text      (str "You may trash the revealed " (ut/format-name name) ".")
                                                :choice    :trash-from-revealed
@@ -257,7 +259,7 @@
 
 (defn- peddler-buy-cost [game {:keys [player-no]}]
   (let [actions-in-play (->> (get-in game [:players player-no :play-area])
-                             (filter (comp :action :types))
+                             (filter (comp :action (partial ut/get-types game)))
                              count)]
     (max 0 (- 8 (* 2 actions-in-play)))))
 
@@ -281,8 +283,9 @@
 
 (defn rabble-discard [game {:keys [player-no]}]
   (let [card-names (->> (get-in game [:players player-no :revealed])
-                        (filter (fn [{:keys [types]}]
-                                  (or (:action types) (:treasure types))))
+                        (filter (fn [card]
+                                  (let [types (ut/get-types game card)]
+                                    (or (:action types) (:treasure types)))))
                         (map :name))]
     (move-cards game {:player-no  player-no
                       :card-names card-names
@@ -332,7 +335,8 @@
                  :while-in-play {:on-gain [[::royal-seal-give-choice]]}})
 
 (defn- talisman-on-buy [game {:keys [player-no card-name]}]
-  (let [{{:keys [types] :as card} :card} (ut/get-pile-idx game card-name)
+  (let [{:keys [card]} (ut/get-pile-idx game card-name)
+        types (ut/get-types game card)
         cost (ut/get-cost game card)]
     (cond-> game
             (and (not (:victory types))
@@ -414,7 +418,8 @@
 
 (defn- venture-reveal [game {:keys [player-no]}]
   (let [{:keys [revealed deck discard]} (get-in game [:players player-no])
-        {:keys [types name] :as card} (last revealed)]
+        {:keys [name] :as card} (last revealed)
+        types (ut/get-types game card)]
     (cond (:treasure types) (push-effect-stack game {:player-no player-no
                                                      :effects   [[:move-card {:card-name name
                                                                               :from      :revealed
