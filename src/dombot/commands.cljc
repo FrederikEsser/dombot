@@ -11,7 +11,6 @@
 ; save / load game
 ; UI button for jumping to next phase
 ; handle simultaneous duration effects at-start-turn
-; fix Scepter on duration stays in play
 ; fix Throne Room / Improve
 ; fix Improve / double Border Guard bug
 ; fix Improve / Cargo Ship bug

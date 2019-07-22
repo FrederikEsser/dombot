@@ -1261,7 +1261,10 @@
         peddler (assoc peddler :id 3)
         villain (assoc villain :id 4)
         priest (assoc priest :id 5)
-        priest-trigger (assoc priest-trigger :card-id 5)]
+        priest-trigger (assoc priest-trigger :card-id 5)
+        merchant-ship (assoc merchant-ship :id 6)
+        research (assoc research :id 7)
+        scepter (assoc scepter :id 8)]
     (testing "Scepter"
       (is (= (-> {:players [{:hand  [scepter]
                              :coins 0}]}
@@ -1373,7 +1376,90 @@
                          :coins          6
                          :phase          :pay
                          :triggers       [priest-trigger priest-trigger]}]
-              :trash   [copper]})))))
+              :trash   [copper]}))
+      (is (= (-> {:track-played-actions? true
+                  :players               [{:hand    [merchant-ship scepter]
+                                           :deck    (repeat 5 copper)
+                                           :actions 1
+                                           :coins   2}]}
+                 (play 0 :merchant-ship)
+                 (play 0 :scepter)
+                 (choose :replay-action)
+                 (choose :merchant-ship)
+                 (end-turn 0))
+             {:track-played-actions? true
+              :current-player        0
+              :players               [{:hand      (repeat 5 copper)
+                                       :play-area [merchant-ship scepter]
+                                       :actions   1
+                                       :coins     4
+                                       :buys      1
+                                       :phase     :action}]}))
+      (is (= (-> {:track-played-actions? true
+                  :players               [{:hand    [research scepter estate copper copper]
+                                           :deck    (repeat 7 copper)
+                                           :actions 1}]}
+                 (play 0 :research)
+                 (choose :estate)
+                 (play 0 :scepter)
+                 (choose :replay-action)
+                 (choose :research)
+                 (choose :copper)
+                 (end-turn 0))
+             {:track-played-actions? true
+              :current-player        0
+              :players               [{:hand      (repeat 7 copper)
+                                       :play-area [(assoc research :set-aside [])
+                                                   scepter]
+                                       :discard   [copper]
+                                       :actions   1
+                                       :coins     0
+                                       :buys      1
+                                       :phase     :action}]
+              :trash                 [estate copper]}))
+      (is (= (-> {:track-played-actions? true
+                  :players               [{:hand    [research scepter estate copper copper]
+                                           :deck    (repeat 7 copper)
+                                           :actions 1}]}
+                 (play 0 :research)
+                 (choose :copper)
+                 (play 0 :scepter)
+                 (choose :replay-action)
+                 (choose :research)
+                 (choose :estate)
+                 (end-turn 0))
+             {:track-played-actions? true
+              :current-player        0
+              :players               [{:hand      (repeat 7 copper)
+                                       :play-area [(assoc research :set-aside [])
+                                                   scepter]
+                                       :discard   [copper]
+                                       :actions   1
+                                       :coins     0
+                                       :buys      1
+                                       :phase     :action}]
+              :trash                 [copper estate]}))
+      (is (= (-> {:track-played-actions? true
+                  :players               [{:hand    [research scepter estate copper copper]
+                                           :deck    (repeat 7 copper)
+                                           :actions 1}]}
+                 (play 0 :research)
+                 (choose :copper)
+                 (play 0 :scepter)
+                 (choose :replay-action)
+                 (choose :research)
+                 (choose :copper)
+                 (end-turn 0))
+             {:track-played-actions? true
+              :current-player        0
+              :players               [{:hand    (repeat 5 copper)
+                                       :deck    [copper copper]
+                                       :discard [estate research scepter]
+                                       :actions 1
+                                       :coins   0
+                                       :buys    1
+                                       :phase   :action}]
+              :trash                 [copper copper]})))))
 
 (deftest scholar-test
   (testing "Scholar"

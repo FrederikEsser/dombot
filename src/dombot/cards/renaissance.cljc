@@ -352,18 +352,21 @@
                                         :min     1
                                         :max     1}]]})
 
-(defn- scepter-replay [game {:keys [player-no card-name]}]
+(defn- scepter-replay [game {:keys [player-no card-id card-name]}]
   (let [played-card-ids (set (get-in game [:players player-no :actions-played]))
         {:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:name card-name
                                                                               :id   played-card-ids})]
-    (card-effect game {:player-no player-no
-                       :card      card})))
+    (push-effect-stack game {:player-no player-no
+                             :card-id   card-id
+                             :effects   [[:card-effect {:card card}]
+                                         [:check-stay-in-play {:target-id (:id card)}]]})))
 
-(defn- scepter-choice [game {:keys [player-no choice]}]
+(defn- scepter-choice [game {:keys [player-no card-id choice]}]
   (let [played-card-ids (set (get-in game [:players player-no :actions-played]))]
     (case choice
       :coins (give-coins game {:player-no player-no :arg 2})
       :replay-action (give-choice game {:player-no player-no
+                                        :card-id   card-id
                                         :text      "Replay an Action card you played this turn."
                                         :choice    ::scepter-replay
                                         :options   [:player :play-area {:type :action
