@@ -7,13 +7,14 @@
             [dombot.cards.dominion :refer [mine throne-room chapel]]
             [dombot.cards.intrigue :as intrigue :refer [courtier ironworks lurker swindler]]
             [dombot.cards.seaside :refer [merchant-ship]]
-            [dombot.cards.prosperity :refer [bank loan mint peddler venture]]
+            [dombot.cards.prosperity :refer [bank loan mint peddler venture watchtower]]
             [dombot.cards.promos :refer [stash]]
             [dombot.cards.renaissance :as renaissance :refer :all]
             [dombot.utils :as ut])
   (:refer-clojure :exclude [key]))
 
 (defn fixture [f]
+  (ut/reset-ids!)
   (with-rand-seed 123 (f)))
 
 (use-fixtures :each fixture)
@@ -299,8 +300,7 @@
         border-guard-4 (assoc border-guard :id 4)
         gold (assoc gold :id 5)
         inventor (assoc inventor :id 6)
-        improve (assoc improve :id 7)
-        experiment (assoc experiment :id 8)]
+        improve (assoc improve :id 7)]
     (testing "Cargo Ship"
       (is (= (-> {:players [{:hand    [cargo-ship]
                              :actions 1
@@ -319,16 +319,21 @@
                  (gain {:player-no 0 :card-name :gold}))
              {:supply       [{:card gold :pile-size 29}]
               :players      [{:play-area [cargo-ship]
-                              :discard   [copper gold]
+                              :gaining   [gold]
+                              :discard   [copper]
                               :actions   0
                               :coins     2}]
               :effect-stack [{:text      "You may set the gained Gold aside on Cargo Ship."
                               :player-no 0
                               :card-id   1
-                              :choice    [::renaissance/cargo-ship-set-aside {:gained-card-id 5 :from :discard}]
-                              :source    :discard
+                              :choice    [::renaissance/cargo-ship-set-aside {:gained-card-id 5}]
+                              :source    :gaining
                               :options   [:gold]
-                              :max       1}]}))
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:finalize-gain {:player-no      0
+                                                          :card-name      :gold
+                                                          :gained-card-id 5}]}]}))
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [cargo-ship]
                              :discard [copper]
@@ -366,7 +371,7 @@
                  (play 0 :sculptor)
                  (choose :border-guard))
              {:supply       [{:card border-guard :pile-size 9}]
-              :players      [{:hand      [border-guard]
+              :players      [{:gaining   [border-guard]
                               :play-area [cargo-ship sculptor]
                               :discard   [copper]
                               :actions   0
@@ -374,10 +379,15 @@
               :effect-stack [{:text      "You may set the gained Border Guard aside on Cargo Ship."
                               :player-no 0
                               :card-id   1
-                              :choice    [::renaissance/cargo-ship-set-aside {:gained-card-id 3 :from :hand}]
-                              :source    :hand
+                              :choice    [::renaissance/cargo-ship-set-aside {:gained-card-id 3}]
+                              :source    :gaining
                               :options   [:border-guard]
-                              :max       1}]}))
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:finalize-gain {:player-no      0
+                                                          :card-name      :border-guard
+                                                          :gained-card-id 3
+                                                          :to             :hand}]}]}))
       (is (= (-> {:supply  [{:card border-guard :pile-size 10}]
                   :players [{:hand    [cargo-ship sculptor]
                              :discard [copper]
@@ -388,8 +398,7 @@
                  (choose :border-guard)
                  (choose :border-guard))
              {:supply  [{:card border-guard :pile-size 9}]
-              :players [{:hand      []
-                         :play-area [(assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :border-guard}]]]
+              :players [{:play-area [(assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :border-guard}]]]
                                                        :set-aside [border-guard])
                                      sculptor]
                          :discard   [copper]
@@ -487,24 +496,27 @@
                (gain {:player-no 0 :card-name :gold}))
            {:supply       [{:card gold :pile-size 29}]
             :players      [{:play-area [throne-room cargo-ship]
-                            :discard   [copper gold]
+                            :gaining   [gold]
+                            :discard   [copper]
                             :actions   0
                             :coins     4}]
             :effect-stack [{:text      "You may set the gained Gold aside on Cargo Ship."
                             :player-no 0
                             :card-id   1
-                            :choice    [::renaissance/cargo-ship-set-aside {:gained-card-id 5 :from :discard}]
-                            :source    :discard
+                            :choice    [::renaissance/cargo-ship-set-aside {:gained-card-id 5}]
+                            :source    :gaining
                             :options   [:gold]
                             :max       1}
                            {:player-no 0
                             :card-id   1
                             :effect    [:dombot.cards.renaissance/cargo-ship-give-choice]
                             :args      {:player-no      0
-                                        :gained-card-id 5
                                         :card-name      :gold
-                                        :from           :discard
-                                        :from-position  :bottom}}]}))
+                                        :gained-card-id 5}}
+                           {:player-no 0
+                            :effect    [:finalize-gain {:player-no      0
+                                                        :card-name      :gold
+                                                        :gained-card-id 5}]}]}))
     (is (= (-> {:supply  [{:card gold :pile-size 30}]
                 :players [{:hand    [cargo-ship throne-room]
                            :discard [copper]
@@ -557,8 +569,8 @@
             :players [{:play-area [throne-room
                                    (assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :experiment}]]
                                                                      [[:put-set-aside-into-hand {:card-name :experiment}]]]
-                                                     :set-aside [experiment experiment])]
-                       :discard   []
+                                                     :set-aside [(assoc experiment :id 1)
+                                                                 (assoc experiment :id 2)])]
                        :actions   0
                        :coins     1
                        :buys      0}]}))))
@@ -580,14 +592,19 @@
                         :card-name :ducat}))
              {:supply       [{:card ducat :pile-size 9}]
               :players      [{:hand    [copper copper]
-                              :discard [ducat]}]
-              :effect-stack [{:text      "You may trash a Copper from your hand."
-                              :player-no 0
-                              :card-name :ducat
-                              :choice    :trash-from-hand
-                              :source    :hand
-                              :options   [:copper :copper]
-                              :max       1}]}))
+                              :gaining [ducat]}]
+              :effect-stack [{:text           "You may trash a Copper from your hand."
+                              :player-no      0
+                              :card-name      :ducat
+                              :gained-card-id 1
+                              :choice         :trash-from-hand
+                              :source         :hand
+                              :options        [:copper :copper]
+                              :max            1}
+                             {:player-no 0
+                              :effect    [:finalize-gain {:player-no      0
+                                                          :card-name      :ducat
+                                                          :gained-card-id 1}]}]}))
       (is (= (-> {:supply  [{:card ducat :pile-size 10}]
                   :players [{:hand [copper copper]}]}
                  (gain {:player-no 0
@@ -1475,26 +1492,26 @@
 (deftest sculptor-test
   (let [estate (assoc estate :id 1)
         silver (assoc silver :id 2)
-        silk-merchant (assoc silk-merchant :id 3)]
+        watchtower (assoc watchtower :id 3)]
     (testing "Sculptor"
       (is (= (-> {:supply  [{:card estate :pile-size 8}
                             {:card duchy :pile-size 8}
                             {:card silver :pile-size 40}
-                            {:card silk-merchant :pile-size 10}]
+                            {:card watchtower :pile-size 10}]
                   :players [{:hand    [sculptor]
                              :actions 1}]}
                  (play 0 :sculptor))
              {:supply       [{:card estate :pile-size 8}
                              {:card duchy :pile-size 8}
                              {:card silver :pile-size 40}
-                             {:card silk-merchant :pile-size 10}]
+                             {:card watchtower :pile-size 10}]
               :players      [{:play-area [sculptor]
                               :actions   0}]
               :effect-stack [{:text      "Gain a card to your hand costing up to $4."
                               :player-no 0
                               :choice    ::renaissance/sculptor-gain
                               :source    :supply
-                              :options   [:estate :silver :silk-merchant]
+                              :options   [:estate :silver :watchtower]
                               :min       1
                               :max       1}]}))
       (is (= (-> {:supply  [{:card estate :pile-size 8}]
@@ -1523,17 +1540,15 @@
                                      :actions      0
                                      :villagers    1
                                      :gained-cards [{:name :silver :types #{:treasure} :cost 3}]}]}))
-      (is (= (-> {:supply  [{:card silk-merchant :pile-size 10}]
+      (is (= (-> {:supply  [{:card watchtower :pile-size 10}]
                   :players [{:hand    [sculptor]
                              :actions 1}]}
                  (play 0 :sculptor)
-                 (choose :silk-merchant))
-             {:supply  [{:card silk-merchant :pile-size 9}]
-              :players [{:hand      [silk-merchant]
+                 (choose :watchtower))
+             {:supply  [{:card watchtower :pile-size 9}]
+              :players [{:hand      [watchtower]
                          :play-area [sculptor]
-                         :actions   0
-                         :coffers   1
-                         :villagers 1}]})))))
+                         :actions   0}]})))))
 
 (deftest seer-test
   (testing "Seer"
@@ -1800,21 +1815,22 @@
                             :options   [:copper :gold]
                             :min       1
                             :max       1}]}))
-    (is (= (-> {:supply  [{:card ducat :pile-size 9}]
-                :players [{:hand    [treasurer copper]
-                           :actions 1
-                           :coins   0}]
-                :trash   [copper estate ducat]}
-               (play 0 :treasurer)
-               (choose :gain)
-               (choose :ducat)
-               (choose :copper))
-           {:supply  [{:card ducat :pile-size 9}]
-            :players [{:hand      [ducat]
-                       :play-area [treasurer]
-                       :actions   0
-                       :coins     3}]
-            :trash   [copper estate copper]}))
+    (let [ducat (assoc ducat :id 0)]
+      (is (= (-> {:supply  [{:card ducat :pile-size 9}]
+                  :players [{:hand    [treasurer copper]
+                             :actions 1
+                             :coins   0}]
+                  :trash   [copper estate ducat]}
+                 (play 0 :treasurer)
+                 (choose :gain)
+                 (choose :ducat)
+                 (choose :copper))
+             {:supply  [{:card ducat :pile-size 9}]
+              :players [{:hand      [ducat]
+                         :play-area [treasurer]
+                         :actions   0
+                         :coins     3}]
+              :trash   [copper estate copper]})))
     (is (= (-> {:artifacts {:key key}
                 :players   [{:hand    [treasurer]
                              :actions 1

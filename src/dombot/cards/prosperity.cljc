@@ -312,21 +312,21 @@
                                                           :min     3
                                                           :max     3}]]}]]})
 
-(defn royal-seal-topdeck [game {:keys [player-no card-name gained-card-id from]}]
+(defn royal-seal-topdeck [game {:keys [player-no card-name gained-card-id]}]
   (cond-> game
           card-name (move-card {:player-no    player-no
                                 :move-card-id gained-card-id
-                                :from         from
+                                :from         :gaining
                                 :to           :deck
                                 :to-position  :top})))
 
-(defn royal-seal-give-choice [game {:keys [player-no gained-card-id from] :as args}]
-  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})]
+(defn royal-seal-give-choice [game {:keys [player-no gained-card-id]}]
+  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
     (cond-> game
             card (give-choice {:player-no player-no
                                :text      (str "You may put the gained " (ut/format-name name) " onto your deck.")
-                               :choice    [::royal-seal-topdeck args]
-                               :options   [:player from {:id gained-card-id}]
+                               :choice    [::royal-seal-topdeck {:gained-card-id gained-card-id}]
+                               :options   [:player :gaining {:id gained-card-id}]
                                :max       1}))))
 
 (effects/register {::royal-seal-topdeck     royal-seal-topdeck
@@ -452,25 +452,25 @@
     (draw game {:player-no player-no
                 :arg       (- 6 (count hand))})))
 
-(defn watchtower-choice [game {:keys [player-no gained-card-id from choice] :as args}]
+(defn watchtower-choice [game {:keys [player-no choice gained-card-id]}]
   (case choice
     :trash (move-card game {:player-no    player-no
                             :move-card-id gained-card-id
-                            :from         from
+                            :from         :gaining
                             :to           :trash})
     :topdeck (move-card game {:player-no    player-no
                               :move-card-id gained-card-id
-                              :from         from
+                              :from         :gaining
                               :to           :deck
                               :to-position  :top})
     :nothing game))
 
-(defn watchtower-give-choice [game {:keys [player-no gained-card-id from] :as args}]
-  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})]
+(defn watchtower-give-choice [game {:keys [player-no gained-card-id]}]
+  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
     (cond-> game
             card (give-choice {:player-no player-no
                                :text      (str "You may reveal a Watchtower from your hand, to either trash the gained " (ut/format-name name) " or put it onto your deck.")
-                               :choice    [::watchtower-choice {:gained-card-id gained-card-id :from from}]
+                               :choice    [::watchtower-choice {:gained-card-id gained-card-id}]
                                :options   [:special
                                            {:option :trash :text (str "Trash " (ut/format-name name) ".")}
                                            {:option :topdeck :text (str "Put " (ut/format-name name) " onto your deck.")}

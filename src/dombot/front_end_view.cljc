@@ -127,21 +127,27 @@
     (if (empty? full-deck)
       {}
       (merge {:number-of-cards (count full-deck)}
-             (when (or (not-empty look-at) (not-empty revealed) revealed-cards-in-deck)
+             (when (or (not-empty look-at)
+                       (not-empty revealed)
+                       revealed-cards-in-deck)
                {:visible-cards (concat (view-area :look-at data)
                                        (view-area :revealed data)
-                                       (when revealed-cards-in-deck (view-area :deck data :top revealed-cards-in-deck)))})))))
+                                       (when revealed-cards-in-deck
+                                         (view-area :deck data :top revealed-cards-in-deck)))})))))
 
 (defn view-discard [{{:keys [discard
+                             gaining
                              approx-discard-size
                              revealed-cards]} :player
                      :as                      data}]
-  (if (empty? discard)
-    {}
-    (let [number-of-cards (or (:discard revealed-cards)
-                              1)]
-      {:visible-cards   (view-area :discard data :bottom number-of-cards)
-       :number-of-cards (max approx-discard-size number-of-cards)})))
+  (let [full-discard (concat gaining discard)]
+    (if (empty? full-discard)
+      {}
+      (let [revealed-cards-in-discard (or (:discard revealed-cards)
+                                          1)]
+        {:visible-cards   (concat (view-area :gaining data)
+                                  (view-area :discard data :bottom revealed-cards-in-discard))
+         :number-of-cards (max approx-discard-size revealed-cards-in-discard)}))))
 
 (defn view-options [options]
   (->> options

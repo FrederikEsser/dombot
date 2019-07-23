@@ -986,17 +986,20 @@
                  (buy-card 0 :gold))
              {:supply       [{:card gold :pile-size 29}]
               :players      [{:play-area [royal-seal]
-                              :discard   [gold]
+                              :gaining   [gold]
                               :coins     0
                               :buys      0}]
               :effect-stack [{:text      "You may put the gained Gold onto your deck."
                               :player-no 0
-                              :choice    [::prosperity/royal-seal-topdeck {:player-no      0
-                                                                           :gained-card-id 0
-                                                                           :from           :discard}]
-                              :source    :discard
+                              :choice    [::prosperity/royal-seal-topdeck {:gained-card-id 0}]
+                              :source    :gaining
                               :options   [:gold]
-                              :max       1}]}))
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:finalize-gain {:player-no      0
+                                                          :card-name      :gold
+                                                          :gained-card-id 0
+                                                          :bought         true}]}]}))
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:play-area [royal-seal]
                              :deck      [copper]
@@ -1328,19 +1331,23 @@
                  (buy-card 0 :gold))
              {:supply       [{:card gold :pile-size 29}]
               :players      [{:hand    [watchtower]
-                              :discard [gold]
+                              :gaining [gold]
                               :coins   0
                               :buys    0}]
               :effect-stack [{:text      "You may reveal a Watchtower from your hand, to either trash the gained Gold or put it onto your deck."
                               :player-no 0
-                              :choice    [::prosperity/watchtower-choice {:gained-card-id 0
-                                                                          :from           :discard}]
+                              :choice    [::prosperity/watchtower-choice {:gained-card-id 0}]
                               :source    :special
                               :options   [{:option :trash :text "Trash Gold."}
                                           {:option :topdeck :text "Put Gold onto your deck."}
                                           {:option :nothing :text "Don't reveal Watchtower."}]
                               :min       1
-                              :max       1}]}))
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:finalize-gain {:player-no      0
+                                                          :card-name      :gold
+                                                          :gained-card-id 0
+                                                          :bought         true}]}]}))
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand  [watchtower]
                              :coins 6
@@ -1385,18 +1392,25 @@
               :players      [{:play-area [sea-hag]
                               :actions   0}
                              {:hand    [watchtower]
-                              :deck    [curse copper]
+                              :gaining [curse]
+                              :deck    [copper]
                               :discard [copper]}]
               :effect-stack [{:text      "You may reveal a Watchtower from your hand, to either trash the gained Curse or put it onto your deck."
                               :player-no 1
-                              :choice    [::prosperity/watchtower-choice {:gained-card-id 1
-                                                                          :from           :deck}]
+                              :choice    [::prosperity/watchtower-choice {:gained-card-id 1}]
                               :source    :special
                               :options   [{:option :trash :text "Trash Curse."}
                                           {:option :topdeck :text "Put Curse onto your deck."}
                                           {:option :nothing :text "Don't reveal Watchtower."}]
                               :min       1
                               :max       1}
+                             {:player-no 1
+                              :effect    [:finalize-gain {:player-no           1
+                                                          :card-name           :curse
+                                                          :gained-card-id      1
+                                                          :to                  :deck
+                                                          :to-position         :top
+                                                          :attacking-player-no 0}]}
                              {:player-no 1
                               :effect    [:clear-unaffected {:works :once}]}]}))
       (is (= (-> {:supply  [{:card curse :pile-size 10}]
@@ -1412,7 +1426,19 @@
                         {:hand    [watchtower]
                          :deck    [copper]
                          :discard [copper]}]
-              :trash   [curse]})))))
+              :trash   [curse]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 0}]
+                  :players [{:hand    [sea-hag]
+                             :actions 1}
+                            {:hand [watchtower]
+                             :deck [copper gold]}]}
+                 (play 0 :sea-hag))
+             {:supply  [{:card curse :pile-size 0}]
+              :players [{:play-area [sea-hag]
+                         :actions   0}
+                        {:hand    [watchtower]
+                         :deck    [gold]
+                         :discard [copper]}]})))))
 
 (deftest workers-village-test
   (testing "Worker's Village"

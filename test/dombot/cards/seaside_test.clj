@@ -387,10 +387,9 @@
                  (choose :province))
              {:supply  [{:card silver :pile-size 40}
                         {:card gold :pile-size 29}]
-              :players [{:hand           [gold province]
-                         :play-area      [explorer]
-                         :actions        0
-                         :revealed-cards {:hand 1}}]}))
+              :players [{:hand      [gold province]
+                         :play-area [explorer]
+                         :actions   0}]}))
       (is (= (-> {:supply  [{:card silver :pile-size 40}
                             {:card gold :pile-size 30}]
                   :players [{:hand    [explorer province]

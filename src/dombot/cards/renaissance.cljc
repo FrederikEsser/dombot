@@ -1,5 +1,5 @@
 (ns dombot.cards.renaissance
-  (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards gain card-effect affect-other-players]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards gain card-effect affect-other-players state-maintenance]]
             [dombot.cards.common :refer [reveal-hand reveal-from-deck add-trigger give-coins give-coffers give-villagers]]
             [dombot.cards.dominion :as dominion]
             [dombot.cards.guilds :as guilds]
@@ -92,28 +92,29 @@
                          :duration :once
                          :effects  [[::cargo-ship-give-choice]]})
 
-(defn cargo-ship-set-aside [game {:keys [player-no card-id card-name gained-card-id from]}]
+(defn cargo-ship-set-aside [game {:keys [player-no card-id card-name gained-card-id]}]
   (if card-name
-    (let [{:keys [card idx]} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})]
+    (let [{:keys [card idx]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
       (-> game
-          (update-in [:players player-no from] ut/vec-remove idx)
+          (update-in [:players player-no :gaining] ut/vec-remove idx)
           (ut/update-in-vec [:players player-no :play-area] {:id card-id}
                             (fn [cargo-ship]
                               (-> cargo-ship
                                   (update :set-aside concat [card])
-                                  (update :at-start-turn concat [[[:put-set-aside-into-hand {:card-name card-name}]]]))))))
+                                  (update :at-start-turn concat [[[:put-set-aside-into-hand {:card-name card-name}]]]))))
+          (state-maintenance player-no :gaining :cargo-ship)))
     (add-trigger game {:player-no player-no
                        :card-id   card-id
                        :trigger   cargo-ship-trigger})))
 
-(defn cargo-ship-give-choice [game {:keys [player-no card-id gained-card-id card-name from]}]
-  (let [card (ut/get-card-idx game [:players player-no from] {:id gained-card-id})]
+(defn cargo-ship-give-choice [game {:keys [player-no card-id gained-card-id]}]
+  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
     (if card
       (give-choice game {:player-no player-no
                          :card-id   card-id
-                         :text      (str "You may set the gained " (ut/format-name card-name) " aside on Cargo Ship.")
-                         :choice    [::cargo-ship-set-aside {:gained-card-id gained-card-id :from from}]
-                         :options   [:player from {:id gained-card-id}]
+                         :text      (str "You may set the gained " (ut/format-name name) " aside on Cargo Ship.")
+                         :choice    [::cargo-ship-set-aside {:gained-card-id gained-card-id}]
+                         :options   [:player :gaining {:id gained-card-id}]
                          :max       1})
       (add-trigger game {:player-no player-no
                          :card-id   card-id
@@ -578,8 +579,8 @@
 
 (effects/register {::add-artifact add-artifact})
 
-(defn academy-on-gain [game {:keys [player-no gained-card-id from]}]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})
+(defn academy-on-gain [game {:keys [player-no gained-card-id]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
         types (ut/get-types game card)]
     (cond-> game
             (:action types) (give-villagers {:player-no player-no :arg 1}))))
@@ -689,8 +690,8 @@
                      :simultaneous-mode :auto
                      :effects           [[:give-buys 1]]}})
 
-(defn guildhall-on-gain [game {:keys [player-no gained-card-id from]}]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})
+(defn guildhall-on-gain [game {:keys [player-no gained-card-id]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
         types (ut/get-types game card)]
     (cond-> game
             (:treasure types) (give-coffers {:player-no player-no :arg 1}))))
@@ -704,17 +705,17 @@
                 :trigger {:trigger :on-gain
                           :effects [[::guildhall-on-gain]]}})
 
-(defn- innovation-play-action [game {:keys [player-no card-name gained-card-id from]}]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})]
+(defn- innovation-play-action [game {:keys [player-no card-name gained-card-id]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
     (cond-> game
             card-name (push-effect-stack {:player-no player-no
                                           :effects   [[:move-card {:move-card-id gained-card-id
-                                                                   :from         from
+                                                                   :from         :gaining
                                                                    :to           :play-area}]
                                                       [:card-effect {:card card}]]}))))
 
-(defn- innovation-on-gain [game {:keys [player-no gained-card-id from]}]
-  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no from] {:id gained-card-id})
+(defn- innovation-on-gain [game {:keys [player-no gained-card-id]}]
+  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
         types (ut/get-types game card)
         gained-actions (->> (get-in game [:players player-no :gained-cards])
                             (filter (comp :action (partial ut/get-types game)))
@@ -723,9 +724,8 @@
             (and (:action types)
                  (<= gained-actions 1)) (give-choice {:player-no player-no
                                                       :text      (str "You may play the gained " (ut/format-name name) ".")
-                                                      :choice    [::innovation-play-action {:gained-card-id gained-card-id
-                                                                                            :from           from}]
-                                                      :options   [:player from {:id gained-card-id}]
+                                                      :choice    [::innovation-play-action {:gained-card-id gained-card-id}]
+                                                      :options   [:player :gaining {:id gained-card-id}]
                                                       :max       1}))))
 
 (effects/register {::innovation-play-action innovation-play-action

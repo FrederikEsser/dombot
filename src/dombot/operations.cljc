@@ -277,61 +277,70 @@
             :else new-args)])
 
 (defn handle-on-gain [{:keys [track-gained-cards? current-player] :as game}
-                      {:keys [player-no card-name from to to-position bought]
-                       :or   {from        :supply
-                              to          :discard
-                              to-position :bottom}
+                      {:keys [player-no gained-card-id from bought]
+                       :or   {from :supply}
                        :as   args}]
-  (let [new-args (merge args {:from          to
-                              :from-position to-position})
-        {{:keys [on-gain id cost] :as card} :card} (get-card game new-args)
+  (let [{{:keys [name on-gain cost] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
         {:keys [hand play-area]} (get-in game [:players player-no])
         reaction-effects (->> hand
                               (mapcat (comp :on-gain :reaction))
-                              (map (partial add-effect-args {:gained-card-id id
-                                                             :from           to})))
+                              (map (partial add-effect-args {:gained-card-id gained-card-id})))
         token-effects (when (= :supply from)
-                        (->> (ut/get-pile-idx game card-name)
+                        (->> (ut/get-pile-idx game name)
                              :tokens
                              (mapcat :on-gain)
-                             (map (partial add-effect-args {:card-name card-name}))))
+                             (map (partial add-effect-args {:card-name name}))))
         while-in-play-effects (->> play-area
                                    (mapcat (comp :on-gain :while-in-play))
-                                   (map (partial add-effect-args {:gained-card-id id
-                                                                  :from           to})))]
-    (cond-> game
-            :always (apply-triggers player-no :on-gain (assoc new-args :gained-card-id id))
-            (or (not-empty reaction-effects)
-                on-gain
-                (not-empty token-effects)
-                (not-empty while-in-play-effects)) (push-effect-stack (merge args {:effects (concat reaction-effects
-                                                                                                    (map (partial add-effect-args args) on-gain)
-                                                                                                    token-effects
-                                                                                                    while-in-play-effects)}))
-            (and track-gained-cards?
-                 (= current-player player-no)) (update-in [:players player-no :gained-cards]
-                                                          concat [(merge {:name  card-name
-                                                                          :cost  cost
-                                                                          :types (ut/get-types game card)}
-                                                                         (when bought {:bought true}))]))))
+                                   (map (partial add-effect-args {:gained-card-id gained-card-id})))]
+    (if card
+      (cond-> game
+              (or (not-empty reaction-effects)
+                  on-gain
+                  (not-empty token-effects)
+                  (not-empty while-in-play-effects)) (push-effect-stack (merge args {:effects (concat reaction-effects
+                                                                                                      (map (partial add-effect-args args) on-gain)
+                                                                                                      token-effects
+                                                                                                      while-in-play-effects)}))
+              :always (apply-triggers player-no :on-gain args)
+              (and track-gained-cards?
+                   (= current-player player-no)) (update-in [:players player-no :gained-cards]
+                                                            concat [(merge {:name  name
+                                                                            :cost  cost
+                                                                            :types (ut/get-types game card)}
+                                                                           (when bought {:bought true}))]))
+      game)))
 
-(defn do-gain [game {:keys [player-no card-name from to to-position]
-                     :or   {from :supply
-                            to   :discard}}]
-  (assert card-name "No card-name specified for gain.")
-  (let [{:keys [card from-path idx]} (get-card game {:player-no player-no
-                                                     :card-name card-name
-                                                     :from      from})]
-    (cond-> game
-            card (-> (remove-card from-path idx)
-                     (add-card [:players player-no to] to-position card)
-                     (state-maintenance player-no from-path to)))))
+(declare move-card)
 
-(defn gain [game {:keys [card-name] :as args}]
-  (cond-> game
-          card-name (-> (push-effect-stack (merge args {:effects [[:do-gain args]
-                                                                  [:on-gain args]]}))
-                        check-stack)))
+(defn finalize-gain [game {:keys [player-no gained-card-id to to-position]
+                           :or   {to :discard}}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
+    (cond-> game
+            card (-> (move-card {:player-no     player-no
+                                 :move-card-id gained-card-id
+                                 :from          :gaining
+                                 :to            to
+                                 :to-position   to-position})
+                     (state-maintenance player-no :gaining to)))))
+
+(defn gain [game {:keys [player-no card-name from to]
+                  :or   {from :supply
+                         to   :discard}
+                  :as   args}]
+  (if card-name
+    (let [{:keys [card from-path idx]} (get-card game {:player-no player-no
+                                                       :card-name card-name
+                                                       :from      from})
+          gain-args (merge args
+                           {:gained-card-id (:id card)})]
+      (cond-> game
+              card (-> (remove-card from-path idx)
+                       (add-card [:players player-no :gaining] :top card)
+                       (push-effect-stack (merge args {:effects [[:on-gain gain-args]
+                                                                 [:finalize-gain gain-args]]}))
+                       check-stack)))
+    game))
 
 (defn overpay-choice [game {:keys [player-no amount effect]}]
   (if (pos? amount)
@@ -341,8 +350,8 @@
                             :effects   [[effect {:amount amount}]]}))
     game))
 
-(effects/register {:do-gain        do-gain
-                   :on-gain        handle-on-gain
+(effects/register {:on-gain        handle-on-gain
+                   :finalize-gain  finalize-gain
                    :gain           gain
                    :overpay-choice overpay-choice})
 
