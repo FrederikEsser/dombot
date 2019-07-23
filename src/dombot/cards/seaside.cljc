@@ -1,6 +1,6 @@
 (ns dombot.cards.seaside
   (:require [dombot.operations :refer [move-card move-cards give-choice push-effect-stack]]
-            [dombot.cards.common :refer [reveal-hand gain-to-hand discard-all-look-at trash-from-revealed]]
+            [dombot.cards.common :refer [reveal-hand gain-to-hand discard-all-look-at trash-from-revealed set-aside=>hand-trigger]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -33,13 +33,16 @@
                        [:give-actions 2]
                        [:give-coins 1]]})
 
-(def caravan {:name     :caravan
-              :set      :seaside
-              :types    #{:action :duration}
-              :cost     4
-              :effects  [[:draw 1]
-                         [:give-actions 1]]
-              :duration [[:draw 1]]})
+(def caravan {:name    :caravan
+              :set     :seaside
+              :types   #{:action :duration}
+              :cost    4
+              :effects [[:draw 1]
+                        [:give-actions 1]]
+              :trigger {:trigger           :at-start-turn
+                        :duration          :once
+                        :simultaneous-mode :auto
+                        :effects           [[:draw 1]]}})
 
 (defn cutpurse-attack [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])]
@@ -110,14 +113,17 @@
                :cost    5
                :effects [[::explorer-reveal-province]]})
 
-(def fishing-village {:name     :fishing-village
-                      :set      :seaside
-                      :types    #{:action :duration}
-                      :cost     3
-                      :effects  [[:give-actions 2]
-                                 [:give-coins 1]]
-                      :duration [[:give-actions 1]
-                                 [:give-coins 1]]})
+(def fishing-village {:name    :fishing-village
+                      :set     :seaside
+                      :types   #{:action :duration}
+                      :cost    3
+                      :effects [[:give-actions 2]
+                                [:give-coins 1]]
+                      :trigger {:trigger           :at-start-turn
+                                :duration          :once
+                                :simultaneous-mode :auto
+                                :effects           [[:give-actions 1]
+                                                    [:give-coins 1]]}})
 
 (def ghost-ship {:name    :ghost-ship
                  :set     :seaside
@@ -130,11 +136,10 @@
   (let [{:keys [card idx]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
     (-> game
         (update-in [:players player-no :hand] ut/vec-remove idx)
-        (ut/update-in-vec [:players player-no :play-area] {:id card-id}
-                          (fn [haven]
-                            (-> haven
-                                (update :set-aside concat [card])
-                                (update :at-start-turn concat [[[:put-set-aside-into-hand {:card-name card-name}]]])))))))
+        (push-effect-stack {:player-no player-no
+                            :effects   [[:add-trigger {:trigger (merge set-aside=>hand-trigger
+                                                                       {:set-aside [card]})
+                                                       :card-id card-id}]]}))))
 
 (effects/register {::haven-set-aside haven-set-aside})
 
@@ -177,15 +182,18 @@
                                              :max     1}]]
              :victory-points 2})
 
-(def lighthouse {:name     :lighthouse
-                 :set      :seaside
-                 :types    #{:action :duration}
-                 :cost     2
-                 :effects  [[:give-actions 1]
-                            [:give-coins 1]
-                            [:mark-unaffected]]
-                 :duration [[:give-coins 1]
-                            [:clear-unaffected]]})
+(def lighthouse {:name    :lighthouse
+                 :set     :seaside
+                 :types   #{:action :duration}
+                 :cost    2
+                 :effects [[:give-actions 1]
+                           [:give-coins 1]
+                           [:mark-unaffected]]
+                 :trigger {:trigger           :at-start-turn
+                           :duration          :once
+                           :simultaneous-mode :auto
+                           :effects           [[:give-coins 1]
+                                               [:clear-unaffected]]}})
 
 (def lookout {:name    :lookout
               :set     :seaside
@@ -208,12 +216,15 @@
                                      :to            :deck
                                      :to-position   :top}]]})
 
-(def merchant-ship {:name     :merchant-ship
-                    :set      :seaside
-                    :types    #{:action :duration}
-                    :cost     5
-                    :effects  [[:give-coins 2]]
-                    :duration [[:give-coins 2]]})
+(def merchant-ship {:name    :merchant-ship
+                    :set     :seaside
+                    :types   #{:action :duration}
+                    :cost    5
+                    :effects [[:give-coins 2]]
+                    :trigger {:trigger           :at-start-turn
+                              :duration          :once
+                              :simultaneous-mode :auto
+                              :effects           [[:give-coins 2]]}})
 
 (defn native-village-choice [game {:keys [player-no choice]}]
   (let [native-village-cards (->> (get-in game [:players player-no :native-village-mat])
@@ -284,12 +295,18 @@
                                                    :number-of-cards 3}]
                                        [:start-turn]]}))
 
+(def outpost-trigger {:trigger  :at-end-turn
+                      :duration :once
+                      :effects  [[::outpost-extra-turn]]})
+
 (defn outpost-give-extra-turn [game {:keys [player-no card-id]}]
   (let [{:keys [previous-turn-was-yours?]} (get-in game [:players player-no])]
+
     (cond-> game
             (not previous-turn-was-yours?) (-> (assoc-in [:players player-no :previous-turn-was-yours?] true)
-                                               (ut/update-in-vec [:players player-no :play-area] {:id card-id}
-                                                                 assoc :at-end-turn [[::outpost-extra-turn]])))))
+                                               (push-effect-stack {:player-no player-no
+                                                                   :effects   [[:add-trigger {:trigger outpost-trigger
+                                                                                              :card-id card-id}]]})))))
 
 (effects/register {::outpost-extra-turn      outpost-extra-turn
                    ::outpost-give-extra-turn outpost-give-extra-turn})
@@ -429,25 +446,31 @@
                 :cost    3
                 :effects [[::smugglers-give-choice]]})
 
+(def tactician-trigger {:trigger           :at-start-turn
+                        :duration          :once
+                        :simultaneous-mode :auto
+                        :effects           [[:draw 5]
+                                            [:give-actions 1]
+                                            [:give-buys 1]]})
+
 (defn tactician-discard [game {:keys [player-no card-id]}]
   (let [hand (get-in game [:players player-no :hand])]
-    (if (pos? (count hand))
-      (move-cards game {:player-no  player-no
-                        :card-names (map :name hand)
-                        :from       :hand
-                        :to         :discard})
-      (ut/update-in-vec game [:players player-no :play-area] {:id card-id} update :at-start-turn drop-last))))
+    (cond-> game
+            (pos? (count hand)) (push-effect-stack {:player-no player-no
+                                                    :effects   [[:move-cards {:player-no  player-no
+                                                                              :card-names (map :name hand)
+                                                                              :from       :hand
+                                                                              :to         :discard}]
+                                                                [:add-trigger {:trigger tactician-trigger
+                                                                               :card-id card-id}]]}))))
 
 (effects/register {::tactician-discard tactician-discard})
 
-(def tactician {:name     :tactician
-                :set      :seaside
-                :types    #{:action :duration}
-                :cost     5
-                :effects  [[::tactician-discard]]
-                :duration [[:draw 5]
-                           [:give-actions 1]
-                           [:give-buys 1]]})
+(def tactician {:name    :tactician
+                :set     :seaside
+                :types   #{:action :duration}
+                :cost    5
+                :effects [[::tactician-discard]]})
 
 (defn treasure-map-trash [game {:keys [player-no card-id] :as args}]
   (let [{this-treasure-map :card} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})
@@ -505,14 +528,17 @@
                                          :min     3
                                          :max     3}]]})
 
-(def wharf {:name     :wharf
-            :set      :seaside
-            :types    #{:action :duration}
-            :cost     5
-            :effects  [[:draw 2]
-                       [:give-buys 1]]
-            :duration [[:draw 2]
-                       [:give-buys 1]]})
+(def wharf {:name    :wharf
+            :set     :seaside
+            :types   #{:action :duration}
+            :cost    5
+            :effects [[:draw 2]
+                      [:give-buys 1]]
+            :trigger {:trigger           :at-start-turn
+                      :duration          :once
+                      :simultaneous-mode :auto
+                      :effects           [[:draw 2]
+                                          [:give-buys 1]]}})
 
 (def kingdom-cards [ambassador
                     bazaar

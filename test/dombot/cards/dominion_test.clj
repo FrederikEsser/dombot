@@ -999,7 +999,7 @@
                                {:effect    [:card-effect {:card militia}]
                                 :player-no 0}
                                {:player-no 0
-                                :effect    [:check-stay-in-play {:target-id nil}]}]}))
+                                :effect    [:register-repeated-play {:target-id nil}]}]}))
         (is (= (-> {:players [{:hand    [throne-room militia]
                                :actions 1
                                :coins   0}
@@ -1024,7 +1024,7 @@
                                {:player-no 1
                                 :effect    [:clear-unaffected {:works :once}]}
                                {:player-no 0
-                                :effect    [:check-stay-in-play {:target-id nil}]}]}))
+                                :effect    [:register-repeated-play {:target-id nil}]}]}))
         (testing "vs Minion"
           (is (= (-> {:players [{:hand    [minion]
                                  :actions 1}
@@ -1541,7 +1541,7 @@
                               :effect    [:card-effect {:card throne-room}]}
                              {:player-no 0
                               :card-id   0
-                              :effect    [:check-stay-in-play {:target-id 0}]}]}))
+                              :effect    [:register-repeated-play {:target-id 0}]}]}))
       (is (= (-> {:players [{:deck    [witch copper copper silver]
                              :hand    [throne-room throne-room merchant]
                              :actions 1}]}
@@ -1562,7 +1562,7 @@
                               :max       1}
                              {:player-no 0
                               :card-id   0
-                              :effect    [:check-stay-in-play {:target-id 0}]}]}))
+                              :effect    [:register-repeated-play {:target-id 0}]}]}))
       (is (= (-> {:supply  [{:card curse :pile-size 10}]
                   :players [{:deck    [witch copper copper silver]
                              :hand    [throne-room throne-room merchant]

@@ -176,9 +176,15 @@
                (buyable-fn game {:player-no player-no}))
     :else true))
 
-(defn stay-in-play [{:keys [at-start-turn at-end-turn]}]
-  (or (not-empty at-start-turn)
-      (not-empty at-end-turn)))
+(defn stay-in-play [game player-no {:keys [id] :as card}]
+  (let [{:keys [triggers repeated-play]} (get-in game [:players player-no])
+        repeated-card-ids (->> repeated-play
+                               (filter (comp #{id} :source))
+                               (map :target)
+                               set)
+        stay-in-play-triggers (filter (comp #{:at-start-turn :at-end-turn} :trigger) triggers)]
+    (or (some (comp #{id} :card-id) stay-in-play-triggers)
+        (some (comp repeated-card-ids :card-id) stay-in-play-triggers))))
 
 (defn- can-react? [game player-no {:keys [react-pred]}]
   (if react-pred
@@ -201,7 +207,7 @@
             reacts-to (filter (every-pred (comp #{reacts-to} :reacts-to)
                                           (partial can-react? game player-no)))
             min-cost (filter (comp (partial <= min-cost) (partial get-cost game)))
-            leaves-play (remove stay-in-play)
+            leaves-play (remove (partial stay-in-play game player-no))
             ids (filter (comp ids :id))
             :always (map :name))))
 
@@ -247,3 +253,9 @@
   (->> supply
        (filter (comp zero? :pile-size))
        count))
+
+(defn add-effect-args [new-args [effect args]]
+  [effect (cond
+            (map? args) (merge new-args args)
+            args (merge new-args {:arg args})
+            :else new-args)])

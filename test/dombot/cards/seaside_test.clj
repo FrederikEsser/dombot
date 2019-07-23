@@ -117,6 +117,10 @@
                        :actions   2
                        :coins     1}]}))))
 
+(defn get-trigger [{:keys [id trigger]}]
+  (merge {:card-id id}
+         trigger))
+
 (deftest caravan-test
   (let [caravan-1 (assoc caravan :id 1)
         caravan-2 (assoc caravan :id 2)
@@ -127,22 +131,24 @@
                              :actions 1}]}
                  (play 0 :caravan))
              {:players [{:hand      [estate estate estate copper copper]
-                         :play-area [(assoc caravan-1 :at-start-turn [[[:draw 1]]])]
+                         :play-area [caravan-1]
                          :deck      [copper copper copper copper copper silver]
-                         :actions   1}]}))
+                         :actions   1
+                         :triggers  [(get-trigger caravan-1)]}]}))
       (is (= (-> {:players [{:hand    [caravan-1 estate estate estate copper]
                              :deck    [copper copper copper copper copper copper silver]
                              :actions 1}]}
                  (play 0 :caravan)
                  (clean-up {:player-no 0}))
              {:players [{:hand      [copper copper copper copper copper]
-                         :play-area [(assoc caravan-1 :at-start-turn [[[:draw 1]]])]
+                         :play-area [caravan-1]
                          :deck      [silver]
                          :discard   [estate estate estate copper copper]
                          :actions   0
                          :coins     0
                          :buys      0
-                         :phase     :out-of-turn}]}))
+                         :phase     :out-of-turn
+                         :triggers  [(get-trigger caravan-1)]}]}))
       (is (= (-> {:players [{:hand    [caravan-1 estate estate estate copper]
                              :deck    [copper copper copper copper copper copper silver]
                              :actions 1}]}
@@ -163,13 +169,13 @@
                  (play 0 :caravan)
                  (clean-up {:player-no 0}))
              {:players [{:hand      [estate estate copper copper silver]
-                         :play-area [(assoc caravan-1 :at-start-turn [[[:draw 1]]])
-                                     (assoc caravan-2 :at-start-turn [[[:draw 1]]])]
+                         :play-area [caravan-1 caravan-2]
                          :discard   [copper copper copper copper copper]
                          :actions   0
                          :coins     0
                          :buys      0
-                         :phase     :out-of-turn}]}))
+                         :phase     :out-of-turn
+                         :triggers  [(get-trigger caravan-1) (get-trigger caravan-2)]}]}))
       (is (= (-> {:players [{:hand    [caravan-1 caravan-2 copper copper copper]
                              :deck    [copper copper estate estate copper copper silver]
                              :actions 1}]}
@@ -190,14 +196,15 @@
                  (play 0 :throne-room)
                  (choose :caravan)
                  (clean-up {:player-no 0}))
-             {:players [{:hand      [estate estate copper copper silver]
-                         :play-area [(assoc throne-room :at-start-turn [[]])
-                                     (assoc caravan-1 :at-start-turn [[[:draw 1]] [[:draw 1]]])]
-                         :discard   [copper copper copper copper copper]
-                         :actions   0
-                         :coins     0
-                         :buys      0
-                         :phase     :out-of-turn}]}))
+             {:players [{:hand          [estate estate copper copper silver]
+                         :play-area     [throne-room caravan-1]
+                         :discard       [copper copper copper copper copper]
+                         :actions       0
+                         :coins         0
+                         :buys          0
+                         :phase         :out-of-turn
+                         :triggers      [(get-trigger caravan-1) (get-trigger caravan-1)]
+                         :repeated-play [{:source 3 :target 1}]}]}))
       (is (= (-> {:players [{:hand    [caravan-1 throne-room copper copper copper]
                              :deck    [copper copper estate estate copper copper silver]
                              :actions 1}]}
@@ -421,10 +428,10 @@
                              :actions 1
                              :coins   0}]}
                  (play 0 :fishing-village))
-             {:players [{:play-area [(assoc fishing-village :at-start-turn [[[:give-actions 1]
-                                                                             [:give-coins 1]]])]
+             {:players [{:play-area [fishing-village]
                          :actions   2
-                         :coins     1}]}))
+                         :coins     1
+                         :triggers  [(get-trigger fishing-village)]}]}))
       (is (= (-> {:players [{:hand    [fishing-village]
                              :actions 1
                              :coins   0}]}
@@ -524,10 +531,12 @@
                  (play 0 :haven)
                  (choose :copper))
              {:players [{:hand      [estate]
-                         :play-area [(assoc haven :at-start-turn [[[:put-set-aside-into-hand {:card-name :copper}]]]
-                                                  :set-aside [copper])]
+                         :play-area [haven]
                          :deck      [copper]
-                         :actions   1}]}))
+                         :actions   1
+                         :triggers  [(merge set-aside=>hand-trigger
+                                            {:card-id   1
+                                             :set-aside [copper]})]}]}))
       (is (= (-> {:players [{:hand    [haven estate]
                              :deck    [copper copper]
                              :actions 1}]}
@@ -536,7 +545,7 @@
                  (end-turn 0))
              {:current-player 0
               :players        [{:hand      [copper estate copper]
-                                :play-area [(assoc haven :set-aside [])]
+                                :play-area [haven]
                                 :actions   1
                                 :coins     0
                                 :buys      1
@@ -553,12 +562,17 @@
                  (choose :haven)
                  (choose :copper)
                  (choose :estate))
-             {:players [{:hand      [copper]
-                         :play-area [(assoc throne-room :at-start-turn [[]])
-                                     (assoc haven :at-start-turn [[[:put-set-aside-into-hand {:card-name :copper}]]
-                                                                  [[:put-set-aside-into-hand {:card-name :estate}]]]
-                                                  :set-aside [copper estate])]
-                         :actions   2}]}))
+             {:players [{:hand          [copper]
+                         :play-area     [throne-room haven]
+                         :actions       2
+                         :triggers      [(merge set-aside=>hand-trigger
+                                                {:card-id   1
+                                                 :set-aside [copper]})
+                                         (merge set-aside=>hand-trigger
+                                                {:card-id   1
+                                                 :set-aside [estate]})]
+                         :repeated-play [{:source 2
+                                          :target 1}]}]}))
       (is (= (-> {:players [{:hand    [throne-room haven estate]
                              :deck    [copper copper]
                              :actions 1}]}
@@ -569,8 +583,7 @@
                  (end-turn 0))
              {:current-player 0
               :players        [{:hand      [copper copper estate]
-                                :play-area [throne-room
-                                            (assoc haven :set-aside [])]
+                                :play-area [throne-room haven]
                                 :actions   1
                                 :coins     0
                                 :buys      1
@@ -624,11 +637,11 @@
                              :actions 1
                              :coins   0}]}
                  (play 0 :lighthouse))
-             {:players [{:play-area  [(assoc lighthouse-1 :at-start-turn [[[:give-coins 1]
-                                                                           [:clear-unaffected]]])]
+             {:players [{:play-area  [lighthouse-1]
                          :actions    1
                          :coins      1
-                         :unaffected [{:card-id 1}]}]}))
+                         :unaffected [{:card-id 1}]
+                         :triggers   [(get-trigger lighthouse-1)]}]}))
       (is (= (-> {:players [{:hand    [lighthouse-1]
                              :actions 1
                              :coins   0}
@@ -636,13 +649,13 @@
                  (play 0 :lighthouse)
                  (end-turn 0))
              {:current-player 1
-              :players        [{:play-area  [(assoc lighthouse-1 :at-start-turn [[[:give-coins 1]
-                                                                                  [:clear-unaffected]]])]
+              :players        [{:play-area  [lighthouse-1]
                                 :actions    0
                                 :coins      0
                                 :buys       0
                                 :phase      :out-of-turn
-                                :unaffected [{:card-id 1}]}
+                                :unaffected [{:card-id 1}]
+                                :triggers   [(get-trigger lighthouse-1)]}
                                {:actions 1
                                 :coins   0
                                 :buys    1}]}))
@@ -662,13 +675,13 @@
                {:current-player 2
                 :supply         [{:card curse :pile-size 18}]
                 :players        [{:hand       [moat]
-                                  :play-area  [(assoc lighthouse-1 :at-start-turn [[[:give-coins 1]
-                                                                                    [:clear-unaffected]]])]
+                                  :play-area  [lighthouse-1]
                                   :actions    0
                                   :coins      0
                                   :buys       0
                                   :phase      :out-of-turn
-                                  :unaffected [{:card-id 1}]}
+                                  :unaffected [{:card-id 1}]
+                                  :triggers   [(get-trigger lighthouse-1)]}
                                  {:hand    [witch]
                                   :discard [curse]
                                   :actions 0
@@ -773,9 +786,10 @@
                              :actions 1
                              :coins   0}]}
                  (play 0 :merchant-ship))
-             {:players [{:play-area [(assoc merchant-ship :at-start-turn [[[:give-coins 2]]])]
+             {:players [{:play-area [merchant-ship]
                          :actions   0
-                         :coins     2}]}))
+                         :coins     2
+                         :triggers  [(get-trigger merchant-ship)]}]}))
       (is (= (-> {:players [{:hand    [merchant-ship]
                              :actions 1
                              :coins   0}]}
@@ -923,9 +937,11 @@
       (is (= (-> {:players [{:hand    [outpost]
                              :actions 1}]}
                  (play 0 :outpost))
-             {:players [{:play-area                [(assoc outpost :at-end-turn [[::seaside/outpost-extra-turn]])]
+             {:players [{:play-area                [outpost]
                          :actions                  0
-                         :previous-turn-was-yours? true}]}))
+                         :previous-turn-was-yours? true
+                         :triggers                 [(merge outpost-trigger
+                                                           {:card-id 1})]}]}))
       (is (= (-> {:players [{:hand            [outpost]
                              :deck            (repeat 5 copper)
                              :actions         1
@@ -1355,20 +1371,19 @@
       (is (= (-> {:players [{:hand    [tactician estate]
                              :actions 1}]}
                  (play 0 :tactician))
-             {:players [{:play-area [(assoc tactician :at-start-turn [[[:draw 5]
-                                                                       [:give-actions 1]
-                                                                       [:give-buys 1]]])]
+             {:players [{:play-area [tactician]
                          :discard   [estate]
-                         :actions   0}]}))
+                         :actions   0
+                         :triggers  [(merge tactician-trigger
+                                            {:card-id 1})]}]}))
       (is (= (-> {:players [{:hand    [tactician]
                              :actions 1}]}
                  (play 0 :tactician))
-             {:players [{:play-area [(assoc tactician :at-start-turn [])]
+             {:players [{:play-area [tactician]
                          :actions   0}]}))
       (is (= (-> {:players [{:hand    [tactician estate]
                              :deck    (repeat 10 copper)
-                             :actions 1
-                             :coins   0}]}
+                             :actions 1}]}
                  (play 0 :tactician)
                  (end-turn 0))
              {:current-player 0
@@ -1381,14 +1396,13 @@
                                 :phase     :action}]}))
       (is (= (-> {:players [{:hand    [tactician]
                              :deck    (repeat 10 copper)
-                             :actions 1
-                             :coins   0}]}
+                             :actions 1}]}
                  (play 0 :tactician)
                  (end-turn 0))
              {:current-player 0
               :players        [{:hand    (repeat 5 copper)
                                 :deck    (repeat 5 copper)
-                                :discard [(assoc tactician :at-start-turn [])]
+                                :discard [tactician]
                                 :actions 1
                                 :coins   0
                                 :buys    1
@@ -1397,12 +1411,27 @@
                              :actions 1}]}
                  (play 0 :throne-room)
                  (choose :tactician))
-             {:players [{:play-area [(assoc throne-room :at-start-turn [[]])
-                                     (assoc tactician :at-start-turn [[[:draw 5]
-                                                                       [:give-actions 1]
-                                                                       [:give-buys 1]]])]
-                         :discard   [estate]
-                         :actions   0}]})))))
+             {:players [{:play-area     [throne-room tactician]
+                         :discard       [estate]
+                         :actions       0
+                         :triggers      [(merge tactician-trigger
+                                                {:card-id 1})]
+                         :repeated-play [{:source 2
+                                          :target 1}]}]}))
+      (is (= (-> {:players [{:hand    [throne-room tactician estate]
+                             :deck    (repeat 10 copper)
+                             :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :tactician)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand      (repeat 10 copper)
+                                :play-area [throne-room tactician]
+                                :discard   [estate]
+                                :actions   2
+                                :coins     0
+                                :buys      2
+                                :phase     :action}]})))))
 
 (deftest treasure-map-test
   (let [treasure-map (assoc treasure-map :id 1)
@@ -1665,11 +1694,11 @@
                              :buys    1}]}
                  (play 0 :wharf))
              {:players [{:hand      [estate estate estate copper copper copper]
-                         :play-area [(assoc wharf :at-start-turn [[[:draw 2]
-                                                                   [:give-buys 1]]])]
+                         :play-area [wharf]
                          :deck      [copper copper copper copper silver]
                          :actions   0
-                         :buys      2}]}))
+                         :buys      2
+                         :triggers  [(get-trigger wharf)]}]}))
       (is (= (-> {:players [{:hand    [wharf estate estate estate copper]
                              :deck    [copper copper copper copper copper copper silver silver silver]
                              :actions 1

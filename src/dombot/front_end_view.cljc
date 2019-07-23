@@ -65,22 +65,25 @@
                        {:interaction :buyable})
                      (choice-interaction name :mixed choice))))))
 
-(defn view-area [area {{:keys [phase actions] :as player} :player
-                       choice                             :choice
-                       active?                            :active-player?
-                       :as                                game}
+(defn view-area [area {{:keys [phase actions player-no triggers] :as player} :player
+                       choice                                                :choice
+                       active?                                               :active-player?
+                       :as                                                   game}
                  & [position number-of-cards]]
   (let [take-fn (if (= :bottom position) take-last take)
         cards (cond->> (get player area)
                        number-of-cards (take-fn number-of-cards))]
     (-> cards
         (->>
-          (map (fn [{:keys [name set-aside] :as card}]
-                 (let [types (ut/get-types game card)]
+          (map (fn [{:keys [id name] :as card}]
+                 (let [types (ut/get-types game card)
+                       set-aside (->> triggers
+                                      (filter (comp #{id} :card-id))
+                                      (mapcat :set-aside))]
                    (merge {:name    name
                            :name-ui (ut/format-name name)
                            :types   types}
-                          (when (ut/stay-in-play card)
+                          (when (ut/stay-in-play game player-no card)
                             {:stay-in-play true})
                           (when (and (= :hand area)
                                      (not choice)

@@ -4,7 +4,7 @@
             [dombot.front-end-view :refer :all]
             [dombot.cards.base-cards :refer :all]
             [dombot.cards.dominion :refer :all]
-            [dombot.cards.seaside :refer [island]]))
+            [dombot.cards.seaside :refer [haven island]]))
 
 (defn fixture [f]
   (with-rand-seed 123 (f)))
@@ -196,14 +196,22 @@
              :name-ui         "Copper"
              :types           #{:treasure}
              :number-of-cards 2}]))
-    (is (= (view-area :play-area {:player {:play-area [copper (assoc copper :at-start-turn [[]])]}})
-           [{:name    :copper
-             :name-ui "Copper"
-             :types   #{:treasure}}
-            {:name         :copper
-             :name-ui      "Copper"
-             :types        #{:treasure}
-             :stay-in-play true}]))))
+    (let [player {:player-no 0
+                  :play-area [copper (assoc haven :id 1)]
+                  :triggers  [{:trigger   :at-start-turn
+                               :card-id   1
+                               :set-aside [silver]}]}]
+      (is (= (view-area :play-area {:player         player
+                                    :active-player? true
+                                    :players        [player]})
+             [{:name         :haven
+               :name-ui      "Haven"
+               :types        #{:action :duration}
+               :stay-in-play true
+               :set-aside    ["Silver"]}
+              {:name    :copper
+               :name-ui "Copper"
+               :types   #{:treasure}}])))))
 
 (deftest discard-test
   (testing "Discard view"

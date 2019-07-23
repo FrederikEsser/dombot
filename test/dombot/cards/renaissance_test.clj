@@ -300,7 +300,8 @@
         border-guard-4 (assoc border-guard :id 4)
         gold (assoc gold :id 5)
         inventor (assoc inventor :id 6)
-        improve (assoc improve :id 7)]
+        improve (assoc improve :id 7)
+        throne-room (assoc throne-room :id 8)]
     (testing "Cargo Ship"
       (is (= (-> {:players [{:hand    [cargo-ship]
                              :actions 1
@@ -310,6 +311,19 @@
                          :actions   0
                          :coins     2
                          :triggers  [(assoc cargo-ship-trigger :card-id 1)]}]}))
+      (is (= (-> {:players [{:hand    [cargo-ship]
+                             :deck    (repeat 5 copper)
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :cargo-ship)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand    (repeat 5 copper)
+                                :discard [cargo-ship]
+                                :actions 1
+                                :coins   0
+                                :buys    1
+                                :phase   :action}]}))
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [cargo-ship]
                              :discard [copper]
@@ -343,11 +357,12 @@
                  (gain {:player-no 0 :card-name :gold})
                  (choose :gold))
              {:supply  [{:card gold :pile-size 29}]
-              :players [{:play-area [(assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :gold}]]]
-                                                       :set-aside [gold])]
+              :players [{:play-area [cargo-ship]
                          :discard   [copper]
                          :actions   0
-                         :coins     2}]}))
+                         :coins     2
+                         :triggers  [(merge set-aside=>hand-trigger {:card-id   1
+                                                                     :set-aside [gold]})]}]}))
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [cargo-ship]
                              :discard [copper]
@@ -398,12 +413,13 @@
                  (choose :border-guard)
                  (choose :border-guard))
              {:supply  [{:card border-guard :pile-size 9}]
-              :players [{:play-area [(assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :border-guard}]]]
-                                                       :set-aside [border-guard])
+              :players [{:play-area [cargo-ship
                                      sculptor]
                          :discard   [copper]
                          :actions   0
-                         :coins     2}]}))
+                         :coins     2
+                         :triggers  [(merge set-aside=>hand-trigger {:card-id   1
+                                                                     :set-aside [border-guard]})]}]}))
       (is (= (-> {:supply  [{:card border-guard :pile-size 10}]
                   :players [{:hand    [cargo-ship sculptor border-guard-4]
                              :discard [copper]
@@ -415,12 +431,13 @@
                  (choose :border-guard))
              {:supply  [{:card border-guard :pile-size 9}]
               :players [{:hand      [border-guard-4]
-                         :play-area [(assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :border-guard}]]]
-                                                       :set-aside [border-guard])
+                         :play-area [cargo-ship
                                      sculptor]
                          :discard   [copper]
                          :actions   0
-                         :coins     2}]}))
+                         :coins     2
+                         :triggers  [(merge set-aside=>hand-trigger {:card-id   1
+                                                                     :set-aside [border-guard]})]}]}))
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [cargo-ship cargo-ship-2]
                              :discard [copper]
@@ -431,13 +448,13 @@
                  (gain {:player-no 0 :card-name :gold})
                  (choose :gold))
              {:supply  [{:card gold :pile-size 29}]
-              :players [{:play-area [(assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :gold}]]]
-                                                       :set-aside [gold])
-                                     cargo-ship-2]
+              :players [{:play-area [cargo-ship cargo-ship-2]
                          :discard   [copper]
                          :actions   0
                          :coins     4
-                         :triggers  [(assoc cargo-ship-trigger :card-id 2)]}]}))
+                         :triggers  [(merge set-aside=>hand-trigger {:card-id   1
+                                                                     :set-aside [gold]})
+                                     (assoc cargo-ship-trigger :card-id 2)]}]}))
       (is (= (-> {:supply  [{:card border-guard :pile-size 10}]
                   :players [{:hand    [cargo-ship inventor]
                              :discard [copper]
@@ -449,43 +466,61 @@
                  (choose :border-guard))
              {:cost-reductions [{:reduction 1}]
               :supply          [{:card border-guard :pile-size 9}]
-              :players         [{:play-area [(assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :border-guard}]]]
-                                                               :set-aside [border-guard])
-                                             inventor]
+              :players         [{:play-area [cargo-ship inventor]
                                  :discard   [copper]
                                  :actions   0
-                                 :coins     2}]}))
-      #_(is (= (-> {:supply  [{:card inventor :pile-size 10}]
-                    :players [{:hand    [cargo-ship improve]
-                               :actions 2
-                               :coins   0}]}
-                   (play 0 :cargo-ship)
-                   (play 0 :improve)
-                   (clean-up {:player-no 0})
-                   (choose :improve)
-                   (choose :cargo-ship)                     ; improve Cargo Ship
-                   (choose :inventor)                       ; gain Inventor
-                   (choose :inventor))                      ; put Inventor on vanished Cargo Ship
-               {:supply  [{:card inventor :pile-size 10}]
-                :players [{:play-area [{:at-start-turn [[[:put-set-aside-into-hand {:card-name :inventor}]]]
-                                        :set-aside     [inventor]}]
-                           :hand      [improve]
-                           :actions   0
-                           :coins     0
-                           :buys      0
-                           :phase     :out-of-turn}]
-                :trash   [cargo-ship]})))
+                                 :coins     2
+                                 :triggers  [(merge set-aside=>hand-trigger {:card-id   1
+                                                                             :set-aside [border-guard]})]}]}))
+      (is (= (-> {:supply  [{:card inventor :pile-size 10}]
+                  :players [{:hand    [cargo-ship improve]
+                             :deck    (repeat 5 copper)
+                             :actions 2
+                             :coins   0}]}
+                 (play 0 :cargo-ship)
+                 (play 0 :improve)
+                 (clean-up {:player-no 0})
+                 (choose :improve)
+                 (choose :cargo-ship)                       ; improve Cargo Ship
+                 (choose :inventor)                         ; gain Inventor
+                 (choose :inventor))                        ; put Inventor on vanished Cargo Ship
+             {:supply  [{:card inventor :pile-size 9}]
+              :players [{:hand     (repeat 5 copper)
+                         :discard  [improve]
+                         :actions  0
+                         :coins    0
+                         :buys     0
+                         :phase    :out-of-turn
+                         :triggers [(merge set-aside=>hand-trigger {:card-id   1
+                                                                    :set-aside [inventor]})]}]
+              :trash   [cargo-ship]})))
     (is (= (-> {:players [{:hand    [cargo-ship throne-room]
                            :discard [copper]
                            :actions 1
                            :coins   0}]}
                (play 0 :throne-room)
                (choose :cargo-ship))
-           {:players [{:play-area [throne-room cargo-ship]
-                       :discard   [copper]
-                       :actions   0
-                       :coins     4
-                       :triggers  [(assoc cargo-ship-trigger :card-id 1) (assoc cargo-ship-trigger :card-id 1)]}]}))
+           {:players [{:play-area     [throne-room cargo-ship]
+                       :discard       [copper]
+                       :actions       0
+                       :coins         4
+                       :triggers      [(assoc cargo-ship-trigger :card-id 1) (assoc cargo-ship-trigger :card-id 1)]
+                       :repeated-play [{:source 8
+                                        :target 1}]}]}))
+    (is (= (-> {:players [{:hand    [cargo-ship throne-room]
+                           :deck    (repeat 5 copper)
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :throne-room)
+               (choose :cargo-ship)
+               (end-turn 0))
+           {:current-player 0
+            :players        [{:hand    (repeat 5 copper)
+                              :discard [throne-room cargo-ship]
+                              :actions 1
+                              :coins   0
+                              :buys    1
+                              :phase   :action}]}))
     (is (= (-> {:supply  [{:card gold :pile-size 30}]
                 :players [{:hand    [cargo-ship throne-room]
                            :discard [copper]
@@ -495,11 +530,13 @@
                (choose :cargo-ship)
                (gain {:player-no 0 :card-name :gold}))
            {:supply       [{:card gold :pile-size 29}]
-            :players      [{:play-area [throne-room cargo-ship]
-                            :gaining   [gold]
-                            :discard   [copper]
-                            :actions   0
-                            :coins     4}]
+            :players      [{:play-area     [throne-room cargo-ship]
+                            :gaining       [gold]
+                            :discard       [copper]
+                            :actions       0
+                            :coins         4
+                            :repeated-play [{:source 8
+                                             :target 1}]}]
             :effect-stack [{:text      "You may set the gained Gold aside on Cargo Ship."
                             :player-no 0
                             :card-id   1
@@ -527,13 +564,33 @@
                (gain {:player-no 0 :card-name :gold})
                (choose :gold))
            {:supply  [{:card gold :pile-size 29}]
-            :players [{:play-area [throne-room
-                                   (assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :gold}]]]
-                                                     :set-aside [gold])]
-                       :discard   [copper]
-                       :actions   0
-                       :coins     4
-                       :triggers  [(assoc cargo-ship-trigger :card-id 1)]}]}))
+            :players [{:play-area     [throne-room cargo-ship]
+                       :discard       [copper]
+                       :actions       0
+                       :coins         4
+                       :triggers      [(merge set-aside=>hand-trigger {:card-id   1
+                                                                       :set-aside [gold]})
+                                       (assoc cargo-ship-trigger :card-id 1)]
+                       :repeated-play [{:source 8
+                                        :target 1}]}]}))
+    (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                :players [{:hand    [cargo-ship throne-room]
+                           :deck    (repeat 5 copper)
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :throne-room)
+               (choose :cargo-ship)
+               (gain {:player-no 0 :card-name :gold})
+               (choose :gold)
+               (end-turn 0))
+           {:current-player 0
+            :supply         [{:card gold :pile-size 29}]
+            :players        [{:hand      [copper copper copper copper copper gold]
+                              :play-area [throne-room cargo-ship]
+                              :actions   1
+                              :coins     0
+                              :buys      1
+                              :phase     :action}]}))
     (is (= (-> {:supply  [{:card gold :pile-size 30}
                           {:card border-guard :pile-size 10}]
                 :players [{:hand    [cargo-ship throne-room]
@@ -548,13 +605,16 @@
                (choose :border-guard))
            {:supply  [{:card gold :pile-size 29}
                       {:card border-guard :pile-size 9}]
-            :players [{:play-area [throne-room
-                                   (assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :gold}]]
-                                                                     [[:put-set-aside-into-hand {:card-name :border-guard}]]]
-                                                     :set-aside [gold border-guard])]
-                       :discard   [copper]
-                       :actions   0
-                       :coins     4}]}))
+            :players [{:play-area     [throne-room cargo-ship]
+                       :discard       [copper]
+                       :actions       0
+                       :coins         4
+                       :triggers      [(merge set-aside=>hand-trigger {:card-id   1
+                                                                       :set-aside [gold]})
+                                       (merge set-aside=>hand-trigger {:card-id   1
+                                                                       :set-aside [border-guard]})]
+                       :repeated-play [{:source 8
+                                        :target 1}]}]}))
     (is (= (-> {:supply  [{:card experiment :pile-size 10}]
                 :players [{:hand    [cargo-ship throne-room]
                            :actions 1
@@ -566,14 +626,16 @@
                (choose :experiment)
                (choose :experiment))
            {:supply  [{:card experiment :pile-size 8}]
-            :players [{:play-area [throne-room
-                                   (assoc cargo-ship :at-start-turn [[[:put-set-aside-into-hand {:card-name :experiment}]]
-                                                                     [[:put-set-aside-into-hand {:card-name :experiment}]]]
-                                                     :set-aside [(assoc experiment :id 1)
-                                                                 (assoc experiment :id 2)])]
-                       :actions   0
-                       :coins     1
-                       :buys      0}]}))))
+            :players [{:play-area     [throne-room cargo-ship]
+                       :actions       0
+                       :coins         1
+                       :buys          0
+                       :triggers      [(merge set-aside=>hand-trigger {:card-id   1
+                                                                       :set-aside [(assoc experiment :id 1)]})
+                                       (merge set-aside=>hand-trigger {:card-id   1
+                                                                       :set-aside [(assoc experiment :id 2)]})]
+                       :repeated-play [{:source 8
+                                        :target 1}]}]}))))
 
 (deftest ducat-test
   (let [ducat (assoc ducat :id 1)]
@@ -773,7 +835,8 @@
               :trash   [estate]})))))
 
 (deftest improve-test
-  (let [improve (assoc improve :id 1)]
+  (let [improve (assoc improve :id 1)
+        research (assoc research :id 2)]
     (testing "Improve"
       (is (= (-> {:players [{:hand    [improve]
                              :actions 1
@@ -822,13 +885,16 @@
                               :effect    [:draw 5]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
-      (is (= (-> {:players [{:play-area [(assoc research :at-start-turn [[:some-effects]])
+      (is (= (-> {:players [{:play-area [research
                                          (assoc improve :at-clean-up [[::renaissance/improve-give-choice]])
-                                         copper]}]}
+                                         copper]
+                             :triggers  [(merge set-aside=>hand-trigger {:card-id   2
+                                                                         :set-aside [silver silver]})]}]}
                  (clean-up {:player-no 0})
                  (choose :improve))
-             {:players      [{:play-area [(assoc research :at-start-turn [[:some-effects]])
-                                          improve copper]}]
+             {:players      [{:play-area [research improve copper]
+                              :triggers  [(merge set-aside=>hand-trigger {:card-id   2
+                                                                          :set-aside [silver silver]})]}]
               :effect-stack [{:text      "You may trash an Action card you would discard this turn to gain a card costing exactly $1 more than it."
                               :player-no 0
                               :choice    ::renaissance/improve-trash
@@ -1233,11 +1299,11 @@
                  (play 0 :research)
                  (choose :estate))
              {:players [{:hand      [copper copper]
-                         :play-area [(assoc research :at-start-turn [[[:put-set-aside-into-hand {:card-name :silver}]
-                                                                      [:put-set-aside-into-hand {:card-name :silver}]]]
-                                                     :set-aside [silver silver])]
+                         :play-area [research]
                          :deck      [copper]
-                         :actions   1}]
+                         :actions   1
+                         :triggers  [(merge set-aside=>hand-trigger {:card-id   1
+                                                                     :set-aside [silver silver]})]}]
               :trash   [estate]}))
       (is (= (-> {:players [{:hand    [research estate copper copper]
                              :deck    [silver silver copper]
@@ -1247,7 +1313,7 @@
                  (end-turn 0))
              {:current-player 0
               :players        [{:hand      [copper copper copper silver silver]
-                                :play-area [(assoc research :set-aside [])]
+                                :play-area [research]
                                 :actions   1
                                 :coins     0
                                 :buys      1
@@ -1264,7 +1330,7 @@
              {:current-player 0
               :players        [{:hand      [copper copper silver silver gold estate copper]
                                 :play-area [throne-room
-                                            (assoc research :set-aside [])]
+                                            research]
                                 :actions   1
                                 :coins     0
                                 :buys      1
@@ -1426,8 +1492,7 @@
              {:track-played-actions? true
               :current-player        0
               :players               [{:hand      (repeat 7 copper)
-                                       :play-area [(assoc research :set-aside [])
-                                                   scepter]
+                                       :play-area [research scepter]
                                        :discard   [copper]
                                        :actions   1
                                        :coins     0
@@ -1448,8 +1513,7 @@
              {:track-played-actions? true
               :current-player        0
               :players               [{:hand      (repeat 7 copper)
-                                       :play-area [(assoc research :set-aside [])
-                                                   scepter]
+                                       :play-area [research scepter]
                                        :discard   [copper]
                                        :actions   1
                                        :coins     0
@@ -2853,7 +2917,11 @@
                               :source    :mixed
                               :options   [:crop-rotation :silos]
                               :min       1
-                              :max       1}]}))
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:remove-triggers {:trigger :at-start-turn}]}
+                             {:player-no 0
+                              :effect    [:sync-repeated-play]}]}))
     (is (= (-> {:players [{:hand     [copper copper silver]
                            :deck     [estate gold copper copper]
                            :phase    :out-of-turn

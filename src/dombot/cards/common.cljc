@@ -84,13 +84,14 @@
 
 (effects/register {:play-from-revealed play-from-revealed})
 
-(defn check-stay-in-play [game {:keys [player-no card-id target-id]}]
+(defn register-repeated-play [game {:keys [player-no card-id target-id]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id target-id})
         types (ut/get-types game card)]
     (cond-> game
-            (and (:duration types) (ut/stay-in-play card)) (ut/update-in-vec [:players player-no :play-area] {:id card-id} update :at-start-turn concat [[]]))))
+            (:duration types) (update-in [:players player-no :repeated-play] conj {:source card-id
+                                                                                   :target target-id}))))
 
-(effects/register {:check-stay-in-play check-stay-in-play})
+(effects/register {:register-repeated-play register-repeated-play})
 
 (defn repeat-action [game {:keys [player-no card-id card-name times]}]
   (if card-name
@@ -101,7 +102,7 @@
                               :effects   (concat
                                            [[:play-from-hand {:card-name card-name}]]
                                            (repeat times [:card-effect {:card card}])
-                                           [[:check-stay-in-play {:target-id (:id card)}]])})))
+                                           [[:register-repeated-play {:target-id (:id card)}]])})))
     game))
 
 (effects/register {:repeat-action repeat-action})
@@ -404,13 +405,14 @@
 
 (effects/register {:put-revealed-types-into-hand put-revealed-types-into-hand})
 
-(defn put-set-aside-into-hand [game {:keys [player-no card-id card-name]}]
-  game
-  (let [{duration-card :card} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})
-        {:keys [idx card]} (ut/get-card-idx duration-card [:set-aside] {:name card-name})]
-    (-> game
-        (ut/update-in-vec [:players player-no :play-area] {:id card-id} update :set-aside ut/vec-remove idx)
-        (update-in [:players player-no :hand] concat [card]))))
+(def set-aside=>hand-trigger {:trigger           :at-start-turn
+                              :duration          :once
+                              :simultaneous-mode :auto
+                              :effects           [[:put-set-aside-into-hand]]})
+
+(defn put-set-aside-into-hand [game {:keys [player-no set-aside]}]
+  (-> game
+      (update-in [:players player-no :hand] concat set-aside)))
 
 (effects/register {:put-set-aside-into-hand put-set-aside-into-hand})
 
@@ -480,5 +482,3 @@
 
 (effects/register {:upgrade-trash       upgrade-trash
                    :upgrade-give-choice upgrade-give-choice})
-
-

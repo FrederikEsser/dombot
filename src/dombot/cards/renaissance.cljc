@@ -1,6 +1,6 @@
 (ns dombot.cards.renaissance
   (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards gain card-effect affect-other-players state-maintenance]]
-            [dombot.cards.common :refer [reveal-hand reveal-from-deck add-trigger give-coins give-coffers give-villagers]]
+            [dombot.cards.common :refer [reveal-hand reveal-from-deck add-trigger give-coins give-coffers give-villagers set-aside=>hand-trigger]]
             [dombot.cards.dominion :as dominion]
             [dombot.cards.guilds :as guilds]
             [dombot.utils :as ut]
@@ -89,7 +89,7 @@
                              [::add-artifact {:artifact-name :lantern}]]})
 
 (def cargo-ship-trigger {:trigger  :on-gain
-                         :duration :once
+                         :duration :once-turn
                          :effects  [[::cargo-ship-give-choice]]})
 
 (defn cargo-ship-set-aside [game {:keys [player-no card-id card-name gained-card-id]}]
@@ -97,11 +97,10 @@
     (let [{:keys [card idx]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
       (-> game
           (update-in [:players player-no :gaining] ut/vec-remove idx)
-          (ut/update-in-vec [:players player-no :play-area] {:id card-id}
-                            (fn [cargo-ship]
-                              (-> cargo-ship
-                                  (update :set-aside concat [card])
-                                  (update :at-start-turn concat [[[:put-set-aside-into-hand {:card-name card-name}]]]))))
+          (push-effect-stack {:player-no player-no
+                              :effects   [[:add-trigger {:trigger (merge set-aside=>hand-trigger
+                                                                         {:set-aside [card]})
+                                                         :card-id card-id}]]})
           (state-maintenance player-no :gaining :cargo-ship)))
     (add-trigger game {:player-no player-no
                        :card-id   card-id
@@ -324,12 +323,11 @@
 (defn research-set-aside [game {:keys [player-no card-id]}]
   (let [set-aside (get-in game [:players player-no :set-aside])]
     (-> game
-        (cond-> (not-empty set-aside) (ut/update-in-vec [:players player-no :play-area] {:id card-id}
-                                                        (fn [research]
-                                                          (-> research
-                                                              (update :set-aside concat set-aside)
-                                                              (update :at-start-turn concat [(for [card-name (map :name set-aside)]
-                                                                                               [:put-set-aside-into-hand {:card-name card-name}])])))))
+        (cond->
+          (not-empty set-aside) (push-effect-stack {:player-no player-no
+                                                    :effects   [[:add-trigger {:trigger (merge set-aside=>hand-trigger
+                                                                                               {:set-aside set-aside})
+                                                                               :card-id card-id}]]}))
         (update-in [:players player-no] dissoc :set-aside))))
 
 (defn research-trash [game {:keys [player-no card-name] :as args}]
@@ -360,7 +358,7 @@
     (push-effect-stack game {:player-no player-no
                              :card-id   card-id
                              :effects   [[:card-effect {:card card}]
-                                         [:check-stay-in-play {:target-id (:id card)}]]})))
+                                         [:register-repeated-play {:target-id (:id card)}]]})))
 
 (defn- scepter-choice [game {:keys [player-no card-id choice]}]
   (let [played-card-ids (set (get-in game [:players player-no :actions-played]))]

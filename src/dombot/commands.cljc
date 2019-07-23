@@ -13,8 +13,6 @@
 ; handle simultaneous duration effects at-start-turn
 ; fix Throne Room / Improve
 ; fix Improve / double Border Guard bug
-; fix Improve / Cargo Ship bug
-; fix Throne Room / Cargo Ship - both stay in play
 ; fix Torturer / Masquerade (empty hand)
 ; hide revealed cards on any movement (Border Guard)
 ; handle revealed-cards in hand as a list of card-names
