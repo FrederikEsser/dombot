@@ -291,7 +291,7 @@
                                                                            (= idx player-no))
                                                                        (not= phase :end-of-game))]
                                                (view-player (merge game {:active-player? active-player?
-                                                                         :player         player
+                                                                         :player         (assoc player :player-no idx)
                                                                          :artifacts      (->> artifacts vals (filter (comp #{idx} :owner)))}
                                                                    (when (= idx player-no)
                                                                      {:choice choice})))))))
