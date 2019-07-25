@@ -219,9 +219,10 @@
       (is (= (-> {:players [{:play-area       [copper copper copper copper copper]
                              :discard         [stash]
                              :number-of-turns 1}
-                            {:play-area       [(assoc caravan :at-start-turn [[[:draw 1]]])]
+                            {:play-area       [caravan]
                              :discard         [stash copper]
-                             :number-of-turns 1}]}
+                             :number-of-turns 1
+                             :triggers        [(get-trigger caravan)]}]}
                  (end-turn 0)
                  (choose 0))
              {:current-player 1
@@ -238,7 +239,8 @@
                                 :actions         1
                                 :coins           0
                                 :buys            1
-                                :number-of-turns 1}]
+                                :number-of-turns 1
+                                :triggers        [(get-trigger caravan)]}]
               :effect-stack   [{:text      "Put the Stash anywhere in your deck."
                                 :player-no 1
                                 :choice    ::promos/stash-put
@@ -250,4 +252,8 @@
                                 :effect    [:move-card {:player-no     1
                                                         :from          :deck
                                                         :from-position :top
-                                                        :to            :hand}]}]})))))
+                                                        :to            :hand}]}
+                               {:player-no 1
+                                :effect    [:remove-triggers {:trigger :at-start-turn}]}
+                               {:player-no 1
+                                :effect    [:sync-repeated-play]}]})))))

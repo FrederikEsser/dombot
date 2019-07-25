@@ -89,29 +89,20 @@
                              {:set-aside set-aside}))]
     (map (partial ut/add-effect-args effect-args) effects)))
 
-(defn at-start-turn-effects [game {:keys [player-no] :as args}]
-  (let [duration-cards (->> (get-in game [:players player-no :play-area])
-                            (filter (comp not-empty :at-start-turn)))
-        start-turn-triggers (->> (get-in game [:players player-no :triggers])
+(defn at-start-turn-effects [game {:keys [player-no]}]
+  (let [start-turn-triggers (->> (get-in game [:players player-no :triggers])
                                  (filter (comp #{:at-start-turn} :trigger)))
         auto-triggers (filter (comp #{:auto} :simultaneous-mode) start-turn-triggers)
-        manual-triggers (filter (comp #{:manual} :simultaneous-mode) start-turn-triggers)
-        do-duration-effect (fn [game {:keys [id at-start-turn]}]
-                             (-> game
-                                 (ut/update-in-vec [:players player-no :play-area] {:id id} dissoc :at-start-turn)
-                                 (cond-> at-start-turn (push-effect-stack {:player-no player-no
-                                                                           :card-id   id
-                                                                           :effects   (apply concat at-start-turn)}))))]
-    (assert (every? :simultaneous-mode start-turn-triggers) (str "Trigger error: Some triggers miss a simultaneous mode: "
+        manual-triggers (filter (comp #{:manual} :simultaneous-mode) start-turn-triggers)]
+    (assert (every? :simultaneous-mode start-turn-triggers) (str "Trigger error: Some triggers lack a simultaneous mode: "
                                                                  (->> start-turn-triggers (remove :simultaneous-mode) (map :name) (clojure.string/join ", "))))
-    (-> (reduce do-duration-effect game (reverse duration-cards))
-        (as-> game
-              (push-effect-stack game {:player-no player-no
-                                       :effects   (concat
-                                                    (mapcat get-effects-from-trigger auto-triggers)
-                                                    (get-trigger-effects manual-triggers)
-                                                    [[:remove-triggers {:trigger :at-start-turn}]
-                                                     [:sync-repeated-play]])})))))
+    (-> game
+        (push-effect-stack {:player-no player-no
+                            :effects   (concat
+                                         (mapcat get-effects-from-trigger auto-triggers)
+                                         (get-trigger-effects manual-triggers)
+                                         [[:remove-triggers {:trigger :at-start-turn}]
+                                          [:sync-repeated-play]])}))))
 
 (effects/register {:at-start-turn at-start-turn-effects})
 

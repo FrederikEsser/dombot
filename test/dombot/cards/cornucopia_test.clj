@@ -275,9 +275,9 @@
                          :actions   0
                          :coins     2}
                         {:hand      [copper copper copper]
-                         :play-area [(assoc horse-traders :at-start-turn [[[::cornucopia/horse-traders-return-to-hand {:card-id 0}]
-                                                                           [:draw 1]]])]
-                         :discard   [copper]}]}))
+                         :play-area [horse-traders]
+                         :discard   [copper]
+                         :triggers  [(assoc horse-traders-trigger :card-id 0)]}]}))
       (is (= (-> {:players [{:hand    [militia]
                              :actions 1
                              :coins   0}

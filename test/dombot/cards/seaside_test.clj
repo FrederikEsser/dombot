@@ -117,10 +117,6 @@
                        :actions   2
                        :coins     1}]}))))
 
-(defn get-trigger [{:keys [id trigger]}]
-  (merge {:card-id id}
-         trigger))
-
 (deftest caravan-test
   (let [caravan-1 (assoc caravan :id 1)
         caravan-2 (assoc caravan :id 2)

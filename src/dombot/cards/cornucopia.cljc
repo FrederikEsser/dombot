@@ -150,10 +150,16 @@
                    :from         :play-area
                    :to           :hand}))
 
+(def horse-traders-trigger {:trigger           :at-start-turn
+                            :duration          :once
+                            :simultaneous-mode :auto
+                            :effects           [[::horse-traders-return-to-hand]
+                                                [:draw 1]]})
+
 (defn- horse-traders-set-start-of-turn [game {:keys [player-no card-id]}]
-  (ut/update-in-vec game [:players player-no :play-area] {:id card-id}
-                    assoc :at-start-turn [[[::horse-traders-return-to-hand {:card-id card-id}]
-                                           [:draw 1]]]))
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:add-trigger {:trigger horse-traders-trigger
+                                                      :card-id card-id}]]}))
 
 (effects/register {::horse-traders-return-to-hand    horse-traders-return-to-hand
                    ::horse-traders-set-start-of-turn horse-traders-set-start-of-turn})

@@ -31,3 +31,7 @@
                   (is (= 0.2372438907623291 (rand)))
                   (is (= 9.90898847579956 (rand 10)))
                   (is (= [7 5 6 2 0 1 8 4 3 9] (shuffle (range 10))))))
+
+(defn get-trigger [{:keys [id trigger]}]
+  (merge {:card-id id}
+         trigger))
