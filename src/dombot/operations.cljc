@@ -3,12 +3,20 @@
             [dombot.effects :as effects]
             [clojure.set]))
 
-(defn game-ended? [game]
+(defn get-game-status [{:keys [players game-ending?] :as game}]
   (let [{province-pile-size :pile-size} (ut/get-pile-idx game :province)
-        {colony-pile-size :pile-size} (ut/get-pile-idx game :colony)]
-    (or (and province-pile-size (zero? province-pile-size))
-        (and colony-pile-size (zero? colony-pile-size))
-        (>= (ut/empty-supply-piles game) 3))))
+        {colony-pile-size :pile-size} (ut/get-pile-idx game :colony)
+        extra-turns? (->> players
+                          (mapcat :triggers)
+                          (some (comp #{:at-end-game} :trigger)))]
+    (if (or (and province-pile-size (zero? province-pile-size))
+            (and colony-pile-size (zero? colony-pile-size))
+            (>= (ut/empty-supply-piles game) 3)
+            game-ending?)
+      (if extra-turns?
+        :ending
+        :finished)
+      :active)))
 
 (defn push-effect-stack [game {:keys [player-no card-id effects choice args]}]
   (cond-> game
@@ -140,6 +148,8 @@
 
 (effects/register {:set-phase set-phase})
 
+(declare end-turn)
+
 (defn start-turn
   ([player]
    (-> player
@@ -148,15 +158,22 @@
               :buys 1)
        (dissoc :gained-cards)))
   ([game {:keys [player-no]}]
-   (if (game-ended? game)
-     game
-     (-> game
-         (assoc :current-player player-no)
-         (update-in [:players player-no] start-turn)
-         (push-effect-stack {:player-no player-no
-                             :effects   [[:set-phase {:phase :action}]
-                                         [:at-start-turn]]})
-         check-stack))))
+   (let [game-status (get-game-status game)
+         extra-turn? (->> (get-in game [:players player-no :triggers])
+                          (some (comp #{:at-end-game} :trigger)))]
+     (cond (= :finished game-status) game
+           (and (= :ending game-status)
+                (not extra-turn?)) (end-turn game player-no)
+           :else (-> game
+                     (assoc :current-player player-no)
+                     (update-in [:players player-no] start-turn)
+                     (push-effect-stack {:player-no player-no
+                                         :effects   (concat
+                                                      (when (= :ending game-status)
+                                                        [[:remove-triggers {:trigger :at-end-game}]])
+                                                      [[:set-phase {:phase :action}]
+                                                       [:at-start-turn]])})
+                     check-stack)))))
 
 (effects/register {:start-turn start-turn})
 
@@ -806,7 +823,7 @@
       (vp-fn cards))
     victory-points))
 
-(defn  calc-victory-points [{:keys [vp-tokens] :as player}]
+(defn calc-victory-points [{:keys [vp-tokens] :as player}]
   (let [cards (all-cards player)]
     (->> cards
          (filter :victory-points)
@@ -825,13 +842,14 @@
                :winner (= best-score (calc-score player))))))
 
 (defn check-game-ended [{:keys [players] :as game} args]
-  (cond-> game
-          (game-ended? game) (as-> game
-                                   (let [best-score (->> players
-                                                         (map calc-score)
-                                                         sort
-                                                         last)]
-                                     (update game :players (partial mapv (partial end-game-for-player best-score)))))))
+  (case (get-game-status game)
+    :active game
+    :ending (assoc game :game-ending? true)
+    :finished (let [best-score (->> players
+                                    (map calc-score)
+                                    sort
+                                    last)]
+                (update game :players (partial mapv (partial end-game-for-player best-score))))))
 
 (effects/register {:check-game-ended check-game-ended})
 

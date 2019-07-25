@@ -575,12 +575,12 @@
 
 (deftest game-end-test
   (testing "Game ending conditions"
-    (is (not (game-ended? {:supply [{:card {:name :province} :pile-size 1}]})))
-    (is (game-ended? {:supply [{:card {:name :province} :pile-size 0}]}))
-    (is (not (game-ended? {:supply (concat [{:card {:name :province} :pile-size 1}] (repeat 1 {:pile-size 0}))})))
-    (is (not (game-ended? {:supply (concat [{:card {:name :province} :pile-size 1}] (repeat 2 {:pile-size 0}))})))
-    (is (game-ended? {:supply (concat [{:card {:name :province} :pile-size 1}] (repeat 3 {:pile-size 0}))}))
-    (is (game-ended? {:supply (concat [{:card {:name :province} :pile-size 1}] (repeat 4 {:pile-size 0}))}))))
+    (is (= :active (get-game-status {:supply [{:card {:name :province} :pile-size 1}]})))
+    (is (= :finished (get-game-status {:supply [{:card {:name :province} :pile-size 0}]})))
+    (is (= :active (get-game-status {:supply (concat [{:card {:name :province} :pile-size 1}] (repeat 1 {:pile-size 0}))})))
+    (is (= :active (get-game-status {:supply (concat [{:card {:name :province} :pile-size 1}] (repeat 2 {:pile-size 0}))})))
+    (is (= :finished (get-game-status {:supply (concat [{:card {:name :province} :pile-size 1}] (repeat 3 {:pile-size 0}))})))
+    (is (= :finished (get-game-status {:supply (concat [{:card {:name :province} :pile-size 1}] (repeat 4 {:pile-size 0}))})))))
 
 (deftest calc-victory-points-test
   (testing "Calculate Victory Points"

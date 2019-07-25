@@ -2465,6 +2465,51 @@
                               :phase    :action
                               :triggers [(get-project-trigger fair)]}]}))))
 
+(deftest fleet-test
+  (testing "Fleet"
+    (is (= (-> {:supply  [{:card province :pile-size 0}]
+                :players [{:triggers [(get-project-trigger fleet)]}]}
+               (end-turn 0))
+           {:supply         [{:card province :pile-size 0}]
+            :current-player 0
+            :game-ending?   true
+            :players        [{:actions 1
+                              :coins   0
+                              :buys    1
+                              :phase   :action}]}))
+    (is (= (-> {:supply  [{:card province :pile-size 0}]
+                :players [{:triggers [(get-project-trigger fleet)]}
+                          {:phase    :out-of-turn
+                           :triggers [(get-project-trigger fleet)]}]}
+               (end-turn 0))
+           {:supply         [{:card province :pile-size 0}]
+            :current-player 1
+            :game-ending?   true
+            :players        [{:actions  0
+                              :coins    0
+                              :buys     0
+                              :phase    :out-of-turn
+                              :triggers [(get-project-trigger fleet)]}
+                             {:actions 1
+                              :coins   0
+                              :buys    1
+                              :phase   :action}]}))
+    (is (= (-> {:supply  [{:card province :pile-size 0}]
+                :players [{:triggers [(get-project-trigger fleet)]}
+                          {}]}
+               (end-turn 0))
+           {:supply         [{:card province :pile-size 0}]
+            :current-player 0
+            :game-ending?   true
+            :players        [{:actions 1
+                              :coins   0
+                              :buys    1
+                              :phase   :action}
+                             {:actions 0
+                              :coins   0
+                              :buys    0
+                              :phase   :out-of-turn}]}))))
+
 (deftest guildhall-test
   (let [silver (assoc silver :id 0)
         mountain-village (assoc mountain-village :id 1)]

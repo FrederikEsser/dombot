@@ -688,6 +688,13 @@
                      :simultaneous-mode :auto
                      :effects           [[:give-buys 1]]}})
 
+(def fleet {:name    :fleet
+            :set     :renaissance
+            :type    :project
+            :cost    5
+            :trigger {:trigger  :at-end-game
+                      :duration :once}})
+
 (defn guildhall-on-gain [game {:keys [player-no gained-card-id]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
         types (ut/get-types game card)]
@@ -899,6 +906,7 @@
                crop-rotation
                exploration
                fair
+               fleet
                guildhall
                innovation
                pageant
