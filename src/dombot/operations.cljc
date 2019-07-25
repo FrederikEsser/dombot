@@ -795,9 +795,9 @@
 
 (effects/register {:play-treasures play-treasures})
 
-(defn- all-cards [{:keys [deck discard hand play-area island-mat native-village-mat]}]
+(defn- all-cards [{:keys [deck discard hand play-area island-mat native-village-mat triggers]}]
   (let [cards (concat deck discard hand play-area island-mat native-village-mat)
-        set-aside-cards (mapcat :set-aside cards)]
+        set-aside-cards (mapcat :set-aside triggers)]
     (concat cards set-aside-cards)))
 
 (defn- get-victory-points [cards {:keys [victory-points]}]
@@ -806,7 +806,7 @@
       (vp-fn cards))
     victory-points))
 
-(defn calc-victory-points [{:keys [vp-tokens] :as player}]
+(defn  calc-victory-points [{:keys [vp-tokens] :as player}]
   (let [cards (all-cards player)]
     (->> cards
          (filter :victory-points)

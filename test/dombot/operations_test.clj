@@ -591,5 +591,5 @@
                                  :island-mat (repeat 16 estate)
                                  :vp-tokens  32})
            63))
-    (is (= (calc-victory-points {:play-area [(assoc haven :set-aside [estate])]})
+    (is (= (calc-victory-points {:triggers [{:set-aside [estate]}]})
            1))))
