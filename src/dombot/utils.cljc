@@ -177,9 +177,11 @@
     :else true))
 
 (defn stay-in-play [game player-no {:keys [id] :as card}]
-  (let [{:keys [triggers repeated-play]} (get-in game [:players player-no])
+  (let [{:keys [play-area triggers repeated-play]} (get-in game [:players player-no])
+        card-ids-in-play (->> play-area (keep :id) set)
         repeated-card-ids (->> repeated-play
                                (filter (comp #{id} :source))
+                               (filter (comp card-ids-in-play :target))
                                (map :target)
                                set)
         stay-in-play-triggers (filter (comp #{:at-start-turn :at-end-turn} :trigger) triggers)]

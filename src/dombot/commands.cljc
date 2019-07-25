@@ -10,7 +10,6 @@
 ; store commands in history
 ; save / load game
 ; show set-aside cards where their carrier has disappeared (Cargo Ship / Improve)
-; fix Throne Room leaves play when Cargo Ship is trashed by Improve
 ; UI button for jumping to next phase
 ; handle simultaneous duration effects at-start-turn
 ; fix Throne Room / Improve

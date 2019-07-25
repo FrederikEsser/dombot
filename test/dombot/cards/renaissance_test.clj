@@ -19,7 +19,7 @@
 
 (use-fixtures :each fixture)
 
-(defn get-trigger [{:keys [name type trigger]}]
+(defn get-project-trigger [{:keys [name type trigger]}]
   (merge (if (= :project type)
            {:name     name
             :duration :game}
@@ -117,7 +117,7 @@
                            :actions        1
                            :revealed-cards {:hand    1
                                             :discard 1}
-                           :triggers       [(get-trigger horn)]}]}))
+                           :triggers       [(get-project-trigger horn)]}]}))
       (is (= (-> {:artifacts {:horn    horn
                               :lantern lantern}
                   :players   [{:hand    [border-guard]
@@ -136,7 +136,7 @@
                               :actions        1
                               :revealed-cards {:hand    1
                                                :discard 1}
-                              :triggers       [(get-trigger horn)]}]
+                              :triggers       [(get-project-trigger horn)]}]
               :effect-stack [{:text      "You may activate cards, that do something when you discard them from play."
                               :player-no 0
                               :choice    :at-clean-up-choice
@@ -168,7 +168,7 @@
                            :coins    0
                            :buys     0
                            :phase    :out-of-turn
-                           :triggers [(get-trigger horn)]}]}))
+                           :triggers [(get-project-trigger horn)]}]}))
       (is (= (-> {:artifacts {:horn    horn
                               :lantern lantern}
                   :players   [{:hand      [border-guard]
@@ -189,7 +189,7 @@
                            :coins    0
                            :buys     0
                            :phase    :out-of-turn
-                           :triggers [(get-trigger horn)]}]}))))
+                           :triggers [(get-project-trigger horn)]}]}))))
   (is (= (-> {:artifacts {:horn    horn
                           :lantern lantern}
               :players   [{:hand    [border-guard]
@@ -283,7 +283,7 @@
                                         :discard 1}}]}))
   (is (= (-> {:artifacts {:horn    (assoc horn :owner 0)
                           :lantern lantern}
-              :players   [{:triggers [(get-trigger horn)]}]}
+              :players   [{:triggers [(get-project-trigger horn)]}]}
              (clean-up {:player-no 0}))
          {:artifacts {:horn    (assoc horn :owner 0)
                       :lantern lantern}
@@ -291,7 +291,7 @@
                        :coins    0
                        :buys     0
                        :phase    :out-of-turn
-                       :triggers [(get-trigger horn)]}]})))
+                       :triggers [(get-project-trigger horn)]}]})))
 
 (deftest cargo-ship-test
   (let [cargo-ship (assoc cargo-ship :id 1)
@@ -493,7 +493,29 @@
                          :phase    :out-of-turn
                          :triggers [(merge set-aside=>hand-trigger {:card-id   1
                                                                     :set-aside [inventor]})]}]
-              :trash   [cargo-ship]})))
+              :trash   [cargo-ship]}))
+      (is (= (-> {:supply  [{:card inventor :pile-size 10}]
+                  :players [{:hand    [throne-room cargo-ship improve]
+                             :deck    (repeat 5 copper)
+                             :actions 2
+                             :coins   0}]}
+                 (play 0 :throne-room)
+                 (choose :cargo-ship)
+                 (play 0 :improve)
+                 (end-turn 0)
+                 (choose :improve)
+                 (choose :cargo-ship)                       ; improve Cargo Ship
+                 (choose :inventor)                         ; gain Inventor
+                 (choose :inventor))                        ; put Inventor on vanished Cargo Ship
+             {:current-player 0
+              :supply         [{:card inventor :pile-size 9}]
+              :players        [{:hand    [copper copper copper copper copper inventor]
+                                :discard [throne-room improve]
+                                :actions 1
+                                :coins   0
+                                :buys    1
+                                :phase   :action}]
+              :trash          [cargo-ship]})))
     (is (= (-> {:players [{:hand    [cargo-ship throne-room]
                            :discard [copper]
                            :actions 1
@@ -750,19 +772,19 @@
              {:supply    [{:card flag-bearer :pile-size 9}]
               :artifacts {:flag (assoc flag :owner 0)}
               :players   [{:discard  [flag-bearer]
-                           :triggers [(get-trigger flag)]}]}))
+                           :triggers [(get-project-trigger flag)]}]}))
       (is (= (-> {:supply    [{:card flag-bearer :pile-size 9}]
                   :artifacts {:flag (assoc flag :owner 0)}
-                  :players   [{:triggers [(get-trigger flag)]}]}
+                  :players   [{:triggers [(get-project-trigger flag)]}]}
                  (gain {:player-no 0
                         :card-name :flag-bearer}))
              {:supply    [{:card flag-bearer :pile-size 8}]
               :artifacts {:flag (assoc flag :owner 0)}
               :players   [{:discard  [flag-bearer]
-                           :triggers [(get-trigger flag)]}]}))
+                           :triggers [(get-project-trigger flag)]}]}))
       (is (= (-> {:supply    [{:card flag-bearer :pile-size 9}]
                   :artifacts {:flag (assoc flag :owner 0)}
-                  :players   [{:triggers [(get-trigger flag)]}
+                  :players   [{:triggers [(get-project-trigger flag)]}
                               {}]}
                  (gain {:player-no 1
                         :card-name :flag-bearer}))
@@ -770,7 +792,7 @@
               :artifacts {:flag (assoc flag :owner 1)}
               :players   [{}
                           {:discard  [flag-bearer]
-                           :triggers [(get-trigger flag)]}]}))
+                           :triggers [(get-project-trigger flag)]}]}))
       (is (= (-> {:artifacts {:flag flag}
                   :players   [{:hand    [chapel flag-bearer]
                                :actions 1}]}
@@ -779,14 +801,14 @@
              {:artifacts {:flag (assoc flag :owner 0)}
               :players   [{:play-area [chapel]
                            :actions   0
-                           :triggers  [(get-trigger flag)]}]
+                           :triggers  [(get-project-trigger flag)]}]
               :trash     [flag-bearer]}))
       (is (= (-> {:players [{:deck     (repeat 7 copper)
-                             :triggers [(get-trigger flag)]}]}
+                             :triggers [(get-project-trigger flag)]}]}
                  (clean-up {:player-no 0}))
              {:players [{:hand     (repeat 6 copper)
                          :deck     [copper]
-                         :triggers [(get-trigger flag)]
+                         :triggers [(get-project-trigger flag)]
                          :actions  0
                          :coins    0
                          :buys     0
@@ -1784,13 +1806,13 @@
                            :discard   [estate]
                            :actions   0
                            :coffers   4
-                           :triggers  [(get-trigger treasure-chest)]}]}))
+                           :triggers  [(get-project-trigger treasure-chest)]}]}))
       (is (= (-> {:artifacts {:treasure-chest (assoc treasure-chest :owner 0)}
                   :supply    [{:card gold :pile-size 30}]
                   :players   [{:hand     [copper]
                                :phase    :action
                                :coins    0
-                               :triggers [(get-trigger treasure-chest)]}]}
+                               :triggers [(get-project-trigger treasure-chest)]}]}
                  (play 0 :copper))
              {:artifacts {:treasure-chest (assoc treasure-chest :owner 0)}
               :supply    [{:card gold :pile-size 29}]
@@ -1798,13 +1820,13 @@
                            :discard   [gold]
                            :phase     :pay
                            :coins     1
-                           :triggers  [(get-trigger treasure-chest)]}]}))
+                           :triggers  [(get-project-trigger treasure-chest)]}]}))
       (is (= (-> {:artifacts {:treasure-chest (assoc treasure-chest :owner 0)}
                   :supply    [{:card gold :pile-size 30}]
                   :players   [{:phase    :action
                                :coins    6
                                :buys     1
-                               :triggers [(get-trigger treasure-chest)]}]}
+                               :triggers [(get-project-trigger treasure-chest)]}]}
                  (buy-card 0 :gold))
              {:artifacts {:treasure-chest (assoc treasure-chest :owner 0)}
               :supply    [{:card gold :pile-size 28}]
@@ -1812,11 +1834,11 @@
                            :phase    :buy
                            :coins    0
                            :buys     0
-                           :triggers [(get-trigger treasure-chest)]}]}))
+                           :triggers [(get-project-trigger treasure-chest)]}]}))
       (is (= (-> {:artifacts {:treasure-chest (assoc treasure-chest :owner 0)}
                   :supply    [{:card gold :pile-size 30}]
                   :players   [{:phase    :action
-                               :triggers [(get-trigger treasure-chest)]}]}
+                               :triggers [(get-project-trigger treasure-chest)]}]}
                  (end-turn 0))
              {:artifacts      {:treasure-chest (assoc treasure-chest :owner 0)}
               :supply         [{:card gold :pile-size 29}]
@@ -1826,7 +1848,7 @@
                                 :coins    0
                                 :buys     1
                                 :phase    :action
-                                :triggers [(get-trigger treasure-chest)]}]})))))
+                                :triggers [(get-project-trigger treasure-chest)]}]})))))
 
 (deftest treasurer-test
   (testing "Treasurer"
@@ -1905,9 +1927,9 @@
             :players   [{:play-area [treasurer]
                          :actions   0
                          :coins     3
-                         :triggers  [(get-trigger key)]}]}))
+                         :triggers  [(get-project-trigger key)]}]}))
     (is (= (-> {:artifacts {:key (assoc key :owner 0)}
-                :players   [{:triggers [(get-trigger key)]}]}
+                :players   [{:triggers [(get-project-trigger key)]}]}
                (end-turn 0))
            {:current-player 0
             :artifacts      {:key (assoc key :owner 0)}
@@ -1915,12 +1937,12 @@
                               :coins    1
                               :buys     1
                               :phase    :action
-                              :triggers [(get-trigger key)]}]}))
+                              :triggers [(get-project-trigger key)]}]}))
     (let [merchant-ship (assoc merchant-ship :id 1)]
       (is (= (-> {:players [{:hand     [merchant-ship]
                              :actions  1
                              :coins    0
-                             :triggers [(get-trigger key)]}]}
+                             :triggers [(get-project-trigger key)]}]}
                  (play 0 :merchant-ship)
                  (end-turn 0))
              {:current-player 0
@@ -1929,7 +1951,7 @@
                                 :coins     3
                                 :buys      1
                                 :phase     :action
-                                :triggers  [(get-trigger key)]}]})))))
+                                :triggers  [(get-project-trigger key)]}]})))))
 
 (deftest villain-test
   (testing "Villain"
@@ -1990,51 +2012,51 @@
              {:projects {:academy (assoc academy :participants [{:player-no 0}])}
               :players  [{:coins    0
                           :buys     0
-                          :triggers [(get-trigger academy)]}]}))
+                          :triggers [(get-project-trigger academy)]}]}))
       (is (= (-> {:supply  [{:card mountain-village :pile-size 10}]
                   :players [{:coins    4
                              :buys     1
-                             :triggers [(get-trigger academy)]}]}
+                             :triggers [(get-project-trigger academy)]}]}
                  (buy-card 0 :mountain-village))
              {:supply  [{:card mountain-village :pile-size 9}]
               :players [{:discard   [mountain-village]
                          :coins     0
                          :buys      0
                          :villagers 1
-                         :triggers  [(get-trigger academy)]}]}))
+                         :triggers  [(get-project-trigger academy)]}]}))
       (is (= (-> {:supply  [{:card silver :pile-size 40}]
                   :players [{:coins    3
                              :buys     1
-                             :triggers [(get-trigger academy)]}]}
+                             :triggers [(get-project-trigger academy)]}]}
                  (buy-card 0 :silver))
              {:supply  [{:card silver :pile-size 39}]
               :players [{:discard  [silver]
                          :coins    0
                          :buys     0
-                         :triggers [(get-trigger academy)]}]}))
+                         :triggers [(get-project-trigger academy)]}]}))
       (is (= (-> {:supply  [{:card experiment :pile-size 10}]
                   :players [{:coins    3
                              :buys     1
-                             :triggers [(get-trigger academy)]}]}
+                             :triggers [(get-project-trigger academy)]}]}
                  (buy-card 0 :experiment))
              {:supply  [{:card experiment :pile-size 8}]
               :players [{:discard   [experiment experiment]
                          :coins     0
                          :buys      0
                          :villagers 2
-                         :triggers  [(get-trigger academy)]}]})))))
+                         :triggers  [(get-project-trigger academy)]}]})))))
 
 (deftest barracks-test
   (testing "Barracks"
     (is (= (-> {:players [{:phase    :out-of-turn
-                           :triggers [(get-trigger barracks)]}]}
+                           :triggers [(get-project-trigger barracks)]}]}
                (start-turn {:player-no 0}))
            {:current-player 0
             :players        [{:actions  2
                               :coins    0
                               :buys     1
                               :phase    :action
-                              :triggers [(get-trigger barracks)]}]}))))
+                              :triggers [(get-project-trigger barracks)]}]}))))
 
 (deftest canal-test
   (testing "Canal"
@@ -2148,7 +2170,7 @@
                     :supply   [{:card patron :pile-size 10}]
                     :players  [{:coins    4
                                 :buys     1
-                                :triggers [(get-trigger guildhall)]}]}
+                                :triggers [(get-project-trigger guildhall)]}]}
                    (buy-card 0 :patron))
                {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
                 :supply   [{:card patron :pile-size 9}]
@@ -2156,7 +2178,7 @@
                             :coins    0
                             :buys     0
                             :coffers  1
-                            :triggers [(get-trigger guildhall)]}]})))
+                            :triggers [(get-project-trigger guildhall)]}]})))
       (testing "with Loan"
         (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
                     :players  [{:hand  [loan]
@@ -2288,7 +2310,7 @@
   (testing "Cathedral"
     (is (= (-> {:players [{:hand     [copper copper copper copper copper]
                            :phase    :out-of-turn
-                           :triggers [(get-trigger cathedral)]}]}
+                           :triggers [(get-project-trigger cathedral)]}]}
                (start-turn {:player-no 0})
                (choose :copper))
            {:current-player 0
@@ -2297,7 +2319,7 @@
                               :coins    0
                               :buys     1
                               :phase    :action
-                              :triggers [(get-trigger cathedral)]}]
+                              :triggers [(get-project-trigger cathedral)]}]
             :trash          [copper]}))))
 
 (deftest citadel-test
@@ -2309,7 +2331,7 @@
                   :players               [{:hand     [patron]
                                            :actions  1
                                            :coins    0
-                                           :triggers [(get-trigger citadel)]}]}
+                                           :triggers [(get-project-trigger citadel)]}]}
                  (play 0 :patron))
              {:track-played-actions? true
               :players               [{:play-area      [patron]
@@ -2317,13 +2339,13 @@
                                        :coins          4
                                        :villagers      2
                                        :actions-played [0 0]
-                                       :triggers       [(get-trigger citadel)]}]}))
+                                       :triggers       [(get-project-trigger citadel)]}]}))
       (is (= (-> {:track-played-actions? true
                   :players               [{:hand           [patron]
                                            :actions        1
                                            :coins          0
                                            :actions-played [0]
-                                           :triggers       [(get-trigger citadel)]}]}
+                                           :triggers       [(get-project-trigger citadel)]}]}
                  (play 0 :patron))
              {:track-played-actions? true
               :players               [{:play-area      [patron]
@@ -2331,12 +2353,12 @@
                                        :coins          2
                                        :villagers      1
                                        :actions-played [0 0]
-                                       :triggers       [(get-trigger citadel)]}]}))
+                                       :triggers       [(get-project-trigger citadel)]}]}))
       (is (= (-> {:track-played-actions? true
                   :players               [{:hand     [throne-room patron flag-bearer]
                                            :actions  1
                                            :coins    0
-                                           :triggers [(get-trigger citadel)]}]}
+                                           :triggers [(get-project-trigger citadel)]}]}
                  (play 0 :throne-room)
                  (choose :patron)
                  (choose :flag-bearer))
@@ -2346,14 +2368,14 @@
                                        :coins          8
                                        :villagers      2
                                        :actions-played [1 0 0 1 2 2]
-                                       :triggers       [(get-trigger citadel)]}]})))))
+                                       :triggers       [(get-project-trigger citadel)]}]})))))
 
 (deftest city-gate-test
   (testing "City Gate"
     (is (= (-> {:players [{:hand     [copper copper copper copper copper]
                            :deck     [silver estate]
                            :phase    :out-of-turn
-                           :triggers [(get-trigger city-gate)]}]}
+                           :triggers [(get-project-trigger city-gate)]}]}
                (start-turn {:player-no 0})
                (choose :copper))
            {:current-player 0
@@ -2363,14 +2385,14 @@
                               :coins    0
                               :buys     1
                               :phase    :action
-                              :triggers [(get-trigger city-gate)]}]}))))
+                              :triggers [(get-project-trigger city-gate)]}]}))))
 
 (deftest crop-rotation-test
   (testing "Crop Rotation"
     (is (= (-> {:players [{:hand     [copper copper copper copper estate]
                            :deck     [gold copper silver]
                            :phase    :out-of-turn
-                           :triggers [(get-trigger crop-rotation)]}]}
+                           :triggers [(get-project-trigger crop-rotation)]}]}
                (start-turn {:player-no 0})
                (choose :estate))
            {:current-player 0
@@ -2381,11 +2403,11 @@
                               :coins    0
                               :buys     1
                               :phase    :action
-                              :triggers [(get-trigger crop-rotation)]}]}))
+                              :triggers [(get-project-trigger crop-rotation)]}]}))
     (is (= (-> {:players [{:hand     [copper copper copper copper gold]
                            :deck     [estate copper silver]
                            :phase    :out-of-turn
-                           :triggers [(get-trigger crop-rotation)]}]}
+                           :triggers [(get-project-trigger crop-rotation)]}]}
                (start-turn {:player-no 0}))
            {:current-player 0
             :players        [{:hand     [copper copper copper copper gold]
@@ -2394,12 +2416,12 @@
                               :coins    0
                               :buys     1
                               :phase    :action
-                              :triggers [(get-trigger crop-rotation)]}]}))))
+                              :triggers [(get-project-trigger crop-rotation)]}]}))))
 
 (deftest exploration-test
   (testing "Exploration"
     (is (= (-> {:players [{:phase    :buy
-                           :triggers [(get-trigger exploration)]}]}
+                           :triggers [(get-project-trigger exploration)]}]}
                (clean-up {:player-no 0}))
            {:players [{:actions   0
                        :coins     0
@@ -2407,10 +2429,10 @@
                        :villagers 1
                        :coffers   1
                        :phase     :out-of-turn
-                       :triggers  [(get-trigger exploration)]}]}))
+                       :triggers  [(get-project-trigger exploration)]}]}))
     (is (= (-> {:players [{:gained-cards [{:name :silver :bought false}]
                            :phase        :buy
-                           :triggers     [(get-trigger exploration)]}]}
+                           :triggers     [(get-project-trigger exploration)]}]}
                (clean-up {:player-no 0}))
            {:players [{:gained-cards [{:name :silver :bought false}]
                        :actions      0
@@ -2419,29 +2441,29 @@
                        :villagers    1
                        :coffers      1
                        :phase        :out-of-turn
-                       :triggers     [(get-trigger exploration)]}]}))
+                       :triggers     [(get-project-trigger exploration)]}]}))
     (is (= (-> {:players [{:gained-cards [{:name :silver :bought true}]
                            :phase        :buy
-                           :triggers     [(get-trigger exploration)]}]}
+                           :triggers     [(get-project-trigger exploration)]}]}
                (clean-up {:player-no 0}))
            {:players [{:gained-cards [{:name :silver :bought true}]
                        :actions      0
                        :coins        0
                        :buys         0
                        :phase        :out-of-turn
-                       :triggers     [(get-trigger exploration)]}]}))))
+                       :triggers     [(get-project-trigger exploration)]}]}))))
 
 (deftest fair-test
   (testing "Fair"
     (is (= (-> {:players [{:phase    :out-of-turn
-                           :triggers [(get-trigger fair)]}]}
+                           :triggers [(get-project-trigger fair)]}]}
                (start-turn {:player-no 0}))
            {:current-player 0
             :players        [{:actions  1
                               :coins    0
                               :buys     2
                               :phase    :action
-                              :triggers [(get-trigger fair)]}]}))))
+                              :triggers [(get-project-trigger fair)]}]}))))
 
 (deftest guildhall-test
   (let [silver (assoc silver :id 0)
@@ -2450,24 +2472,24 @@
       (is (= (-> {:supply  [{:card mountain-village :pile-size 10}]
                   :players [{:coins    4
                              :buys     1
-                             :triggers [(get-trigger guildhall)]}]}
+                             :triggers [(get-project-trigger guildhall)]}]}
                  (buy-card 0 :mountain-village))
              {:supply  [{:card mountain-village :pile-size 9}]
               :players [{:discard  [mountain-village]
                          :coins    0
                          :buys     0
-                         :triggers [(get-trigger guildhall)]}]}))
+                         :triggers [(get-project-trigger guildhall)]}]}))
       (is (= (-> {:supply  [{:card silver :pile-size 40}]
                   :players [{:coins    3
                              :buys     1
-                             :triggers [(get-trigger guildhall)]}]}
+                             :triggers [(get-project-trigger guildhall)]}]}
                  (buy-card 0 :silver))
              {:supply  [{:card silver :pile-size 39}]
               :players [{:discard  [silver]
                          :coins    0
                          :buys     0
                          :coffers  1
-                         :triggers [(get-trigger guildhall)]}]})))))
+                         :triggers [(get-project-trigger guildhall)]}]})))))
 
 (deftest innovation-test
   (let [silver (assoc silver :id 0)
@@ -2478,7 +2500,7 @@
                   :supply              [{:card mountain-village :pile-size 10}]
                   :players             [{:deck     [silver silver]
                                          :actions  0
-                                         :triggers [(get-trigger innovation)]}]}
+                                         :triggers [(get-project-trigger innovation)]}]}
                  (gain {:player-no 0 :card-name :mountain-village})
                  (choose :mountain-village))
              {:current-player      0
@@ -2491,7 +2513,7 @@
                                      :gained-cards [{:cost  4
                                                      :name  :mountain-village
                                                      :types #{:action}}]
-                                     :triggers     [(get-trigger innovation)]}]}))
+                                     :triggers     [(get-project-trigger innovation)]}]}))
       (is (= (-> {:current-player      0
                   :track-gained-cards? true
                   :supply              [{:card mountain-village :pile-size 9}]
@@ -2501,7 +2523,7 @@
                                          :gained-cards [{:cost  4
                                                          :name  :mountain-village
                                                          :types #{:action}}]
-                                         :triggers     [(get-trigger innovation)]}]}
+                                         :triggers     [(get-project-trigger innovation)]}]}
                  (gain {:player-no 0 :card-name :mountain-village}))
              {:current-player      0
               :track-gained-cards? true
@@ -2516,12 +2538,12 @@
                                                     {:cost  4
                                                      :name  :mountain-village
                                                      :types #{:action}}]
-                                     :triggers     [(get-trigger innovation)]}]}))
+                                     :triggers     [(get-project-trigger innovation)]}]}))
       (is (= (-> {:current-player      0
                   :track-gained-cards? true
                   :supply              [{:card mountain-village :pile-size 10}]
                   :players             [{:deck     [silver silver]
-                                         :triggers [(get-trigger innovation)]}]}
+                                         :triggers [(get-project-trigger innovation)]}]}
                  (gain {:player-no 0 :card-name :mountain-village})
                  (choose nil))
              {:current-player      0
@@ -2532,13 +2554,13 @@
                                      :gained-cards [{:cost  4
                                                      :name  :mountain-village
                                                      :types #{:action}}]
-                                     :triggers     [(get-trigger innovation)]}]})))))
+                                     :triggers     [(get-project-trigger innovation)]}]})))))
 
 (deftest pageant-test
   (testing "Pageant"
     (is (= (-> {:players [{:coins    1
                            :phase    :buy
-                           :triggers [(get-trigger pageant)]}]}
+                           :triggers [(get-project-trigger pageant)]}]}
                (clean-up {:player-no 0})
                (choose :get-coffers))
            {:players [{:actions  0
@@ -2546,10 +2568,10 @@
                        :buys     0
                        :coffers  1
                        :phase    :out-of-turn
-                       :triggers [(get-trigger pageant)]}]}))
+                       :triggers [(get-project-trigger pageant)]}]}))
     (is (= (-> {:players [{:coins    1
                            :phase    :action
-                           :triggers [(get-trigger pageant)]}]}
+                           :triggers [(get-project-trigger pageant)]}]}
                (clean-up {:player-no 0})
                (choose :get-coffers))
            {:players [{:actions  0
@@ -2557,24 +2579,24 @@
                        :buys     0
                        :coffers  1
                        :phase    :out-of-turn
-                       :triggers [(get-trigger pageant)]}]}))
+                       :triggers [(get-project-trigger pageant)]}]}))
     (is (= (-> {:players [{:coins    1
                            :phase    :buy
-                           :triggers [(get-trigger pageant)]}]}
+                           :triggers [(get-project-trigger pageant)]}]}
                (clean-up {:player-no 0})
                (choose :decline))
            {:players [{:actions  0
                        :coins    0
                        :buys     0
                        :phase    :out-of-turn
-                       :triggers [(get-trigger pageant)]}]}))))
+                       :triggers [(get-project-trigger pageant)]}]}))))
 
 (deftest piazza-test
   (testing "Piazza"
     (is (= (-> {:players [{:hand     [copper copper estate silver estate]
                            :deck     [patron gold]
                            :phase    :out-of-turn
-                           :triggers [(get-trigger piazza)]}]}
+                           :triggers [(get-project-trigger piazza)]}]}
                (start-turn {:player-no 0}))
            {:current-player 0
             :players        [{:hand           [copper copper estate silver estate]
@@ -2587,11 +2609,11 @@
                               :coffers        1
                               :villagers      1
                               :phase          :action
-                              :triggers       [(get-trigger piazza)]}]}))
+                              :triggers       [(get-project-trigger piazza)]}]}))
     (is (= (-> {:players [{:hand     [copper copper estate silver estate]
                            :deck     [gold patron]
                            :phase    :out-of-turn
-                           :triggers [(get-trigger piazza)]}]}
+                           :triggers [(get-project-trigger piazza)]}]}
                (start-turn {:player-no 0}))
            {:current-player 0
             :players        [{:hand           [copper copper estate silver estate]
@@ -2601,7 +2623,7 @@
                               :coins          0
                               :buys           1
                               :phase          :action
-                              :triggers       [(get-trigger piazza)]}]}))))
+                              :triggers       [(get-project-trigger piazza)]}]}))))
 
 (deftest road-network-test
   (let [duchy (assoc duchy :id 0)
@@ -2733,7 +2755,7 @@
     (is (= (-> {:players [{:hand     [copper copper estate silver estate]
                            :deck     [gold gold duchy]
                            :phase    :out-of-turn
-                           :triggers [(get-trigger silos)]}]}
+                           :triggers [(get-project-trigger silos)]}]}
                (start-turn {:player-no 0})
                (choose [:copper :copper]))
            {:current-player 0
@@ -2744,25 +2766,25 @@
                               :coins    0
                               :buys     1
                               :phase    :action
-                              :triggers [(get-trigger silos)]}]}))))
+                              :triggers [(get-project-trigger silos)]}]}))))
 
 (deftest sewers-test
   (testing "Sewers"
     (is (= (-> {:players [{:hand     [research copper estate copper]
                            :actions  1
-                           :triggers [(get-trigger sewers)]}]}
+                           :triggers [(get-project-trigger sewers)]}]}
                (play 0 :research)
                (choose :copper)
                (choose :estate))
            {:players [{:hand      [copper]
                        :play-area [research]
                        :actions   1
-                       :triggers  [(get-trigger sewers)]}]
+                       :triggers  [(get-project-trigger sewers)]}]
             :trash   [copper estate]}))
     (is (= (-> {:players [{:hand     [priest copper estate copper]
                            :actions  1
                            :coins    0
-                           :triggers [(get-trigger sewers)]}]}
+                           :triggers [(get-project-trigger sewers)]}]}
                (play 0 :priest)
                (choose :copper)
                (choose :estate))
@@ -2770,7 +2792,7 @@
                        :play-area [priest]
                        :actions   0
                        :coins     2                         ; up for discussion; does Priest's on-trash apply to Sewers trash?
-                       :triggers  [(get-trigger sewers)
+                       :triggers  [(get-project-trigger sewers)
                                    priest-trigger]}]
             :trash   [copper estate]}))))
 
@@ -2780,7 +2802,7 @@
                 :players  [{:hand     [copper copper estate silver estate]
                             :deck     [gold gold duchy]
                             :phase    :out-of-turn
-                            :triggers [(get-trigger sinister-plot)]}]}
+                            :triggers [(get-project-trigger sinister-plot)]}]}
                (start-turn {:player-no 0})
                (choose :add-token))
            {:projects       {:sinister-plot (assoc fair :participants [{:player-no 0
@@ -2792,13 +2814,13 @@
                               :coins    0
                               :buys     1
                               :phase    :action
-                              :triggers [(get-trigger sinister-plot)]}]}))
+                              :triggers [(get-project-trigger sinister-plot)]}]}))
     (is (= (-> {:projects {:sinister-plot (assoc fair :participants [{:player-no 0
                                                                       :tokens    1}])}
                 :players  [{:hand     [copper copper estate silver estate]
                             :deck     [gold gold duchy]
                             :phase    :out-of-turn
-                            :triggers [(get-trigger sinister-plot)]}]}
+                            :triggers [(get-project-trigger sinister-plot)]}]}
                (start-turn {:player-no 0})
                (choose :add-token))
            {:projects       {:sinister-plot (assoc fair :participants [{:player-no 0
@@ -2810,13 +2832,13 @@
                               :coins    0
                               :buys     1
                               :phase    :action
-                              :triggers [(get-trigger sinister-plot)]}]}))
+                              :triggers [(get-project-trigger sinister-plot)]}]}))
     (is (= (-> {:projects {:sinister-plot (assoc fair :participants [{:player-no 0
                                                                       :tokens    2}])}
                 :players  [{:hand     [copper copper estate silver estate]
                             :deck     [gold gold duchy]
                             :phase    :out-of-turn
-                            :triggers [(get-trigger sinister-plot)]}]}
+                            :triggers [(get-project-trigger sinister-plot)]}]}
                (start-turn {:player-no 0})
                (choose :remove-tokens))
            {:projects       {:sinister-plot (assoc fair :participants [{:player-no 0}])}
@@ -2827,12 +2849,12 @@
                               :coins    0
                               :buys     1
                               :phase    :action
-                              :triggers [(get-trigger sinister-plot)]}]}))
+                              :triggers [(get-project-trigger sinister-plot)]}]}))
     (is (= (-> {:projects {:sinister-plot (assoc fair :participants [{:player-no 0}])}
                 :players  [{:hand     [copper copper estate silver estate]
                             :deck     [gold gold duchy]
                             :phase    :out-of-turn
-                            :triggers [(get-trigger sinister-plot)]}]}
+                            :triggers [(get-project-trigger sinister-plot)]}]}
                (start-turn {:player-no 0})
                (choose :remove-tokens))
            {:projects       {:sinister-plot (assoc fair :participants [{:player-no 0}])}
@@ -2843,47 +2865,47 @@
                               :coins    0
                               :buys     1
                               :phase    :action
-                              :triggers [(get-trigger sinister-plot)]}]}))))
+                              :triggers [(get-project-trigger sinister-plot)]}]}))))
 
 (deftest star-chart-test
   (testing "Star Chart"
     (is (= (-> {:players [{:hand     [lackeys]
                            :discard  [silver copper copper copper]
                            :actions  1
-                           :triggers [(get-trigger star-chart)]}]}
+                           :triggers [(get-project-trigger star-chart)]}]}
                (play 0 :lackeys)
                (choose :silver))
            {:players [{:hand      [silver copper]
                        :play-area [lackeys]
                        :deck      [copper copper]
                        :actions   0
-                       :triggers  [(get-trigger star-chart)]}]}))
+                       :triggers  [(get-project-trigger star-chart)]}]}))
     (is (= (-> {:players [{:hand     [lackeys]
                            :discard  [silver copper copper copper]
                            :actions  1
-                           :triggers [(get-trigger star-chart)]}]}
+                           :triggers [(get-project-trigger star-chart)]}]}
                (play 0 :lackeys)
                (choose :copper))
            {:players [{:hand      [copper copper]
                        :play-area [lackeys]
                        :deck      [copper silver]
                        :actions   0
-                       :triggers  [(get-trigger star-chart)]}]}))
+                       :triggers  [(get-project-trigger star-chart)]}]}))
     (is (= (-> {:players [{:hand     [lackeys]
                            :discard  [silver copper copper copper]
                            :actions  1
-                           :triggers [(get-trigger star-chart)]}]}
+                           :triggers [(get-project-trigger star-chart)]}]}
                (play 0 :lackeys)
                (choose nil))
            {:players [{:hand      [copper silver]
                        :play-area [lackeys]
                        :deck      [copper copper]
                        :actions   0
-                       :triggers  [(get-trigger star-chart)]}]}))
+                       :triggers  [(get-project-trigger star-chart)]}]}))
     (is (= (-> {:players [{:hand     [lackeys]
                            :discard  [silver copper stash copper copper]
                            :actions  1
-                           :triggers [(get-trigger star-chart)]}]}
+                           :triggers [(get-project-trigger star-chart)]}]}
                (play 0 :lackeys)
                (choose :silver)
                (choose 1))
@@ -2891,15 +2913,15 @@
                        :play-area [lackeys]
                        :deck      [copper copper copper]
                        :actions   0
-                       :triggers  [(get-trigger star-chart)]}]}))))
+                       :triggers  [(get-project-trigger star-chart)]}]}))))
 
 (deftest simultaneous-effects-test
   (testing "Simultaneous effects"
     (is (= (-> {:players [{:hand     [copper copper silver]
                            :deck     [estate gold copper copper]
                            :phase    :out-of-turn
-                           :triggers [(get-trigger crop-rotation)
-                                      (get-trigger silos)]}]}
+                           :triggers [(get-project-trigger crop-rotation)
+                                      (get-project-trigger silos)]}]}
                (start-turn {:player-no 0}))
            {:current-player 0
             :players        [{:hand     [copper copper silver]
@@ -2908,12 +2930,12 @@
                               :coins    0
                               :buys     1
                               :phase    :action
-                              :triggers [(get-trigger crop-rotation)
-                                         (get-trigger silos)]}]
+                              :triggers [(get-project-trigger crop-rotation)
+                                         (get-project-trigger silos)]}]
             :effect-stack   [{:text      "Multiple things happen at the start of your turn. Select which one happens next."
                               :player-no 0
-                              :choice    [:simultaneous-effects-choice {:triggers [(get-trigger crop-rotation)
-                                                                                   (get-trigger silos)]}]
+                              :choice    [:simultaneous-effects-choice {:triggers [(get-project-trigger crop-rotation)
+                                                                                   (get-project-trigger silos)]}]
                               :source    :mixed
                               :options   [:crop-rotation :silos]
                               :min       1
@@ -2925,8 +2947,8 @@
     (is (= (-> {:players [{:hand     [copper copper silver]
                            :deck     [estate gold copper copper]
                            :phase    :out-of-turn
-                           :triggers [(get-trigger crop-rotation)
-                                      (get-trigger silos)]}]}
+                           :triggers [(get-project-trigger crop-rotation)
+                                      (get-project-trigger silos)]}]}
                (start-turn {:player-no 0})
                (choose :silos)
                (choose [:copper :copper])
@@ -2938,13 +2960,13 @@
                               :coins    0
                               :buys     1
                               :phase    :action
-                              :triggers [(get-trigger crop-rotation)
-                                         (get-trigger silos)]}]}))
+                              :triggers [(get-project-trigger crop-rotation)
+                                         (get-project-trigger silos)]}]}))
     (is (= (-> {:players [{:hand     [copper copper silver estate]
                            :deck     [gold copper copper silver silver silver]
                            :phase    :out-of-turn
-                           :triggers [(get-trigger crop-rotation)
-                                      (get-trigger silos)]}]}
+                           :triggers [(get-project-trigger crop-rotation)
+                                      (get-project-trigger silos)]}]}
                (start-turn {:player-no 0})
                (choose :crop-rotation)
                (choose :estate)
@@ -2957,13 +2979,13 @@
                               :coins    0
                               :buys     1
                               :phase    :action
-                              :triggers [(get-trigger crop-rotation)
-                                         (get-trigger silos)]}]}))
+                              :triggers [(get-project-trigger crop-rotation)
+                                         (get-project-trigger silos)]}]}))
     (is (= (-> {:players [{:hand     [copper copper silver]
                            :deck     [estate gold copper copper]
                            :phase    :out-of-turn
-                           :triggers [(get-trigger key)
-                                      (get-trigger silos)]}]}
+                           :triggers [(get-project-trigger key)
+                                      (get-project-trigger silos)]}]}
                (start-turn {:player-no 0})
                (choose [:copper :copper]))
            {:current-player 0
@@ -2974,6 +2996,6 @@
                               :coins    1
                               :buys     1
                               :phase    :action
-                              :triggers [(get-trigger key)
-                                         (get-trigger silos)]}]}))))
+                              :triggers [(get-project-trigger key)
+                                         (get-project-trigger silos)]}]}))))
 
