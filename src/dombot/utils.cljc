@@ -204,7 +204,7 @@
             id (filter (comp #{id} :id))
             name (filter (comp #{name} :name))
             names (filter (comp names :name))
-            not-name (remove (comp #{not-name} :name))
+            not-name (remove (comp not-name :name))
             type (filter (comp type (partial get-types game)))
             reacts-to (filter (every-pred (comp #{reacts-to} :reacts-to)
                                           (partial can-react? game player-no)))

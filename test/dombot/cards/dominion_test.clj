@@ -179,7 +179,7 @@
                                           {:attacking-player-no 0
                                            :text                "Trash a revealed Treasure other than Copper, and discards the rest."
                                            :choice              :trash-from-revealed
-                                           :options             [:player :revealed {:not-name :copper :type :treasure}]
+                                           :options             [:player :revealed {:not-name #{:copper} :type :treasure}]
                                            :max                 1
                                            :min                 1}]}
                              {:player-no 2

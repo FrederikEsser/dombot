@@ -94,16 +94,14 @@
 (effects/register {:register-repeated-play register-repeated-play})
 
 (defn repeat-action [game {:keys [player-no card-id card-name times]}]
-  (if card-name
-    (let [{card :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
-      (-> game
-          (push-effect-stack {:player-no player-no
-                              :card-id   card-id
-                              :effects   (concat
-                                           [[:play-from-hand {:card-name card-name}]]
-                                           (repeat times [:card-effect {:card card}])
-                                           [[:register-repeated-play {:target-id (:id card)}]])})))
-    game))
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :card-id   card-id
+                                     :effects   (concat
+                                                  [[:play-from-hand {:card-name card-name}]]
+                                                  (repeat times [:card-effect {:card card}])
+                                                  [[:register-repeated-play {:target-id (:id card)}]])}))))
 
 (effects/register {:repeat-action repeat-action})
 

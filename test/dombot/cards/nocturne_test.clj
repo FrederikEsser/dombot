@@ -11,6 +11,61 @@
 
 (use-fixtures :each fixture)
 
+(deftest conclave-test
+  (testing "Conclave"
+    (is (= (-> {:players [{:hand    [conclave]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :conclave))
+           {:players [{:play-area [conclave]
+                       :actions   0
+                       :coins     2}]}))
+    (is (= (-> {:players [{:hand    [conclave conclave]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :conclave))
+           {:players [{:hand      [conclave]
+                       :play-area [conclave]
+                       :actions   0
+                       :coins     2}]}))
+    (is (= (-> {:players [{:hand    [conclave tragic-hero]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :conclave))
+           {:players      [{:hand      [tragic-hero]
+                            :play-area [conclave]
+                            :actions   0
+                            :coins     2}]
+            :effect-stack [{:text      "You may play an Action card from your hand that you don't have a copy of in play."
+                            :player-no 0
+                            :choice    ::nocturne/conclave-play-action
+                            :source    :hand
+                            :options   [:tragic-hero]
+                            :max       1}]}))
+    (is (= (-> {:players [{:hand    [conclave tragic-hero]
+                           :deck    [copper copper copper]
+                           :actions 1
+                           :coins   0
+                           :buys    1}]}
+               (play 0 :conclave)
+               (choose :tragic-hero))
+           {:players [{:hand      [copper copper copper]
+                       :play-area [conclave tragic-hero]
+                       :actions   1
+                       :coins     2
+                       :buys      2}]}))
+    (is (= (-> {:players [{:hand    [conclave tragic-hero]
+                           :deck    [copper copper copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :conclave)
+               (choose nil))
+           {:players [{:hand      [tragic-hero]
+                       :deck      [copper copper copper]
+                       :play-area [conclave]
+                       :actions   0
+                       :coins     2}]}))))
+
 (deftest tragic-hero-test
   (let [tragic-hero (assoc tragic-hero :id 0)]
     (testing "Tragic Hero"
