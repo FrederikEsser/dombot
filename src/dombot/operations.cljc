@@ -118,6 +118,7 @@
                   :action
                   :pay
                   :buy
+                  :night
                   :clean-up
                   :out-of-turn])
 
@@ -759,17 +760,19 @@
   ([{:keys [effect-stack] :as game} player-no card-name]
    (let [{:keys [phase actions actions-played triggers]
           :or   {phase :action}} (get-in game [:players player-no])
-         {{:keys [effects coin-value] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+         {{:keys [effects coin-value trigger] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
          types (ut/get-types game card)
          play-type (cond
                      (and (#{:action} phase) (:action types) (pos? actions)) :action
-                     (and (#{:action :pay} phase) (:treasure types)) :treasure)]
+                     (and (#{:action :pay} phase) (:treasure types)) :treasure
+                     (and (#{:action :pay :buy :night} phase) (:night types)) :night)]
      (assert (-> effect-stack first :choice not) "You can't play cards when you have a choice to make.")
      (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
      (assert types (str "Play error: " (ut/format-name card-name) " has no types."))
      (case play-type
        :action (assert effects (str "Play error: " (ut/format-name card-name) " has no effect."))
        :treasure (assert (or coin-value effects) (str "Play error: " (ut/format-name card-name) " has no coin value or effects."))
+       :night (assert (or effects trigger) (str "Play error: " (ut/format-name card-name) " has no effect or trigger."))
        (assert false (str "Play error: You can't play " (ut/format-types types) " cards"
                           " when you're in the " (ut/format-name phase) " phase"
                           (when (and (#{:action} phase) (:action types))
@@ -778,8 +781,8 @@
      (-> game
          (cond-> (= :action play-type) (update-in [:players player-no :actions] - 1))
          (push-effect-stack {:player-no player-no
-                             :effects   (concat [(when (= :treasure play-type)
-                                                   [:set-phase {:phase :pay}])
+                             :effects   (concat [(cond (= :treasure play-type) [:set-phase {:phase :pay}]
+                                                       (= :night play-type) [:set-phase {:phase :night}])
                                                  [:move-card {:card-name card-name
                                                               :from      :hand
                                                               :to        :play-area}]

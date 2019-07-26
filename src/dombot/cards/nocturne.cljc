@@ -1,8 +1,16 @@
 (ns dombot.cards.nocturne
-  (:require [dombot.operations :refer [push-effect-stack give-choice]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice move-card]]
             [dombot.cards.common :refer []]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
+
+(defn- gain-to-hand [game {:keys [player-no gained-card-id] :as args}]
+  (move-card game {:player-no    player-no
+                   :move-card-id gained-card-id
+                   :from         :gaining
+                   :to           :hand}))
+
+(effects/register {::gain-to-hand gain-to-hand})
 
 (defn- conclave-play-action [game {:keys [player-no card-name]}]
   (let [{card :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
@@ -34,6 +42,17 @@
                :effects [[:give-coins 2]
                          [::conclave-give-choice]]})
 
+(def ghost-town {:name    :ghost-town
+                 :set     :nocturne
+                 :types   #{:night :duration}
+                 :cost    3
+                 :trigger {:trigger           :at-start-turn
+                           :duration          :once
+                           :simultaneous-mode :auto
+                           :effects           [[:draw 1]
+                                               [:give-actions 1]]}
+                 :on-gain [[::gain-to-hand]]})
+
 (defn- tragic-hero-demise [game {:keys [player-no card-id] :as args}]
   (let [hand-size (count (get-in game [:players player-no :hand]))]
     (cond-> game
@@ -56,4 +75,5 @@
                             [::tragic-hero-demise]]})
 
 (def kingdom-cards [conclave
+                    ghost-town
                     tragic-hero])

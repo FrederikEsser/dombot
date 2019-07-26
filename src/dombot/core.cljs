@@ -33,9 +33,12 @@
   (swap! state update :selection remove-idx idx))
 
 (defn button-style [& [disabled types number-of-cards]]
-  (merge {:color            (if disabled :grey :black)
+  (merge {:color            (cond disabled :grey
+                                  (:night types) :white
+                                  :else :black)
           :font-weight      :bold
           :background-color (cond
+                              (:night types) "#464040"
                               (:duration types) "#FF9E37"
                               (:reaction types) "#A8BFD3"
                               (:action types) "#F3EEDF"
@@ -49,10 +52,11 @@
                               (:curse types) "#9F76B8"
                               (:victory types) "#6DB954"
                               (:treasure types) "#EFD34E"
-                              (:attack types) "#940000"
                               (:reaction types) "#6295CE"
                               (:duration types) "#F1820E"
+                              (:attack types) "#B40000"
                               (:action types) "#DED7C4"
+                              (:night types) "#413B3B"
                               (:artifact types) "#B4763B"
                               (:project types) "#EF8984"
                               :else :grey)
@@ -177,7 +181,7 @@
 
        (mapk (fn [s]
                [set-selector sets s])
-             all-sets)])))
+             (sort all-sets))])))
 
 (defn home-page []
   (fn []

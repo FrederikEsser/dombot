@@ -10,7 +10,7 @@
       {:interaction :choosable})))
 
 (defn view-supply [{supply                         :supply
-                    {:keys [coins buys player-no]} :player
+                    {:keys [coins buys player-no phase]} :player
                     choice                         :choice
                     :as                            game}]
   (->> supply
@@ -27,7 +27,8 @@
                         :number-of-cards number-of-cards}
                        (when (not= cost buy-cost)
                          {:buy-cost buy-cost})
-                       (when (and (not choice)              ; todo: check phase
+                       (when (and (#{:action :pay :buy} phase)
+                                  (not choice)
                                   (pos? number-of-cards)
                                   buys (pos? buys)
                                   coins (<= buy-cost coins)
@@ -40,7 +41,7 @@
                          {:bane? true})))))))
 
 (defn view-projects [{projects                       :projects
-                      {:keys [coins buys player-no]} :player
+                      {:keys [coins buys player-no phase]} :player
                       choice                         :choice
                       :as                            game}]
   (->> projects
@@ -58,7 +59,8 @@
                                                            ut/format-name-short)
                                                        (when tokens (str ":" tokens))
                                                        "]"))))})
-                     (when (and (not choice)                ; todo: check phase
+                     (when (and (#{:action :pay :buy} phase)
+                                (not choice)
                                 (not-any? (comp #{player-no} :player-no) participants)
                                 buys (pos? buys)
                                 coins (<= cost coins))
@@ -91,7 +93,9 @@
                                               (#{:action} phase)
                                               (pos? actions))
                                          (and (:treasure types)
-                                              (#{:action :pay} phase))))
+                                              (#{:action :pay} phase))
+                                         (and (:night types)
+                                              (#{:action :pay :buy :night} phase))))
                             {:interaction :playable})
                           (choice-interaction name area choice)
                           (when (not-empty set-aside)
@@ -275,7 +279,8 @@
                                      (pos? actions)
                                      (some (comp :action (partial ut/get-types game)) hand)) "You can still play actions."
                                 (and (pos? buys)
-                                     (<= 3 potential-coins)) "You can buy a card.")}))
+                                     (<= 3 potential-coins)) "You can buy a card."
+                                (some (comp :night (partial ut/get-types game)) hand) "You can play Night cards.")}))
 
 (defn view-game [{:keys [supply artifacts projects trade-route-mat players trash effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack

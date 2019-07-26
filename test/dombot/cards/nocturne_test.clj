@@ -66,6 +66,51 @@
                        :actions   0
                        :coins     2}]}))))
 
+(deftest ghost-town-test
+  (let [ghost-town (assoc ghost-town :id 0)]
+    (testing "Ghost Town"
+      (is (= (-> {:players [{:hand  [ghost-town]
+                             :phase :action}]}
+                 (play 0 :ghost-town))
+             {:players [{:play-area [ghost-town]
+                         :phase     :night
+                         :triggers  [(get-trigger ghost-town)]}]}))
+      (is (= (-> {:players [{:hand  [ghost-town]
+                             :phase :pay}]}
+                 (play 0 :ghost-town))
+             {:players [{:play-area [ghost-town]
+                         :phase     :night
+                         :triggers  [(get-trigger ghost-town)]}]}))
+      (is (= (-> {:players [{:hand  [ghost-town]
+                             :phase :buy}]}
+                 (play 0 :ghost-town))
+             {:players [{:play-area [ghost-town]
+                         :phase     :night
+                         :triggers  [(get-trigger ghost-town)]}]}))
+      (is (= (-> {:players [{:hand  [ghost-town]
+                             :phase :night}]}
+                 (play 0 :ghost-town))
+             {:players [{:play-area [ghost-town]
+                         :phase     :night
+                         :triggers  [(get-trigger ghost-town)]}]}))
+      (is (= (-> {:players [{:hand [ghost-town]
+                             :deck [copper copper copper copper copper copper silver]}]}
+                 (play 0 :ghost-town)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand      [copper copper copper copper copper copper]
+                                :play-area [ghost-town]
+                                :deck      [silver]
+                                :actions   2
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]}))
+      (is (= (-> {:supply  [{:card ghost-town :pile-size 10}]
+                  :players [{}]}
+                 (gain {:player-no 0 :card-name :ghost-town}))
+             {:supply  [{:card ghost-town :pile-size 9}]
+              :players [{:hand [ghost-town]}]})))))
+
 (deftest tragic-hero-test
   (let [tragic-hero (assoc tragic-hero :id 0)]
     (testing "Tragic Hero"
