@@ -111,6 +111,61 @@
              {:supply  [{:card ghost-town :pile-size 9}]
               :players [{:hand [ghost-town]}]})))))
 
+(deftest monastery-test
+  (let [monastery (assoc monastery :id 0)]
+    (testing "Monastery"
+      (is (= (-> {:players [{:hand         [monastery estate copper]
+                             :gained-cards [{:name :silver :types #{:treasure} :cost 3}]}]}
+                 (play 0 :monastery))
+             {:players      [{:hand         [estate copper]
+                              :play-area    [monastery]
+                              :gained-cards [{:name :silver :types #{:treasure} :cost 3}]}]
+              :effect-stack [{:text      "Trash up to 1 card from your hand or Coppers you have in play."
+                              :player-no 0
+                              :choice    :trash-from-area
+                              :source    :multi
+                              :options   [{:area :hand :card-name :estate}
+                                          {:area :hand :card-name :copper}]
+                              :max       1}]}))
+      (is (= (-> {:players [{:hand         [monastery estate copper]
+                             :play-area    [silver copper]
+                             :gained-cards [{:name :silver :types #{:treasure} :cost 3}
+                                            {:name :silver :types #{:treasure} :cost 3}]}]}
+                 (play 0 :monastery))
+             {:players      [{:hand         [estate copper]
+                              :play-area    [silver copper monastery]
+                              :gained-cards [{:name :silver :types #{:treasure} :cost 3}
+                                             {:name :silver :types #{:treasure} :cost 3}]}]
+              :effect-stack [{:text      "Trash up to 2 cards from your hand or Coppers you have in play."
+                              :player-no 0
+                              :choice    :trash-from-area
+                              :source    :multi
+                              :options   [{:area :hand :card-name :estate}
+                                          {:area :hand :card-name :copper}
+                                          {:area :play-area :card-name :copper}]
+                              :max       2}]}))
+      (is (= (-> {:players [{:hand         [monastery estate copper]
+                             :play-area    [silver copper]
+                             :gained-cards [{:name :silver :types #{:treasure} :cost 3}]}]}
+                 (play 0 :monastery)
+                 (choose {:area :hand :card-name :estate}))
+             {:players [{:hand         [copper]
+                         :play-area    [silver copper monastery]
+                         :gained-cards [{:name :silver :types #{:treasure} :cost 3}]}]
+              :trash   [estate]}))
+      (is (= (-> {:players [{:hand         [monastery estate copper]
+                             :play-area    [silver copper]
+                             :gained-cards [{:name :silver :types #{:treasure} :cost 3}
+                                            {:name :silver :types #{:treasure} :cost 3}]}]}
+                 (play 0 :monastery)
+                 (choose [{:area :hand :card-name :copper}
+                          {:area :play-area :card-name :copper}]))
+             {:players [{:hand         [estate]
+                         :play-area    [silver monastery]
+                         :gained-cards [{:name :silver :types #{:treasure} :cost 3}
+                                        {:name :silver :types #{:treasure} :cost 3}]}]
+              :trash   [copper copper]})))))
+
 (deftest tragic-hero-test
   (let [tragic-hero (assoc tragic-hero :id 0)]
     (testing "Tragic Hero"

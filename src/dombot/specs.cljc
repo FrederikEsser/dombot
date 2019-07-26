@@ -15,6 +15,13 @@
 
 (s/def ::interaction #{:buyable :playable :choosable :quick-choosable :spendable})
 
+(s/def ::area #{:hand :play-area})
+
+(s/def ::card-name ::name)
+
+(s/def ::choice-value (s/keys :req-un [::area
+                                       ::card-name]))
+
 (s/def ::stay-in-play boolean?)
 
 (s/def ::token-type #{:embargo :trade-route})
@@ -29,6 +36,7 @@
                       :opt-un [::cost
                                ::number-of-cards
                                ::interaction
+                               ::choice-value
                                ::stay-in-play
                                ::tokens]))
 

@@ -3,22 +3,30 @@
             [dombot.specs :as specs]
             [clojure.spec.alpha :as s]))
 
-(defn- choice-interaction [name area {:keys [source options min max]}]
-  (when (and (= area source) ((set options) name))
-    (if (= 1 (or max (count options)))
-      {:interaction :quick-choosable}
-      {:interaction :choosable})))
+(defn- choice-interaction [name area {:keys [source options max]}]
+  (let [interaction (if (= 1 (or max (count options)))
+                      {:interaction :quick-choosable}
+                      {:interaction :choosable})]
+    (cond
+      (and (= area source) ((set options) name)) interaction
+      (= :multi source) (let [card-names (->> options
+                                              (filter (comp #{area} :area))
+                                              (map :card-name)
+                                              set)]
+                          (when (card-names name)
+                            (merge interaction
+                                   {:choice-value {:area area :card-name name}}))))))
 
-(defn view-supply [{supply                         :supply
+(defn view-supply [{supply                               :supply
                     {:keys [coins buys player-no phase]} :player
-                    choice                         :choice
-                    :as                            game}]
+                    choice                               :choice
+                    :as                                  game}]
   (->> supply
        (map (fn [{{:keys [name bane?] :as card} :card
                   number-of-cards               :pile-size
                   :keys                         [tokens]}]
-              (let [types (ut/get-types game card)
-                    cost (ut/get-cost game card)
+              (let [types    (ut/get-types game card)
+                    cost     (ut/get-cost game card)
                     buy-cost (ut/get-buy-cost game player-no card)]
                 (merge {:name            name
                         :name-ui         (ut/format-name name)
@@ -40,10 +48,10 @@
                        (when bane?
                          {:bane? true})))))))
 
-(defn view-projects [{projects                       :projects
+(defn view-projects [{projects                             :projects
                       {:keys [coins buys player-no phase]} :player
-                      choice                         :choice
-                      :as                            game}]
+                      choice                               :choice
+                      :as                                  game}]
   (->> projects
        vals
        (map (fn [{:keys [name type cost participants]}]
@@ -73,12 +81,12 @@
                        :as                                                   game}
                  & [position number-of-cards]]
   (let [take-fn (if (= :bottom position) take-last take)
-        cards (cond->> (get player area)
-                       number-of-cards (take-fn number-of-cards))]
+        cards   (cond->> (get player area)
+                         number-of-cards (take-fn number-of-cards))]
     (-> cards
         (->>
           (map (fn [{:keys [id name] :as card}]
-                 (let [types (ut/get-types game card)
+                 (let [types     (ut/get-types game card)
                        set-aside (->> triggers
                                       (filter (comp #{id} :card-id))
                                       (mapcat :set-aside))]
@@ -129,7 +137,7 @@
                           revealed
                           revealed-cards]} :player
                   :as                      data}]
-  (let [full-deck (concat look-at revealed deck)
+  (let [full-deck              (concat look-at revealed deck)
         revealed-cards-in-deck (:deck revealed-cards)]
     (if (empty? full-deck)
       {}
@@ -269,8 +277,8 @@
         can-play-treasures? (boolean (and (not choice)
                                           (#{:action :pay} phase)
                                           (some (comp :treasure (partial ut/get-types game)) hand)))
-        potential-coins (cond-> coins
-                                can-play-treasures? (+ (->> hand (keep :coin-value) (apply +))))]
+        potential-coins     (cond-> coins
+                                    can-play-treasures? (+ (->> hand (keep :coin-value) (apply +))))]
     {:can-undo?           (boolean can-undo?)
      :can-play-treasures? can-play-treasures?
      :can-end-turn?       (and (not choice)

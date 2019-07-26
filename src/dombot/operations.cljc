@@ -44,12 +44,12 @@
 (defn do-effect [game {:keys              [player-no card-id args]
                        [name inline-args] :effect}]
   (let [effect-fn (effects/get-effect name)
-        args (merge {:player-no player-no}
-                    args
-                    (when card-id
-                      {:card-id card-id})
-                    (cond (map? inline-args) inline-args
-                          inline-args {:arg inline-args}))]
+        args      (merge {:player-no player-no}
+                         args
+                         (when card-id
+                           {:card-id card-id})
+                         (cond (map? inline-args) inline-args
+                               inline-args {:arg inline-args}))]
     (effect-fn game args)))
 
 (defn check-stack [game]
@@ -100,8 +100,8 @@
 (defn at-start-turn-effects [game {:keys [player-no]}]
   (let [start-turn-triggers (->> (get-in game [:players player-no :triggers])
                                  (filter (comp #{:at-start-turn} :trigger)))
-        auto-triggers (filter (comp #{:auto} :simultaneous-mode) start-turn-triggers)
-        manual-triggers (filter (comp #{:manual} :simultaneous-mode) start-turn-triggers)]
+        auto-triggers       (filter (comp #{:auto} :simultaneous-mode) start-turn-triggers)
+        manual-triggers     (filter (comp #{:manual} :simultaneous-mode) start-turn-triggers)]
     (assert (every? :simultaneous-mode start-turn-triggers) (str "Trigger error: Some triggers lack a simultaneous mode: "
                                                                  (->> start-turn-triggers (remove :simultaneous-mode) (map :name) (clojure.string/join ", "))))
     (-> game
@@ -133,9 +133,9 @@
 (defn set-phase [game {:keys [player-no phase]}]
   (let [current-phase (get-in game [:players player-no :phase])]
     (if (and current-phase (not= current-phase phase))
-      (let [next-phase (next-phase current-phase)
-            phase-change (cond (#{:pay} next-phase) :at-start-buy
-                               (#{:buy} current-phase) :at-end-buy)
+      (let [next-phase           (next-phase current-phase)
+            phase-change         (cond (#{:pay} next-phase) :at-start-buy
+                                       (#{:buy} current-phase) :at-end-buy)
             phase-change-effects (->> (get-in game [:players player-no :triggers])
                                       (filter (comp #{phase-change} :trigger))
                                       (mapcat :effects))]
@@ -213,11 +213,11 @@
   ([game {:keys [player-no trigger] :as args}]
    (apply-triggers game player-no trigger args))
   ([game player-no trigger & [args]]
-   (let [triggers (get-in game [:players player-no :triggers])
-         apply-trigger (fn [game {:keys [card-id effects]}] (push-effect-stack game {:player-no player-no
-                                                                                     :card-id   card-id
-                                                                                     :effects   effects
-                                                                                     :args      args}))
+   (let [triggers          (get-in game [:players player-no :triggers])
+         apply-trigger     (fn [game {:keys [card-id effects]}] (push-effect-stack game {:player-no player-no
+                                                                                         :card-id   card-id
+                                                                                         :effects   effects
+                                                                                         :args      args}))
          matching-triggers (filter (comp #{trigger} :trigger) triggers)]
      (-> (reduce apply-trigger game (reverse matching-triggers))
          (remove-triggers {:player-no player-no
@@ -228,8 +228,8 @@
 
 (defn set-approx-discard-size [game player-no & [n]]
   (let [{:keys [discard approx-discard-size]} (get-in game [:players player-no])
-        size (count discard)
-        variance (Math/round (/ size 4.0))
+        size        (count discard)
+        variance    (Math/round (/ size 4.0))
         approx-size (or n
                         (- (+ size
                               (rand-int (inc variance)))
@@ -265,7 +265,7 @@
         {:card      (ut/give-id! card)
          :from-path from
          :idx       idx}))
-    (let [player (get-in game [:players player-no])
+    (let [player    (get-in game [:players player-no])
           from-path (case from
                       :trash [:trash]
                       [:players player-no from])]
@@ -305,14 +305,14 @@
                        :as   args}]
   (let [{{:keys [name on-gain cost] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
         {:keys [hand play-area]} (get-in game [:players player-no])
-        reaction-effects (->> hand
-                              (mapcat (comp :on-gain :reaction))
-                              (map (partial ut/add-effect-args {:gained-card-id gained-card-id})))
-        token-effects (when (= :supply from)
-                        (->> (ut/get-pile-idx game name)
-                             :tokens
-                             (mapcat :on-gain)
-                             (map (partial ut/add-effect-args {:card-name name}))))
+        reaction-effects      (->> hand
+                                   (mapcat (comp :on-gain :reaction))
+                                   (map (partial ut/add-effect-args {:gained-card-id gained-card-id})))
+        token-effects         (when (= :supply from)
+                                (->> (ut/get-pile-idx game name)
+                                     :tokens
+                                     (mapcat :on-gain)
+                                     (map (partial ut/add-effect-args {:card-name name}))))
         while-in-play-effects (->> play-area
                                    (mapcat (comp :on-gain :while-in-play))
                                    (map (partial ut/add-effect-args {:gained-card-id gained-card-id})))]
@@ -381,16 +381,16 @@
 (defn buy-card [{:keys [effect-stack] :as game} player-no card-name]
   (let [{:keys [buys coins phase play-area]} (get-in game [:players player-no])
         {:keys [card pile-size tokens] :as supply-pile} (ut/get-pile-idx game card-name)
-        cost (ut/get-buy-cost game player-no card)
+        cost                  (ut/get-buy-cost game player-no card)
         {:keys [on-buy overpay]} card
-        overpay-effects (when (and overpay (pos? (- coins cost)))
-                          [[:give-choice {:text    (str "You may overpay for your " (ut/format-name card-name) ". Choose amount:")
-                                          :choice  [:overpay-choice {:effect overpay}]
-                                          :options [:overpay]
-                                          :min     1
-                                          :max     1}]])
-        token-effects (->> tokens
-                           (mapcat :on-buy))
+        overpay-effects       (when (and overpay (pos? (- coins cost)))
+                                [[:give-choice {:text    (str "You may overpay for your " (ut/format-name card-name) ". Choose amount:")
+                                                :choice  [:overpay-choice {:effect overpay}]
+                                                :options [:overpay]
+                                                :min     1
+                                                :max     1}]])
+        token-effects         (->> tokens
+                                   (mapcat :on-buy))
         while-in-play-effects (->> play-area
                                    (mapcat (comp :on-buy :while-in-play))
                                    (map (partial ut/add-effect-args {:card-name card-name})))]
@@ -447,11 +447,11 @@
        (state-maintenance player-no :discard :deck))))
 
 (defn shuffle-discard [game {:keys [player-no]}]
-  (let [discard (get-in game [:players player-no :discard])
-        before (->> discard
-                    (mapcat :before-shuffle))
-        after (->> discard
-                   (mapcat :after-shuffle))
+  (let [discard    (get-in game [:players player-no :discard])
+        before     (->> discard
+                        (mapcat :before-shuffle))
+        after      (->> discard
+                        (mapcat :after-shuffle))
         on-shuffle (->> (get-in game [:players player-no :triggers])
                         (filter (comp #{:on-shuffle} :trigger))
                         (mapcat :effects))]
@@ -490,7 +490,7 @@
                                (filter (comp #{:on-trash} :trigger))
                                (mapcat :effects)
                                (map (partial ut/add-effect-args args)))
-        on-trash-effects (concat on-trash-triggers on-trash)]
+        on-trash-effects  (concat on-trash-triggers on-trash)]
     (cond-> game
             (not-empty on-trash-effects) (push-effect-stack (merge args {:effects on-trash-effects})))))
 
@@ -570,14 +570,14 @@
                    :clear-unaffected clear-unaffected})
 
 (defn affect-other-players [{:keys [players] :as game} {:keys [player-no effects attack all at-once]}]
-  (let [player-no (or player-no 0)
+  (let [player-no  (or player-no 0)
         player-nos (cond-> (->> (range 1 (count players))
                                 (map (fn [n] (-> n (+ player-no) (mod (count players)))))
                                 (remove (fn [n] (and attack (is-unaffected? game n)))))
                            (not at-once) reverse
                            all (concat [player-no]))
-        effects (cond->> effects
-                         attack (map (partial ut/add-effect-args {:attacking-player-no player-no})))]
+        effects    (cond->> effects
+                            attack (map (partial ut/add-effect-args {:attacking-player-no player-no})))]
     (reduce (fn [game other-player-no]
               (push-effect-stack game {:player-no other-player-no
                                        :effects   effects}))
@@ -602,17 +602,18 @@
     (merge result {:choice-fn (effects/get-effect choice)})))
 
 (defn- choose-single [game valid-choices selection]
-  (if (coll? selection)
+  (when (sequential? selection)
     (assert (<= (count selection) 1) "Choose error: You can only pick 1 option."))
   (let [[{:keys [player-no attacker card-id choice source min optional?]}] (get game :effect-stack)
         {:keys [choice-fn args]} (get-choice-fn choice)
-        arg-name (case source
-                   :deck-position :position
-                   :overpay :amount
-                   :special :choice
-                   :mixed :choice
-                   :card-name)
-        single-selection (if (coll? selection)
+        arg-name         (case source
+                           :deck-position :position
+                           :overpay :amount
+                           :special :choice
+                           :mixed :choice
+                           :multi :choice
+                           :card-name)
+        single-selection (if (sequential? selection)
                            (first selection)
                            selection)]
     (if (= min 1)
@@ -632,12 +633,13 @@
 (defn- choose-multi [game valid-choices selection]
   (let [[{:keys [player-no attacker card-id choice source min max optional?]}] (get game :effect-stack)
         {:keys [choice-fn args]} (get-choice-fn choice)
-        arg-name (case source
-                   :deck-position :position
-                   :overpay :amount
-                   :special :choices
-                   :card-names)
-        multi-selection (if (coll? selection)
+        arg-name        (case source
+                          :deck-position :position
+                          :overpay :amount
+                          :special :choices
+                          :multi :choices
+                          :card-names)
+        multi-selection (if (sequential? selection)
                           selection
                           (if selection
                             [selection]
@@ -662,7 +664,7 @@
 
 (defn choose [game selection]
   (let [[{:keys [choice options min max]}] (get game :effect-stack)
-        choose-fn (if (= max 1) choose-single choose-multi)
+        choose-fn     (if (= max 1) choose-single choose-multi)
         valid-choices (->> options
                            (map (fn [{:keys [option] :as option-data}]
                                   (or option
@@ -676,14 +678,6 @@
         (choose-fn valid-choices selection)
         check-stack)))
 
-(defn get-source [{[name arg & [{:keys [id last]}]] :options}]
-  (if (= :player name)
-    (merge {:source arg}
-           (when (and (= :discard arg)
-                      (not (or id last)))
-             {:reveal-discard? true}))
-    {:source name}))
-
 (defn- do-reveal-discard [game player-no reveal-discard?]
   (let [discard-count (-> (get-in game [:players player-no :discard]) count)]
     (cond-> game
@@ -691,12 +685,12 @@
                  (< 1 discard-count)) (-> (set-approx-discard-size player-no discard-count)
                                           (assoc-in [:players player-no :revealed-cards :discard] discard-count)))))
 
-(defn give-choice [{:keys [mode] :as game} {:keys                 [player-no card-id min max optional?]
-                                            [opt-name & opt-args] :options
-                                            :as                   choice}]
-  (let [opt-fn (effects/get-option opt-name)
-        options (apply opt-fn game player-no card-id opt-args)
-        {:keys [source reveal-discard?]} (get-source choice)
+(defn give-choice [{:keys [mode] :as game} {:keys                            [player-no card-id min max optional?]
+                                            [opt-name & opt-args :as option] :options
+                                            :as                              choice}]
+  (let [opt-fn    (effects/get-option opt-name)
+        options   (apply opt-fn game player-no card-id opt-args)
+        {:keys [source reveal-discard?]} (ut/get-source option)
         {:keys [min max] :as choice} (-> choice
                                          (assoc :options options
                                                 :source source)
@@ -761,7 +755,7 @@
    (let [{:keys [phase actions actions-played triggers]
           :or   {phase :action}} (get-in game [:players player-no])
          {{:keys [effects coin-value trigger] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-         types (ut/get-types game card)
+         types     (ut/get-types game card)
          play-type (cond
                      (and (#{:action} phase) (:action types) (pos? actions)) :action
                      (and (#{:action :pay} phase) (:treasure types)) :treasure
@@ -816,7 +810,7 @@
 (effects/register {:play-treasures play-treasures})
 
 (defn- all-cards [{:keys [deck discard hand play-area island-mat native-village-mat triggers]}]
-  (let [cards (concat deck discard hand play-area island-mat native-village-mat)
+  (let [cards           (concat deck discard hand play-area island-mat native-village-mat)
         set-aside-cards (mapcat :set-aside triggers)]
     (concat cards set-aside-cards)))
 
@@ -918,9 +912,9 @@
 (defn clean-up [game {:keys [player-no number-of-cards]
                       :or   {number-of-cards 5}
                       :as   args}]
-  (let [at-clean-up-triggers (->> (get-in game [:players player-no :triggers])
-                                  (filter (comp #{:at-clean-up} :trigger))
-                                  (mapcat :effects))
+  (let [at-clean-up-triggers  (->> (get-in game [:players player-no :triggers])
+                                   (filter (comp #{:at-clean-up} :trigger))
+                                   (mapcat :effects))
         at-draw-hand-triggers (->> (get-in game [:players player-no :triggers])
                                    (filter (comp #{:at-draw-hand} :trigger))
                                    (mapcat :effects))]

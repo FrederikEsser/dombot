@@ -270,6 +270,21 @@
 
 (effects/register {:trash-from-hand trash-from-hand})
 
+(defn trash-from-area [game {:keys [player-no choice choices] :as args}]
+  (cond-> game
+          choice (move-card {:player-no player-no
+                             :card-name (:card-name choice)
+                             :from      (:area choice)
+                             :to        :trash})
+          (not-empty choices) (push-effect-stack {:player-no player-no
+                                                  :effects   (->> choices
+                                                                  (map (fn [{:keys [area card-name]}]
+                                                                         [:move-card {:card-name card-name
+                                                                                      :from      area
+                                                                                      :to        :trash}])))})))
+
+(effects/register {:trash-from-area trash-from-area})
+
 (defn trash-this [game {:keys [player-no card-id] :as args}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
     (cond-> game

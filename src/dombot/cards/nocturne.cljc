@@ -53,6 +53,26 @@
                                                [:give-actions 1]]}
                  :on-gain [[::gain-to-hand]]})
 
+(defn- monastery-trash [game {:keys [player-no]}]
+  (let [gained-cards (count (get-in game [:players player-no :gained-cards]))]
+    (cond-> game
+            (pos? gained-cards) (give-choice {:player-no player-no
+                                              :text      (str "Trash up to " gained-cards " card" (when (< 1 gained-cards) "s")
+                                                              " from your hand or Coppers you have in play.")
+                                              :choice    :trash-from-area
+                                              :options   [:multi
+                                                          [:player :hand]
+                                                          [:player :play-area {:name :copper}]]
+                                              :max       gained-cards}))))
+
+(effects/register {::monastery-trash monastery-trash})
+
+(def monastery {:name    :monastery
+                :set     :nocturne
+                :types   #{:night}
+                :cost    2
+                :effects [[::monastery-trash]]})
+
 (defn- tragic-hero-demise [game {:keys [player-no card-id] :as args}]
   (let [hand-size (count (get-in game [:players player-no :hand]))]
     (cond-> game
@@ -76,4 +96,5 @@
 
 (def kingdom-cards [conclave
                     ghost-town
+                    monastery
                     tragic-hero])

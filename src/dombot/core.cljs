@@ -24,9 +24,9 @@
   (swap! state update :selection conj option))
 
 (defn remove-idx [coll idx]
-  (let [v (vec coll)
+  (let [v     (vec coll)
         start (subvec v 0 idx)
-        end (subvec v (inc idx) (count v))]
+        end   (subvec v (inc idx) (count v))]
     (vec (concat start end))))
 
 (defn deselect! [idx]
@@ -67,17 +67,17 @@
 (defn view-card
   ([card]
    (view-card nil card))
-  ([max {:keys [name name-ui types cost buy-cost set-aside number-of-cards interaction tokens bane?] :as card}]
+  ([max {:keys [name name-ui choice-value types cost buy-cost set-aside number-of-cards interaction tokens bane?] :as card}]
    (if (map? card)
-     (let [selection (:selection @state)
-           num-selected (->> selection (filter #{name}) count)
+     (let [selection       (:selection @state)
+           num-selected    (->> selection (filter #{name choice-value}) count)
            number-of-cards (if (= :choosable interaction)
                              (let [num (- (or number-of-cards 1) num-selected)]
                                (if (= 1 num) nil num))
                              number-of-cards)
-           disabled (or (nil? interaction)
-                        (and (= :choosable interaction)
-                             (= (count selection) max)))]
+           disabled        (or (nil? interaction)
+                               (and (= :choosable interaction)
+                                    (= (count selection) max)))]
        (when-not (and (= :choosable interaction)
                       (= 0 number-of-cards))
          [:div
@@ -86,8 +86,8 @@
                     :on-click (when interaction
                                 (fn [] (case interaction
                                          :playable (swap! state assoc :game (cmd/play name))
-                                         :choosable (select! name)
-                                         :quick-choosable (swap! state assoc :game (cmd/choose name))
+                                         :choosable (select! (or choice-value name))
+                                         :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name)))
                                          :buyable (swap! state assoc :game (cmd/buy name)))))}
            (str (when tokens (str (->> tokens (map ut/format-token) (string/join " ")) " "))
                 name-ui
@@ -204,7 +204,7 @@
                     :on-click (fn [] (swap! state assoc :game (cmd/undo) :selection []))}
            "Undo"])]
        [:div "Supply"
-        (let [supply (-> (:game @state) :supply)
+        (let [supply     (-> (:game @state) :supply)
               properity? (-> (:game @state) :prosperity?)
               [row1 supply] (split-at (if properity? 5 4) supply)
               [row2 supply] (split-at (if properity? 4 3) supply)
@@ -341,7 +341,7 @@
                                                 :disabled disabled
                                                 :on-click (fn [] (swap! state assoc :game (cmd/play-treasures)))}
                                        "Play Treasures"])]
-                              [:div (let [disabled (-> @state :game :commands :can-end-turn? not)
+                              [:div (let [disabled     (-> @state :game :commands :can-end-turn? not)
                                           confirm-text (-> @state :game :commands :confirm-end-turn)]
                                       [:button {:style    (button-style disabled)
                                                 :disabled disabled

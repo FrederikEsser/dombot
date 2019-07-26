@@ -14,12 +14,14 @@
   (cond-> card
           (nil? id) (assoc :id (next-id!))))
 
-(defn format-name [kw]
-  (-> kw
-      name
-      (s/split #"[- ]")
-      (->> (map s/capitalize)
-           (s/join " "))))
+(defn format-name [{:keys [card-name] :as kw}]
+  (if card-name
+    (format-name card-name)
+    (-> kw
+        name
+        (s/split #"[- ]")
+        (->> (map s/capitalize)
+             (s/join " ")))))
 
 (defn format-name-short [n]
   (-> n
@@ -150,7 +152,7 @@
                              (mapcat (comp :cost-reductions :while-in-play))
                              (concat (:cost-reductions game)
                                      (get-in game [:players player-no :cost-reductions])))
-        card-types (get-types game card)]
+        card-types      (get-types game card)]
     (-> (reduce (fn [card {:keys [reduction] :as reduction-data}]
                   (cond-> card
                           (reduction-matches-card-types reduction-data card-types) (update :cost minus-cost reduction)))
@@ -178,12 +180,12 @@
 
 (defn stay-in-play [game player-no {:keys [id] :as card}]
   (let [{:keys [play-area triggers repeated-play]} (get-in game [:players player-no])
-        card-ids-in-play (->> play-area (keep :id) set)
-        repeated-card-ids (->> repeated-play
-                               (filter (comp #{id} :source))
-                               (filter (comp card-ids-in-play :target))
-                               (map :target)
-                               set)
+        card-ids-in-play      (->> play-area (keep :id) set)
+        repeated-card-ids     (->> repeated-play
+                                   (filter (comp #{id} :source))
+                                   (filter (comp card-ids-in-play :target))
+                                   (map :target)
+                                   set)
         stay-in-play-triggers (filter (comp #{:at-start-turn :at-end-turn} :trigger) triggers)]
     (or (some (comp #{id} :card-id) stay-in-play-triggers)
         (some (comp repeated-card-ids :card-id) stay-in-play-triggers))))
@@ -250,6 +252,26 @@
 
 (effects/register-options {:special special-options
                            :mixed   special-options})
+
+(defn get-source [[name arg & [{:keys [id last]}]]]
+  (if (= :player name)
+    (merge {:source arg}
+           (when (and (= :discard arg)
+                      (not (or id last)))
+             {:reveal-discard? true}))
+    {:source name}))
+
+(defn multi-options [game player-no card-id & options]
+  (->> options
+       (mapcat (fn [[opt-name & opt-args :as option]]
+                 (let [opt-fn (effects/get-option opt-name)
+                       {:keys [source]} (get-source option)]
+                   (->> (apply opt-fn game player-no card-id opt-args)
+                        (map (fn [card-name]
+                               {:area      source
+                                :card-name card-name}))))))))
+
+(effects/register-options {:multi multi-options})
 
 (defn empty-supply-piles [{:keys [supply] :as game}]
   (->> supply
