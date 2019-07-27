@@ -118,8 +118,8 @@
                        :coins     1}]}))))
 
 (deftest caravan-test
-  (let [caravan-1 (assoc caravan :id 1)
-        caravan-2 (assoc caravan :id 2)
+  (let [caravan-1   (assoc caravan :id 1)
+        caravan-2   (assoc caravan :id 2)
         throne-room (assoc throne-room :id 3)]
     (testing "Caravan"
       (is (= (-> {:players [{:hand    [caravan-1 estate estate estate copper]
@@ -270,8 +270,8 @@
 
 (deftest embargo-test
   (let [embargo (assoc embargo :id 1)
-        silver (assoc silver :id 2)
-        curse (assoc curse :id 3)]
+        silver  (assoc silver :id 2)
+        curse   (assoc curse :id 3)]
     (testing "Embargo"
       (is (= (-> {:supply  (base/supply 2 8)
                   :players [{:hand    [embargo]
@@ -354,7 +354,7 @@
 
 (deftest explorer-test
   (let [silver (assoc silver :id 1)
-        gold (assoc gold :id 2)]
+        gold   (assoc gold :id 2)]
     (testing "Explorer"
       (is (= (-> {:supply  [{:card silver :pile-size 40}
                             {:card gold :pile-size 30}]
@@ -502,7 +502,7 @@
                        :deck [copper copper copper estate]}]}))))
 
 (deftest haven-test
-  (let [haven (assoc haven :id 1)
+  (let [haven       (assoc haven :id 1)
         throne-room (assoc throne-room :id 2)]
     (testing "Haven"
       (is (= (-> {:players [{:hand    [haven estate]
@@ -656,6 +656,19 @@
                                 :coins   0
                                 :buys    1}]}))
       (let [curse (assoc curse :id 1)]
+        (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                    :players [{:hand    [witch]
+                               :actions 1}
+                              {:play-area  [lighthouse-1]
+                               :unaffected [{:card-id 1}]
+                               :triggers   [(get-trigger lighthouse-1)]}]}
+                   (play 0 :witch))
+               {:supply  [{:card curse :pile-size 10}]
+                :players [{:play-area [witch]
+                           :actions   0}
+                          {:play-area  [lighthouse-1]
+                           :unaffected [{:card-id 1}]
+                           :triggers   [(get-trigger lighthouse-1)]}]}))
         (is (= (-> {:supply  [{:card curse :pile-size 20}]
                     :players [{:hand    [lighthouse-1]
                                :deck    [moat]
@@ -1213,7 +1226,7 @@
                          :discard [copper]}]})))))
 
 (deftest smugglers-test
-  (let [gold (assoc gold :id 1)
+  (let [gold  (assoc gold :id 1)
         curse (assoc curse :id 2)]
     (testing "smugglers"
       (is (= (-> {:track-gained-cards? true
@@ -1361,7 +1374,7 @@
                                     {:deck [curse]}]})))))
 
 (deftest tactician-test
-  (let [tactician (assoc tactician :id 1)
+  (let [tactician   (assoc tactician :id 1)
         throne-room (assoc throne-room :id 2)]
     (testing "Tactician"
       (is (= (-> {:players [{:hand    [tactician estate]
@@ -1431,7 +1444,7 @@
 
 (deftest treasure-map-test
   (let [treasure-map (assoc treasure-map :id 1)
-        gold (assoc gold :id 2)]
+        gold         (assoc gold :id 2)]
     (testing "Treasure Map"
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [treasure-map]
@@ -1484,7 +1497,7 @@
 (deftest treasury-test
   (let [treasury-1 (assoc treasury :id 1)
         treasury-2 (assoc treasury :id 2)
-        province (assoc province :id 3)]
+        province   (assoc province :id 3)]
     (is (= (-> {:track-gained-cards? true
                 :current-player      0
                 :supply              [{:card province :pile-size 8}]

@@ -17,7 +17,8 @@
                                   {:card silver :pile-size 40}
                                   {:card estate :pile-size 8}]
                          :player {:coins 2
-                                  :buys  1}})
+                                  :buys  1
+                                  :phase :buy}})
            [{:name            :copper
              :name-ui         "Copper"
              :types           #{:treasure}
@@ -59,7 +60,8 @@
                                   {:card silver :pile-size 40}
                                   {:card estate :pile-size 8}]
                          :player {:coins 2
-                                  :buys  1}})
+                                  :buys  1
+                                  :phase :buy}})
            [{:name            :copper
              :name-ui         "Copper"
              :types           #{:treasure}
@@ -128,7 +130,8 @@
                                              {:card estate :pile-size 8}]
                            :cost-reductions [{:reduction 1}]
                            :player          {:coins 2
-                                             :buys  1}})
+                                             :buys  1
+                                             :phase :buy}})
              [{:name            :copper
                :name-ui         "Copper"
                :types           #{:treasure}

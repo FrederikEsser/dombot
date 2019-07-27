@@ -4,6 +4,7 @@
             [dombot.operations :refer :all]
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
+            [dombot.cards.dominion :refer [witch]]
             [dombot.cards.nocturne :as nocturne :refer :all]))
 
 (defn fixture [f]
@@ -160,6 +161,38 @@
                  (gain {:player-no 0 :card-name :ghost-town}))
              {:supply  [{:card ghost-town :pile-size 9}]
               :players [{:hand [ghost-town]}]})))))
+
+(deftest guardian-test
+  (let [guardian (assoc guardian :id 0)]
+    (testing "guardian"
+      (is (= (-> {:players [{:hand [guardian]}]}
+                 (play 0 :guardian))
+             {:players [{:play-area  [guardian]
+                         :unaffected [{:card-id 0}]
+                         :triggers   [(get-trigger guardian)]}]}))
+      (let [curse (assoc curse :id 1)]
+        (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                    :players [{:hand    [witch]
+                               :actions 1}
+                              {:play-area  [guardian]
+                               :unaffected [{:card-id 0}]
+                               :triggers   [(get-trigger guardian)]}]}
+                   (play 0 :witch))
+               {:supply  [{:card curse :pile-size 10}]
+                :players [{:play-area [witch]
+                           :actions   0}
+                          {:play-area  [guardian]
+                           :unaffected [{:card-id 0}]
+                           :triggers   [(get-trigger guardian)]}]})))
+      (is (= (-> {:players [{:hand [guardian]}]}
+                 (play 0 :guardian)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:play-area [guardian]
+                                :actions   1
+                                :coins     1
+                                :buys      1
+                                :phase     :action}]})))))
 
 (deftest monastery-test
   (let [monastery (assoc monastery :id 0)]

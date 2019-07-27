@@ -76,6 +76,18 @@
                                                [:give-actions 1]]}
                  :on-gain [[::gain-to-hand]]})
 
+(def guardian {:name    :guardian
+               :set     :nocturne
+               :types   #{:night :duration}
+               :cost    2
+               :effects [[:mark-unaffected]]
+               :trigger {:trigger           :at-start-turn
+                         :duration          :once
+                         :simultaneous-mode :auto
+                         :effects           [[:give-coins 1]
+                                             [:clear-unaffected]]}
+               :on-gain [[::gain-to-hand]]})
+
 (defn- monastery-trash [game {:keys [player-no]}]
   (let [gained-cards (count (get-in game [:players player-no :gained-cards]))]
     (cond-> game
@@ -168,6 +180,7 @@
                     conclave
                     den-of-sin
                     ghost-town
+                    guardian
                     monastery
                     night-watchman
                     raider
