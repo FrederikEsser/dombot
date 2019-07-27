@@ -83,7 +83,22 @@
                 :cost    2
                 :effects [[::monastery-trash]]})
 
-(defn- tragic-hero-demise [game {:keys [player-no card-id] :as args}]
+(def night-watchman {:name    :night-watchman
+                     :set     :nocturne
+                     :types   #{:night}
+                     :cost    3
+                     :effects [[:look-at 5]
+                               [:give-choice {:text    "Discard any number of the top 5 cards of your deck."
+                                              :choice  :discard-from-look-at
+                                              :options [:player :look-at]}]
+                               [:topdeck-all-look-at]
+                               #_[:give-choice {:text    "Put the rest back on top in any order."
+                                                :choice  :topdeck-from-look-at
+                                                :options [:player :look-at]
+                                                :min     5}]]
+                     :on-gain [[::gain-to-hand]]})
+
+(defn- tragic-hero-demise [game {:keys [player-no card-id]}]
   (let [hand-size (count (get-in game [:players player-no :hand]))]
     (cond-> game
             (<= 8 hand-size) (push-effect-stack {:player-no player-no
@@ -108,4 +123,5 @@
                     den-of-sin
                     ghost-town
                     monastery
+                    night-watchman
                     tragic-hero])

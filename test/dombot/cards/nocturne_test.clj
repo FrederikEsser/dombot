@@ -187,6 +187,29 @@
                                         {:name :silver :types #{:treasure} :cost 3}]}]
               :trash   [copper copper]})))))
 
+(deftest night-watchman-test
+  (testing "Night Watchman"
+    (is (= (-> {:players [{:hand [night-watchman]
+                           :deck [copper copper estate estate silver estate]}]}
+               (play 0 :night-watchman)
+               (choose nil))
+           {:players [{:play-area [night-watchman]
+                       :deck      [copper copper estate estate silver estate]}]}))
+    (is (= (-> {:players [{:hand [night-watchman]
+                           :deck [copper copper estate estate silver estate]}]}
+               (play 0 :night-watchman)
+               (choose [:estate :estate]))
+           {:players [{:play-area [night-watchman]
+                       :deck      [copper copper silver estate]
+                       :discard   [estate estate]}]}))
+    (is (= (-> {:players [{:hand [night-watchman]
+                           :deck [copper copper estate estate silver estate]}]}
+               (play 0 :night-watchman)
+               (choose [:estate :estate :copper :copper :silver]))
+           {:players [{:play-area [night-watchman]
+                       :deck      [estate]
+                       :discard   [estate estate copper copper silver]}]}))))
+
 (deftest tragic-hero-test
   (let [tragic-hero (assoc tragic-hero :id 0)]
     (testing "Tragic Hero"

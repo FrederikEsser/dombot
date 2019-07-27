@@ -256,6 +256,16 @@
 
 (effects/register {:topdeck-from-look-at topdeck-from-look-at})
 
+(defn topdeck-all-look-at [game {:keys [player-no]}]
+  (let [look-at (get-in game [:players player-no :look-at])]
+    (move-cards game {:player-no   player-no
+                      :card-names  (reverse (map :name look-at))
+                      :from        :look-at
+                      :to          :deck
+                      :to-position :top})))
+
+(effects/register {:topdeck-all-look-at topdeck-all-look-at})
+
 (defn topdeck-from-revealed [game args]
   (move-cards game (merge args {:from        :revealed
                                 :to          :deck

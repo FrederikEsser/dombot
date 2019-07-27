@@ -5,6 +5,7 @@
 
 ; todo:
 
+; make "any order" option for all topdecking (Sentry, Navigator, Rabble, Doctor, Seer, Night Watchman)
 ; make extra-cards (Prizes) visible for Wishing Well
 ; view card images
 ; store commands in history
