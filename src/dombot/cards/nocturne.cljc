@@ -1,6 +1,6 @@
 (ns dombot.cards.nocturne
-  (:require [dombot.operations :refer [push-effect-stack give-choice move-card]]
-            [dombot.cards.common :refer []]
+  (:require [dombot.operations :refer [push-effect-stack give-choice move-card attack-other-players]]
+            [dombot.cards.common :refer [reveal-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -111,6 +111,38 @@
                                                 :min     5}]]
                      :on-gain [[::gain-to-hand]]})
 
+(defn- raider-attack [game {:keys [player-no card-names]}]
+  (let [hand               (get-in game [:players player-no :hand])
+        has-eligible-card? (some (comp card-names :name) hand)]
+    (cond (< (count hand) 5) game
+          has-eligible-card? (give-choice game {:player-no player-no
+                                                :text      "Discard a copy of a card the attacker has in play."
+                                                :choice    :discard-from-hand
+                                                :options   [:player :hand {:names card-names}]
+                                                :min       1
+                                                :max       1})
+          :else (reveal-hand game {:player-no player-no}))))
+
+(defn- make-raider-attack [game {:keys [player-no]}]
+  (let [card-names (->> (get-in game [:players player-no :play-area])
+                        (map :name)
+                        set)]
+    (attack-other-players game {:player-no player-no
+                                :effects   [[::raider-attack {:card-names card-names}]]})))
+
+(effects/register {::raider-attack      raider-attack
+                   ::make-raider-attack make-raider-attack})
+
+(def raider {:name    :raider
+             :set     :nocturne
+             :types   #{:night :duration :attack}
+             :cost    6
+             :effects [[::make-raider-attack]]
+             :trigger {:trigger           :at-start-turn
+                       :duration          :once
+                       :simultaneous-mode :auto
+                       :effects           [[:give-coins 3]]}})
+
 (defn- tragic-hero-demise [game {:keys [player-no card-id]}]
   (let [hand-size (count (get-in game [:players player-no :hand]))]
     (cond-> game
@@ -138,4 +170,5 @@
                     ghost-town
                     monastery
                     night-watchman
+                    raider
                     tragic-hero])

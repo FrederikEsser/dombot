@@ -239,6 +239,63 @@
                        :deck      [estate]
                        :discard   [estate estate copper copper silver]}]}))))
 
+(deftest raider-test
+  (let [raider (assoc raider :id 0)]
+    (testing "Raider"
+      (is (= (-> {:players [{:hand      [raider copper]
+                             :play-area [silver conclave]}
+                            {:hand [conclave copper raider silver gold]}]}
+                 (play 0 :raider))
+             {:players      [{:hand      [copper]
+                              :play-area [silver conclave raider]
+                              :triggers  [(get-trigger raider)]}
+                             {:hand [conclave copper raider silver gold]}]
+              :effect-stack [{:player-no 1
+                              :text      "Discard a copy of a card the attacker has in play."
+                              :choice    :discard-from-hand
+                              :source    :hand
+                              :options   [:conclave :raider :silver]
+                              :min       1
+                              :max       1}
+                             {:player-no 1
+                              :effect    [:clear-unaffected {:works :once}]}]}))
+      (is (= (-> {:players [{:hand      [raider copper]
+                             :play-area [silver conclave]}
+                            {:hand [conclave copper raider silver gold]}]}
+                 (play 0 :raider)
+                 (choose :silver))
+             {:players [{:hand      [copper]
+                         :play-area [silver conclave raider]
+                         :triggers  [(get-trigger raider)]}
+                        {:hand    [conclave copper raider gold]
+                         :discard [silver]}]}))
+      (is (= (-> {:players [{:hand      [raider copper]
+                             :play-area [silver conclave]}
+                            {:hand [conclave copper raider gold]}]}
+                 (play 0 :raider))
+             {:players [{:hand      [copper]
+                         :play-area [silver conclave raider]
+                         :triggers  [(get-trigger raider)]}
+                        {:hand [conclave copper raider gold]}]}))
+      (is (= (-> {:players [{:hand      [raider copper]
+                             :play-area [silver conclave]}
+                            {:hand (repeat 5 copper)}]}
+                 (play 0 :raider))
+             {:players [{:hand      [copper]
+                         :play-area [silver conclave raider]
+                         :triggers  [(get-trigger raider)]}
+                        {:hand           (repeat 5 copper)
+                         :revealed-cards {:hand 5}}]}))
+      (is (= (-> {:players [{:hand [raider]}]}
+                 (play 0 :raider)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:play-area [raider]
+                                :actions   1
+                                :coins     3
+                                :buys      1
+                                :phase     :action}]})))))
+
 (deftest tragic-hero-test
   (let [tragic-hero (assoc tragic-hero :id 0)]
     (testing "Tragic Hero"
