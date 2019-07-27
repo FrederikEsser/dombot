@@ -406,6 +406,58 @@
                                 :buys      1
                                 :phase     :action}]})))))
 
+(deftest shepherd-test
+  (let [shepherd (assoc shepherd :id 0)]
+    (testing "Shepherd"
+      (is (= (-> {:players [{:hand    [shepherd copper copper]
+                             :actions 1}]}
+                 (play 0 :shepherd))
+             {:players [{:hand      [copper copper]
+                         :play-area [shepherd]
+                         :actions   1}]}))
+      (is (= (-> {:players [{:hand    [shepherd copper copper estate estate]
+                             :actions 1}]}
+                 (play 0 :shepherd)
+                 (choose nil))
+             {:players [{:hand      [copper copper estate estate]
+                         :play-area [shepherd]
+                         :actions   1}]}))
+      (is (= (-> {:players [{:hand    [shepherd copper copper estate estate]
+                             :deck    (repeat 5 copper)
+                             :actions 1}]}
+                 (play 0 :shepherd)
+                 (choose :estate))
+             {:players [{:hand           [copper copper estate copper copper]
+                         :play-area      [shepherd]
+                         :deck           (repeat 3 copper)
+                         :discard        [estate]
+                         :revealed-cards {:discard 1}
+                         :actions        1}]}))
+      (is (= (-> {:players [{:hand    [shepherd copper copper estate estate]
+                             :deck    (repeat 5 copper)
+                             :actions 1}]}
+                 (play 0 :shepherd)
+                 (choose [:estate :estate]))
+             {:players [{:hand           [copper copper copper copper copper copper]
+                         :play-area      [shepherd]
+                         :deck           [copper]
+                         :discard        [estate estate]
+                         :revealed-cards {:discard 2}
+                         :actions        1}]}))
+      (is (= (-> {:players [{:hand  [pasture]
+                             :coins 0}]}
+                 (play 0 :pasture))
+             {:players [{:play-area [pasture]
+                         :coins     1}]}))
+      (is (= (calc-victory-points {:deck [pasture]})
+             0))
+      (is (= (calc-victory-points {:deck [pasture estate]})
+             2))
+      (is (= (calc-victory-points {:deck [pasture estate estate]})
+             4))
+      (is (= (calc-victory-points {:deck [pasture estate estate estate]})
+             6)))))
+
 (deftest tragic-hero-test
   (let [tragic-hero (assoc tragic-hero :id 0)]
     (testing "Tragic Hero"

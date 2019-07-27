@@ -195,6 +195,39 @@
                        :simultaneous-mode :auto
                        :effects           [[:give-coins 3]]}})
 
+(defn pasture-victory-points [cards]
+  (->> cards
+       (filter (comp #{:estate} :name))
+       count))
+
+(effects/register {::pasture-victory-points pasture-victory-points})
+
+(defn- shepherd-discard-draw [game {:keys [player-no card-names]}]
+  (cond-> game
+          (not-empty card-names) (push-effect-stack {:player-no player-no
+                                                     :effects   [[:reveal-from-hand {:card-names card-names}]
+                                                                 [:discard-from-revealed {:card-names card-names}]
+                                                                 [:draw (* 2 (count card-names))]]})))
+
+(effects/register {::shepherd-discard-draw shepherd-discard-draw})
+
+(def pasture {:name           :pasture
+              :set            :nocturne
+              :types          #{:treasure :victory :heirloom}
+              :cost           2
+              :coin-value     1
+              :victory-points ::pasture-victory-points})
+
+(def shepherd {:name     :shepherd
+               :set      :nocturne
+               :types    #{:action}
+               :cost     4
+               :effects  [[:give-actions 1]
+                          [:give-choice {:text    "Discard any number of Victory cards."
+                                         :choice  ::shepherd-discard-draw
+                                         :options [:player :hand {:type :victory}]}]]
+               :heirloom pasture})
+
 (defn- tragic-hero-demise [game {:keys [player-no card-id]}]
   (let [hand-size (count (get-in game [:players player-no :hand]))]
     (cond-> game
@@ -225,4 +258,5 @@
                     monastery
                     night-watchman
                     raider
+                    shepherd
                     tragic-hero])

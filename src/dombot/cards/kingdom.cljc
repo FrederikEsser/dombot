@@ -29,9 +29,9 @@
                                    shuffle
                                    (split-at 10))]
     (if (some (comp #{:young-witch} :name) kingdom)
-      (let [kingdom (vec (concat kingdom
-                                 [(or (->> randomizers (filter (comp #{2 3} :cost)) first)
-                                      (->> randomizers first))]))
+      (let [kingdom  (vec (concat kingdom
+                                  [(or (->> randomizers (filter (comp #{2 3} :cost)) first)
+                                       (->> randomizers first))]))
             bane-idx (->> kingdom
                           (keep-indexed (fn [idx {:keys [cost]}]
                                           (when (#{2 3} cost) idx)))
@@ -68,12 +68,13 @@
    :number-of-turns     0
    :phase               :out-of-turn})
 
-(defn prepare-cards [game player-no]
+(defn prepare-cards [heirlooms game player-no]
   (-> game
-      (ut/redupeat 7 op/gain {:player-no player-no
-                              :card-name :copper})
+      (ut/redupeat (- 7 (count heirlooms)) op/gain {:player-no player-no
+                                                    :card-name :copper})
       (ut/redupeat 3 op/gain {:player-no player-no
                               :card-name :estate})
+      (update-in [:players player-no :discard] concat (map ut/give-id! heirlooms))
       (op/draw {:player-no player-no :arg 5})))
 
 (defn setup-game [{:keys [supply] :as game}]
@@ -89,24 +90,26 @@
                             2 8
                             3 12
                             4 12)
-        starting-player (rand-int number-of-players)
-        kingdom (random-kingdom sets)
-        elps (->> kingdom
-                  (take 10)
-                  (drop 2)
-                  (split-at 4)
-                  (keep (fn [cards]
-                          (->> cards
-                               (keep (comp #{:renaissance} :set))
-                               first)))
-                  frequencies
-                  (mapcat random-elps)
-                  (sort-by (juxt :cost :name)))
-        projects (->> elps
-                      (filter (comp #{:project} :type))
-                      (map (fn [{:keys [name] :as elp}]
-                             [name elp]))
-                      (into {}))]
+        starting-player   (rand-int number-of-players)
+        kingdom           (random-kingdom sets)
+        elps              (->> kingdom
+                               (take 10)
+                               (drop 2)
+                               (split-at 4)
+                               (keep (fn [cards]
+                                       (->> cards
+                                            (keep (comp #{:renaissance} :set))
+                                            first)))
+                               frequencies
+                               (mapcat random-elps)
+                               (sort-by (juxt :cost :name)))
+        projects          (->> elps
+                               (filter (comp #{:project} :type))
+                               (map (fn [{:keys [name] :as elp}]
+                                      [name elp]))
+                               (into {}))
+        heirlooms         (->> kingdom
+                               (keep :heirloom))]
     (ut/reset-ids!)
     (as-> (merge
             {:mode                  mode
@@ -120,5 +123,5 @@
              :starting-player       starting-player}
             (when (not-empty projects)
               {:projects projects})) game
-          (-> (reduce prepare-cards game (range number-of-players))
+          (-> (reduce (partial prepare-cards heirlooms) game (range number-of-players))
               setup-game))))
