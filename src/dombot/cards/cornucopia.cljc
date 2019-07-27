@@ -370,7 +370,7 @@
   (cond-> game
           card-name (update :revealed-provinces (comp set conj) player-no)))
 
-(defn- tournament-give-choice [game {:keys [player-no] :as args}]
+(defn- tournament-give-choice [game {:keys [player-no]}]
   (give-choice game {:player-no player-no
                      :text      "You may reveal a Province from your hand."
                      :choice    ::tournament-reveal-province

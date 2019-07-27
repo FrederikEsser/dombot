@@ -560,7 +560,7 @@
    (-> (get-in game [:players player-no])
        is-unaffected?)))
 
-(defn clear-unaffected [game {:keys [player-no card-id works] :as args}]
+(defn clear-unaffected [game {:keys [player-no card-id works]}]
   (let [criteria (if works {:works works} {:card-id card-id})]
     (-> game
         (update-in [:players player-no :unaffected] (partial remove (ut/match criteria)))

@@ -414,7 +414,7 @@
                                         :min     1
                                         :max     1}]]})
 
-(defn seer-put-in-hand [game {:keys [player-no] :as args}]
+(defn seer-put-in-hand [game {:keys [player-no]}]
   (let [card-names (->> (get-in game [:players player-no :revealed])
                         (filter (comp #{2 3 4} (partial ut/get-cost game)))
                         (map :name))]
@@ -780,7 +780,7 @@
                        :effects           [[:reveal-from-deck 1]
                                            [::guilds/herald-play-action]]}})
 
-(defn- road-network-on-gain [game {:keys [player-no card-name] :as args}]
+(defn- road-network-on-gain [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-pile-idx game card-name)
         types (ut/get-types game card)]
     (cond-> game

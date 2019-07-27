@@ -85,7 +85,7 @@
                                        :min     1
                                        :max     1}]]})
 
-(defn explorer-choice [game {:keys [player-no card-name] :as args}]
+(defn explorer-choice [game {:keys [player-no card-name]}]
   (if (= :province card-name)
     (push-effect-stack game {:player-no player-no
                              :effects   [[:gain-to-hand {:card-name :gold}]

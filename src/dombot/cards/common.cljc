@@ -280,7 +280,7 @@
 
 (effects/register {:trash-from-hand trash-from-hand})
 
-(defn trash-from-area [game {:keys [player-no choice choices] :as args}]
+(defn trash-from-area [game {:keys [player-no choice choices]}]
   (cond-> game
           choice (move-card {:player-no player-no
                              :card-name (:card-name choice)

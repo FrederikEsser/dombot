@@ -4,7 +4,7 @@
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
-(defn- gain-to-hand [game {:keys [player-no gained-card-id] :as args}]
+(defn- gain-to-hand [game {:keys [player-no gained-card-id]}]
   (move-card game {:player-no    player-no
                    :move-card-id gained-card-id
                    :from         :gaining

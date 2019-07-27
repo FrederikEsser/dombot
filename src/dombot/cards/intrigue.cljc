@@ -487,7 +487,7 @@
                                        :min     1
                                        :max     1}]]})
 
-(defn swindler-attack [game {:keys [player-no attacking-player-no] :as args}]
+(defn swindler-attack [game {:keys [player-no]}]
   (let [{[top-card] :deck
          discard    :discard} (get-in game [:players player-no])
         cost (ut/get-cost game top-card)]
