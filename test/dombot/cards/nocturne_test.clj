@@ -11,6 +11,35 @@
 
 (use-fixtures :each fixture)
 
+(deftest cobbler-test
+  (let [cobbler (assoc cobbler :id 0)]
+    (testing "Cobbler"
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand [cobbler]}]}
+                 (play 0 :cobbler)
+                 (end-turn 0))
+             {:supply         (base/supply 2 8)
+              :current-player 0
+              :players        [{:play-area [cobbler]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action
+                                :triggers  [(get-trigger cobbler)]}]
+              :effect-stack   [{:text      "Gain a card to your hand costing up to $4."
+                                :player-no 0
+                                :card-id   0
+                                :choice    :gain-to-hand
+                                :source    :supply
+                                :options   [:curse :estate :copper :silver]
+                                :min       1
+                                :max       1}
+                               {:player-no 0
+                                :effect    [:remove-triggers
+                                            {:trigger :at-start-turn}]}
+                               {:player-no 0
+                                :effect    [:sync-repeated-play]}]})))))
+
 (deftest conclave-test
   (testing "Conclave"
     (is (= (-> {:players [{:hand    [conclave]

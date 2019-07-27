@@ -12,6 +12,19 @@
 
 (effects/register {::gain-to-hand gain-to-hand})
 
+(def cobbler {:name    :cobbler
+              :set     :nocturne
+              :types   #{:night :duration}
+              :cost    5
+              :trigger {:trigger           :at-start-turn
+                        :duration          :once
+                        :simultaneous-mode :auto
+                        :effects           [[:give-choice {:text    "Gain a card to your hand costing up to $4."
+                                                           :choice  :gain-to-hand
+                                                           :options [:supply {:max-cost 4}]
+                                                           :min     1
+                                                           :max     1}]]}})
+
 (defn- conclave-play-action [game {:keys [player-no card-name]}]
   (let [{card :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
     (cond-> game
@@ -119,7 +132,8 @@
                             [:give-buys 1]
                             [::tragic-hero-demise]]})
 
-(def kingdom-cards [conclave
+(def kingdom-cards [cobbler
+                    conclave
                     den-of-sin
                     ghost-town
                     monastery

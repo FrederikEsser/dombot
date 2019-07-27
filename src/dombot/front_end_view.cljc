@@ -75,6 +75,14 @@
                        {:interaction :buyable})
                      (choice-interaction name :mixed choice))))))
 
+(defn- types-sort-order [types]
+  (cond (:action types) 1
+        (:treasure types) 2
+        (:night types) 3
+        (:curse types) 4
+        (:victory types) 5
+        :else 6))
+
 (defn view-area [area {{:keys [phase actions player-no triggers] :as player} :player
                        choice                                                :choice
                        active?                                               :active-player?
@@ -112,7 +120,7 @@
           (map (fn [[card number-of-cards]]
                  (cond-> card
                          (< 1 number-of-cards) (assoc :number-of-cards number-of-cards)))))
-        (cond->> (not number-of-cards) (sort-by (juxt (comp first (partial remove nil?) (juxt :action :treasure :curse :victory) (partial ut/get-types game))
+        (cond->> (not number-of-cards) (sort-by (juxt (comp types-sort-order (partial ut/get-types game))
                                                       :name))))))
 
 (defn view-hand [{active-player?                      :active-player?
