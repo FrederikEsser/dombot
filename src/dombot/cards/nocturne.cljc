@@ -4,34 +4,33 @@
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
-(defn- gain-to-hand [game {:keys [player-no gained-card-id]}]
-  (move-card game {:player-no    player-no
-                   :move-card-id gained-card-id
-                   :from         :gaining
-                   :to           :hand}))
-
-(effects/register {::gain-to-hand gain-to-hand})
-
 (defn- changeling-exchange [game {:keys [player-no card-name gained-card-id]}]
   (cond-> game
           card-name (push-effect-stack {:player-no player-no
                                         :effects   [[:move-card {:move-card-id gained-card-id
                                                                  :from         :gaining
                                                                  :to           :supply}]
-                                                    [:gain {:card-name :changeling}]]})))
+                                                    [:move-card {:card-name :changeling
+                                                                 :from      :supply
+                                                                 :to        :discard}]]})))
 
-(defn- changeling-on-gain [game {:keys [player-no gained-card-id card-name]}]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
-        cost (ut/get-cost game card)
-        {:keys [pile-size]} (ut/get-pile-idx game :changeling)]
+(defn- changeling-on-gain [game {:keys [player-no gained-card-id bought]}]
+  (let [{{:keys [name on-gain on-buy] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
+        cost         (ut/get-cost game card)
+        {:keys [pile-size]} (ut/get-pile-idx game :changeling)
+        ignore-gain? (or (= :changeling name)
+                         (and bought
+                              (nil? on-gain)
+                              (nil? on-buy)))]
     (cond-> game
-            (and (not= :changeling card-name)
+            (and card
                  (<= 3 cost)
-                 (pos? pile-size)) (give-choice {:player-no player-no
-                                                 :text      (str "You may exchange the gained " (ut/format-name card-name) " for a Changeling.")
-                                                 :choice    [::changeling-exchange {:gained-card-id gained-card-id}]
-                                                 :options   [:player :gaining {:id gained-card-id}]
-                                                 :max       1}))))
+                 (pos? pile-size)
+                 (not ignore-gain?)) (give-choice {:player-no player-no
+                                                   :text      (str "You may exchange the gained " (ut/format-name name) " for a Changeling.")
+                                                   :choice    [::changeling-exchange {:gained-card-id gained-card-id}]
+                                                   :options   [:player :gaining {:id gained-card-id}]
+                                                   :max       1}))))
 
 (effects/register {::changeling-exchange changeling-exchange
                    ::changeling-on-gain  changeling-on-gain})
@@ -103,7 +102,7 @@
                            :duration          :once
                            :simultaneous-mode :auto
                            :effects           [[:draw 2]]}
-                 :on-gain [[::gain-to-hand]]})
+                 :gain-to :hand})
 
 (def ghost-town {:name    :ghost-town
                  :set     :nocturne
@@ -114,7 +113,7 @@
                            :simultaneous-mode :auto
                            :effects           [[:draw 1]
                                                [:give-actions 1]]}
-                 :on-gain [[::gain-to-hand]]})
+                 :gain-to :hand})
 
 (def guardian {:name    :guardian
                :set     :nocturne
@@ -126,7 +125,7 @@
                          :simultaneous-mode :auto
                          :effects           [[:give-coins 1]
                                              [:clear-unaffected]]}
-               :on-gain [[::gain-to-hand]]})
+               :gain-to :hand})
 
 (defn- monastery-trash [game {:keys [player-no]}]
   (let [gained-cards (count (get-in game [:players player-no :gained-cards]))]
@@ -161,7 +160,7 @@
                                                 :choice  :topdeck-from-look-at
                                                 :options [:player :look-at]
                                                 :min     5}]]
-                     :on-gain [[::gain-to-hand]]})
+                     :gain-to :hand})
 
 (defn- raider-attack [game {:keys [player-no card-names]}]
   (let [hand               (get-in game [:players player-no :hand])

@@ -5,6 +5,7 @@
 
 ; todo:
 
+; fix Changeling to ask unless some on-gain/on-buy effect is active.
 ; make "any order" option for all topdecking (Sentry, Navigator, Rabble, Doctor, Seer, Night Watchman)
 ; make extra-cards (Prizes) visible for Wishing Well
 ; view card images

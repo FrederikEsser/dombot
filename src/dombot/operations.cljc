@@ -327,18 +327,19 @@
                                                                                                       while-in-play-effects)}))
               :always (apply-triggers player-no :on-gain args)
               (and track-gained-cards?
-                   (= current-player player-no)) (update-in [:players player-no :gained-cards]
-                                                            concat [(merge {:name  name
-                                                                            :cost  cost
-                                                                            :types (ut/get-types game card)}
-                                                                           (when bought {:bought true}))]))
+                   (or (nil? current-player)
+                       (= current-player player-no))) (update-in [:players player-no :gained-cards]
+                                                                 concat [(merge {:name  name
+                                                                                 :cost  cost
+                                                                                 :types (ut/get-types game card)}
+                                                                                (when bought {:bought true}))]))
       game)))
 
 (declare move-card)
 
-(defn finalize-gain [game {:keys [player-no gained-card-id to to-position]
-                           :or   {to :discard}}]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
+(defn finalize-gain [game {:keys [player-no gained-card-id to to-position]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
+        to (or to (:gain-to card) :discard)]
     (cond-> game
             card (-> (move-card {:player-no    player-no
                                  :move-card-id gained-card-id

@@ -87,7 +87,20 @@
                {:supply  [{:card changeling :pile-size 0}
                           {:card conclave :pile-size 9}]
                 :players [{:discard  [conclave]
-                           :triggers [changeling-trigger]}]}))))))
+                           :triggers [changeling-trigger]}]}))
+        (is (= (-> {:track-gained-cards? true
+                    :supply              [{:card changeling :pile-size 10}
+                                          {:card conclave :pile-size 10}]
+                    :players             [{:gained-cards []
+                                           :triggers     [changeling-trigger]}]}
+                   (gain {:player-no 0 :card-name :conclave})
+                   (choose :conclave))
+               {:track-gained-cards? true
+                :supply              [{:card changeling :pile-size 9}
+                                      {:card conclave :pile-size 10}]
+                :players             [{:discard      [changeling]
+                                       :gained-cards [{:name :conclave :cost 4 :types #{:action}}]
+                                       :triggers     [changeling-trigger]}]}))))))
 
 (deftest cobbler-test
   (let [cobbler (assoc cobbler :id 0)]
