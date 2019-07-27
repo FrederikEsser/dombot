@@ -66,6 +66,27 @@
                        :actions   0
                        :coins     2}]}))))
 
+(deftest den-of-sin-test
+  (let [den-of-sin (assoc den-of-sin :id 0)]
+    (testing "Den of Sin"
+      (is (= (-> {:players [{:hand [den-of-sin]
+                             :deck [copper copper copper copper copper copper silver silver]}]}
+                 (play 0 :den-of-sin)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand      [copper copper copper copper copper copper silver]
+                                :play-area [den-of-sin]
+                                :deck      [silver]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]}))
+      (is (= (-> {:supply  [{:card den-of-sin :pile-size 10}]
+                  :players [{}]}
+                 (gain {:player-no 0 :card-name :den-of-sin}))
+             {:supply  [{:card den-of-sin :pile-size 9}]
+              :players [{:hand [den-of-sin]}]})))))
+
 (deftest ghost-town-test
   (let [ghost-town (assoc ghost-town :id 0)]
     (testing "Ghost Town"

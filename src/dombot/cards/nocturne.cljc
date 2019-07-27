@@ -42,6 +42,16 @@
                :effects [[:give-coins 2]
                          [::conclave-give-choice]]})
 
+(def den-of-sin {:name    :den-of-sin
+                 :set     :nocturne
+                 :types   #{:night :duration}
+                 :cost    5
+                 :trigger {:trigger           :at-start-turn
+                           :duration          :once
+                           :simultaneous-mode :auto
+                           :effects           [[:draw 2]]}
+                 :on-gain [[::gain-to-hand]]})
+
 (def ghost-town {:name    :ghost-town
                  :set     :nocturne
                  :types   #{:night :duration}
@@ -95,6 +105,7 @@
                             [::tragic-hero-demise]]})
 
 (def kingdom-cards [conclave
+                    den-of-sin
                     ghost-town
                     monastery
                     tragic-hero])
