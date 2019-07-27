@@ -12,6 +12,83 @@
 
 (use-fixtures :each fixture)
 
+(deftest changeling-test
+  (let [changeling (assoc changeling :id 0)]
+    (testing "Changeling"
+      (is (= (-> {:players [{:hand      [changeling copper]
+                             :play-area [silver conclave]}]}
+                 (play 0 :changeling))
+             {:players      [{:hand      [copper]
+                              :play-area [silver conclave]}]
+              :trash        [changeling]
+              :effect-stack [{:text      "Gain a copy of a card you have in play."
+                              :player-no 0
+                              :card-id   0
+                              :choice    :gain
+                              :source    :play-area
+                              :options   [:silver :conclave]
+                              :min       1
+                              :max       1}]}))
+      (let [silver (assoc silver :id 1)]
+        (is (= (-> {:supply  [{:card silver :pile-size 40}
+                              {:card conclave :pile-size 0}]
+                    :players [{:hand      [changeling copper]
+                               :play-area [silver conclave]}]}
+                   (play 0 :changeling)
+                   (choose :silver))
+               {:supply  [{:card silver :pile-size 39}
+                          {:card conclave :pile-size 0}]
+                :players [{:hand      [copper]
+                           :play-area [silver conclave]
+                           :discard   [silver]}]
+                :trash   [changeling]})))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card conclave :pile-size 0}]
+                  :players [{:hand      [changeling copper]
+                             :play-area [silver conclave]}]}
+                 (play 0 :changeling)
+                 (choose :conclave))
+             {:supply  [{:card silver :pile-size 40}
+                        {:card conclave :pile-size 0}]
+              :players [{:hand      [copper]
+                         :play-area [silver conclave]}]
+              :trash   [changeling]}))
+      (let [conclave (assoc conclave :id 1)]
+        (is (= (-> {:supply  [{:card changeling :pile-size 10}
+                              {:card conclave :pile-size 10}]
+                    :players [{:triggers [changeling-trigger]}]}
+                   (gain {:player-no 0 :card-name :conclave})
+                   (choose nil))
+               {:supply  [{:card changeling :pile-size 10}
+                          {:card conclave :pile-size 9}]
+                :players [{:discard  [conclave]
+                           :triggers [changeling-trigger]}]}))
+        (is (= (-> {:supply  [{:card changeling :pile-size 10}
+                              {:card conclave :pile-size 10}]
+                    :players [{:triggers [changeling-trigger]}]}
+                   (gain {:player-no 0 :card-name :conclave})
+                   (choose :conclave))
+               {:supply  [{:card changeling :pile-size 9}
+                          {:card conclave :pile-size 10}]
+                :players [{:discard  [changeling]
+                           :triggers [changeling-trigger]}]}))
+        (is (= (-> {:supply  [{:card changeling :pile-size 10}
+                              {:card conclave :pile-size 10}]
+                    :players [{:triggers [changeling-trigger]}]}
+                   (gain {:player-no 0 :card-name :changeling}))
+               {:supply  [{:card changeling :pile-size 9}
+                          {:card conclave :pile-size 10}]
+                :players [{:discard  [changeling]
+                           :triggers [changeling-trigger]}]}))
+        (is (= (-> {:supply  [{:card changeling :pile-size 0}
+                              {:card conclave :pile-size 10}]
+                    :players [{:triggers [changeling-trigger]}]}
+                   (gain {:player-no 0 :card-name :conclave}))
+               {:supply  [{:card changeling :pile-size 0}
+                          {:card conclave :pile-size 9}]
+                :players [{:discard  [conclave]
+                           :triggers [changeling-trigger]}]}))))))
+
 (deftest cobbler-test
   (let [cobbler (assoc cobbler :id 0)]
     (testing "Cobbler"

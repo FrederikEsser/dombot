@@ -12,6 +12,46 @@
 
 (effects/register {::gain-to-hand gain-to-hand})
 
+(defn- changeling-exchange [game {:keys [player-no card-name gained-card-id]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:move-card {:move-card-id gained-card-id
+                                                                 :from         :gaining
+                                                                 :to           :supply}]
+                                                    [:gain {:card-name :changeling}]]})))
+
+(defn- changeling-on-gain [game {:keys [player-no gained-card-id card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
+        cost (ut/get-cost game card)
+        {:keys [pile-size]} (ut/get-pile-idx game :changeling)]
+    (cond-> game
+            (and (not= :changeling card-name)
+                 (<= 3 cost)
+                 (pos? pile-size)) (give-choice {:player-no player-no
+                                                 :text      (str "You may exchange the gained " (ut/format-name card-name) " for a Changeling.")
+                                                 :choice    [::changeling-exchange {:gained-card-id gained-card-id}]
+                                                 :options   [:player :gaining {:id gained-card-id}]
+                                                 :max       1}))))
+
+(effects/register {::changeling-exchange changeling-exchange
+                   ::changeling-on-gain  changeling-on-gain})
+
+(def changeling-trigger {:trigger  :on-gain
+                         :duration :game
+                         :effects  [[::changeling-on-gain]]})
+
+(def changeling {:name    :changeling
+                 :set     :nocturne
+                 :types   #{:night}
+                 :cost    3
+                 :effects [[:trash-this]
+                           [:give-choice {:text    "Gain a copy of a card you have in play."
+                                          :choice  :gain
+                                          :options [:player :play-area]
+                                          :min     1
+                                          :max     1}]]
+                 :setup   [[:all-players {:effects [[:add-trigger {:trigger changeling-trigger}]]}]]})
+
 (def cobbler {:name    :cobbler
               :set     :nocturne
               :types   #{:night :duration}
@@ -176,7 +216,8 @@
                             [:give-buys 1]
                             [::tragic-hero-demise]]})
 
-(def kingdom-cards [cobbler
+(def kingdom-cards [changeling
+                    cobbler
                     conclave
                     den-of-sin
                     ghost-town
