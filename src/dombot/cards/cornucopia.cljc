@@ -237,7 +237,7 @@
                                            [::jester-give-choice]]}]]})
 
 (defn- menagerie-draw [game {:keys [player-no]}]
-  (let [hand (get-in game [:players player-no :hand])
+  (let [hand             (get-in game [:players player-no :hand])
         different-names? (or (empty? hand)
                              (->> hand
                                   (map :name)
@@ -322,13 +322,6 @@
 (effects/register {::diadem-give-coins    diadem-give-coins
                    ::trusty-steed-choices trusty-steed-choices})
 
-(defn- tournament-setup-prizes [game _]
-  (update game :extra-cards (comp vec concat) [{:card bag-of-gold :pile-size 1}
-                                               {:card diadem :pile-size 1}
-                                               {:card followers :pile-size 1}
-                                               {:card princess :pile-size 1}
-                                               {:card trusty-steed :pile-size 1}]))
-
 (defn- tournament-gain-prize [game {:keys [player-no choice]}]
   (cond-> game
           (not= :nothing choice)
@@ -344,10 +337,10 @@
                            (filter (comp pos? :pile-size))
                            (map (fn create-prize-option [{{:keys [name]} :card}]
                                   {:option name :text (ut/format-name name)})))
-        all-options (concat prize-options
-                            [{:option :duchy :text "Duchy"}]
-                            (when (empty? prize-options)
-                              [{:option :nothing :text "No Prize"}]))]
+        all-options   (concat prize-options
+                              [{:option :duchy :text "Duchy"}]
+                              (when (empty? prize-options)
+                                [{:option :nothing :text "No Prize"}]))]
     (give-choice game {:player-no player-no
                        :text      "Gain any Prize or a Duchy onto your deck."
                        :choice    ::tournament-gain-prize
@@ -377,8 +370,7 @@
                      :options   [:player :hand {:name :province}]
                      :max       1}))
 
-(effects/register {::tournament-setup-prizes    tournament-setup-prizes
-                   ::tournament-gain-prize      tournament-gain-prize
+(effects/register {::tournament-gain-prize      tournament-gain-prize
                    ::tournament-choose-prize    tournament-choose-prize
                    ::tournament-results         tournament-results
                    ::tournament-reveal-province tournament-reveal-province
@@ -391,7 +383,11 @@
                  :effects [[:give-actions 1]
                            [:all-players {:effects [[::tournament-give-choice]]}]
                            [::tournament-results]]
-                 :setup   [[::tournament-setup-prizes]]})
+                 :setup   [[:setup-extra-cards {:extra-cards [{:card bag-of-gold :pile-size 1}
+                                                              {:card diadem :pile-size 1}
+                                                              {:card followers :pile-size 1}
+                                                              {:card princess :pile-size 1}
+                                                              {:card trusty-steed :pile-size 1}]}]]})
 
 (defn- young-witch-choice [game {:keys [player-no card-name]}]
   (cond-> game

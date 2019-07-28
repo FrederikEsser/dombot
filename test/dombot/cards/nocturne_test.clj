@@ -207,6 +207,47 @@
              {:supply  [{:card den-of-sin :pile-size 9}]
               :players [{:hand [den-of-sin]}]})))))
 
+(deftest devils-workshop-test
+  (let [devils-workshop (assoc devils-workshop :id 0)]
+    (testing "Devil's Workshop"
+      (let [gold (assoc gold :id 1)]
+        (is (= (-> {:track-gained-cards? true
+                    :supply              [{:card gold :pile-size 30}]
+                    :players             [{:hand [devils-workshop]}]}
+                   (play 0 :devil's-workshop))
+               {:track-gained-cards? true
+                :supply              [{:card gold :pile-size 29}]
+                :players             [{:play-area    [devils-workshop]
+                                       :discard      [gold]
+                                       :gained-cards [{:name :gold :cost 6 :types #{:treasure}}]}]})))
+      (let [silver (assoc silver :id 1)]
+        (is (= (-> {:track-gained-cards? true
+                    :supply              [{:card silver :pile-size 40}]
+                    :players             [{:hand         [devils-workshop]
+                                           :gained-cards [{:name :gold :cost 6 :types #{:treasure}}]}]}
+                   (play 0 :devil's-workshop)
+                   (choose :silver))
+               {:track-gained-cards? true
+                :supply              [{:card silver :pile-size 39}]
+                :players             [{:play-area    [devils-workshop]
+                                       :discard      [silver]
+                                       :gained-cards [{:name :gold :cost 6 :types #{:treasure}}
+                                                      {:name :silver :cost 3 :types #{:treasure}}]}]})))
+      (let [imp (assoc imp :id 1)]
+        (is (= (-> {:track-gained-cards? true
+                    :extra-cards         [{:card imp :pile-size 13}]
+                    :players             [{:hand         [devils-workshop]
+                                           :gained-cards [{:name :gold :cost 6 :types #{:treasure}}
+                                                          {:name :silver :cost 3 :types #{:treasure}}]}]}
+                   (play 0 :devil's-workshop))
+               {:track-gained-cards? true
+                :extra-cards         [{:card imp :pile-size 12}]
+                :players             [{:play-area    [devils-workshop]
+                                       :discard      [imp]
+                                       :gained-cards [{:name :gold :cost 6 :types #{:treasure}}
+                                                      {:name :silver :cost 3 :types #{:treasure}}
+                                                      {:name :imp :cost 2 :types #{:action :spirit}}]}]}))))))
+
 (deftest ghost-town-test
   (let [ghost-town (assoc ghost-town :id 0)]
     (testing "Ghost Town"
@@ -283,6 +324,45 @@
                                 :coins     1
                                 :buys      1
                                 :phase     :action}]})))))
+
+(deftest imp-test
+  (testing "Imp"
+    (is (= (-> {:players [{:hand    [imp]
+                           :deck    [copper copper copper]
+                           :actions 1}]}
+               (play 0 :imp))
+           {:players [{:hand      [copper copper]
+                       :play-area [imp]
+                       :deck      [copper]
+                       :actions   0}]}))
+    (is (= (-> {:players [{:hand    [imp imp]
+                           :deck    [copper copper copper]
+                           :actions 1}]}
+               (play 0 :imp))
+           {:players [{:hand      [imp copper copper]
+                       :play-area [imp]
+                       :deck      [copper]
+                       :actions   0}]}))
+    (is (= (-> {:players [{:hand    [imp]
+                           :deck    [conclave copper copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :imp)
+               (choose :conclave))
+           {:players [{:hand      [copper]
+                       :play-area [imp conclave]
+                       :deck      [copper]
+                       :actions   0
+                       :coins     2}]}))
+    (is (= (-> {:players [{:hand    [imp]
+                           :deck    [conclave copper copper]
+                           :actions 1}]}
+               (play 0 :imp)
+               (choose nil))
+           {:players [{:hand      [conclave copper]
+                       :play-area [imp]
+                       :deck      [copper]
+                       :actions   0}]}))))
 
 (deftest monastery-test
   (let [monastery (assoc monastery :id 0)]

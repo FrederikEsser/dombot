@@ -509,3 +509,13 @@
 
 (effects/register {:upgrade-trash       upgrade-trash
                    :upgrade-give-choice upgrade-give-choice})
+
+(defn- setup-extra-cards [game {:keys [extra-cards]}]
+  (update game :extra-cards (fn [cards]
+                              (->> (concat cards extra-cards)
+                                   set
+                                   (sort-by (comp (juxt :cost :name) :card))
+                                   vec))))
+
+(effects/register {:setup-extra-cards setup-extra-cards})
+

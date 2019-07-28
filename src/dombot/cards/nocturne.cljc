@@ -1,8 +1,38 @@
 (ns dombot.cards.nocturne
-  (:require [dombot.operations :refer [push-effect-stack give-choice move-card attack-other-players]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice move-card attack-other-players gain]]
             [dombot.cards.common :refer [reveal-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
+
+(defn- imp-play-action [game {:keys [player-no card-name]}]
+  (let [{card :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:play-from-hand {:card-name card-name}]
+                                                 [:card-effect {:card card}]]}))))
+
+(defn- imp-give-choice [game {:keys [player-no]}]
+  (let [actions-in-play (->> (get-in game [:players player-no :play-area])
+                             (filter (comp :action :types))
+                             (map :name)
+                             set)]
+    (give-choice game {:player-no player-no
+                       :text      "You may play an Action card from your hand that you don't have a copy of in play."
+                       :choice    ::imp-play-action
+                       :options   [:player :hand {:type     :action
+                                                  :not-name actions-in-play}]
+                       :max       1})))
+
+(effects/register {::imp-play-action imp-play-action
+                   ::imp-give-choice imp-give-choice})
+
+
+(def imp {:name    :imp
+          :set     :nocturne
+          :types   #{:action :spirit}
+          :cost    2
+          :effects [[:draw 2]
+                    [::imp-give-choice]]})
 
 (defn- changeling-exchange [game {:keys [player-no card-name gained-card-id]}]
   (cond-> game
@@ -103,6 +133,30 @@
                            :simultaneous-mode :auto
                            :effects           [[:draw 2]]}
                  :gain-to :hand})
+
+(defn- devils-workshop-gain [game {:keys [player-no]}]
+  (let [gained-cards (count (get-in game [:players player-no :gained-cards]))]
+    (cond-> game
+            (zero? gained-cards) (gain {:player-no player-no
+                                        :card-name :gold})
+            (= 1 gained-cards) (give-choice {:player-no player-no
+                                             :text      "Gain a card costing up to $4."
+                                             :choice    :gain
+                                             :options   [:supply {:max-cost 4}]
+                                             :min       1
+                                             :max       1})
+            (<= 2 gained-cards) (gain {:player-no player-no
+                                       :card-name :imp
+                                       :from      :extra-cards}))))
+
+(effects/register {::devils-workshop-gain devils-workshop-gain})
+
+(def devils-workshop {:name    :devil's-workshop
+                      :set     :nocturne
+                      :types   #{:night}
+                      :cost    4
+                      :effects [[::devils-workshop-gain]]
+                      :setup   [[:setup-extra-cards {:extra-cards [{:card imp :pile-size 13}]}]]})
 
 (def ghost-town {:name    :ghost-town
                  :set     :nocturne
@@ -278,6 +332,7 @@
                     cobbler
                     conclave
                     den-of-sin
+                    devils-workshop
                     ghost-town
                     guardian
                     monastery
