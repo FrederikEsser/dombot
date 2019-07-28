@@ -362,6 +362,51 @@
                        :deck      [estate]
                        :discard   [estate estate copper copper silver]}]}))))
 
+(deftest pooka-test
+  (let [pooka (assoc pooka :id 0)]
+    (testing "Pooka"
+      (is (= (-> {:players [{:hand    [pooka estate copper cursed-gold]
+                             :actions 1}]}
+                 (play 0 :pooka))
+             {:players      [{:hand      [estate copper cursed-gold]
+                              :play-area [pooka]
+                              :actions   0}]
+              :effect-stack [{:text      "You may trash a Treasure other than Cursed Gold from your hand, for +4 Cards."
+                              :player-no 0
+                              :card-id   0
+                              :choice    ::nocturne/pooka-trash
+                              :source    :hand
+                              :options   [:copper]
+                              :max       1}]}))
+      (is (= (-> {:players [{:hand    [pooka estate copper cursed-gold]
+                             :deck    (repeat 5 copper)
+                             :actions 1}]}
+                 (play 0 :pooka)
+                 (choose nil))
+             {:players [{:hand      [estate copper cursed-gold]
+                         :play-area [pooka]
+                         :deck      (repeat 5 copper)
+                         :actions   0}]}))
+      (is (= (-> {:players [{:hand    [pooka estate copper cursed-gold]
+                             :deck    (repeat 5 copper)
+                             :actions 1}]}
+                 (play 0 :pooka)
+                 (choose :copper))
+             {:players [{:hand      [estate cursed-gold copper copper copper copper]
+                         :play-area [pooka]
+                         :deck      [copper]
+                         :actions   0}]
+              :trash   [copper]}))
+      (let [curse (assoc curse :id 1)]
+        (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                    :players [{:hand  [cursed-gold]
+                               :coins 0}]}
+                   (play 0 :cursed-gold))
+               {:supply  [{:card curse :pile-size 9}]
+                :players [{:play-area [cursed-gold]
+                           :discard   [curse]
+                           :coins     3}]}))))))
+
 (deftest raider-test
   (let [raider (assoc raider :id 0)]
     (testing "Raider"

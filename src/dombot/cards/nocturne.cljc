@@ -162,6 +162,32 @@
                                                 :min     5}]]
                      :gain-to :hand})
 
+(def cursed-gold {:name       :cursed-gold
+                  :set        :nocturne
+                  :types      #{:treasure :heirloom}
+                  :cost       4
+                  :coin-value 3
+                  :effects    [[:gain {:card-name :curse}]]})
+
+(defn- pooka-trash [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:trash-from-hand {:card-name card-name}]
+                                                    [:draw 4]]})))
+
+(effects/register {::pooka-trash pooka-trash})
+
+(def pooka {:name     :pooka
+            :set      :nocturne
+            :types    #{:action}
+            :cost     5
+            :effects  [[:give-choice {:text    "You may trash a Treasure other than Cursed Gold from your hand, for +4 Cards."
+                                      :choice  ::pooka-trash
+                                      :options [:player :hand {:type     :treasure
+                                                               :not-name #{:cursed-gold}}]
+                                      :max     1}]]
+            :heirloom cursed-gold})
+
 (defn- raider-attack [game {:keys [player-no card-names]}]
   (let [hand               (get-in game [:players player-no :hand])
         has-eligible-card? (some (comp card-names :name) hand)]
@@ -256,6 +282,7 @@
                     guardian
                     monastery
                     night-watchman
+                    pooka
                     raider
                     shepherd
                     tragic-hero])
