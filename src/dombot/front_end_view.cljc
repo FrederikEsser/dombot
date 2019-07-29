@@ -294,7 +294,8 @@
      :confirm-end-turn    (cond (and (= :action phase)
                                      (pos? actions)
                                      (some (comp :action (partial ut/get-types game)) hand)) "You can still play actions."
-                                (and (pos? buys)
+                                (and (#{:action :pay :buy} phase)
+                                     (pos? buys)
                                      (<= 3 potential-coins)) "You can buy a card."
                                 (some (comp :night (partial ut/get-types game)) hand) "You can play Night cards.")}))
 

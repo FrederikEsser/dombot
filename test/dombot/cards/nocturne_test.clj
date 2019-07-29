@@ -12,6 +12,84 @@
 
 (use-fixtures :each fixture)
 
+(deftest cemetery-test
+  (let [cemetery (assoc cemetery :id 0)]
+    (testing "Cemetery"
+      (is (= (calc-victory-points {:deck [cemetery]})
+             2))
+      (is (= (-> {:supply  [{:card cemetery :pile-size 8}]
+                  :players [{}]}
+                 (gain {:player-no 0
+                        :card-name :cemetery}))
+             {:supply  [{:card cemetery :pile-size 7}]
+              :players [{:discard [cemetery]}]}))
+      (is (= (-> {:supply  [{:card cemetery :pile-size 8}]
+                  :players [{:hand [estate]}]}
+                 (gain {:player-no 0
+                        :card-name :cemetery})
+                 (choose nil))
+             {:supply  [{:card cemetery :pile-size 7}]
+              :players [{:hand    [estate]
+                         :discard [cemetery]}]}))
+      (is (= (-> {:supply  [{:card cemetery :pile-size 8}]
+                  :players [{:hand [estate]}]}
+                 (gain {:player-no 0
+                        :card-name :cemetery})
+                 (choose :estate))
+             {:supply  [{:card cemetery :pile-size 7}]
+              :players [{:discard [cemetery]}]
+              :trash   [estate]}))
+      (is (= (-> {:supply  [{:card cemetery :pile-size 8}]
+                  :players [{:hand [estate estate estate copper copper]}]}
+                 (gain {:player-no 0
+                        :card-name :cemetery})
+                 (choose [:estate :estate :estate :copper]))
+             {:supply  [{:card cemetery :pile-size 7}]
+              :players [{:hand    [copper]
+                         :discard [cemetery]}]
+              :trash   [estate estate estate copper]})))
+    (let [haunted-mirror (assoc haunted-mirror :id 1)
+          ghost          (assoc ghost :id 2)]
+      (testing "Haunted Mirror"
+        (is (= (-> {:players [{:hand  [haunted-mirror]
+                               :coins 0}]}
+                   (play 0 :haunted-mirror))
+               {:players [{:play-area [haunted-mirror]
+                           :coins     1}]}))
+        (is (= (-> {:supply      [{:card cemetery :pile-size 8}]
+                    :extra-cards [{:card ghost :pile-size 6}]
+                    :players     [{:hand [haunted-mirror]}]}
+                   (gain {:player-no 0
+                          :card-name :cemetery})
+                   (choose :haunted-mirror))
+               {:supply      [{:card cemetery :pile-size 7}]
+                :extra-cards [{:card ghost :pile-size 6}]
+                :players     [{:discard [cemetery]}]
+                :trash       [haunted-mirror]}))
+        (is (= (-> {:supply      [{:card cemetery :pile-size 8}]
+                    :extra-cards [{:card ghost :pile-size 6}]
+                    :players     [{:hand [haunted-mirror conclave]}]}
+                   (gain {:player-no 0
+                          :card-name :cemetery})
+                   (choose :haunted-mirror)
+                   (choose nil))
+               {:supply      [{:card cemetery :pile-size 7}]
+                :extra-cards [{:card ghost :pile-size 6}]
+                :players     [{:hand    [conclave]
+                               :discard [cemetery]}]
+                :trash       [haunted-mirror]}))
+        (is (= (-> {:supply      [{:card cemetery :pile-size 8}]
+                    :extra-cards [{:card ghost :pile-size 6}]
+                    :players     [{:hand [haunted-mirror conclave]}]}
+                   (gain {:player-no 0
+                          :card-name :cemetery})
+                   (choose :haunted-mirror)
+                   (choose :conclave))
+               {:supply      [{:card cemetery :pile-size 7}]
+                :extra-cards [{:card ghost :pile-size 5}]
+                :players     [{:discard [conclave ghost cemetery]}]
+                :trash       [haunted-mirror]}))))))
+
 (deftest changeling-test
   (let [changeling (assoc changeling :id 0)]
     (testing "Changeling"
@@ -247,6 +325,48 @@
                                        :gained-cards [{:name :gold :cost 6 :types #{:treasure}}
                                                       {:name :silver :cost 3 :types #{:treasure}}
                                                       {:name :imp :cost 2 :types #{:action :spirit}}]}]}))))))
+
+(deftest ghost-test
+  (let [ghost (assoc ghost :id 0)]
+    (testing "Ghost"
+      (is (= (-> {:players [{:hand [ghost]
+                             :deck [conclave estate]}]}
+                 (play 0 :ghost))
+             {:players [{:play-area      [ghost]
+                         :deck           [estate]
+                         :revealed-cards {:ghost 1}
+                         :triggers       [(merge ghost-trigger
+                                                 {:card-id   0
+                                                  :set-aside [conclave]})]}]}))
+      (is (= (-> {:players [{:hand [ghost]
+                             :deck [estate conclave estate]}]}
+                 (play 0 :ghost))
+             {:players [{:play-area      [ghost]
+                         :deck           [estate]
+                         :discard        [estate]
+                         :revealed-cards {:discard 1
+                                          :ghost   1}
+                         :triggers       [(merge ghost-trigger
+                                                 {:card-id   0
+                                                  :set-aside [conclave]})]}]}))
+      (is (= (-> {:players [{:hand    [ghost]
+                             :deck    [estate]
+                             :discard [copper]}]}
+                 (play 0 :ghost))
+             {:players [{:play-area      [ghost]
+                         :discard        [estate copper]
+                         :revealed-cards {:discard 2}}]}))
+      (is (= (-> {:players [{:play-area [ghost]
+                             :triggers  [(merge ghost-trigger
+                                                {:card-id   0
+                                                 :set-aside [conclave]})]}]}
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:play-area [ghost conclave]
+                                :actions   1
+                                :coins     4
+                                :buys      1
+                                :phase     :action}]})))))
 
 (deftest ghost-town-test
   (let [ghost-town (assoc ghost-town :id 0)]

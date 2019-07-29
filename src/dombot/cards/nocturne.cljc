@@ -1,8 +1,51 @@
 (ns dombot.cards.nocturne
-  (:require [dombot.operations :refer [push-effect-stack give-choice move-card attack-other-players gain]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice move-card attack-other-players gain state-maintenance]]
             [dombot.cards.common :refer [reveal-hand]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
+
+(defn- ghost-repeat-action [game {:keys [player-no card-id set-aside]}]
+  (let [{:keys [id] :as card} (first set-aside)]
+    (-> game
+        (update-in [:players player-no :play-area] concat set-aside)
+        (push-effect-stack {:player-no player-no
+                            :card-id   card-id
+                            :effects   [[:card-effect {:card card}]
+                                        [:card-effect {:card card}]
+                                        [:register-repeated-play {:target-id id}]]}))))
+
+(def ghost-trigger {:trigger           :at-start-turn
+                    :duration          :once
+                    :simultaneous-mode :auto
+                    :effects           [[::ghost-repeat-action]]})
+
+(defn- ghost-reveal [game {:keys [player-no card-id]}]
+  (let [{:keys [revealed deck discard]} (get-in game [:players player-no])
+        card  (last revealed)
+        types (ut/get-types game card)]
+    (cond (:action types) (-> game
+                              (update-in [:players player-no :revealed] drop-last)
+                              (push-effect-stack {:player-no player-no
+                                                  :effects   [[:add-trigger {:trigger (merge ghost-trigger
+                                                                                             {:set-aside [card]})
+                                                                             :card-id card-id}]]})
+                              (state-maintenance player-no :revealed :ghost))
+          (not-empty (concat deck discard)) (push-effect-stack game {:player-no player-no
+                                                                     :card-id   card-id
+                                                                     :effects   [[:reveal-from-deck 1]
+                                                                                 [::ghost-reveal]]})
+          :else game)))
+
+(effects/register {::ghost-repeat-action ghost-repeat-action
+                   ::ghost-reveal        ghost-reveal})
+
+(def ghost {:name    :ghost
+            :set     :nocturne
+            :types   #{:night :duration :spirit}
+            :cost    4
+            :effects [[:reveal-from-deck 1]
+                      [::ghost-reveal]
+                      [:discard-all-revealed]]})
 
 (defn- imp-play-action [game {:keys [player-no card-name]}]
   (let [{card :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
@@ -45,6 +88,37 @@
                                     :options [:supply {:max-cost 6}]
                                     :min     1
                                     :max     1}]]})
+
+(defn- haunted-mirror-ghost [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:discard-from-hand {:card-name card-name}]
+                                                    [:gain {:card-name :ghost
+                                                            :from      :extra-cards}]]})))
+
+(effects/register {::haunted-mirror-ghost haunted-mirror-ghost})
+
+(def haunted-mirror {:name       :haunted-mirror
+                     :set        :nocturne
+                     :types      #{:treasure :heirloom}
+                     :cost       0
+                     :coin-value 1
+                     :on-trash   [[:give-choice {:text    "You may discard an Action card, to gain a Ghost."
+                                                 :choice  ::haunted-mirror-ghost
+                                                 :options [:player :hand {:type :action}]
+                                                 :max     1}]]})
+
+(def cemetery {:name           :cemetery
+               :set            :nocturne
+               :types          #{:victory}
+               :cost           4
+               :victory-points 2
+               :on-gain        [[:give-choice {:text    "Trash up to 4 cards from your hand."
+                                               :choice  :trash-from-hand
+                                               :options [:player :hand]
+                                               :max     4}]]
+               :heirloom       haunted-mirror
+               :setup          [[:setup-extra-cards {:extra-cards [{:card ghost :pile-size 6}]}]]})
 
 (defn- changeling-exchange [game {:keys [player-no card-name gained-card-id]}]
   (cond-> game
@@ -393,7 +467,8 @@
                             [:give-buys 1]
                             [::tragic-hero-demise]]})
 
-(def kingdom-cards [changeling
+(def kingdom-cards [cemetery
+                    changeling
                     cobbler
                     conclave
                     den-of-sin
