@@ -34,6 +34,18 @@
           :effects [[:draw 2]
                     [::imp-give-choice]]})
 
+(def wish {:name    :wish
+           :set     :nocturne
+           :types   #{:action}
+           :cost    0
+           :effects [[:give-actions 1]
+                     [:return-this-to-supply {:area :extra-cards}]
+                     [:give-choice {:text    "Gain a card to your hand costing up to $6."
+                                    :choice  :gain-to-hand
+                                    :options [:supply {:max-cost 6}]
+                                    :min     1
+                                    :max     1}]]})
+
 (defn- changeling-exchange [game {:keys [player-no card-name gained-card-id]}]
   (cond-> game
           card-name (push-effect-stack {:player-no player-no
@@ -274,6 +286,59 @@
                        :simultaneous-mode :auto
                        :effects           [[:give-coins 3]]}})
 
+(defn- magic-lamp-genie [game {:keys [player-no card-id]}]
+  (let [singular-cards-in-play (->> (get-in game [:players player-no :play-area])
+                                    (map :name)
+                                    frequencies
+                                    (filter (comp #{1} second))
+                                    count)
+        {:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
+    (cond-> game
+            (and (<= 6 singular-cards-in-play)
+                 card) (push-effect-stack {:player-no player-no
+                                           :effects   [[:trash-this {:card-id card-id}]
+                                                       [:gain {:card-name :wish :from :extra-cards}]
+                                                       [:gain {:card-name :wish :from :extra-cards}]
+                                                       [:gain {:card-name :wish :from :extra-cards}]]}))))
+
+(effects/register {::magic-lamp-genie magic-lamp-genie})
+
+(def magic-lamp {:name       :magic-lamp
+                 :set        :nocturne
+                 :types      #{:treasure :heirloom}
+                 :cost       0
+                 :coin-value 1
+                 :effects    [[::magic-lamp-genie]]})
+
+(def secret-cave-trigger {:trigger           :at-start-turn
+                          :duration          :once
+                          :simultaneous-mode :auto
+                          :effects           [[:give-coins 3]]})
+
+(defn- secret-cave-discard [game {:keys [player-no card-id card-names] :as args}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (concat [[:discard-from-hand args]]
+                                              (when (= 3 (count card-names))
+                                                [[:add-trigger {:trigger secret-cave-trigger
+                                                                :card-id card-id}]]))}))
+
+(effects/register {::secret-cave-discard secret-cave-discard})
+
+(def secret-cave {:name     :secret-cave
+                  :set      :nocturne
+                  :types    #{:action :duration}
+                  :cost     3
+                  :effects  [[:draw 1]
+                             [:give-actions 1]
+                             [:give-choice {:text      "You may discard 3 cards, for +$3 next turn."
+                                            :choice    ::secret-cave-discard
+                                            :options   [:player :hand]
+                                            :min       3
+                                            :max       3
+                                            :optional? true}]]
+                  :heirloom magic-lamp
+                  :setup    [[:setup-extra-cards {:extra-cards [{:card wish :pile-size 12}]}]]})
+
 (defn pasture-victory-points [cards]
   (->> cards
        (filter (comp #{:estate} :name))
@@ -339,5 +404,13 @@
                     night-watchman
                     pooka
                     raider
+                    secret-cave
                     shepherd
                     tragic-hero])
+
+; Doable without Boons / Hexes:
+; Faithful Hound - On discard other than Clean Up
+; Cemetery
+; Exorcist - viewing extra cards
+; Necromancer - play from trash
+; Crypt - Duration lasting several turns

@@ -457,16 +457,19 @@
 
 (effects/register {:take-from-revealed take-from-revealed})
 
-(defn return-to-supply [game {:keys [card-name card-names] :as args}]
+(defn return-to-supply [game {:keys [card-name card-names area]
+                              :or   {area :supply}
+                              :as   args}]
   (cond-> game
           (or card-name card-names) (move-cards (merge args {:from :hand
-                                                             :to   :supply}))))
+                                                             :to   area}))))
 
-(defn return-this-to-supply [game {:keys [player-no card-id]}]
+(defn return-this-to-supply [game {:keys [player-no card-id area]
+                                   :or   {area :supply}}]
   (move-card game {:player-no    player-no
                    :move-card-id card-id
                    :from         :play-area
-                   :to           :supply}))
+                   :to           area}))
 
 (effects/register {:return-this-to-supply return-this-to-supply
                    :return-to-supply      return-to-supply})

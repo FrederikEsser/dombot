@@ -294,9 +294,9 @@
                                                                 [card]
                                                                 (subvec coll to-position (count coll)))
                                  :else (concat coll [card])))))]
-    (if (= :supply to-path)
-      (let [{:keys [idx]} (ut/get-pile-idx game name)]
-        (update-in game [:supply idx :pile-size] inc))
+    (if (#{:supply :extra-cards} to-path)
+      (let [{:keys [idx]} (ut/get-pile-idx game to-path name)]
+        (update-in game [to-path idx :pile-size] inc))
       (update-in game to-path add-card-to-coll card))))
 
 (defn handle-on-gain [{:keys [track-gained-cards? current-player] :as game}
@@ -477,6 +477,7 @@
         to-path (case to
                   :trash [:trash]
                   :supply :supply
+                  :extra-cards :extra-cards
                   [:players (or to-player player-no) to])]
     (when card-name
       (assert card (str "Move error: There is no " (ut/format-name card-name) " in " from-path ".")))

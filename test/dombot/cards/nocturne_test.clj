@@ -476,7 +476,8 @@
                          :play-area [pooka]
                          :deck      [copper]
                          :actions   0}]
-              :trash   [copper]}))
+              :trash   [copper]})))
+    (testing "Cursed Gold"
       (let [curse (assoc curse :id 1)]
         (is (= (-> {:supply  [{:card curse :pile-size 10}]
                     :players [{:hand  [cursed-gold]
@@ -544,6 +545,119 @@
                                 :buys      1
                                 :phase     :action}]})))))
 
+(deftest secret-cave-test
+  (let [secret-cave (assoc secret-cave :id 0)]
+    (testing "Secret Cave"
+      (is (= (-> {:players [{:hand    [secret-cave]
+                             :actions 1}]}
+                 (play 0 :secret-cave))
+             {:players [{:play-area [secret-cave]
+                         :actions   1}]}))
+      (is (= (-> {:players [{:hand    [secret-cave estate estate]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :secret-cave))
+             {:players      [{:hand      [estate estate copper]
+                              :play-area [secret-cave]
+                              :deck      [copper]
+                              :actions   1}]
+              :effect-stack [{:text      "You may discard 3 cards, for +$3 next turn."
+                              :player-no 0
+                              :card-id   0
+                              :choice    ::nocturne/secret-cave-discard
+                              :source    :hand
+                              :options   [:estate :estate :copper]
+                              :min       3
+                              :max       3
+                              :optional? true}]}))
+      (is (= (-> {:players [{:hand    [secret-cave estate estate]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :secret-cave)
+                 (choose nil))
+             {:players [{:hand      [estate estate copper]
+                         :play-area [secret-cave]
+                         :deck      [copper]
+                         :actions   1}]}))
+      (is (= (-> {:players [{:hand    [secret-cave estate estate]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :secret-cave)
+                 (choose [:estate :estate :copper]))
+             {:players [{:play-area [secret-cave]
+                         :deck      [copper]
+                         :discard   [estate estate copper]
+                         :actions   1
+                         :triggers  [(merge secret-cave-trigger
+                                            {:card-id 0})]}]}))
+      (is (= (-> {:players [{:hand    [secret-cave estate estate]
+                             :deck    (repeat 7 copper)
+                             :actions 1}]}
+                 (play 0 :secret-cave)
+                 (choose [:estate :estate :copper])
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand      (repeat 5 copper)
+                                :play-area [secret-cave]
+                                :deck      [copper]
+                                :discard   [estate estate copper]
+                                :actions   1
+                                :coins     3
+                                :buys      1
+                                :phase     :action}]}))
+      (is (= (-> {:players [{:hand    [secret-cave estate]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :secret-cave)
+                 (choose [:estate :copper]))
+             {:players [{:play-area [secret-cave]
+                         :deck      [copper]
+                         :discard   [estate copper]
+                         :actions   1}]}))
+      (is (= (-> {:players [{:hand    [secret-cave]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :secret-cave)
+                 (choose [:copper]))
+             {:players [{:play-area [secret-cave]
+                         :deck      [copper]
+                         :discard   [copper]
+                         :actions   1}]}))))
+  (let [magic-lamp (assoc magic-lamp :id 0)]
+    (testing "Magic Lamp"
+      (let [wish (assoc wish :id 1)]
+        (is (= (-> {:players [{:hand  [magic-lamp]
+                               :coins 0}]}
+                   (play 0 :magic-lamp))
+               {:players [{:play-area [magic-lamp]
+                           :coins     1}]}))
+        (is (= (-> {:extra-cards [{:card wish :pile-size 12}]
+                    :players     [{:hand      [magic-lamp]
+                                   :play-area [secret-cave gold silver copper]
+                                   :coins     6}]}
+                   (play 0 :magic-lamp))
+               {:extra-cards [{:card wish :pile-size 12}]
+                :players     [{:play-area [secret-cave gold silver copper magic-lamp]
+                               :coins     7}]}))
+        (is (= (-> {:extra-cards [{:card wish :pile-size 12}]
+                    :players     [{:hand      [magic-lamp]
+                                   :play-area [secret-cave shepherd gold silver copper]
+                                   :coins     6}]}
+                   (play 0 :magic-lamp))
+               {:extra-cards [{:card wish :pile-size 9}]
+                :players     [{:play-area [secret-cave shepherd gold silver copper]
+                               :discard   [wish wish wish]
+                               :coins     7}]
+                :trash       [magic-lamp]}))
+        (is (= (-> {:extra-cards [{:card wish :pile-size 12}]
+                    :players     [{:hand      [magic-lamp]
+                                   :play-area [secret-cave shepherd shepherd gold silver copper]
+                                   :coins     6}]}
+                   (play 0 :magic-lamp))
+               {:extra-cards [{:card wish :pile-size 12}]
+                :players     [{:play-area [secret-cave shepherd shepherd gold silver copper magic-lamp]
+                               :coins     7}]}))))))
+
 (deftest shepherd-test
   (let [shepherd (assoc shepherd :id 0)]
     (testing "Shepherd"
@@ -581,7 +695,8 @@
                          :deck           [copper]
                          :discard        [estate estate]
                          :revealed-cards {:discard 2}
-                         :actions        1}]}))
+                         :actions        1}]})))
+    (testing "Pasture"
       (is (= (-> {:players [{:hand  [pasture]
                              :coins 0}]}
                  (play 0 :pasture))
@@ -624,3 +739,34 @@
                            :actions 0
                            :buys    2}]
                 :trash   [tragic-hero]}))))))
+
+(deftest wish-test
+  (testing "Wish"
+    (let [wish (assoc wish :id 0)]
+      (is (= (-> {:supply      (base/supply 2 8)
+                  :extra-cards [{:card wish :pile-size 11}]
+                  :players     [{:hand    [wish]
+                                 :actions 1}]}
+                 (play 0 :wish))
+             {:supply       (base/supply 2 8)
+              :extra-cards  [{:card wish :pile-size 12}]
+              :players      [{:actions 1}]
+              :effect-stack [{:text      "Gain a card to your hand costing up to $6."
+                              :player-no 0
+                              :card-id   0
+                              :choice    :gain-to-hand
+                              :source    :supply
+                              :options   [:curse :estate :duchy :copper :silver :gold]
+                              :min       1
+                              :max       1}]}))
+      (let [gold (assoc gold :id 1)]
+        (is (= (-> {:supply      [{:card gold :pile-size 30}]
+                    :extra-cards [{:card wish :pile-size 11}]
+                    :players     [{:hand    [wish]
+                                   :actions 1}]}
+                   (play 0 :wish)
+                   (choose :gold))
+               {:supply      [{:card gold :pile-size 29}]
+                :extra-cards [{:card wish :pile-size 12}]
+                :players     [{:hand    [gold]
+                               :actions 1}]}))))))
