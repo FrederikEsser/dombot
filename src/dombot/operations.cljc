@@ -430,11 +430,13 @@
         (update-in [:players player-no :coins] - cost)
         (update-in [:players player-no :buys] - 1)
         (update-in [:projects project-name :participants] (comp vec conj) {:player-no player-no})
-        (cond-> trigger (update-in [:players player-no :triggers] concat [(merge {:name     project-name
+        (push-effect-stack {:player-no player-no
+                            :effects   (concat [[:set-phase {:phase :buy}]]
+                                               (when trigger
+                                                 [[:add-trigger {:trigger (merge {:name     project-name
                                                                                   :duration :game}
-                                                                                 trigger)])
-                on-buy (push-effect-stack {:player-no player-no
-                                           :effects   on-buy}))
+                                                                                 trigger)}]])
+                                               on-buy)})
         check-stack)))
 
 (defn do-shuffle

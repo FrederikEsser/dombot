@@ -294,14 +294,14 @@
                        :triggers [(get-project-trigger horn)]}]})))
 
 (deftest cargo-ship-test
-  (let [cargo-ship (assoc cargo-ship :id 1)
-        cargo-ship-2 (assoc cargo-ship :id 2)
-        border-guard (assoc border-guard :id 3)
+  (let [cargo-ship     (assoc cargo-ship :id 1)
+        cargo-ship-2   (assoc cargo-ship :id 2)
+        border-guard   (assoc border-guard :id 3)
         border-guard-4 (assoc border-guard :id 4)
-        gold (assoc gold :id 5)
-        inventor (assoc inventor :id 6)
-        improve (assoc improve :id 7)
-        throne-room (assoc throne-room :id 8)]
+        gold           (assoc gold :id 5)
+        inventor       (assoc inventor :id 6)
+        improve        (assoc improve :id 7)
+        throne-room    (assoc throne-room :id 8)]
     (testing "Cargo Ship"
       (is (= (-> {:players [{:hand    [cargo-ship]
                              :actions 1
@@ -857,7 +857,7 @@
               :trash   [estate]})))))
 
 (deftest improve-test
-  (let [improve (assoc improve :id 1)
+  (let [improve  (assoc improve :id 1)
         research (assoc research :id 2)]
     (testing "Improve"
       (is (= (-> {:players [{:hand    [improve]
@@ -962,7 +962,7 @@
 
 (deftest inventor-test
   (let [silver (assoc silver :id 1)
-        duchy (assoc duchy :id 2)]
+        duchy  (assoc duchy :id 2)]
     (testing "Inventor"
       (is (= (-> {:supply  (base/supply 2 8)
                   :players [{:hand    [inventor]
@@ -1286,7 +1286,7 @@
                               (spend-villager 0))))))
 
 (deftest research-test
-  (let [research (assoc research :id 1)
+  (let [research    (assoc research :id 1)
         throne-room (assoc throne-room :id 2)]
     (testing "research"
       (is (= (-> {:players [{:hand    [research estate copper copper]
@@ -1360,16 +1360,16 @@
               :trash          [estate silver]})))))
 
 (deftest scepter-test
-  (let [patron (assoc patron :id 0)
-        swindler (assoc swindler :id 1)
-        curse (assoc curse :id 2)
-        peddler (assoc peddler :id 3)
-        villain (assoc villain :id 4)
-        priest (assoc priest :id 5)
+  (let [patron         (assoc patron :id 0)
+        swindler       (assoc swindler :id 1)
+        curse          (assoc curse :id 2)
+        peddler        (assoc peddler :id 3)
+        villain        (assoc villain :id 4)
+        priest         (assoc priest :id 5)
         priest-trigger (assoc priest-trigger :card-id 5)
-        merchant-ship (assoc merchant-ship :id 6)
-        research (assoc research :id 7)
-        scepter (assoc scepter :id 8)]
+        merchant-ship  (assoc merchant-ship :id 6)
+        research       (assoc research :id 7)
+        scepter        (assoc scepter :id 8)]
     (testing "Scepter"
       (is (= (-> {:players [{:hand  [scepter]
                              :coins 0}]}
@@ -1576,8 +1576,8 @@
                        :actions   0}]}))))
 
 (deftest sculptor-test
-  (let [estate (assoc estate :id 1)
-        silver (assoc silver :id 2)
+  (let [estate     (assoc estate :id 1)
+        silver     (assoc silver :id 2)
         watchtower (assoc watchtower :id 3)]
     (testing "Sculptor"
       (is (= (-> {:supply  [{:card estate :pile-size 8}
@@ -2001,17 +2001,19 @@
                        :revealed-cards {:hand 5}}]}))))
 
 (deftest academy-test
-  (let [silver (assoc silver :id 0)
+  (let [silver           (assoc silver :id 0)
         mountain-village (assoc mountain-village :id 1)
-        experiment (assoc experiment :id 2)]
+        experiment       (assoc experiment :id 2)]
     (testing "Academy"
       (is (= (-> {:projects {:academy academy}
                   :players  [{:coins 5
-                              :buys  1}]}
+                              :buys  1
+                              :phase :pay}]}
                  (buy-project 0 :academy))
              {:projects {:academy (assoc academy :participants [{:player-no 0}])}
               :players  [{:coins    0
                           :buys     0
+                          :phase    :buy
                           :triggers [(get-project-trigger academy)]}]}))
       (is (= (-> {:supply  [{:card mountain-village :pile-size 10}]
                   :players [{:coins    4
@@ -2071,7 +2073,7 @@
 
 (deftest capitalism-test
   (let [patron (assoc patron :id 0)
-        mint (assoc mint :id 1)]
+        mint   (assoc mint :id 1)]
     (testing "Capitalism"
       (testing "get-types"
         (is (= (-> {:projects {:capitalism capitalism}
@@ -2323,7 +2325,7 @@
             :trash          [copper]}))))
 
 (deftest citadel-test
-  (let [patron (assoc patron :id 0)
+  (let [patron      (assoc patron :id 0)
         throne-room (assoc throne-room :id 1)
         flag-bearer (assoc flag-bearer :id 2)]
     (testing "Citadel"
@@ -2511,7 +2513,7 @@
                               :phase   :out-of-turn}]}))))
 
 (deftest guildhall-test
-  (let [silver (assoc silver :id 0)
+  (let [silver           (assoc silver :id 0)
         mountain-village (assoc mountain-village :id 1)]
     (testing "Guildhall"
       (is (= (-> {:supply  [{:card mountain-village :pile-size 10}]
@@ -2537,7 +2539,7 @@
                          :triggers [(get-project-trigger guildhall)]}]})))))
 
 (deftest innovation-test
-  (let [silver (assoc silver :id 0)
+  (let [silver           (assoc silver :id 0)
         mountain-village (assoc mountain-village :id 1)]
     (testing "Innovation"
       (is (= (-> {:current-player      0
@@ -2671,7 +2673,7 @@
                               :triggers       [(get-project-trigger piazza)]}]}))))
 
 (deftest road-network-test
-  (let [duchy (assoc duchy :id 0)
+  (let [duchy  (assoc duchy :id 0)
         silver (assoc silver :id 1)]
     (testing "Road Network"
       (is (= (-> {:projects {:road-network road-network}
