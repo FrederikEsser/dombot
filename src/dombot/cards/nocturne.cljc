@@ -287,6 +287,89 @@
                 :cost    2
                 :effects [[::monastery-trash]]})
 
+(defn- zombie-apprentice-trash [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:trash-from-hand {:card-name card-name}]
+                                                    [:draw 3]
+                                                    [:give-actions 1]]})))
+
+(def zombie-apprentice {:name    :zombie-apprentice
+                        :set     :nocturne
+                        :types   #{:action :zombie}
+                        :cost    3
+                        :effects [[:give-choice {:text    "You may trash and Action card from your hand for +3 Cards and +1 Action."
+                                                 :choice  ::zombie-apprentice-trash
+                                                 :options [:player :hand {:type :action}]
+                                                 :max     1}]]})
+
+(defn- zombie-mason-trash [game {:keys [player-no]}]
+  (let [{[card]  :deck
+         discard :discard} (get-in game [:players player-no])
+        cost (ut/get-cost game card)]
+    (assert (or card (empty? discard)) "Discard was not properly shuffled for Zombie Mason.")
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:trash-from-topdeck]
+                                                 [:give-choice {:text    (str "You may gain a card costing up to $" (inc cost) ".")
+                                                                :choice  :gain
+                                                                :options [:supply {:max-cost (inc cost)}]
+                                                                :max     1}]]}))))
+
+(def zombie-mason {:name    :zombie-mason
+                   :set     :nocturne
+                   :types   #{:action :zombie}
+                   :cost    3
+                   :effects [[:peek-deck 1]
+                             [::zombie-mason-trash]]})
+
+(def zombie-spy {:name    :zombie-spy
+                 :set     :nocturne
+                 :types   #{:action :zombie}
+                 :cost    3
+                 :effects [[:draw 1]
+                           [:give-actions 1]
+                           [:look-at 1]
+                           [:give-choice {:text    "You may discard the top card of your deck."
+                                          :choice  :discard-from-look-at
+                                          :options [:player :look-at]}]
+                           [:topdeck-all-look-at]]})
+
+(effects/register {::zombie-apprentice-trash zombie-apprentice-trash
+                   ::zombie-mason-trash      zombie-mason-trash})
+
+(defn- necromancer-play-action [game {:keys [player-no card-name]}]
+  (if card-name
+    (let [{:keys [card]} (ut/get-card-idx game [:trash] {:name card-name
+                                                         :face #{nil :up}})]
+      (-> game
+          (ut/update-in-vec [:trash] {:name card-name :face #{nil :up}} assoc :face :down)
+          (push-effect-stack {:player-no player-no
+                              :effects   [[:card-effect {:card card}]]})))
+    game))
+
+(defn- necromancer-setup [game _]
+  (assoc game :trash (->> [zombie-apprentice
+                           zombie-mason
+                           zombie-spy]
+                          (map ut/give-id!))))
+
+(effects/register {::necromancer-play-action necromancer-play-action
+                   ::necromancer-setup       necromancer-setup})
+
+(def necromancer {:name    :necromancer
+                  :set     :nocturne
+                  :types   #{:action}
+                  :cost    4
+                  :effects [[:give-choice {:text    "Play a face up, non-Duration Action card from the Trash."
+                                           :choice  ::necromancer-play-action
+                                           :options [:trash {:face     :up
+                                                             :not-type :duration
+                                                             :type     :action}]
+                                           :min     1
+                                           :max     1}]]
+                  :setup   [[::necromancer-setup]]})
+
 (def night-watchman {:name    :night-watchman
                      :set     :nocturne
                      :types   #{:night}
@@ -476,6 +559,7 @@
                     ghost-town
                     guardian
                     monastery
+                    necromancer
                     night-watchman
                     pooka
                     raider
@@ -485,7 +569,5 @@
 
 ; Doable without Boons / Hexes:
 ; Faithful Hound - On discard other than Clean Up
-; Cemetery
 ; Exorcist - viewing extra cards
-; Necromancer - play from trash
 ; Crypt - Duration lasting several turns

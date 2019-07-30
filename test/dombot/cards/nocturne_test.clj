@@ -5,6 +5,7 @@
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
             [dombot.cards.dominion :refer [witch]]
+            [dombot.cards.intrigue :refer [lurker]]
             [dombot.cards.nocturne :as nocturne :refer :all]))
 
 (defn fixture [f]
@@ -538,6 +539,190 @@
                          :gained-cards [{:name :silver :types #{:treasure} :cost 3}
                                         {:name :silver :types #{:treasure} :cost 3}]}]
               :trash   [copper copper]})))))
+
+(deftest necromancer-test
+  (testing "Necromancer"
+    (is (= (-> {:players [{:hand    [necromancer]
+                           :actions 1
+                           :coins   0}]
+                :trash   [conclave]}
+               (play 0 :necromancer)
+               (choose :conclave))
+           {:players [{:play-area [necromancer]
+                       :actions   0
+                       :coins     2}]
+            :trash   [(assoc conclave :face :down)]}))
+    (is (= (-> {:players [{:hand    [necromancer]
+                           :actions 1
+                           :coins   0}]
+                :trash   [conclave conclave]}
+               (play 0 :necromancer)
+               (choose :conclave))
+           {:players [{:play-area [necromancer]
+                       :actions   0
+                       :coins     2}]
+            :trash   [(assoc conclave :face :down) conclave]}))
+    (is (= (-> {:players [{:hand    [necromancer]
+                           :actions 1
+                           :coins   2}]
+                :trash   [(assoc conclave :face :down) conclave]}
+               (play 0 :necromancer)
+               (choose :conclave))
+           {:players [{:play-area [necromancer]
+                       :actions   0
+                       :coins     4}]
+            :trash   [(assoc conclave :face :down) (assoc conclave :face :down)]}))
+    (is (= (-> {:players [{:hand    [necromancer]
+                           :actions 1
+                           :coins   4}]
+                :trash   [(assoc conclave :face :down) (assoc conclave :face :down)]}
+               (play 0 :necromancer))
+           {:players [{:play-area [necromancer]
+                       :actions   0
+                       :coins     4}]
+            :trash   [(assoc conclave :face :down) (assoc conclave :face :down)]}))
+    (is (= (-> {:players [{:hand    [necromancer]
+                           :actions 1}]
+                :trash   [secret-cave]}
+               (play 0 :necromancer))
+           {:players [{:play-area [necromancer]
+                       :actions   0}]
+            :trash   [secret-cave]}))
+    (is (= (-> {:players [{:hand    [necromancer]
+                           :actions 1}]
+                :trash   [(assoc zombie-apprentice :face :down)]}
+               (clean-up {:player-no 0}))
+           {:players [{:hand    [necromancer]
+                       :actions 0
+                       :coins   0
+                       :buys    0
+                       :phase   :out-of-turn}]
+            :trash   [zombie-apprentice]}))
+    (let [zombie-apprentice (assoc zombie-apprentice :id 1)]
+      (is (= (-> {:players [{:hand    [lurker]
+                             :actions 1}]
+                  :trash   [(assoc zombie-apprentice :face :down)]}
+                 (play 0 :lurker)
+                 (choose :gain)
+                 (choose :zombie-apprentice))
+             {:players [{:play-area [lurker]
+                         :discard   [zombie-apprentice]
+                         :actions   1}]
+              :trash   []})))
+    (testing "Zombie Apprentice"
+      (is (= (-> {:players [{:hand    [necromancer]
+                             :actions 1}]
+                  :trash   [zombie-apprentice]}
+                 (play 0 :necromancer)
+                 (choose :zombie-apprentice))
+             {:players [{:play-area [necromancer]
+                         :actions   0}]
+              :trash   [(assoc zombie-apprentice :face :down)]}))
+      (is (= (-> {:players [{:hand    [necromancer conclave]
+                             :actions 1}]
+                  :trash   [zombie-apprentice]}
+                 (play 0 :necromancer)
+                 (choose :zombie-apprentice)
+                 (choose nil))
+             {:players [{:hand      [conclave]
+                         :play-area [necromancer]
+                         :actions   0}]
+              :trash   [(assoc zombie-apprentice :face :down)]}))
+      (is (= (-> {:players [{:hand    [necromancer conclave]
+                             :deck    [copper copper copper copper]
+                             :actions 1}]
+                  :trash   [zombie-apprentice]}
+                 (play 0 :necromancer)
+                 (choose :zombie-apprentice)
+                 (choose :conclave))
+             {:players [{:hand      [copper copper copper]
+                         :play-area [necromancer]
+                         :deck      [copper]
+                         :actions   1}]
+              :trash   [(assoc zombie-apprentice :face :down)
+                        conclave]})))
+    (testing "Zombie Mason"
+      (is (= (-> {:players [{:hand    [necromancer]
+                             :actions 1}]
+                  :trash   [zombie-mason]}
+                 (play 0 :necromancer)
+                 (choose :zombie-mason))
+             {:players [{:play-area [necromancer]
+                         :actions   0}]
+              :trash   [(assoc zombie-mason :face :down)]}))
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand    [necromancer]
+                             :deck    [copper]
+                             :actions 1}]
+                  :trash   [zombie-mason]}
+                 (play 0 :necromancer)
+                 (choose :zombie-mason)
+                 (choose nil))
+             {:supply  (base/supply 2 8)
+              :players [{:play-area [necromancer]
+                         :actions   0}]
+              :trash   [(assoc zombie-mason :face :down)
+                        copper]}))
+      (let [silver (assoc silver :id 1)]
+        (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                    :players [{:hand    [necromancer]
+                               :discard [estate estate]
+                               :actions 1}]
+                    :trash   [zombie-mason]}
+                   (play 0 :necromancer)
+                   (choose :zombie-mason)
+                   (choose :silver))
+               {:supply  [{:card silver :pile-size 39}]
+                :players [{:play-area [necromancer]
+                           :deck      [estate]
+                           :discard   [silver]
+                           :actions   0}]
+                :trash   [(assoc zombie-mason :face :down)
+                          estate]}))))
+    (testing "Zombie Spy"
+      (is (= (-> {:players [{:hand    [necromancer]
+                             :actions 1}]
+                  :trash   [zombie-spy]}
+                 (play 0 :necromancer)
+                 (choose :zombie-spy))
+             {:players [{:play-area [necromancer]
+                         :actions   1}]
+              :trash   [(assoc zombie-spy :face :down)]}))
+      (is (= (-> {:players [{:hand    [necromancer]
+                             :deck    [copper]
+                             :actions 1}]
+                  :trash   [zombie-spy]}
+                 (play 0 :necromancer)
+                 (choose :zombie-spy))
+             {:players [{:hand      [copper]
+                         :play-area [necromancer]
+                         :actions   1}]
+              :trash   [(assoc zombie-spy :face :down)]}))
+      (is (= (-> {:players [{:hand    [necromancer]
+                             :deck    [copper silver estate]
+                             :actions 1}]
+                  :trash   [zombie-spy]}
+                 (play 0 :necromancer)
+                 (choose :zombie-spy)
+                 (choose nil))
+             {:players [{:hand      [copper]
+                         :play-area [necromancer]
+                         :deck      [silver estate]
+                         :actions   1}]
+              :trash   [(assoc zombie-spy :face :down)]}))
+      (is (= (-> {:players [{:hand    [necromancer]
+                             :deck    [copper estate silver]
+                             :actions 1}]
+                  :trash   [zombie-spy]}
+                 (play 0 :necromancer)
+                 (choose :zombie-spy)
+                 (choose :estate))
+             {:players [{:hand      [copper]
+                         :play-area [necromancer]
+                         :deck      [silver]
+                         :discard   [estate]
+                         :actions   1}]
+              :trash   [(assoc zombie-spy :face :down)]})))))
 
 (deftest night-watchman-test
   (testing "Night Watchman"

@@ -1460,7 +1460,17 @@
                             :effect    [:give-choice {:text    "Put the rest back on top in any order."
                                                       :choice  :topdeck-from-look-at
                                                       :options [:player :look-at]
-                                                      :min     2}]}]}))))
+                                                      :min     2}]}]}))
+    (is (= (-> {:players [{:deck    [market copper]
+                           :hand    [sentry]
+                           :actions 1}]}
+               (play 0 :sentry)
+               (choose nil)
+               (choose :copper))
+           {:players [{:hand      [market]
+                       :play-area [sentry]
+                       :discard   [copper]
+                       :actions   1}]}))))
 
 (deftest smithy-test
   (testing "Smithy"
@@ -1481,7 +1491,7 @@
 
 (deftest throne-room-test
   (let [throne-room (assoc throne-room :id 0)
-        curse (assoc curse :id 1)]
+        curse       (assoc curse :id 1)]
     (testing "Throne Room"
       (is (= (play {:players [{:deck    [copper copper copper]
                                :hand    [throne-room market copper]
@@ -1728,7 +1738,7 @@
                        :buys      2}]}))))
 (deftest workshop-test
   (let [silver (assoc silver :id 1)
-        duchy (assoc duchy :id 2)]
+        duchy  (assoc duchy :id 2)]
     (testing "Workshop"
       (is (= (play {:supply  (base/supply 2 8)
                     :players [{:hand    [workshop copper]

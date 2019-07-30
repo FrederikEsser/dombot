@@ -113,6 +113,18 @@
         (update-in path vec)
         (as-> game (apply update-in game (concat path [idx]) f args)))))
 
+(defn update-if-present
+  "Update if a value is already present, otherwise do nothing (don't insert nil)."
+  [m k f & args]
+  (cond->> m
+           (get m k) (#(apply update % k f args))))
+
+(defn update-in-if-present
+  "Update if a value is already present, otherwise do nothing (don't insert nil)."
+  [m ks f & args]
+  (cond->> m
+           (get-in m ks) (#(apply update-in % ks f args))))
+
 (defn plus [n m]
   (if n (+ n m) m))
 
@@ -240,9 +252,11 @@
 
 (effects/register-options {:overpay options-from-overbuy})
 
-(defn options-from-trash [{:keys [trash] :as game} player-no card-id {:keys [type]}]
+(defn options-from-trash [{:keys [trash] :as game} player-no card-id {:keys [type not-type face]}]
   (cond->> trash
            type (filter (comp type (partial get-types game)))
+           not-type (remove (comp not-type (partial get-types game)))
+           (= :up face) (remove (comp #{:down} :face))
            :always (map :name)))
 
 (effects/register-options {:trash options-from-trash})

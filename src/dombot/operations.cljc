@@ -360,7 +360,7 @@
                            {:gained-card-id (:id card)})]
       (cond-> game
               card (-> (remove-card from-path idx)
-                       (add-card [:players player-no :gaining] :top card)
+                       (add-card [:players player-no :gaining] :top (dissoc card :face))
                        (push-effect-stack (merge args {:effects [[:on-gain gain-args]
                                                                  [:finalize-gain gain-args]]}))
                        check-stack)))
@@ -876,7 +876,8 @@
         (update-in [:players player-no] clean-up-player)
         (set-approx-discard-size player-no)
         (update :players (partial mapv (fn [player] (dissoc player :revealed-cards))))
-        (dissoc :cost-reductions :unbuyable-cards))))
+        (dissoc :cost-reductions :unbuyable-cards)
+        (ut/update-if-present :trash (partial map #(dissoc % :face))))))
 
 (defn at-clean-up-choice [game {:keys [player-no card-name]}]
   (let [{{:keys [at-clean-up id]} :card} (ut/get-card-idx game [:players player-no :play-area] {:name card-name})]
