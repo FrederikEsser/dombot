@@ -101,11 +101,16 @@
         first)))
 
 (defn get-card-idx [game path criteria]
-  (let [result (->> (get-in game path)
-                    (keep-indexed (fn [idx card]
-                                    (when ((match criteria) card) {:idx idx :card card})))
-                    first)]
-    result))
+  (->> (get-in game path)
+       (keep-indexed (fn [idx card]
+                       (when ((match criteria) card) {:idx idx :card card})))
+       first))
+
+(defn get-trigger-idx [game path criteria]
+  (->> (get-in game path)
+       (keep-indexed (fn [idx trigger]
+                       (when ((match criteria) trigger) {:idx idx :trigger trigger})))
+       first))
 
 (defn update-in-vec [game path criteria f & args]
   (let [{:keys [idx]} (get-card-idx game path criteria)]

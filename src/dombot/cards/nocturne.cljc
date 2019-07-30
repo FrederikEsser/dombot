@@ -1,6 +1,6 @@
 (ns dombot.cards.nocturne
   (:require [dombot.operations :refer [push-effect-stack give-choice move-card attack-other-players gain state-maintenance]]
-            [dombot.cards.common :refer [reveal-hand]]
+            [dombot.cards.common :refer [reveal-hand add-trigger]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -209,6 +209,64 @@
                :cost    4
                :effects [[:give-coins 2]
                          [::conclave-give-choice]]})
+
+(defn crypt-put-treasure-into-hand [game {:keys [player-no card-id choice]}]
+  (let [{:keys [trigger]} (ut/get-trigger-idx game [:players player-no :triggers] {:card-id card-id})
+        {:keys [idx card]} (ut/get-card-idx trigger [:set-aside] {:name choice})]
+    (-> game
+        (ut/update-in-vec [:players player-no :triggers] {:card-id card-id}
+                          update :set-aside ut/vec-remove idx)
+        (update-in [:players player-no :hand] concat [card]))))
+
+(defn- crypt-pick-treasure [game {:keys [player-no card-id set-aside]}]
+  (give-choice game {:player-no player-no
+                     :card-id   card-id
+                     :text      "Put a Treasure from your Crypt into your hand."
+                     :choice    ::crypt-put-treasure-into-hand
+                     :options   (concat [:special]
+                                        (->> set-aside
+                                             (map (fn [{:keys [name]}]
+                                                    {:option name :text (ut/format-name name)}))
+                                             set))
+                     :min       1
+                     :max       1}))
+
+
+
+(def crypt-trigger {:trigger           :at-start-turn
+                    :duration          :until-empty
+                    :simultaneous-mode :auto
+                    :effects           [[::crypt-pick-treasure]]})
+
+(defn- crypt-set-aside [game {:keys [player-no card-id]}]
+  (let [set-aside (get-in game [:players player-no :crypt-set-aside])]
+    (-> game
+        (update-in [:players player-no] dissoc :crypt-set-aside)
+        (add-trigger {:player-no player-no
+                      :card-id   card-id
+                      :trigger   (merge crypt-trigger {:set-aside set-aside})}))))
+
+(defn crypt-choose-treasures [game {:keys [player-no card-id card-names]}]
+  (cond-> game
+          (not-empty card-names) (push-effect-stack {:player-no player-no
+                                                     :card-id   card-id
+                                                     :effects   [[:move-cards {:card-names card-names
+                                                                               :from       :play-area
+                                                                               :to         :crypt-set-aside}]
+                                                                 [::crypt-set-aside]]})))
+
+(effects/register {::crypt-put-treasure-into-hand crypt-put-treasure-into-hand
+                   ::crypt-pick-treasure          crypt-pick-treasure
+                   ::crypt-set-aside              crypt-set-aside
+                   ::crypt-choose-treasures       crypt-choose-treasures})
+
+(def crypt {:name    :crypt
+            :set     :nocturne
+            :types   #{:night :duration}
+            :cost    5
+            :effects [[:give-choice {:text    "Set aside any number of Treasures you have in play."
+                                     :choice  ::crypt-choose-treasures
+                                     :options [:player :play-area {:type :treasure}]}]]})
 
 (def den-of-sin {:name    :den-of-sin
                  :set     :nocturne
@@ -554,6 +612,7 @@
                     changeling
                     cobbler
                     conclave
+                    crypt
                     den-of-sin
                     devils-workshop
                     ghost-town
@@ -570,4 +629,3 @@
 ; Doable without Boons / Hexes:
 ; Faithful Hound - On discard other than Clean Up
 ; Exorcist - viewing extra cards
-; Crypt - Duration lasting several turns

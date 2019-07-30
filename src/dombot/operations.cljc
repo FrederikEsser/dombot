@@ -207,6 +207,9 @@
   (-> game
       (update-in [:players player-no :triggers] (partial remove (every-pred (ut/match {:trigger trigger})
                                                                             (comp #{:once :once-turn} :duration))))
+      (update-in [:players player-no :triggers] (partial remove (every-pred (ut/match {:trigger trigger})
+                                                                            (comp #{:until-empty} :duration)
+                                                                            (comp empty? :set-aside))))
       (update-in [:players player-no] ut/dissoc-if-empty :triggers)))
 
 (defn- apply-triggers
@@ -709,7 +712,9 @@
         (cond-> (not-empty options) (push-effect-stack {:player-no player-no
                                                         :card-id   card-id
                                                         :choice    choice})
-                swiftable (choose (take min options)))
+                swiftable (choose (->> options
+                                       (take min)
+                                       (map (fn [o] (or (:option o) o))))))
         (do-reveal-discard player-no reveal-discard?)
         check-stack)))
 

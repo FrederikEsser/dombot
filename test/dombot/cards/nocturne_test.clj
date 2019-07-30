@@ -265,6 +265,105 @@
                        :actions   0
                        :coins     2}]}))))
 
+(deftest crypt-test
+  (let [crypt (assoc crypt :id 0)]
+    (testing "Crypt"
+      (is (= (-> {:players [{:hand [crypt]}]}
+                 (play 0 :crypt))
+             {:players [{:play-area [crypt]}]}))
+      (is (= (-> {:players [{:hand      [crypt]
+                             :play-area [conclave guardian]}]}
+                 (play 0 :crypt))
+             {:players [{:play-area [conclave guardian crypt]}]}))
+      (is (= (-> {:players [{:hand      [crypt]
+                             :play-area [copper]}]}
+                 (play 0 :crypt)
+                 (choose nil))
+             {:players [{:play-area [copper crypt]}]}))
+      (is (= (-> {:players [{:hand      [crypt]
+                             :play-area [gold]}]}
+                 (play 0 :crypt)
+                 (choose :gold))
+             {:players [{:play-area [crypt]
+                         :triggers  [(merge crypt-trigger
+                                            {:card-id   0
+                                             :set-aside [gold]})]}]}))
+      (is (= (-> {:players [{:hand      [crypt]
+                             :play-area [copper silver gold]}]}
+                 (play 0 :crypt)
+                 (choose [:copper :silver :gold]))
+             {:players [{:play-area [crypt]
+                         :triggers  [(merge crypt-trigger
+                                            {:card-id   0
+                                             :set-aside [copper silver gold]})]}]}))
+      (is (= (-> {:players [{:play-area [crypt]
+                             :deck      (repeat 6 copper)
+                             :triggers  [(merge crypt-trigger
+                                                {:card-id   0
+                                                 :set-aside [copper silver gold]})]}]}
+                 (end-turn 0)
+                 (choose :gold))
+             {:current-player 0
+              :players        [{:hand      [copper copper copper copper copper gold]
+                                :play-area [crypt]
+                                :deck      [copper]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action
+                                :triggers  [(merge crypt-trigger
+                                                   {:card-id   0
+                                                    :set-aside [copper silver]})]}]}))
+      (is (= (-> {:players [{:play-area [crypt]
+                             :deck      (repeat 6 copper)
+                             :triggers  [(merge crypt-trigger
+                                                {:card-id   0
+                                                 :set-aside [copper silver]})]}]}
+                 (end-turn 0)
+                 (choose :copper))
+             {:current-player 0
+              :players        [{:hand      [copper copper copper copper copper copper]
+                                :play-area [crypt]
+                                :deck      [copper]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action
+                                :triggers  [(merge crypt-trigger
+                                                   {:card-id   0
+                                                    :set-aside [silver]})]}]}))
+      (is (= (-> {:players [{:play-area [crypt]
+                             :deck      (repeat 6 copper)
+                             :triggers  [(merge crypt-trigger
+                                                {:card-id   0
+                                                 :set-aside [silver]})]}]}
+                 (end-turn 0)
+                 (choose :silver))
+             {:current-player 0
+              :players        [{:hand      [copper copper copper copper copper silver]
+                                :play-area [crypt]
+                                :deck      [copper]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]}))
+      (is (= (-> {:mode    :swift
+                  :players [{:play-area [crypt]
+                             :deck      (repeat 6 copper)
+                             :triggers  [(merge crypt-trigger
+                                                {:card-id   0
+                                                 :set-aside [silver]})]}]}
+                 (end-turn 0))
+             {:mode    :swift
+              :current-player 0
+              :players        [{:hand      [copper copper copper copper copper silver]
+                                :play-area [crypt]
+                                :deck      [copper]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]})))))
+
 (deftest den-of-sin-test
   (let [den-of-sin (assoc den-of-sin :id 0)]
     (testing "Den of Sin"
