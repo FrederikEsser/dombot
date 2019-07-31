@@ -5,7 +5,9 @@
 
 ; todo:
 
-; fix Changeling to ask unless some on-gain/on-buy effect is active.
+; test swiftable for multi/mixed choices
+; remove set-aside cards from triggers when activated - trigger-ids
+; fix Changeling to ask unless some on-gain/on-buy effect is active on either card.
 ; make "any order" option for all topdecking (Sentry, Navigator, Rabble, Doctor, Seer, Night Watchman)
 ; make extra-cards (Prizes) visible for Wishing Well
 ; view card images
@@ -13,7 +15,9 @@
 ; save / load game
 ; show set-aside cards where their carrier has disappeared (Cargo Ship / Improve)
 ; UI button for jumping to next phase
+; show face-down cards in trash (Necromancer)
 ; handle simultaneous duration effects at-start-turn
+; handle simultaneous effects for all reactions
 ; fix Throne Room / Improve
 ; fix Improve / double Border Guard bug
 ; fix Torturer / Masquerade (empty hand)

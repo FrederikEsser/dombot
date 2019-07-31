@@ -538,7 +538,7 @@
 (deftest duke-test
   (testing "Duke"
     (doseq [duchies (range 9)
-            dukes (range 9)]
+            dukes   (range 9)]
       (is (= (calc-victory-points {:deck (concat (repeat duchies duchy)
                                                  (repeat dukes duke))})
              (+ (* dukes duchies)
@@ -555,10 +555,10 @@
            2))))
 
 (deftest ironworks-test
-  (let [estate (assoc estate :id 1)
-        silver (assoc silver :id 2)
+  (let [estate    (assoc estate :id 1)
+        silver    (assoc silver :id 2)
         courtyard (assoc courtyard :id 3)
-        mill (assoc mill :id 4)]
+        mill      (assoc mill :id 4)]
     (testing "Ironworks"
       (is (= (-> {:supply  [{:card estate :pile-size 8}
                             {:card duchy :pile-size 8}
@@ -1308,8 +1308,8 @@
 
 (deftest replace-test
   (let [silver (assoc silver :id 1)
-        duchy (assoc duchy :id 2)
-        curse (assoc curse :id 3)
+        duchy  (assoc duchy :id 2)
+        curse  (assoc curse :id 3)
         nobles (assoc nobles :id 4)]
     (testing "Replace"
       (is (= (play {:players [{:hand    [replace copper estate]
@@ -1645,7 +1645,7 @@
                        :coins     2}
                       {}]
             :trash   [mining-village]}))
-    (let [curse (assoc curse :id 1)
+    (let [curse  (assoc curse :id 1)
           copper (assoc copper :id 2)]
       (is (= (-> {:supply  [{:card curse :pile-size 10}]
                   :players [{:hand    [swindler]
@@ -2033,4 +2033,13 @@
                             :source    :supply
                             :options   [:wishing-well]
                             :min       1
-                            :max       1}]}))))
+                            :max       1}]})))
+  (is (= (-> {:supply  (base/supply 2 8)
+              :players [{:hand    [wishing-well]
+                         :deck    [silver]
+                         :actions 1}]}
+             (play 0 :wishing-well))
+         {:supply  (base/supply 2 8)
+          :players [{:hand      [silver]
+                     :play-area [wishing-well]
+                     :actions   1}]})))

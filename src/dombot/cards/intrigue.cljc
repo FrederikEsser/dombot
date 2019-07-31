@@ -567,16 +567,28 @@
                         [:upgrade-give-choice]]})
 
 (defn wishing-well-guess [game {:keys [player-no card-name]}]
-  (let [{[{:keys [name]}] :deck
-         discard          :discard} (get-in game [:players player-no])]
+  (let [{[{:keys [name] :as card}] :deck
+         discard                   :discard} (get-in game [:players player-no])]
     (assert (or name (empty? discard)) "Discard was not properly shuffled for Wishing Well.")
-    (push-effect-stack game {:player-no player-no
-                             :effects   [[:reveal-from-deck 1]
-                                         (if (= card-name name)
-                                           [:put-revealed-into-hand {:card-name card-name}]
-                                           [:topdeck-from-revealed {:card-name name}])]})))
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:reveal-from-deck 1]
+                                                 (if (= card-name name)
+                                                   [:put-revealed-into-hand {:card-name card-name}]
+                                                   [:topdeck-from-revealed {:card-name name}])]}))))
 
-(effects/register {::wishing-well-guess wishing-well-guess})
+(defn wishing-well-make-wish [game {:keys [player-no]}]
+  (let [[card] (get-in game [:players player-no :deck])]
+    (cond-> game
+            card (give-choice {:player-no player-no
+                               :text      "Name a card."
+                               :choice    ::wishing-well-guess
+                               :options   [:supply {:all true}]
+                               :min       1
+                               :max       1}))))
+
+(effects/register {::wishing-well-guess     wishing-well-guess
+                   ::wishing-well-make-wish wishing-well-make-wish})
 
 (def wishing-well {:name    :wishing-well
                    :set     :intrigue
@@ -585,11 +597,7 @@
                    :effects [[:draw 1]
                              [:give-actions 1]
                              [:peek-deck 1]
-                             [:give-choice {:text    "Name a card."
-                                            :choice  ::wishing-well-guess
-                                            :options [:supply {:all true}]
-                                            :min     1
-                                            :max     1}]]})
+                             [::wishing-well-make-wish]]})
 
 (def kingdom-cards [baron
                     bridge
