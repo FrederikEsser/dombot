@@ -245,6 +245,14 @@
 
 (effects/register-options {:supply options-from-supply})
 
+(defn options-from-extra-cards [{:keys [extra-cards] :as game} player-no card-id & [{:keys [max-cost cost type names all]}]]
+  (cond->> extra-cards
+           max-cost (filter (comp (partial >= max-cost) (partial get-cost game) :card))
+           type (filter (comp type (partial get-types game) :card))
+           :always (map (comp :name :card))))
+
+(effects/register-options {:extra-cards options-from-extra-cards})
+
 (defn options-from-deck-position [game player-no & args]
   (let [deck (get-in game [:players player-no :deck])]
     (-> deck count inc range)))

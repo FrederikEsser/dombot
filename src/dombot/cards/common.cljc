@@ -273,6 +273,16 @@
 
 (effects/register {:topdeck-from-revealed topdeck-from-revealed})
 
+(defn topdeck-all-revealed [game {:keys [player-no]}]
+  (let [revealed (get-in game [:players player-no :revealed])]
+    (move-cards game {:player-no   player-no
+                      :card-names  (map :name revealed)
+                      :from        :revealed
+                      :to          :deck
+                      :to-position :top})))
+
+(effects/register {:topdeck-all-revealed topdeck-all-revealed})
+
 (defn trash-from-hand [game {:keys [card-name card-names] :as args}]
   (cond-> game
           (or card-name card-names) (move-cards (merge args {:from :hand

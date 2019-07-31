@@ -203,6 +203,11 @@
                     :disabled disabled
                     :on-click (fn [] (swap! state assoc :game (cmd/undo) :selection []))}
            "Undo"])]
+       (when (-> @state :game :extra-cards)
+         [:div "Extra cards"
+          [:table
+           [:tbody
+            (view-row (-> @state :game :extra-cards))]]])
        [:div "Supply"
         (let [supply     (-> (:game @state) :supply)
               properity? (-> (:game @state) :prosperity?)

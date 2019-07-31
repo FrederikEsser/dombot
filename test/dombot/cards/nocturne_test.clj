@@ -354,7 +354,7 @@
                                                 {:card-id   0
                                                  :set-aside [silver]})]}]}
                  (end-turn 0))
-             {:mode    :swift
+             {:mode           :swift
               :current-player 0
               :players        [{:hand      [copper copper copper copper copper silver]
                                 :play-area [crypt]
@@ -425,6 +425,63 @@
                                        :gained-cards [{:name :gold :cost 6 :types #{:treasure}}
                                                       {:name :silver :cost 3 :types #{:treasure}}
                                                       {:name :imp :cost 2 :types #{:action :spirit}}]}]}))))))
+
+(deftest exorcist-test
+  (let [exorcist    (assoc exorcist :id 0)
+        will-o-wisp (assoc will-o-wisp :id 1)
+        imp         (assoc imp :id 2)
+        ghost       (assoc ghost :id 3)]
+    (testing "Exorcist"
+      (is (= (-> {:players [{:hand [exorcist]}]}
+                 (play 0 :exorcist))
+             {:players [{:play-area [exorcist]}]}))
+      (is (= (-> {:extra-cards (vals spirit-piles)
+                  :players     [{:hand [exorcist copper]}]}
+                 (play 0 :exorcist)
+                 (choose :copper))
+             {:extra-cards (vals spirit-piles)
+              :players     [{:play-area [exorcist]}]
+              :trash       [copper]}))
+      (is (= (-> {:extra-cards [{:card will-o-wisp :pile-size 12}]
+                  :players     [{:hand [exorcist estate]}]}
+                 (play 0 :exorcist)
+                 (choose :estate)
+                 (choose :will-o'-wisp))
+             {:extra-cards [{:card will-o-wisp :pile-size 11}]
+              :players     [{:play-area [exorcist]
+                             :discard   [will-o-wisp]}]
+              :trash       [estate]}))
+      (is (thrown-with-msg? AssertionError #"Choose error: Imp is not a valid option."
+                            (-> {:extra-cards (vals spirit-piles)
+                                 :players     [{:hand [exorcist estate]}]}
+                                (play 0 :exorcist)
+                                (choose :estate)
+                                (choose :imp))))
+      (is (thrown-with-msg? AssertionError #"Choose error: Wish is not a valid option."
+                            (-> {:extra-cards [{:card wish :pile-size 12}
+                                               {:card will-o-wisp :pile-size 12}]
+                                 :players     [{:hand [exorcist estate]}]}
+                                (play 0 :exorcist)
+                                (choose :estate)
+                                (choose :wish))))
+      (is (= (-> {:extra-cards [{:card imp :pile-size 13}]
+                  :players     [{:hand [exorcist silver]}]}
+                 (play 0 :exorcist)
+                 (choose :silver)
+                 (choose :imp))
+             {:extra-cards [{:card imp :pile-size 12}]
+              :players     [{:play-area [exorcist]
+                             :discard   [imp]}]
+              :trash       [silver]}))
+      (is (= (-> {:extra-cards [{:card ghost :pile-size 6}]
+                  :players     [{:hand [exorcist duchy]}]}
+                 (play 0 :exorcist)
+                 (choose :duchy)
+                 (choose :ghost))
+             {:extra-cards [{:card ghost :pile-size 5}]
+              :players     [{:play-area [exorcist]
+                             :discard   [ghost]}]
+              :trash       [duchy]})))))
 
 (deftest ghost-test
   (let [ghost (assoc ghost :id 0)]
@@ -1143,6 +1200,36 @@
                            :actions 0
                            :buys    2}]
                 :trash   [tragic-hero]}))))))
+
+(deftest will-o-wisp-test
+  (testing "Will-o'-Wisp"
+    (let [will-o-wisp (assoc will-o-wisp :id 0)
+          estate      (assoc estate :id 1)]
+      (is (= (-> {:players [{:hand    [will-o-wisp]
+                             :deck    [silver silver copper]
+                             :actions 1}]}
+                 (play 0 :will-o'-wisp))
+             {:players [{:hand           [silver]
+                         :play-area      [will-o-wisp]
+                         :deck           [silver copper]
+                         :revealed-cards {:deck 1}
+                         :actions        1}]}))
+      (is (= (-> {:players [{:hand    [will-o-wisp]
+                             :deck    [silver estate copper]
+                             :actions 1}]}
+                 (play 0 :will-o'-wisp))
+             {:players [{:hand           [silver estate]
+                         :play-area      [will-o-wisp]
+                         :deck           [copper]
+                         :revealed-cards {:hand 1}
+                         :actions        1}]}))
+      (is (= (-> {:players [{:hand    [will-o-wisp]
+                             :deck    [silver]
+                             :actions 1}]}
+                 (play 0 :will-o'-wisp))
+             {:players [{:hand      [silver]
+                         :play-area [will-o-wisp]
+                         :actions   1}]})))))
 
 (deftest wish-test
   (testing "Wish"

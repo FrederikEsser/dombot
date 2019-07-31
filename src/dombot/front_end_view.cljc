@@ -48,6 +48,21 @@
                        (when bane?
                          {:bane? true})))))))
 
+(defn view-extra-cards [{extra-cards :extra-cards
+                         choice      :choice
+                         :as         game}]
+  (->> extra-cards
+       (map (fn [{{:keys [name] :as card} :card
+                  number-of-cards         :pile-size}]
+              (let [types (ut/get-types game card)
+                    cost  (ut/get-cost game card)]
+                (merge {:name            name
+                        :name-ui         (ut/format-name name)
+                        :types           types
+                        :cost            cost
+                        :number-of-cards number-of-cards}
+                       (choice-interaction name :extra-cards choice)))))))
+
 (defn view-projects [{projects                             :projects
                       {:keys [coins buys player-no phase]} :player
                       choice                               :choice
@@ -299,7 +314,7 @@
                                      (<= 3 potential-coins)) "You can buy a card."
                                 (some (comp :night (partial ut/get-types game)) hand) "You can play Night cards.")}))
 
-(defn view-game [{:keys [supply artifacts projects trade-route-mat players trash effect-stack current-player] :as game}]
+(defn view-game [{:keys [supply extra-cards artifacts projects trade-route-mat players effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
     (->> (merge
@@ -320,6 +335,9 @@
             :trash       {:compact (view-trash (merge game {:choice choice}) :compact)
                           :full    (view-trash (merge game {:choice choice}) :full)}
             :commands    (view-commands game)}
+           (when extra-cards
+             {:extra-cards (view-extra-cards (merge game {:player (assoc player :player-no current-player)
+                                                          :choice choice}))})
            (when trade-route-mat
              {:trade-route-mat trade-route-mat})
            (when projects

@@ -77,6 +77,31 @@
           :effects [[:draw 2]
                     [::imp-give-choice]]})
 
+(defn- will-o-wish-put-revealed-into-hand [game {:keys [player-no]}]
+  (let [{:keys [id] :as card} (last (get-in game [:players player-no :revealed]))
+        cost (ut/get-cost game card)]
+    (cond-> game
+            (and card (<= cost 2)) (move-card {:player-no    player-no
+                                               :move-card-id id
+                                               :from         :revealed
+                                               :to           :hand}))))
+
+(effects/register {::will-o-wish-put-revealed-into-hand will-o-wish-put-revealed-into-hand})
+
+(def will-o-wisp {:name    :will-o'-wisp
+                  :set     :nocturne
+                  :types   #{:action :spirit}
+                  :cost    0
+                  :effects [[:draw 1]
+                            [:give-actions 1]
+                            [:reveal-from-deck 1]
+                            [::will-o-wish-put-revealed-into-hand]
+                            [:topdeck-all-revealed]]})
+
+(def spirit-piles {:ghost        {:card ghost :pile-size 6}
+                   :imp          {:card imp :pile-size 13}
+                   :will-o'-wisp {:card will-o-wisp :pile-size 12}})
+
 (def wish {:name    :wish
            :set     :nocturne
            :types   #{:action}
@@ -88,6 +113,8 @@
                                     :options [:supply {:max-cost 6}]
                                     :min     1
                                     :max     1}]]})
+
+(def wish-pile {:card wish :pile-size 12})
 
 (defn- haunted-mirror-ghost [game {:keys [player-no card-name]}]
   (cond-> game
@@ -118,19 +145,20 @@
                                                :options [:player :hand]
                                                :max     4}]]
                :heirloom       haunted-mirror
-               :setup          [[:setup-extra-cards {:extra-cards [{:card ghost :pile-size 6}]}]]})
+               :setup          [[:setup-extra-cards {:extra-cards [(:ghost spirit-piles)]}]]})
 
-(defn- changeling-exchange [game {:keys [player-no card-name gained-card-id]}]
+(defn- changeling-exchange [game {:keys [player-no card-name gained-card-id from]
+                                  :or   {from :supply} :as args}]
   (cond-> game
           card-name (push-effect-stack {:player-no player-no
                                         :effects   [[:move-card {:move-card-id gained-card-id
                                                                  :from         :gaining
-                                                                 :to           :supply}]
+                                                                 :to           from}]
                                                     [:move-card {:card-name :changeling
                                                                  :from      :supply
                                                                  :to        :discard}]]})))
 
-(defn- changeling-on-gain [game {:keys [player-no gained-card-id bought]}]
+(defn- changeling-on-gain [game {:keys [player-no gained-card-id bought] :as args}]
   (let [{{:keys [name on-gain on-buy] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
         cost         (ut/get-cost game card)
         {:keys [pile-size]} (ut/get-pile-idx game :changeling)
@@ -144,7 +172,7 @@
                  (pos? pile-size)
                  (not ignore-gain?)) (give-choice {:player-no player-no
                                                    :text      (str "You may exchange the gained " (ut/format-name name) " for a Changeling.")
-                                                   :choice    [::changeling-exchange {:gained-card-id gained-card-id}]
+                                                   :choice    [::changeling-exchange args]
                                                    :options   [:player :gaining {:id gained-card-id}]
                                                    :max       1}))))
 
@@ -300,7 +328,33 @@
                       :types   #{:night}
                       :cost    4
                       :effects [[::devils-workshop-gain]]
-                      :setup   [[:setup-extra-cards {:extra-cards [{:card imp :pile-size 13}]}]]})
+                      :setup   [[:setup-extra-cards {:extra-cards [(:imp spirit-piles)]}]]})
+
+(defn- exorcist-trash [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        cost (ut/get-cost game card)]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:trash-from-hand {:card-name card-name}]
+                                                 [:give-choice {:text    (str "Gain a Spirit costing up to $" (dec cost) ".")
+                                                                :choice  [:gain {:from :extra-cards}]
+                                                                :options [:extra-cards {:type     :spirit
+                                                                                        :max-cost (dec cost)}]
+                                                                :min     1
+                                                                :max     1}]]}))))
+
+(effects/register {::exorcist-trash exorcist-trash})
+
+(def exorcist {:name    :exorcist
+               :set     :nocturne
+               :types   #{:night}
+               :cost    4
+               :effects [[:give-choice {:text    "Trash a card from your hand to gain a cheaper Spirit."
+                                        :choice  ::exorcist-trash
+                                        :options [:player :hand]
+                                        :min     1
+                                        :max     1}]]
+               :setup   [[:setup-extra-cards {:extra-cards (vals spirit-piles)}]]})
 
 (def ghost-town {:name    :ghost-town
                  :set     :nocturne
@@ -552,7 +606,7 @@
                                             :max       3
                                             :optional? true}]]
                   :heirloom magic-lamp
-                  :setup    [[:setup-extra-cards {:extra-cards [{:card wish :pile-size 12}]}]]})
+                  :setup    [[:setup-extra-cards {:extra-cards [wish-pile]}]]})
 
 (defn pasture-victory-points [cards]
   (->> cards
@@ -615,6 +669,7 @@
                     crypt
                     den-of-sin
                     devils-workshop
+                    exorcist
                     ghost-town
                     guardian
                     monastery
