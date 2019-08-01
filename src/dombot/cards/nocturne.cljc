@@ -156,32 +156,35 @@
                :heirloom       haunted-mirror
                :setup          [[:setup-extra-cards {:extra-cards [(:ghost spirit-piles)]}]]})
 
-(defn- changeling-exchange [game {:keys [player-no card-name gained-card-id from]
-                                  :or   {from :supply} :as args}]
+(defn- changeling-exchange [game {:keys [player-no card-name gained-card-id pile-location]}]
   (cond-> game
           card-name (push-effect-stack {:player-no player-no
                                         :effects   [[:move-card {:move-card-id gained-card-id
                                                                  :from         :gaining
-                                                                 :to           from}]
+                                                                 :to           pile-location}]
                                                     [:move-card {:card-name :changeling
                                                                  :from      :supply
                                                                  :to        :discard}]]})))
 
-(defn- changeling-on-gain [game {:keys [player-no gained-card-id bought] :as args}]
+(defn- changeling-on-gain [{:keys [supply extra-cards] :as game} {:keys [player-no gained-card-id bought] :as args}]
   (let [{{:keys [name on-gain on-buy] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
-        cost         (ut/get-cost game card)
+        pile-location (cond (some (comp #{name} :name :card) supply) :supply
+                            (some (comp #{name} :name :card) extra-cards) :extra-cards)
+        cost          (ut/get-cost game card)
         {:keys [pile-size]} (ut/get-pile-idx game :changeling)
-        ignore-gain? (or (= :changeling name)
-                         (and bought
-                              (nil? on-gain)
-                              (nil? on-buy)))]
+        ignore-gain?  (or (= :changeling name)
+                          (and bought
+                               (nil? on-gain)
+                               (nil? on-buy)))]
     (cond-> game
             (and card
+                 pile-location
                  (<= 3 cost)
                  (pos? pile-size)
                  (not ignore-gain?)) (give-choice {:player-no player-no
                                                    :text      (str "You may exchange the gained " (ut/format-name name) " for a Changeling.")
-                                                   :choice    [::changeling-exchange args]
+                                                   :choice    [::changeling-exchange {:gained-card-id gained-card-id
+                                                                                      :pile-location  pile-location}]
                                                    :options   [:player :gaining {:id gained-card-id}]
                                                    :max       1}))))
 

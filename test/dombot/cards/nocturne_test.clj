@@ -184,14 +184,46 @@
         (is (= (-> {:extra-cards [{:card ghost :pile-size 6}]
                     :supply      [{:card changeling :pile-size 10}]
                     :players     [{:triggers [changeling-trigger]}]}
-                   (gain {:player-no 0
-                          :card-name :ghost
-                          :from      :extra-cards})
+                   (gain {:player-no 0 :card-name :ghost :from :extra-cards})
                    (choose :ghost))
                {:extra-cards [{:card ghost :pile-size 6}]
                 :supply      [{:card changeling :pile-size 9}]
                 :players     [{:discard  [changeling]
-                               :triggers [changeling-trigger]}]}))))))
+                               :triggers [changeling-trigger]}]})))
+      (testing "gaining from Trash"
+        (let [conclave (assoc conclave :id 1)]
+          (is (= (-> {:supply  [{:card changeling :pile-size 10}
+                                {:card conclave :pile-size 9}]
+                      :players [{:triggers [changeling-trigger]}]
+                      :trash   [conclave]}
+                     (gain {:player-no 0 :card-name :conclave :from :trash})
+                     (choose :conclave))
+                 {:supply  [{:card changeling :pile-size 9}
+                            {:card conclave :pile-size 10}]
+                  :players [{:discard  [changeling]
+                             :triggers [changeling-trigger]}]
+                  :trash   []})))
+        (let [ghost (assoc ghost :id 1)]
+          (is (= (-> {:extra-cards [{:card ghost :pile-size 5}]
+                      :supply      [{:card changeling :pile-size 10}]
+                      :players     [{:triggers [changeling-trigger]}]
+                      :trash       [ghost]}
+                     (gain {:player-no 0 :card-name :ghost :from :trash})
+                     (choose :ghost))
+                 {:extra-cards [{:card ghost :pile-size 6}]
+                  :supply      [{:card changeling :pile-size 9}]
+                  :players     [{:discard  [changeling]
+                                 :triggers [changeling-trigger]}]
+                  :trash       []})))
+        (let [zombie-apprentice (assoc zombie-apprentice :id 1)]
+          (is (= (-> {:supply  [{:card changeling :pile-size 10}]
+                      :players [{:triggers [changeling-trigger]}]
+                      :trash   [zombie-apprentice]}
+                     (gain {:player-no 0 :card-name :zombie-apprentice :from :trash}))
+                 {:supply  [{:card changeling :pile-size 10}]
+                  :players [{:discard  [zombie-apprentice]
+                             :triggers [changeling-trigger]}]
+                  :trash   []})))))))
 
 (deftest cobbler-test
   (let [cobbler (assoc cobbler :id 0)]

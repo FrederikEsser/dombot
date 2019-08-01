@@ -8,7 +8,6 @@
 ; test swiftable for multi/mixed choices
 ; remove set-aside cards from triggers when activated - trigger-ids
 ; fix Changeling to ask unless some on-gain/on-buy effect is active on either card.
-; gaining Zombies from trash with Changeling in game
 ; make "any order" option for all topdecking (Sentry, Navigator, Rabble, Doctor, Seer, Night Watchman)
 ; make extra-cards (Prizes) and unique cards (Zombies & Heirlooms) visible for Wishing Well
 ; view card images
