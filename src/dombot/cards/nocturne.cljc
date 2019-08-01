@@ -77,7 +77,7 @@
           :effects [[:draw 2]
                     [::imp-give-choice]]})
 
-(defn- will-o-wish-put-revealed-into-hand [game {:keys [player-no]}]
+(defn- will-o-wisp-put-revealed-into-hand [game {:keys [player-no]}]
   (let [{:keys [id] :as card} (last (get-in game [:players player-no :revealed]))
         cost (ut/get-cost game card)]
     (cond-> game
@@ -86,7 +86,7 @@
                                                :from         :revealed
                                                :to           :hand}))))
 
-(effects/register {::will-o-wish-put-revealed-into-hand will-o-wish-put-revealed-into-hand})
+(effects/register {::will-o-wisp-put-revealed-into-hand will-o-wisp-put-revealed-into-hand})
 
 (def will-o-wisp {:name    :will-o'-wisp
                   :set     :nocturne
@@ -95,24 +95,33 @@
                   :effects [[:draw 1]
                             [:give-actions 1]
                             [:reveal-from-deck 1]
-                            [::will-o-wish-put-revealed-into-hand]
+                            [::will-o-wisp-put-revealed-into-hand]
                             [:topdeck-all-revealed]]})
 
 (def spirit-piles {:ghost        {:card ghost :pile-size 6}
                    :imp          {:card imp :pile-size 13}
                    :will-o'-wisp {:card will-o-wisp :pile-size 12}})
 
+(defn- grant-wish [game {:keys [player-no card-id]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :card-id   card-id
+                                     :effects   [[:return-this-to-supply {:area :extra-cards}]
+                                                 [:give-choice {:text    "Gain a card to your hand costing up to $6."
+                                                                :choice  :gain-to-hand
+                                                                :options [:supply {:max-cost 6}]
+                                                                :min     1
+                                                                :max     1}]]}))))
+
+(effects/register {::grant-wish grant-wish})
+
 (def wish {:name    :wish
            :set     :nocturne
            :types   #{:action}
            :cost    0
            :effects [[:give-actions 1]
-                     [:return-this-to-supply {:area :extra-cards}]
-                     [:give-choice {:text    "Gain a card to your hand costing up to $6."
-                                    :choice  :gain-to-hand
-                                    :options [:supply {:max-cost 6}]
-                                    :min     1
-                                    :max     1}]]})
+                     [::grant-wish]]})
 
 (def wish-pile {:card wish :pile-size 12})
 

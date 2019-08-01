@@ -4,7 +4,7 @@
             [dombot.operations :refer :all]
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
-            [dombot.cards.dominion :refer [witch]]
+            [dombot.cards.dominion :refer [throne-room witch]]
             [dombot.cards.intrigue :refer [lurker]]
             [dombot.cards.nocturne :as nocturne :refer :all]))
 
@@ -1260,4 +1260,16 @@
                {:supply      [{:card gold :pile-size 29}]
                 :extra-cards [{:card wish :pile-size 12}]
                 :players     [{:hand    [gold]
-                               :actions 1}]}))))))
+                               :actions 1}]}))
+        (is (= (-> {:supply      [{:card gold :pile-size 30}]
+                    :extra-cards [{:card wish :pile-size 11}]
+                    :players     [{:hand    [throne-room wish]
+                                   :actions 1}]}
+                   (play 0 :throne-room)
+                   (choose :wish)
+                   (choose :gold))
+               {:supply      [{:card gold :pile-size 29}]
+                :extra-cards [{:card wish :pile-size 12}]
+                :players     [{:hand      [gold]
+                               :play-area [throne-room]
+                               :actions   2}]}))))))
