@@ -179,7 +179,19 @@
                                       {:card conclave :pile-size 10}]
                 :players             [{:discard      [changeling]
                                        :gained-cards [{:name :conclave :cost 4 :types #{:action}}]
-                                       :triggers     [changeling-trigger]}]}))))))
+                                       :triggers     [changeling-trigger]}]})))
+      (let [ghost (assoc ghost :id 1)]
+        (is (= (-> {:extra-cards [{:card ghost :pile-size 6}]
+                    :supply      [{:card changeling :pile-size 10}]
+                    :players     [{:triggers [changeling-trigger]}]}
+                   (gain {:player-no 0
+                          :card-name :ghost
+                          :from      :extra-cards})
+                   (choose :ghost))
+               {:extra-cards [{:card ghost :pile-size 6}]
+                :supply      [{:card changeling :pile-size 9}]
+                :players     [{:discard  [changeling]
+                               :triggers [changeling-trigger]}]}))))))
 
 (deftest cobbler-test
   (let [cobbler (assoc cobbler :id 0)]
