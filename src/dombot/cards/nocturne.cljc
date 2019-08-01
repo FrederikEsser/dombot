@@ -1,6 +1,6 @@
 (ns dombot.cards.nocturne
-  (:require [dombot.operations :refer [push-effect-stack give-choice move-card attack-other-players gain state-maintenance]]
-            [dombot.cards.common :refer [reveal-hand add-trigger]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice move-card attack-other-players gain state-maintenance check-stack]]
+            [dombot.cards.common :refer [reveal-hand add-trigger setup-extra-cards]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -124,6 +124,66 @@
                      [::grant-wish]]})
 
 (def wish-pile {:card wish :pile-size 12})
+
+(def flame-gift {:name    :the-flame's-gift
+                 :type    :boon
+                 :effects [[:give-choice {:text    "You may trash a card from your hand."
+                                          :choice  :trash-from-hand
+                                          :options [:player :hand]
+                                          :max     1}]]})
+
+(def mountain-gift {:name    :the-mountain's-gift
+                    :type    :boon
+                    :effects [[:gain {:card-name :silver}]]})
+
+(def sea-gift {:name    :the-sea's-gift
+               :type    :boon
+               :effects [[:draw 1]]})
+
+(def swamp-gift {:name    :the-swamp's-gift
+                 :type    :boon
+                 :effects [[:gain {:card-name :will-o'-wisp :from :extra-cards}]]})
+
+(def boons [flame-gift
+            mountain-gift
+            sea-gift
+            swamp-gift])
+
+(defn- setup-boons [game args]
+  (cond-> game
+          (not (:boons game)) (-> (assoc :boons {:deck (shuffle boons)})
+                                  (setup-extra-cards {:extra-cards [(:will-o'-wisp spirit-piles)]}))))
+
+(defn- maybe-shuffle [{:keys [deck discard] :as piles}]
+  (if (empty? deck)
+    {:deck (shuffle discard)}
+    piles))
+
+(defn- return-boon [game {:keys [boon]}]
+  (update-in game [:boons :discard] concat [boon]))
+
+(defn receive-boon [{:keys [boons] :as game} {:keys [player-no]}]
+  (let [{[{:keys [effects] :as boon} & deck] :deck
+         discard                             :discard} (maybe-shuffle boons)]
+    (-> game
+        (assoc :boons (merge (when deck {:deck deck})
+                             (when discard {:discard discard})))
+        (push-effect-stack {:player-no player-no
+                            :effects   (concat effects
+                                               [[:return-boon {:boon boon}]])})
+        check-stack)))
+
+(effects/register {:setup-boons  setup-boons
+                   :return-boon  return-boon
+                   :receive-boon receive-boon})
+
+(def bard {:name    :bard
+           :set     :nocturne
+           :types   #{:action :fate}
+           :cost    4
+           :effects [[:give-coins 2]
+                     [:receive-boon]]
+           :setup   [[:setup-boons]]})
 
 (defn- haunted-mirror-ghost [game {:keys [player-no card-name]}]
   (cond-> game
@@ -674,7 +734,8 @@
                             [:give-buys 1]
                             [::tragic-hero-demise]]})
 
-(def kingdom-cards [cemetery
+(def kingdom-cards [bard
+                    cemetery
                     changeling
                     cobbler
                     conclave

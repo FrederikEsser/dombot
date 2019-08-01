@@ -5,11 +5,12 @@
 
 ; todo:
 
+; fix Ghost on Durations - and Ghost stays in play
 ; test swiftable for multi/mixed choices
 ; remove set-aside cards from triggers when activated - trigger-ids
 ; fix Changeling to ask unless some on-gain/on-buy effect is active on either card.
 ; make "any order" option for all topdecking (Sentry, Navigator, Rabble, Doctor, Seer, Night Watchman)
-; make extra-cards (Prizes) and unique cards (Zombies & Heirlooms) visible for Wishing Well
+; make extra-cards (Prizes) and unique cards (Zombies & Heirlooms) visible for Wishing Well / Doctor / Journeyman
 ; view card images
 ; store commands in history
 ; save / load game

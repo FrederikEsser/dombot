@@ -13,6 +13,66 @@
 
 (use-fixtures :each fixture)
 
+(deftest boons-test
+  (testing "Boons"
+    (is (= (-> {:boons   {:deck [flame-gift]}
+                :players [{:hand [estate]}]}
+               (receive-boon {:player-no 0})
+               (choose nil))
+           {:boons   {:discard [flame-gift]}
+            :players [{:hand [estate]}]}))
+    (is (= (-> {:boons   {:deck [flame-gift]}
+                :players [{:hand [estate]}]}
+               (receive-boon {:player-no 0})
+               (choose :estate))
+           {:boons   {:discard [flame-gift]}
+            :players [{}]
+            :trash   [estate]}))
+    (let [silver (assoc silver :id 1)]
+      (is (= (-> {:boons   {:deck [mountain-gift]}
+                  :supply  [{:card silver :pile-size 40}]
+                  :players [{}]}
+                 (receive-boon {:player-no 0}))
+             {:boons   {:discard [mountain-gift]}
+              :supply  [{:card silver :pile-size 39}]
+              :players [{:discard [silver]}]})))
+    (is (= (-> {:boons   {:deck [sea-gift]}
+                :players [{:deck [copper copper]}]}
+               (receive-boon {:player-no 0}))
+           {:boons   {:discard [sea-gift]}
+            :players [{:hand [copper]
+                       :deck [copper]}]}))
+    (is (= (-> {:boons   {:discard [sea-gift]}
+                :players [{:deck [copper copper]}]}
+               (receive-boon {:player-no 0}))
+           {:boons   {:discard [sea-gift]}
+            :players [{:hand [copper]
+                       :deck [copper]}]}))
+    (let [will-o-wisp (assoc will-o-wisp :id 1)]
+      (is (= (-> {:boons       {:deck [swamp-gift]}
+                  :extra-cards [{:card will-o-wisp :pile-size 12}]
+                  :players     [{}]}
+                 (receive-boon {:player-no 0}))
+             {:boons       {:discard [swamp-gift]}
+              :extra-cards [{:card will-o-wisp :pile-size 11}]
+              :players     [{:discard [will-o-wisp]}]})))))
+
+(deftest bard-test
+  (let [bard (assoc bard :id 0)]
+    (testing "Bard"
+      (is (= (-> {:boons   {:deck [sea-gift]}
+                  :players [{:hand    [bard]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :bard))
+             {:boons   {:discard [sea-gift]}
+              :players [{:hand      [copper]
+                         :play-area [bard]
+                         :deck      [copper]
+                         :actions   0
+                         :coins     2}]})))))
+
 (deftest cemetery-test
   (let [cemetery (assoc cemetery :id 0)]
     (testing "Cemetery"

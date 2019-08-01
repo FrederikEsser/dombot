@@ -6,7 +6,7 @@
 (s/def ::name-ui string?)
 
 (s/def ::type #{:curse :victory :treasure :action :attack :reaction :duration :artifact :prize :project
-                :night :heirloom :spirit :zombie})
+                :night :heirloom :spirit :zombie :fate})
 
 (s/def ::types (s/coll-of ::type :distinct true))
 
@@ -44,6 +44,8 @@
 (s/def ::cards (s/coll-of ::card))
 
 (s/def ::supply ::cards)
+
+(s/def ::extra-cards ::cards)
 
 (s/def ::participants (s/coll-of string?))
 
@@ -184,5 +186,6 @@
                                ::players
                                ::trash
                                ::commands]
-                      :opt-un [::projects
+                      :opt-un [::extra-cards
+                               ::projects
                                ::trade-route-mat]))
