@@ -6,7 +6,7 @@
 (s/def ::name-ui string?)
 
 (s/def ::type #{:curse :victory :treasure :action :attack :reaction :duration :artifact :prize :project
-                :night :heirloom :spirit :zombie :fate})
+                :night :heirloom :spirit :zombie :fate :boon})
 
 (s/def ::types (s/coll-of ::type :distinct true))
 
@@ -55,6 +55,19 @@
                                               ::cost]
                                      :opt-un [::interaction
                                               ::participants])))
+
+(s/def ::boon (s/keys :req-un [::name
+                               ::name-ui
+                               ::type]
+                      :opt-un [::interaction]))
+
+(s/def ::top-boon ::boon)
+
+(s/def ::boon-discard (s/coll-of ::boon))
+
+(s/def ::boons (s/keys :req-un [::boon-discard
+                                ::number-of-cards]
+                       :opt-un [::top-boon]))
 
 (s/def ::prosperity? boolean?)
 
@@ -188,4 +201,5 @@
                                ::commands]
                       :opt-un [::extra-cards
                                ::projects
+                               ::boons
                                ::trade-route-mat]))

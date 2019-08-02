@@ -90,6 +90,18 @@
                        {:interaction :buyable})
                      (choice-interaction name :mixed choice))))))
 
+(defn view-boons [{:keys [deck discard]}]
+  (let [boon-discard (->> discard
+                          reverse
+                          (map (fn [{:keys [name type]}]
+                                 (merge {:name    name
+                                         :name-ui (ut/format-name name)
+                                         :type    type}))))]
+    (merge {:number-of-cards (count deck)
+            :boon-discard    boon-discard}
+           (when (not-empty boon-discard)
+             {:top-boon (first boon-discard)}))))
+
 (defn- types-sort-order [types]
   (cond (:action types) 1
         (:treasure types) 2
@@ -314,7 +326,8 @@
                                      (<= 3 potential-coins)) "You can buy a card."
                                 (some (comp :night (partial ut/get-types game)) hand) "You can play Night cards.")}))
 
-(defn view-game [{:keys [supply extra-cards artifacts projects trade-route-mat players effect-stack current-player] :as game}]
+(defn view-game [{:keys [supply extra-cards artifacts projects boons
+                         trade-route-mat players effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
     (->> (merge
@@ -342,5 +355,7 @@
              {:trade-route-mat trade-route-mat})
            (when projects
              {:projects (view-projects (merge game {:player (assoc player :player-no current-player)
-                                                    :choice choice}))}))
+                                                    :choice choice}))})
+           (when boons
+             {:boons (view-boons boons)}))
          (s/assert* ::specs/game))))
