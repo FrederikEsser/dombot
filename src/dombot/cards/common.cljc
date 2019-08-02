@@ -113,9 +113,10 @@
 
 (effects/register {:play-from-discard play-from-discard})
 
-(defn discard-from-hand [game args]
-  (move-cards game (merge args {:from :hand
-                                :to   :discard})))
+(defn discard-from-hand [game {:keys [card-name card-names] :as args}]
+  (cond-> game
+          (or card-name card-names) (move-cards (merge args {:from :hand
+                                                             :to   :discard}))))
 
 (effects/register {:discard-from-hand discard-from-hand})
 

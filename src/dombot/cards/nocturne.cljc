@@ -125,12 +125,38 @@
 
 (def wish-pile {:card wish :pile-size 12})
 
+(defn- earth-gift-discard [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:discard-from-hand {:card-name card-name}]
+                                                    [:give-choice {:text    "Gain a card costing up to $4."
+                                                                   :choice  :gain
+                                                                   :options [:supply {:max-cost 4}]
+                                                                   :min     1
+                                                                   :max     1}]]})))
+
+(effects/register {::earth-gift-discard earth-gift-discard})
+
+(def earth-gift {:name    :the-earth's-gift
+                 :type    :boon
+                 :effects [[:give-choice {:text    "You may discard a Treasure to gain a card costing up to $4."
+                                          :choice  ::earth-gift-discard
+                                          :options [:player :hand {:type :treasure}]
+                                          :max     1}]]})
+
 (def flame-gift {:name    :the-flame's-gift
                  :type    :boon
                  :effects [[:give-choice {:text    "You may trash a card from your hand."
                                           :choice  :trash-from-hand
                                           :options [:player :hand]
                                           :max     1}]]})
+
+(def moon-gift {:name    :the-moon's-gift
+                :type    :boon
+                :effects [[:give-choice {:text    "You may put a card from your discard onto your deck."
+                                         :choice  :topdeck-from-discard
+                                         :options [:player :discard]
+                                         :max     1}]]})
 
 (def mountain-gift {:name    :the-mountain's-gift
                     :type    :boon
@@ -140,14 +166,56 @@
                :type    :boon
                :effects [[:draw 1]]})
 
+(defn- sky-gift-discard [game {:keys [player-no card-name card-names] :as args}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (concat [[:discard-from-hand args]]
+                                              (when (= 3 (count card-names))
+                                                [[:gain {:card-name :gold}]]))}))
+
+(effects/register {::sky-gift-discard sky-gift-discard})
+
+(def sky-gift {:name    :the-sky's-gift
+               :type    :boon
+               :effects [[:give-choice {:text      "You may discard 3 cards to gain a Gold."
+                                        :choice    ::sky-gift-discard
+                                        :options   [:player :hand]
+                                        :min       3
+                                        :max       3
+                                        :optional? true}]]})
+
+(def sun-gift {:name    :the-sun's-gift
+               :type    :boon
+               :effects [[:look-at 4]
+                         [:give-choice {:text    "Discard any number of the top 4 cards of your deck."
+                                        :choice  :discard-from-look-at
+                                        :options [:player :look-at]}]
+                         [:give-choice {:text    "Put the rest back on top in any order."
+                                        :choice  :topdeck-from-look-at
+                                        :options [:player :look-at]
+                                        :min     4}]]})
+
 (def swamp-gift {:name    :the-swamp's-gift
                  :type    :boon
                  :effects [[:gain {:card-name :will-o'-wisp :from :extra-cards}]]})
 
-(def boons [flame-gift
+(def wind-gift {:name    :the-wind's-gift
+                :type    :boon
+                :effects [[:draw 2]
+                          [:give-choice {:text    "Discard 2 card."
+                                         :choice  :discard-from-hand
+                                         :options [:player :hand]
+                                         :min     2
+                                         :max     2}]]})
+
+(def boons [earth-gift
+            flame-gift
+            moon-gift
             mountain-gift
             sea-gift
-            swamp-gift])
+            sky-gift
+            sun-gift
+            swamp-gift
+            wind-gift])
 
 (defn- setup-boons [game args]
   (cond-> game

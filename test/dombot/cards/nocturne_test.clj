@@ -15,47 +15,184 @@
 
 (deftest boons-test
   (testing "Boons"
-    (is (= (-> {:boons   {:deck [flame-gift]}
-                :players [{:hand [estate]}]}
-               (receive-boon {:player-no 0})
-               (choose nil))
-           {:boons   {:discard [flame-gift]}
-            :players [{:hand [estate]}]}))
-    (is (= (-> {:boons   {:deck [flame-gift]}
-                :players [{:hand [estate]}]}
-               (receive-boon {:player-no 0})
-               (choose :estate))
-           {:boons   {:discard [flame-gift]}
-            :players [{}]
-            :trash   [estate]}))
-    (let [silver (assoc silver :id 1)]
-      (is (= (-> {:boons   {:deck [mountain-gift]}
-                  :supply  [{:card silver :pile-size 40}]
+    (testing "The Earth's Gift"
+      (is (= (-> {:boons   {:deck [earth-gift]}
+                  :players [{:hand [estate]}]}
+                 (receive-boon {:player-no 0}))
+             {:boons   {:discard [earth-gift]}
+              :players [{:hand [estate]}]}))
+      (is (= (-> {:boons   {:deck [earth-gift]}
+                  :players [{:hand [estate copper]}]}
+                 (receive-boon {:player-no 0})
+                 (choose nil))
+             {:boons   {:discard [earth-gift]}
+              :players [{:hand [estate copper]}]}))
+      (let [bard (assoc bard :id 1)]
+        (is (= (-> {:boons   {:deck [earth-gift]}
+                    :supply  [{:card bard :pile-size 9}]
+                    :players [{:hand [estate copper]}]}
+                   (receive-boon {:player-no 0})
+                   (choose :copper)
+                   (choose :bard))
+               {:boons   {:discard [earth-gift]}
+                :supply  [{:card bard :pile-size 8}]
+                :players [{:hand    [estate]
+                           :discard [copper bard]}]}))))
+    (testing "The Flame's Gift"
+      (is (= (-> {:boons   {:deck [flame-gift]}
+                  :players [{:hand [estate]}]}
+                 (receive-boon {:player-no 0})
+                 (choose nil))
+             {:boons   {:discard [flame-gift]}
+              :players [{:hand [estate]}]}))
+      (is (= (-> {:boons   {:deck [flame-gift]}
+                  :players [{:hand [estate]}]}
+                 (receive-boon {:player-no 0})
+                 (choose :estate))
+             {:boons   {:discard [flame-gift]}
+              :players [{}]
+              :trash   [estate]})))
+    (testing "The Moon's Gift"
+      (is (= (-> {:boons   {:deck [moon-gift]}
                   :players [{}]}
                  (receive-boon {:player-no 0}))
-             {:boons   {:discard [mountain-gift]}
-              :supply  [{:card silver :pile-size 39}]
-              :players [{:discard [silver]}]})))
-    (is (= (-> {:boons   {:deck [sea-gift]}
-                :players [{:deck [copper copper]}]}
-               (receive-boon {:player-no 0}))
-           {:boons   {:discard [sea-gift]}
-            :players [{:hand [copper]
-                       :deck [copper]}]}))
-    (is (= (-> {:boons   {:discard [sea-gift]}
-                :players [{:deck [copper copper]}]}
-               (receive-boon {:player-no 0}))
-           {:boons   {:discard [sea-gift]}
-            :players [{:hand [copper]
-                       :deck [copper]}]}))
-    (let [will-o-wisp (assoc will-o-wisp :id 1)]
-      (is (= (-> {:boons       {:deck [swamp-gift]}
-                  :extra-cards [{:card will-o-wisp :pile-size 12}]
-                  :players     [{}]}
+             {:boons   {:discard [moon-gift]}
+              :players [{}]}))
+      (is (= (-> {:boons   {:deck [moon-gift]}
+                  :players [{:deck    [bard]
+                             :discard [estate gold copper]}]}
+                 (receive-boon {:player-no 0})
+                 (choose :gold))
+             {:boons   {:discard [moon-gift]}
+              :players [{:deck    [gold bard]
+                         :discard [estate copper]}]})))
+    (testing "The Mountain's Gift"
+      (let [silver (assoc silver :id 1)]
+        (is (= (-> {:boons   {:deck [mountain-gift]}
+                    :supply  [{:card silver :pile-size 40}]
+                    :players [{}]}
+                   (receive-boon {:player-no 0}))
+               {:boons   {:discard [mountain-gift]}
+                :supply  [{:card silver :pile-size 39}]
+                :players [{:discard [silver]}]}))))
+    (testing "The Sea's Gift"
+      (is (= (-> {:boons   {:deck [sea-gift]}
+                  :players [{:deck [copper copper]}]}
                  (receive-boon {:player-no 0}))
-             {:boons       {:discard [swamp-gift]}
-              :extra-cards [{:card will-o-wisp :pile-size 11}]
-              :players     [{:discard [will-o-wisp]}]})))))
+             {:boons   {:discard [sea-gift]}
+              :players [{:hand [copper]
+                         :deck [copper]}]}))
+      (is (= (-> {:boons   {:discard [sea-gift]}
+                  :players [{:deck [copper copper]}]}
+                 (receive-boon {:player-no 0}))
+             {:boons   {:discard [sea-gift]}
+              :players [{:hand [copper]
+                         :deck [copper]}]})))
+    (testing "The Sky's Gift"
+      (is (= (-> {:boons   {:deck [sky-gift]}
+                  :players [{}]}
+                 (receive-boon {:player-no 0}))
+             {:boons   {:discard [sky-gift]}
+              :players [{}]}))
+      (is (= (-> {:boons   {:deck [sky-gift]}
+                  :players [{:hand [copper]}]}
+                 (receive-boon {:player-no 0})
+                 (choose :copper))
+             {:boons   {:discard [sky-gift]}
+              :players [{:discard [copper]}]}))
+      (is (= (-> {:boons   {:deck [sky-gift]}
+                  :players [{:hand [copper]}]}
+                 (receive-boon {:player-no 0})
+                 (choose nil))
+             {:boons   {:discard [sky-gift]}
+              :players [{:hand [copper]}]}))
+      (is (= (-> {:boons   {:deck [sky-gift]}
+                  :players [{:hand [copper copper]}]}
+                 (receive-boon {:player-no 0})
+                 (choose [:copper :copper]))
+             {:boons   {:discard [sky-gift]}
+              :players [{:discard [copper copper]}]}))
+      (is (= (-> {:boons   {:deck [sky-gift]}
+                  :players [{:hand [copper copper copper]}]}
+                 (receive-boon {:player-no 0})
+                 (choose nil))
+             {:boons   {:discard [sky-gift]}
+              :players [{:hand [copper copper copper]}]}))
+      (let [gold (assoc gold :id 1)]
+        (is (= (-> {:boons   {:deck [sky-gift]}
+                    :supply  [{:card gold :pile-size 30}]
+                    :players [{:hand [copper copper copper]}]}
+                   (receive-boon {:player-no 0})
+                   (choose [:copper :copper :copper]))
+               {:boons   {:discard [sky-gift]}
+                :supply  [{:card gold :pile-size 29}]
+                :players [{:discard [copper copper copper gold]}]}))))
+    (testing "The Sun's Gift"
+      (is (= (-> {:boons   {:deck [sun-gift]}
+                  :players [{:deck [copper copper estate silver estate]}]}
+                 (receive-boon {:player-no 0})
+                 (choose nil)
+                 (choose [:copper :copper :estate :silver]))
+             {:boons   {:discard [sun-gift]}
+              :players [{:deck [silver estate copper copper estate]}]}))
+      (is (= (-> {:boons   {:deck [sun-gift]}
+                  :players [{:deck [copper copper estate silver estate]}]}
+                 (receive-boon {:player-no 0})
+                 (choose [:estate])
+                 (choose [:copper :copper :silver]))
+             {:boons   {:discard [sun-gift]}
+              :players [{:deck    [silver copper copper estate]
+                         :discard [estate]}]}))
+      (is (= (-> {:boons   {:deck [sun-gift]}
+                  :players [{:deck [copper copper estate silver estate]}]}
+                 (receive-boon {:player-no 0})
+                 (choose [:estate :copper :copper :silver]))
+             {:boons   {:discard [sun-gift]}
+              :players [{:deck    [estate]
+                         :discard [estate copper copper silver]}]})))
+    (testing "The Swamp's Gift"
+      (let [will-o-wisp (assoc will-o-wisp :id 1)]
+        (is (= (-> {:boons       {:deck [swamp-gift]}
+                    :extra-cards [{:card will-o-wisp :pile-size 12}]
+                    :players     [{}]}
+                   (receive-boon {:player-no 0}))
+               {:boons       {:discard [swamp-gift]}
+                :extra-cards [{:card will-o-wisp :pile-size 11}]
+                :players     [{:discard [will-o-wisp]}]}))))
+    (testing "The Wind's Gift"
+      (is (= (-> {:boons   {:deck [wind-gift]}
+                  :players [{}]}
+                 (receive-boon {:player-no 0}))
+             {:boons   {:discard [wind-gift]}
+              :players [{}]}))
+      (is (= (-> {:boons   {:deck [wind-gift]}
+                  :players [{:hand [copper]}]}
+                 (receive-boon {:player-no 0})
+                 (choose :copper))
+             {:boons   {:discard [wind-gift]}
+              :players [{:discard [copper]}]}))
+      (is (= (-> {:boons   {:deck [wind-gift]}
+                  :players [{:hand [copper copper copper]}]}
+                 (receive-boon {:player-no 0})
+                 (choose [:copper :copper]))
+             {:boons   {:discard [wind-gift]}
+              :players [{:hand    [copper]
+                         :discard [copper copper]}]}))
+      (is (= (-> {:boons   {:deck [wind-gift]}
+                  :players [{:hand [estate]
+                             :deck [copper]}]}
+                 (receive-boon {:player-no 0})
+                 (choose [:estate :copper]))
+             {:boons   {:discard [wind-gift]}
+              :players [{:discard [estate copper]}]}))
+      (is (= (-> {:boons   {:deck [wind-gift]}
+                  :players [{:hand [estate copper estate gold]
+                             :deck [copper silver]}]}
+                 (receive-boon {:player-no 0})
+                 (choose [:estate :estate]))
+             {:boons   {:discard [wind-gift]}
+              :players [{:hand    [copper gold copper silver]
+                         :discard [estate estate]}]})))))
 
 (deftest bard-test
   (let [bard (assoc bard :id 0)]
@@ -1178,6 +1315,15 @@
              {:players [{:play-area [secret-cave]
                          :deck      [copper]
                          :discard   [estate copper]
+                         :actions   1}]}))
+      (is (= (-> {:players [{:hand    [secret-cave]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :secret-cave)
+                 (choose nil))
+             {:players [{:hand      [copper]
+                         :play-area [secret-cave]
+                         :deck      [copper]
                          :actions   1}]}))
       (is (= (-> {:players [{:hand    [secret-cave]
                              :deck    [copper copper]
