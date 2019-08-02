@@ -38,6 +38,14 @@
                 :supply  [{:card bard :pile-size 8}]
                 :players [{:hand    [estate]
                            :discard [copper bard]}]}))))
+    (testing "The Field's Gift"
+      (is (= (-> {:boons   {:deck [field-gift]}
+                  :players [{:actions 0
+                             :coins   0}]}
+                 (receive-boon {:player-no 0}))
+             {:boons   {:discard [field-gift]}
+              :players [{:actions 1
+                         :coins   1}]})))
     (testing "The Flame's Gift"
       (is (= (-> {:boons   {:deck [flame-gift]}
                   :players [{:hand [estate]}]}
@@ -52,6 +60,14 @@
              {:boons   {:discard [flame-gift]}
               :players [{}]
               :trash   [estate]})))
+    (testing "The Forest's Gift"
+      (is (= (-> {:boons   {:deck [forest-gift]}
+                  :players [{:coins 0
+                             :buys  1}]}
+                 (receive-boon {:player-no 0}))
+             {:boons   {:discard [forest-gift]}
+              :players [{:coins 1
+                         :buys  2}]})))
     (testing "The Moon's Gift"
       (is (= (-> {:boons   {:deck [moon-gift]}
                   :players [{}]}

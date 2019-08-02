@@ -144,12 +144,22 @@
                                           :options [:player :hand {:type :treasure}]
                                           :max     1}]]})
 
+(def field-gift {:name    :the-field's-gift
+                 :type    :boon
+                 :effects [[:give-actions 1]
+                           [:give-coins 1]]})
+
 (def flame-gift {:name    :the-flame's-gift
                  :type    :boon
                  :effects [[:give-choice {:text    "You may trash a card from your hand."
                                           :choice  :trash-from-hand
                                           :options [:player :hand]
                                           :max     1}]]})
+
+(def forest-gift {:name    :the-forest's-gift
+                  :type    :boon
+                  :effects [[:give-buys 1]
+                            [:give-coins 1]]})
 
 (def moon-gift {:name    :the-moon's-gift
                 :type    :boon
@@ -208,7 +218,9 @@
                                          :max     2}]]})
 
 (def boons [earth-gift
+            field-gift
             flame-gift
+            forest-gift
             moon-gift
             mountain-gift
             sea-gift
