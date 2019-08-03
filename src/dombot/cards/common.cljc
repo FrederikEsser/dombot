@@ -524,6 +524,28 @@
 (effects/register {:upgrade-trash       upgrade-trash
                    :upgrade-give-choice upgrade-give-choice})
 
+(defn topdeck-from-gained [game {:keys [player-no card-name gained-card-id]}]
+  (cond-> game
+          card-name (move-card {:player-no    player-no
+                                :move-card-id gained-card-id
+                                :from         :gaining
+                                :to           :deck
+                                :to-position  :top})))
+
+(defn topdeck-gained-choice [game {:keys [player-no gained-card-id]}]
+  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
+    (cond-> game
+            card (give-choice {:player-no player-no
+                               :text      (str "You may put the gained " (ut/format-name name) " onto your deck.")
+                               :choice    [:topdeck-from-gained {:gained-card-id gained-card-id}]
+                               :options   [:player :gaining {:id gained-card-id}]
+                               :max       1}))))
+
+(effects/register {:topdeck-from-gained   topdeck-from-gained
+                   :topdeck-gained-choice topdeck-gained-choice})
+
+
+
 (defn setup-extra-cards [game {:keys [extra-cards]}]
   (update game :extra-cards (fn [cards]
                               (->> (concat cards extra-cards)

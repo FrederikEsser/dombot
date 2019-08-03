@@ -312,37 +312,17 @@
                                                           :min     3
                                                           :max     3}]]}]]})
 
-(defn royal-seal-topdeck [game {:keys [player-no card-name gained-card-id]}]
-  (cond-> game
-          card-name (move-card {:player-no    player-no
-                                :move-card-id gained-card-id
-                                :from         :gaining
-                                :to           :deck
-                                :to-position  :top})))
-
-(defn royal-seal-give-choice [game {:keys [player-no gained-card-id]}]
-  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
-    (cond-> game
-            card (give-choice {:player-no player-no
-                               :text      (str "You may put the gained " (ut/format-name name) " onto your deck.")
-                               :choice    [::royal-seal-topdeck {:gained-card-id gained-card-id}]
-                               :options   [:player :gaining {:id gained-card-id}]
-                               :max       1}))))
-
-(effects/register {::royal-seal-topdeck     royal-seal-topdeck
-                   ::royal-seal-give-choice royal-seal-give-choice})
-
 (def royal-seal {:name          :royal-seal
                  :set           :prosperity
                  :types         #{:treasure}
                  :cost          5
                  :coin-value    2
-                 :while-in-play {:on-gain [[::royal-seal-give-choice]]}})
+                 :while-in-play {:on-gain [[:topdeck-gained-choice]]}})
 
 (defn- talisman-on-buy [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-pile-idx game card-name)
         types (ut/get-types game card)
-        cost (ut/get-cost game card)]
+        cost  (ut/get-cost game card)]
     (cond-> game
             (and (not (:victory types))
                  (<= cost 4)) (push-effect-stack {:player-no player-no

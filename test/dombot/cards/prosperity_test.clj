@@ -543,7 +543,7 @@
 
 (deftest hoard-test
   (let [duchy (assoc duchy :id 0)
-        gold (assoc gold :id 1)]
+        gold  (assoc gold :id 1)]
     (testing "Hoard"
       (is (= (-> {:players [{:hand  [hoard]
                              :coins 0}]}
@@ -741,7 +741,7 @@
                        :vp-tokens 1}]}))))
 
 (deftest mountebank-test
-  (let [curse (assoc curse :id 0)
+  (let [curse  (assoc curse :id 0)
         copper (assoc copper :id 1)]
     (testing "Mountebank"
       (is (= (-> {:supply  [{:card curse :pile-size 10}
@@ -933,7 +933,7 @@
 
 (deftest quarry-test
   (let [monument (assoc monument :id 0)
-        quarry (assoc quarry :id 1)]
+        quarry   (assoc quarry :id 1)]
     (testing "Quarry"
       (is (= (-> {:players [{:hand  [quarry]
                              :coins 0}]}
@@ -991,7 +991,7 @@
                               :buys      0}]
               :effect-stack [{:text      "You may put the gained Gold onto your deck."
                               :player-no 0
-                              :choice    [::prosperity/royal-seal-topdeck {:gained-card-id 0}]
+                              :choice    [:topdeck-from-gained {:gained-card-id 0}]
                               :source    :gaining
                               :options   [:gold]
                               :max       1}
@@ -1040,8 +1040,8 @@
 
 (deftest talisman-test
   (let [talisman (assoc talisman :id 0)
-        estate (assoc estate :id 1)
-        venture (assoc venture :id 2)]
+        estate   (assoc estate :id 1)
+        venture  (assoc venture :id 2)]
     (testing "Talisman"
       (is (= (-> {:players [{:hand  [talisman]
                              :coins 0}]}
@@ -1313,7 +1313,7 @@
             :trash   [copper]}))))
 
 (deftest watchtower-test
-  (let [gold (assoc gold :id 0)
+  (let [gold  (assoc gold :id 0)
         curse (assoc curse :id 1)]
     (testing "Watchtower"
       (is (= (-> {:players [{:hand    [watchtower estate estate]

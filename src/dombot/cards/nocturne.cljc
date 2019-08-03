@@ -818,6 +818,23 @@
                                          :options [:player :hand {:type :victory}]}]]
                :heirloom pasture})
 
+(def pouch {:name       :pouch
+            :set        :nocturne
+            :types      #{:treasure :heirloom}
+            :cost       2
+            :coin-value 1
+            :effects    [[:give-buys 1]]})
+
+(def tracker {:name          :tracker
+              :set           :nocturne
+              :types         #{:action :fate}
+              :cost          2
+              :effects       [[:give-coins 1]
+                              [:receive-boon]]
+              :while-in-play {:on-gain [[:topdeck-gained-choice]]}
+              :heirloom      pouch
+              :setup         [[:setup-boons]]})
+
 (defn- tragic-hero-demise [game {:keys [player-no card-id]}]
   (let [hand-size (count (get-in game [:players player-no :hand]))]
     (cond-> game
@@ -857,6 +874,7 @@
                     raider
                     secret-cave
                     shepherd
+                    tracker
                     tragic-hero])
 
 ; Doable without Boons / Hexes:

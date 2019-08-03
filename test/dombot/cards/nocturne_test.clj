@@ -144,7 +144,7 @@
                                 :coins   0
                                 :buys    0
                                 :phase   :out-of-turn}
-                               {:hand (repeat 5 copper)
+                               {:hand    (repeat 5 copper)
                                 :actions 1
                                 :coins   0
                                 :buys    1}]})))
@@ -1494,6 +1494,39 @@
              4))
       (is (= (calc-victory-points {:deck [pasture estate estate estate]})
              6)))))
+
+(deftest tracker-test
+  (let [tracker (assoc tracker :id 0)]
+    (testing "Tracker"
+      (is (= (-> {:boons   {:deck [sea-gift]}
+                  :players [{:hand    [tracker]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :tracker))
+             {:boons   {:discard [sea-gift]}
+              :players [{:hand      [copper]
+                         :play-area [tracker]
+                         :deck      [copper]
+                         :actions   0
+                         :coins     1}]}))
+      (let [gold (assoc gold :id 1)]
+        (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                    :players [{:play-area [tracker]
+                               :deck      [copper]}]}
+                   (gain {:player-no 0 :card-name :gold})
+                   (choose :gold))
+               {:supply  [{:card gold :pile-size 29}]
+                :players [{:play-area [tracker]
+                           :deck      [gold copper]}]}))))
+    (testing "Pouch"
+      (is (= (-> {:players [{:hand  [pouch]
+                             :coins 0
+                             :buys  1}]}
+                 (play 0 :pouch))
+             {:players [{:play-area [pouch]
+                         :coins     1
+                         :buys      2}]})))))
 
 (deftest tragic-hero-test
   (let [tragic-hero (assoc tragic-hero :id 0)]
