@@ -119,6 +119,35 @@
                {:boons   {:discard [mountain-gift]}
                 :supply  [{:card silver :pile-size 39}]
                 :players [{:discard [silver]}]}))))
+    (testing "The River's Gift"
+      (is (= (-> {:boons   {:deck [river-gift]}
+                  :players [{}]}
+                 (receive-boon {:player-no 0}))
+             {:boons   {}
+              :players [{:boons    [river-gift]
+                         :triggers [{:trigger  :at-draw-hand
+                                     :duration :once
+                                     :effects  [[:draw 1]]}
+                                    {:trigger  :at-clean-up
+                                     :duration :once
+                                     :effects  [[:return-boon {:boon-name :the-river's-gift}]]}]}]}))
+      (is (= (-> {:boons   {:deck [river-gift]}
+                  :players [{:deck (repeat 7 copper)}
+                            {:hand (repeat 5 copper)}]}
+                 (receive-boon {:player-no 0})
+                 (end-turn 0))
+             {:current-player 1
+              :boons          {:discard [river-gift]}
+              :players        [{:hand    (repeat 6 copper)
+                                :deck    [copper]
+                                :actions 0
+                                :coins   0
+                                :buys    0
+                                :phase   :out-of-turn}
+                               {:hand (repeat 5 copper)
+                                :actions 1
+                                :coins   0
+                                :buys    1}]})))
     (testing "The Sea's Gift"
       (is (= (-> {:boons   {:deck [sea-gift]}
                   :players [{:deck [copper copper]}]}

@@ -15,7 +15,7 @@
 
 (deftest dismantle-test
   (let [copper (assoc copper :id 0)
-        gold (assoc gold :id 1)]
+        gold   (assoc gold :id 1)]
     (testing "Dismantle"
       (is (= (-> {:players [{:hand    [dismantle copper estate]
                              :actions 1}]}
@@ -63,7 +63,7 @@
                       {}]}))))
 
 (deftest stash-test
-  (let [stash (assoc stash :id 1)
+  (let [stash   (assoc stash :id 1)
         caravan (assoc caravan :id 2)]
     (testing "Stash"
       (is (= (-> {:players [{:hand  [stash]
@@ -212,6 +212,8 @@
                                                       :from          :deck
                                                       :from-position :top
                                                       :to            :hand}]}
+                             {:player-no 0
+                              :effect    [:remove-triggers {:trigger :at-draw-hand}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}
                              {:player-no 1

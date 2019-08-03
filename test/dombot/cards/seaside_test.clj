@@ -1551,6 +1551,8 @@
                              {:player-no 0
                               :effect    [:draw 5]}
                              {:player-no 0
+                              :effect    [:remove-triggers {:trigger :at-draw-hand}]}
+                             {:player-no 0
                               :effect    [:check-game-ended]}]}))
       (is (= (-> {:players [{:deck         (repeat 7 copper)
                              :hand         [treasury-1]
@@ -1618,6 +1620,8 @@
                               :effect    [:do-clean-up {:player-no 0}]}
                              {:player-no 0
                               :effect    [:draw 5]}
+                             {:player-no 0
+                              :effect    [:remove-triggers {:trigger :at-draw-hand}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
       (is (= (-> {:players [{:deck    (repeat 7 copper)

@@ -174,6 +174,13 @@
                     :type    :boon
                     :effects [[:gain {:card-name :silver}]]})
 
+(def river-gift {:name                 :the-river's-gift
+                 :type                 :boon
+                 :effects              [[:add-trigger {:trigger {:trigger  :at-draw-hand
+                                                                 :duration :once
+                                                                 :effects  [[:draw 1]]}}]]
+                 :keep-until-clean-up? true})
+
 (def sea-gift {:name    :the-sea's-gift
                :type    :boon
                :effects [[:draw 1]]})
@@ -225,6 +232,7 @@
             forest-gift
             moon-gift
             mountain-gift
+            river-gift
             sea-gift
             sky-gift
             sun-gift

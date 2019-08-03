@@ -932,12 +932,13 @@
         (push-effect-stack (merge args
                                   {:effects (concat [[:set-phase {:phase :clean-up}]]
                                                     at-clean-up-triggers
-                                                    [[:remove-triggers {:trigger :at-clean-up}]]
-                                                    [[:at-clean-up]
+                                                    [[:remove-triggers {:trigger :at-clean-up}]
+                                                     [:at-clean-up]
                                                      [:do-clean-up args]
                                                      [:draw number-of-cards]]
                                                     at-draw-hand-triggers
-                                                    [[:check-game-ended]])}))
+                                                    [[:remove-triggers {:trigger :at-draw-hand}]
+                                                     [:check-game-ended]])}))
         check-stack)))
 
 (effects/register {:do-clean-up do-clean-up
