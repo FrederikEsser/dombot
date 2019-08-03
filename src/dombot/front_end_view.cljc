@@ -90,13 +90,15 @@
                        {:interaction :buyable})
                      (choice-interaction name :mixed choice))))))
 
+(defn view-boon [{:keys [name type]}]
+  (merge {:name    name
+          :name-ui (ut/format-name name)
+          :type    type}))
+
 (defn view-boons [{:keys [deck discard]}]
   (let [boon-discard (->> discard
                           reverse
-                          (map (fn [{:keys [name type]}]
-                                 (merge {:name    name
-                                         :name-ui (ut/format-name name)
-                                         :type    type}))))]
+                          (map view-boon))]
     (merge {:number-of-cards (count deck)
             :boon-discard    boon-discard}
            (when (not-empty boon-discard)
@@ -233,6 +235,7 @@
                             vp-tokens
                             coffers
                             villagers
+                            boons
                             victory-points
                             winner]} :player
                     choice           :choice
@@ -277,6 +280,8 @@
                                                                  :types   #{:artifact}})))})
          (when choice
            {:choice (view-choice choice)})
+         (when boons
+           {:boons (map view-boon boons)})
          (when victory-points
            {:victory-points victory-points})
          (when-not (nil? winner)

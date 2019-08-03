@@ -932,6 +932,7 @@
         (push-effect-stack (merge args
                                   {:effects (concat [[:set-phase {:phase :clean-up}]]
                                                     at-clean-up-triggers
+                                                    [[:remove-triggers {:trigger :at-clean-up}]]
                                                     [[:at-clean-up]
                                                      [:do-clean-up args]
                                                      [:draw number-of-cards]]

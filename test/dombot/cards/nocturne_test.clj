@@ -43,9 +43,23 @@
                   :players [{:actions 0
                              :coins   0}]}
                  (receive-boon {:player-no 0}))
+             {:boons   {}
+              :players [{:actions  1
+                         :coins    1
+                         :boons    [field-gift]
+                         :triggers [{:trigger  :at-clean-up
+                                     :duration :once
+                                     :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]}))
+      (is (= (-> {:boons   {:deck [field-gift]}
+                  :players [{:actions 0
+                             :coins   0}]}
+                 (receive-boon {:player-no 0})
+                 (clean-up {:player-no 0}))
              {:boons   {:discard [field-gift]}
-              :players [{:actions 1
-                         :coins   1}]})))
+              :players [{:actions 0
+                         :coins   0
+                         :buys    0
+                         :phase   :out-of-turn}]})))
     (testing "The Flame's Gift"
       (is (= (-> {:boons   {:deck [flame-gift]}
                   :players [{:hand [estate]}]}
@@ -65,9 +79,23 @@
                   :players [{:coins 0
                              :buys  1}]}
                  (receive-boon {:player-no 0}))
+             {:boons   {}
+              :players [{:coins    1
+                         :buys     2
+                         :boons    [forest-gift]
+                         :triggers [{:trigger  :at-clean-up
+                                     :duration :once
+                                     :effects  [[:return-boon {:boon-name :the-forest's-gift}]]}]}]}))
+      (is (= (-> {:boons   {:deck [forest-gift]}
+                  :players [{:coins 0
+                             :buys  1}]}
+                 (receive-boon {:player-no 0})
+                 (clean-up {:player-no 0}))
              {:boons   {:discard [forest-gift]}
-              :players [{:coins 1
-                         :buys  2}]})))
+              :players [{:actions 0
+                         :coins   0
+                         :buys    0
+                         :phase   :out-of-turn}]})))
     (testing "The Moon's Gift"
       (is (= (-> {:boons   {:deck [moon-gift]}
                   :players [{}]}

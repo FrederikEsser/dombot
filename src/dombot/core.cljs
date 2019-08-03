@@ -244,7 +244,8 @@
                                                :background-color "#C5E3BF"
                                                :border-color     "#788B5D"
                                                :border-width     2}
-                                    :on-click (fn [] (swap! state assoc :boons-unfolded? false))}
+                                    :on-click (when (not-empty boon-discard)
+                                                (fn [] (swap! state assoc :boons-unfolded? false)))}
                            (str "Boons x" number-of-cards)]
                       (mapk view-boon boon-discard)]
                      [:td (view-boon top-boon {:on-click (fn [] (swap! state assoc :boons-unfolded? true))})])))]]]]))
@@ -259,6 +260,7 @@
                                                 actions coins buys set-aside
                                                 coffers villagers artifacts
                                                 island-mat native-village-mat pirate-ship-coins
+                                                boons
                                                 vp-tokens active? victory-points winner?]
                            {:keys [text
                                    options
@@ -308,6 +310,7 @@
                                                                          :spendable (swap! state assoc :game (cmd/spend-coffer)))))}
                                            (str number " Coffer" (when (< 1 number) "s"))]]))
                                 [:div "Buys: " buys]
+                                (mapk view-boon boons)
                                 (when pirate-ship-coins
                                   [:div "Pirate Ship: " pirate-ship-coins])
                                 (when vp-tokens

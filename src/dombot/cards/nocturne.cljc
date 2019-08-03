@@ -144,10 +144,11 @@
                                           :options [:player :hand {:type :treasure}]
                                           :max     1}]]})
 
-(def field-gift {:name    :the-field's-gift
-                 :type    :boon
-                 :effects [[:give-actions 1]
-                           [:give-coins 1]]})
+(def field-gift {:name                 :the-field's-gift
+                 :type                 :boon
+                 :effects              [[:give-actions 1]
+                                        [:give-coins 1]]
+                 :keep-until-clean-up? true})
 
 (def flame-gift {:name    :the-flame's-gift
                  :type    :boon
@@ -156,10 +157,11 @@
                                           :options [:player :hand]
                                           :max     1}]]})
 
-(def forest-gift {:name    :the-forest's-gift
-                  :type    :boon
-                  :effects [[:give-buys 1]
-                            [:give-coins 1]]})
+(def forest-gift {:name                 :the-forest's-gift
+                  :type                 :boon
+                  :effects              [[:give-buys 1]
+                                         [:give-coins 1]]
+                  :keep-until-clean-up? true})
 
 (def moon-gift {:name    :the-moon's-gift
                 :type    :boon
@@ -239,18 +241,33 @@
     {:deck (shuffle discard)}
     piles))
 
-(defn- return-boon [game {:keys [boon]}]
-  (update-in game [:boons :discard] concat [boon]))
+(defn- remove-boon-from-player [{:keys [boons] :as player} boon-name]
+  (let [boons (remove (comp #{boon-name} :name) boons)]
+    (if (empty? boons)
+      (dissoc player :boons)
+      (assoc player :boons boons))))
+
+(defn- return-boon [game {:keys [player-no boon-name]}]
+  (let [{boon :card} (ut/get-card-idx game [:players player-no :boons] {:name boon-name})]
+    (-> game
+        (update-in [:players player-no] remove-boon-from-player boon-name)
+        (update-in [:boons :discard] concat [boon]))))
 
 (defn receive-boon [{:keys [boons] :as game} {:keys [player-no]}]
-  (let [{[{:keys [effects] :as boon} & deck] :deck
-         discard                             :discard} (maybe-shuffle boons)]
+  (let [{[{:keys [name effects keep-until-clean-up?] :as boon} & deck] :deck
+         discard                                                       :discard} (maybe-shuffle boons)]
     (-> game
-        (assoc :boons (merge (when deck {:deck deck})
+        (assoc :boons (merge {}
+                             (when deck {:deck deck})
                              (when discard {:discard discard})))
+        (update-in [:players player-no :boons] concat [boon])
         (push-effect-stack {:player-no player-no
                             :effects   (concat effects
-                                               [[:return-boon {:boon boon}]])})
+                                               (if keep-until-clean-up?
+                                                 [[:add-trigger {:trigger {:trigger  :at-clean-up
+                                                                           :duration :once
+                                                                           :effects  [[:return-boon {:boon-name name}]]}}]]
+                                                 [[:return-boon {:boon-name name}]]))})
         check-stack)))
 
 (effects/register {:setup-boons  setup-boons
