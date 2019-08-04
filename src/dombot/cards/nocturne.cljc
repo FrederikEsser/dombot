@@ -297,6 +297,49 @@
                      [:receive-boon]]
            :setup   [[:setup-boons]]})
 
+(defn- blessed-village-choice [game {:keys [player-no boon-name choice]}]
+  (let [{{:keys [keep-until-clean-up?] :as boon} :card} (ut/get-card-idx game [:players player-no :boons] {:name boon-name})
+        boon-effects (concat (when-not keep-until-clean-up?
+                               [[:return-boon {:boon-name boon-name}]])
+                             [[:receive-boon {:boon boon}]])]
+    (case choice
+      :now (push-effect-stack game {:player-no player-no
+                                    :effects   boon-effects})
+      :at-start-turn (add-trigger game {:player-no player-no
+                                        :trigger   {:trigger           :at-start-turn
+                                                    :duration          :once
+                                                    :simultaneous-mode :auto
+                                                    :effects           boon-effects}}))))
+
+(defn- blessed-village-take-boon [{:keys [boons] :as game} {:keys [player-no]}]
+  (let [{[{:keys [name] :as boon} & deck] :deck
+         discard                          :discard} (maybe-shuffle-boons boons)]
+    (-> game
+        (assoc :boons (merge {}
+                             (when deck {:deck deck})
+                             (when discard {:discard discard})))
+        (update-in [:players player-no :boons] concat [boon])
+        (give-choice {:player-no player-no
+                      :text      (str "Receive " (ut/format-name name) " now or at the start of your next turn.")
+                      :choice    [::blessed-village-choice {:boon-name name}]
+                      :options   [:special
+                                  {:option :now :text "Now"}
+                                  {:option :at-start-turn :text "Next turn"}]
+                      :min       1
+                      :max       1}))))
+
+(effects/register {::blessed-village-choice    blessed-village-choice
+                   ::blessed-village-take-boon blessed-village-take-boon})
+
+(def blessed-village {:name    :blessed-village
+                      :set     :nocturne
+                      :types   #{:action :fate}
+                      :cost    4
+                      :effects [[:draw 1]
+                                [:give-actions 2]]
+                      :on-gain [[::blessed-village-take-boon]]
+                      :setup   [[:setup-boons]]})
+
 (defn- haunted-mirror-ghost [game {:keys [player-no card-name]}]
   (cond-> game
           card-name (push-effect-stack {:player-no player-no
@@ -864,6 +907,7 @@
                             [::tragic-hero-demise]]})
 
 (def kingdom-cards [bard
+                    blessed-village
                     cemetery
                     changeling
                     cobbler

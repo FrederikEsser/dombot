@@ -283,6 +283,127 @@
                          :actions   0
                          :coins     2}]})))))
 
+(deftest blessed-village-test
+  (let [blessed-village (assoc blessed-village :id 0)]
+    (testing "blessed-village"
+      (is (= (-> {:players [{:hand    [blessed-village]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :blessed-village))
+             {:players [{:hand      [copper]
+                         :play-area [blessed-village]
+                         :deck      [copper]
+                         :actions   2}]}))
+      (is (= (-> {:boons   {:deck [sea-gift]}
+                  :supply  [{:card blessed-village :pile-size 10}]
+                  :players [{}]}
+                 (gain {:player-no 0 :card-name :blessed-village}))
+             {:boons        {}
+              :supply       [{:card blessed-village :pile-size 9}]
+              :players      [{:gaining [blessed-village]
+                              :boons   [sea-gift]}]
+              :effect-stack [{:player-no 0
+                              :text      "Receive The Sea's Gift now or at the start of your next turn."
+                              :choice    [::nocturne/blessed-village-choice {:boon-name :the-sea's-gift}]
+                              :source    :special
+                              :options   [{:option :now :text "Now"}
+                                          {:option :at-start-turn :text "Next turn"}]
+                              :min       1
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:finalize-gain {:player-no      0
+                                                          :card-name      :blessed-village
+                                                          :gained-card-id 0}]}]}))
+      (is (= (-> {:boons   {:deck [sea-gift]}
+                  :supply  [{:card blessed-village :pile-size 10}]
+                  :players [{:deck [copper copper]}]}
+                 (gain {:player-no 0 :card-name :blessed-village})
+                 (choose :now))
+             {:boons   {:discard [sea-gift]}
+              :supply  [{:card blessed-village :pile-size 9}]
+              :players [{:hand    [copper]
+                         :deck    [copper]
+                         :discard [blessed-village]}]}))
+      (is (= (-> {:boons   {:deck [sea-gift]}
+                  :supply  [{:card blessed-village :pile-size 10}]
+                  :players [{:deck [copper copper]}]}
+                 (gain {:player-no 0 :card-name :blessed-village})
+                 (choose :at-start-turn))
+             {:boons   {}
+              :supply  [{:card blessed-village :pile-size 9}]
+              :players [{:deck     [copper copper]
+                         :discard  [blessed-village]
+                         :boons    [sea-gift]
+                         :triggers [{:trigger           :at-start-turn
+                                     :duration          :once
+                                     :simultaneous-mode :auto
+                                     :effects           [[:return-boon {:boon-name :the-sea's-gift}]
+                                                         [:receive-boon {:boon sea-gift}]]}]}]}))
+      (is (= (-> {:boons   {:deck [sea-gift]}
+                  :supply  [{:card blessed-village :pile-size 10}]
+                  :players [{:deck (repeat 7 copper)}]}
+                 (gain {:player-no 0 :card-name :blessed-village})
+                 (choose :at-start-turn)
+                 (end-turn 0))
+             {:current-player 0
+              :boons          {:discard [sea-gift]}
+              :supply         [{:card blessed-village :pile-size 9}]
+              :players        [{:hand    (repeat 6 copper)
+                                :deck    [copper]
+                                :discard [blessed-village]
+                                :actions 1
+                                :coins   0
+                                :buys    1
+                                :phase   :action}]}))
+      (is (= (-> {:boons   {:deck [forest-gift]}
+                  :supply  [{:card blessed-village :pile-size 10}]
+                  :players [{:coins 0
+                             :buys  1}]}
+                 (gain {:player-no 0 :card-name :blessed-village})
+                 (choose :now))
+             {:boons   {}
+              :supply  [{:card blessed-village :pile-size 9}]
+              :players [{:discard  [blessed-village]
+                         :coins    1
+                         :buys     2
+                         :boons    [forest-gift]
+                         :triggers [{:trigger  :at-clean-up
+                                     :duration :once
+                                     :effects  [[:return-boon {:boon-name :the-forest's-gift}]]}]}]}))
+      (is (= (-> {:boons   {:deck [forest-gift]}
+                  :supply  [{:card blessed-village :pile-size 10}]
+                  :players [{:deck [copper copper]}]}
+                 (gain {:player-no 0 :card-name :blessed-village})
+                 (choose :at-start-turn))
+             {:boons   {}
+              :supply  [{:card blessed-village :pile-size 9}]
+              :players [{:deck     [copper copper]
+                         :discard  [blessed-village]
+                         :boons    [forest-gift]
+                         :triggers [{:trigger           :at-start-turn
+                                     :duration          :once
+                                     :simultaneous-mode :auto
+                                     :effects           [[:receive-boon {:boon forest-gift}]]}]}]}))
+      (is (= (-> {:boons   {:deck [forest-gift]}
+                  :supply  [{:card blessed-village :pile-size 10}]
+                  :players [{:deck (repeat 5 copper)}]}
+                 (gain {:player-no 0 :card-name :blessed-village})
+                 (choose :at-start-turn)
+                 (end-turn 0))
+             {:current-player 0
+              :boons          {}
+              :supply         [{:card blessed-village :pile-size 9}]
+              :players        [{:hand     (repeat 5 copper)
+                                :discard  [blessed-village]
+                                :actions  1
+                                :coins    1
+                                :buys     2
+                                :phase    :action
+                                :boons    [forest-gift]
+                                :triggers [{:trigger  :at-clean-up
+                                            :duration :once
+                                            :effects  [[:return-boon {:boon-name :the-forest's-gift}]]}]}]})))))
+
 (deftest cemetery-test
   (let [cemetery (assoc cemetery :id 0)]
     (testing "Cemetery"
