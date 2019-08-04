@@ -257,14 +257,14 @@
 
 (defn- return-boon [game {:keys [player-no boon-name]}]
   (let [{boon :card} (ut/get-card-idx game [:players player-no :boons] {:name boon-name})]
-    (-> game
-        (update-in [:players player-no] remove-boon-from-player boon-name)
-        (update-in [:boons :discard] concat [boon]))))
+    (cond-> game
+            boon (-> (update-in [:players player-no] remove-boon-from-player boon-name)
+                     (update-in [:boons :discard] concat [boon])))))
 
-(defn receive-boon [{:keys [boons] :as game} {:keys [player-no boon]}]
+(defn receive-boon [game {:keys [player-no boon]}]
   (if (not boon)
     (let [{[{:keys [keep-until-clean-up?] :as boon} & deck] :deck
-           discard                                          :discard} (maybe-shuffle-boons boons)
+           discard                                          :discard} (maybe-shuffle-boons (:boons game))
           discard (if keep-until-clean-up?
                     discard
                     (concat discard [boon]))]
@@ -311,9 +311,9 @@
                                                     :simultaneous-mode :auto
                                                     :effects           boon-effects}}))))
 
-(defn- blessed-village-take-boon [{:keys [boons] :as game} {:keys [player-no]}]
+(defn- blessed-village-take-boon [game {:keys [player-no]}]
   (let [{[{:keys [name] :as boon} & deck] :deck
-         discard                          :discard} (maybe-shuffle-boons boons)]
+         discard                          :discard} (maybe-shuffle-boons (:boons game))]
     (-> game
         (assoc :boons (merge {}
                              (when deck {:deck deck})
@@ -724,6 +724,57 @@
                                                 :min     5}]]
                      :gain-to :hand})
 
+(def goat {:name       :goat
+           :set        :nocturne
+           :types      #{:treasure :heirloom}
+           :cost       2
+           :coin-value 1
+           :effects    [[:give-choice {:text    "You may trash a card from your hand."
+                                       :choice  :trash-from-hand
+                                       :options [:player :hand]
+                                       :max     1}]]})
+
+(defn- pixie-receive-boon [game {:keys [player-no card-id card-name boon]}]
+  (let [{:keys [name effects keep-until-clean-up?]} boon]
+    (cond-> game
+            card-name (-> (cond-> keep-until-clean-up? (-> (update-in [:boons :discard] (partial remove #{boon}))
+                                                           (update :boons ut/remove-if-empty :discard)
+                                                           (update-in [:players player-no :boons] concat [boon])))
+                          (push-effect-stack {:player-no player-no
+                                              :effects   (concat [[:trash-from-play-area {:trash-card-id card-id}]]
+                                                                 effects
+                                                                 effects
+                                                                 (when keep-until-clean-up?
+                                                                   [[:add-trigger {:trigger {:trigger  :at-clean-up
+                                                                                             :duration :once
+                                                                                             :effects  [[:return-boon {:boon-name name}]]}}]]))})))))
+
+(defn- pixie-give-choice [game {:keys [player-no card-id]}]
+  (let [{[{:keys [name] :as boon} & deck] :deck
+         discard                          :discard} (maybe-shuffle-boons (:boons game))]
+    (-> game
+        (assoc :boons (merge {}
+                             (when deck {:deck deck})
+                             {:discard (concat discard [boon])}))
+        (give-choice {:player-no player-no
+                      :card-id   card-id
+                      :text      (str "You may trash the Pixie to receive " (ut/format-name name) " twice.")
+                      :choice    [::pixie-receive-boon {:boon boon}]
+                      :options   [:player :play-area {:id card-id}]
+                      :max       1}))))
+
+(effects/register {::pixie-receive-boon pixie-receive-boon
+                   ::pixie-give-choice  pixie-give-choice})
+
+(def pixie {:name     :pixie
+            :set      :nocturne
+            :types    #{:action :fate}
+            :cost     2
+            :effects  [[:draw 1]
+                       [:give-actions 1]
+                       [::pixie-give-choice]]
+            :heirloom goat})
+
 (def cursed-gold {:name       :cursed-gold
                   :set        :nocturne
                   :types      #{:treasure :heirloom}
@@ -921,6 +972,7 @@
                     monastery
                     necromancer
                     night-watchman
+                    pixie
                     pooka
                     raider
                     secret-cave

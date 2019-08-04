@@ -64,6 +64,10 @@
   (let [vcoll (vec coll)]
     (vec (concat (subvec vcoll 0 pos) (subvec vcoll (inc pos))))))
 
+(defn remove-if-empty [map key]
+  (cond-> map
+          (empty? (get map key)) (dissoc key)))
+
 (defn frequencies-of [coll key]
   (->> coll
        (map key)

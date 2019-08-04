@@ -1338,6 +1338,110 @@
                        :deck      [estate]
                        :discard   [estate estate copper copper silver]}]}))))
 
+(deftest pixie-test
+  (let [pixie (assoc pixie :id 0)]
+    (testing "Pixie"
+      (is (= (-> {:boons   {:deck [sea-gift]}
+                  :players [{:hand    [pixie]
+                             :deck    [copper copper copper copper]
+                             :actions 1}]}
+                 (play 0 :pixie))
+             {:boons        {:discard [sea-gift]}
+              :players      [{:hand      [copper]
+                              :play-area [pixie]
+                              :deck      [copper copper copper]
+                              :actions   1}]
+              :effect-stack [{:text      "You may trash the Pixie to receive The Sea's Gift twice."
+                              :player-no 0
+                              :card-id   0
+                              :choice    [::nocturne/pixie-receive-boon {:boon sea-gift}]
+                              :source    :play-area
+                              :options   [:pixie]
+                              :max       1}]}))
+      (is (= (-> {:boons   {:deck [sea-gift]}
+                  :players [{:hand    [pixie]
+                             :deck    [copper copper copper copper]
+                             :actions 1}]}
+                 (play 0 :pixie)
+                 (choose nil))
+             {:boons   {:discard [sea-gift]}
+              :players [{:hand      [copper]
+                         :play-area [pixie]
+                         :deck      [copper copper copper]
+                         :actions   1}]}))
+      (is (= (-> {:boons   {:deck [sea-gift]}
+                  :players [{:hand    [pixie]
+                             :deck    [copper copper copper copper]
+                             :actions 1}]}
+                 (play 0 :pixie)
+                 (choose :pixie))
+             {:boons   {:discard [sea-gift]}
+              :players [{:hand    [copper copper copper]
+                         :deck    [copper]
+                         :actions 1}]
+              :trash   [pixie]}))
+      (is (= (-> {:boons   {:deck [sea-gift field-gift]}
+                  :players [{:hand    [throne-room pixie]
+                             :deck    [copper copper copper copper copper]
+                             :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :pixie)
+                 (choose :pixie))
+             {:boons   {:discard [sea-gift field-gift]}
+              :players [{:hand      [copper copper copper copper]
+                         :play-area [throne-room]
+                         :deck      [copper]
+                         :actions   2}]
+              :trash   [pixie]}))
+      (is (= (-> {:boons   {:deck [field-gift sea-gift]}
+                  :players [{:hand    [throne-room pixie]
+                             :deck    [copper copper copper copper copper]
+                             :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :pixie)
+                 (choose nil)
+                 (choose :pixie))
+             {:boons   {:discard [field-gift sea-gift]}
+              :players [{:hand      [copper copper copper copper]
+                         :play-area [throne-room]
+                         :deck      [copper]
+                         :actions   2}]
+              :trash   [pixie]}))
+      (is (= (-> {:boons   {:deck [field-gift]}
+                  :players [{:hand    [pixie]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :pixie)
+                 (choose :pixie))
+             {:boons   {}
+              :players [{:actions  3
+                         :coins    2
+                         :boons    [field-gift]
+                         :triggers [{:trigger  :at-clean-up
+                                     :duration :once
+                                     :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]
+              :trash   [pixie]})))
+    (testing "Goat"
+      (is (= (-> {:players [{:hand  [goat]
+                             :coins 0}]}
+                 (play 0 :goat))
+             {:players [{:play-area [goat]
+                         :coins     1}]}))
+      (is (= (-> {:players [{:hand  [goat copper]
+                             :coins 0}]}
+                 (play 0 :goat)
+                 (choose nil))
+             {:players [{:hand      [copper]
+                         :play-area [goat]
+                         :coins     1}]}))
+      (is (= (-> {:players [{:hand  [goat copper]
+                             :coins 0}]}
+                 (play 0 :goat)
+                 (choose :copper))
+             {:players [{:play-area [goat]
+                         :coins     1}]
+              :trash   [copper]})))))
+
 (deftest pooka-test
   (let [pooka (assoc pooka :id 0)]
     (testing "Pooka"
