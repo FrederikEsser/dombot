@@ -606,6 +606,25 @@
                                              [:clear-unaffected]]}
                :gain-to :hand})
 
+(defn- idol-boon-or-curse [game {:keys [player-no]}]
+  (let [idols-in-play (->> (get-in game [:players player-no :play-area])
+                           (filter (comp #{:idol} :name))
+                           count)]
+    (cond
+      (odd? idols-in-play) (receive-boon game {:player-no player-no})
+      (even? idols-in-play) (attack-other-players game {:player-no player-no
+                                                        :effects   [[:gain {:card-name :curse}]]}))))
+
+(effects/register {::idol-boon-or-curse idol-boon-or-curse})
+
+(def idol {:name       :idol
+           :set        :nocturne
+           :types      #{:treasure :attack :fate}
+           :cost       5
+           :coin-value 2
+           :effects    [[::idol-boon-or-curse]]
+           :setup      [[:setup-boons]]})
+
 (defn- monastery-trash [game {:keys [player-no]}]
   (let [gained-cards (count (get-in game [:players player-no :gained-cards]))]
     (cond-> game
@@ -969,6 +988,7 @@
                     exorcist
                     ghost-town
                     guardian
+                    idol
                     monastery
                     necromancer
                     night-watchman

@@ -1037,6 +1037,39 @@
                                 :buys      1
                                 :phase     :action}]})))))
 
+(deftest idol-test
+  (let [idol  (assoc idol :id 0)
+        curse (assoc curse :id 1)]
+    (testing "Idol"
+      (is (= (-> {:boons   {:deck [sea-gift]}
+                  :supply  [{:card curse :pile-size 10}]
+                  :players [{:hand  [idol]
+                             :deck  [copper copper]
+                             :coins 0}
+                            {}]}
+                 (play 0 :idol))
+             {:boons   {:discard [sea-gift]}
+              :supply  [{:card curse :pile-size 10}]
+              :players [{:hand      [copper]
+                         :play-area [idol]
+                         :deck      [copper]
+                         :coins     2}
+                        {}]}))
+      (is (= (-> {:boons   {:deck [sea-gift]}
+                  :supply  [{:card curse :pile-size 10}]
+                  :players [{:hand      [idol]
+                             :play-area [idol]
+                             :deck      [copper copper]
+                             :coins     2}
+                            {}]}
+                 (play 0 :idol))
+             {:boons   {:deck [sea-gift]}
+              :supply  [{:card curse :pile-size 9}]
+              :players [{:play-area [idol idol]
+                         :deck      [copper copper]
+                         :coins     4}
+                        {:discard [curse]}]})))))
+
 (deftest imp-test
   (testing "Imp"
     (is (= (-> {:players [{:hand    [imp]
