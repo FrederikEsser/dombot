@@ -541,7 +541,7 @@
                               {:card conclave :pile-size 10}]
                     :players [{:triggers [changeling-trigger]}]}
                    (gain {:player-no 0 :card-name :conclave})
-                   (choose :conclave))
+                   (choose :changeling))
                {:supply  [{:card changeling :pile-size 9}
                           {:card conclave :pile-size 10}]
                 :players [{:discard  [changeling]
@@ -552,7 +552,7 @@
                     :players             [{:gained-cards []
                                            :triggers     [changeling-trigger]}]}
                    (gain {:player-no 0 :card-name :conclave})
-                   (choose :conclave))
+                   (choose :changeling))
                {:track-gained-cards? true
                 :supply              [{:card changeling :pile-size 9}
                                       {:card conclave :pile-size 10}]
@@ -611,7 +611,7 @@
                                    :buys      1
                                    :triggers  [changeling-trigger]}]}
                        (buy-card 0 :mint)
-                       (choose :mint))
+                       (choose :changeling))
                    {:supply  [{:card changeling :pile-size 9}
                               {:card mint :pile-size 10}]
                     :players [{:discard  [changeling]
@@ -630,7 +630,7 @@
                                    :triggers  [changeling-trigger]}]}
                        (buy-card 0 :duchy)
                        (choose nil)                         ; don't exchange gained Gold
-                       (choose :duchy))                     ;exchange bought Duchy
+                       (choose :changeling))                ;exchange bought Duchy
                    {:supply  [{:card changeling :pile-size 9}
                               {:card duchy :pile-size 8}
                               {:card gold :pile-size 29}]
@@ -649,7 +649,7 @@
                                    :buys     1
                                    :triggers [changeling-trigger]}]}
                        (buy-card 0 :conclave)
-                       (choose :conclave))
+                       (choose :changeling))
                    {:supply  [{:card curse :pile-size 9}
                               {:card changeling :pile-size 9}
                               {:card   conclave :pile-size 10
@@ -668,7 +668,7 @@
                                    :buys     1
                                    :triggers [changeling-trigger]}]}
                        (buy-card 0 :conclave)
-                       (choose :conclave))
+                       (choose :changeling))
                    {:supply  [{:card curse :pile-size 10}
                               {:card   changeling :pile-size 9
                                :tokens [{:token-type :embargo
@@ -685,7 +685,7 @@
                                    :buys     1
                                    :triggers [changeling-trigger]}]}
                        (buy-card 0 :silk-merchant)
-                       (choose :silk-merchant))
+                       (choose :changeling))
                    {:supply  [{:card changeling :pile-size 9}
                               {:card silk-merchant :pile-size 10}]
                     :players [{:discard   [changeling]
@@ -703,7 +703,7 @@
                                    :buys     1
                                    :triggers [changeling-trigger]}]}
                        (buy-card 0 :duchy)
-                       (choose :duchy))
+                       (choose :changeling))
                    {:trade-route-mat 1
                     :supply          [{:card changeling :pile-size 9}
                                       {:card duchy :pile-size 8}]
@@ -719,7 +719,7 @@
                                  :triggers  [changeling-trigger]}]}
                      (buy-card 0 :conclave)
                      (choose nil)                           ; keep bought Conclave
-                     (choose :conclave))                    ; exchange gained Conclave
+                     (choose :changeling))                  ; exchange gained Conclave
                  {:supply  [{:card changeling :pile-size 9}
                             {:card conclave :pile-size 9}]
                   :players [{:play-area [talisman]
@@ -734,7 +734,7 @@
                                  :buys      1
                                  :triggers  [changeling-trigger]}]}
                      (buy-card 0 :conclave)
-                     (choose :conclave)                     ; exchange bought Conclave
+                     (choose :changeling)                   ; exchange bought Conclave
                      (choose nil))                          ; keep gained Conclave
                  {:supply  [{:card changeling :pile-size 9}
                             {:card conclave :pile-size 9}]
@@ -764,7 +764,7 @@
                                  :buys     1
                                  :triggers [changeling-trigger (:trigger academy)]}]}
                      (buy-card 0 :conclave)
-                     (choose :conclave))
+                     (choose :changeling))
                  {:supply  [{:card changeling :pile-size 9}
                             {:card conclave :pile-size 10}]
                   :players [{:discard   [changeling]
@@ -778,7 +778,7 @@
                       :supply      [{:card changeling :pile-size 10}]
                       :players     [{:triggers [changeling-trigger]}]}
                      (gain {:player-no 0 :card-name :ghost :from :extra-cards})
-                     (choose :ghost))
+                     (choose :changeling))
                  {:extra-cards [{:card ghost :pile-size 6}]
                   :supply      [{:card changeling :pile-size 9}]
                   :players     [{:discard  [changeling]
@@ -790,7 +790,7 @@
                       :players [{:triggers [changeling-trigger]}]
                       :trash   [conclave]}
                      (gain {:player-no 0 :card-name :conclave :from :trash})
-                     (choose :conclave))
+                     (choose :changeling))
                  {:supply  [{:card changeling :pile-size 9}
                             {:card conclave :pile-size 10}]
                   :players [{:discard  [changeling]
@@ -802,7 +802,7 @@
                       :players     [{:triggers [changeling-trigger]}]
                       :trash       [ghost]}
                      (gain {:player-no 0 :card-name :ghost :from :trash})
-                     (choose :ghost))
+                     (choose :changeling))
                  {:extra-cards [{:card ghost :pile-size 6}]
                   :supply      [{:card changeling :pile-size 9}]
                   :players     [{:discard  [changeling]

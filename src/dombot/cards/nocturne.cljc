@@ -391,7 +391,6 @@
                                 (get-on-buy-effects game player-no :changeling))
         on-gain-effects (->> (get-on-gain-effects game player-no name)
                              (remove #{[::changeling-on-gain]}))
-        {:keys [pile-size]} (ut/get-pile-idx game :changeling)
         ignore-gain?    (or (= :changeling name)
                             (and bought
                                  (empty? on-buy-effects)
@@ -400,12 +399,11 @@
             (and card
                  pile-location
                  (<= 3 cost)
-                 (pos? pile-size)
                  (not ignore-gain?)) (give-choice {:player-no player-no
                                                    :text      (str "You may exchange the gained " (ut/format-name name) " for a Changeling.")
                                                    :choice    [::changeling-exchange {:gained-card-id gained-card-id
                                                                                       :pile-location  pile-location}]
-                                                   :options   [:player :gaining {:id gained-card-id}]
+                                                   :options   [:supply {:names #{:changeling}}]
                                                    :max       1}))))
 
 (effects/register {::changeling-exchange changeling-exchange
