@@ -50,7 +50,7 @@
   (if (= player-no (get-in game [:artifacts :lantern :owner])) 3 2))
 
 (defn border-guard-take-revealed [game {:keys [player-no] :as args}]
-  (let [revealed (get-in game [:players player-no :revealed])
+  (let [revealed           (get-in game [:players player-no :revealed])
         may-take-artifact? (and (= (border-guard-number-of-revealed-cards game player-no)
                                    (count revealed))
                                 (every? :action (map (partial ut/get-types game) revealed)))]
@@ -89,35 +89,34 @@
                              [::add-artifact {:artifact-name :lantern}]]})
 
 (def cargo-ship-trigger {:trigger  :on-gain
-                         :duration :once-turn
+                         :duration :turn
                          :effects  [[::cargo-ship-give-choice]]})
 
 (defn cargo-ship-set-aside [game {:keys [player-no card-id card-name gained-card-id]}]
   (if card-name
-    (let [{:keys [card idx]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
+    (let [{card     :card
+           card-idx :idx} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
+          {trigger-idx :idx} (ut/get-trigger-idx game [:players player-no :triggers] {:card-id  card-id ; todo: Use trigger-id
+                                                                                      :duration :turn})]
       (-> game
-          (update-in [:players player-no :gaining] ut/vec-remove idx)
+          (update-in [:players player-no :gaining] ut/vec-remove card-idx)
+          (update-in [:players player-no :triggers] ut/vec-remove trigger-idx)
           (push-effect-stack {:player-no player-no
                               :effects   [[:add-trigger {:trigger (merge set-aside=>hand-trigger
                                                                          {:set-aside [card]})
                                                          :card-id card-id}]]})
           (state-maintenance player-no :gaining :cargo-ship)))
-    (add-trigger game {:player-no player-no
-                       :card-id   card-id
-                       :trigger   cargo-ship-trigger})))
+    game))
 
 (defn cargo-ship-give-choice [game {:keys [player-no card-id gained-card-id]}]
   (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
-    (if card
-      (give-choice game {:player-no player-no
-                         :card-id   card-id
-                         :text      (str "You may set the gained " (ut/format-name name) " aside on Cargo Ship.")
-                         :choice    [::cargo-ship-set-aside {:gained-card-id gained-card-id}]
-                         :options   [:player :gaining {:id gained-card-id}]
-                         :max       1})
-      (add-trigger game {:player-no player-no
-                         :card-id   card-id
-                         :trigger   cargo-ship-trigger}))))
+    (cond-> game
+            card (give-choice {:player-no player-no
+                               :card-id   card-id
+                               :text      (str "You may set the gained " (ut/format-name name) " aside on Cargo Ship.")
+                               :choice    [::cargo-ship-set-aside {:gained-card-id gained-card-id}]
+                               :options   [:player :gaining {:id gained-card-id}]
+                               :max       1}))))
 
 (effects/register {::cargo-ship-set-aside   cargo-ship-set-aside
                    ::cargo-ship-give-choice cargo-ship-give-choice})
@@ -520,7 +519,7 @@
                 :setup   [[::add-artifact {:artifact-name :key}]]})
 
 (defn villain-attack [game {:keys [player-no]}]
-  (let [hand (get-in game [:players player-no :hand])
+  (let [hand               (get-in game [:players player-no :hand])
         has-eligible-card? (some (comp (partial <= 2) (partial ut/get-cost game)) hand)]
     (cond (< (count hand) 5) game
           has-eligible-card? (give-choice game {:player-no player-no
@@ -577,20 +576,13 @@
 
 (effects/register {::add-artifact add-artifact})
 
-(defn academy-on-gain [game {:keys [player-no gained-card-id]}]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
-        types (ut/get-types game card)]
-    (cond-> game
-            (:action types) (give-villagers {:player-no player-no :arg 1}))))
-
-(effects/register {::academy-on-gain academy-on-gain})
-
 (def academy {:name    :academy
               :set     :renaissance
               :type    :project
               :cost    5
               :trigger {:trigger :on-gain
-                        :effects [[::academy-on-gain]]}})
+                        :type    :action
+                        :effects [[:give-villagers 1]]}})
 
 (def barracks {:name    :barracks
                :set     :renaissance
@@ -695,20 +687,13 @@
             :trigger {:trigger  :at-end-game
                       :duration :once}})
 
-(defn guildhall-on-gain [game {:keys [player-no gained-card-id]}]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
-        types (ut/get-types game card)]
-    (cond-> game
-            (:treasure types) (give-coffers {:player-no player-no :arg 1}))))
-
-(effects/register {::guildhall-on-gain guildhall-on-gain})
-
 (def guildhall {:name    :guildhall
                 :set     :renaissance
                 :type    :project
                 :cost    5
                 :trigger {:trigger :on-gain
-                          :effects [[::guildhall-on-gain]]}})
+                          :type    :treasure
+                          :effects [[:give-coffers 1]]}})
 
 (defn- innovation-play-action [game {:keys [player-no card-name gained-card-id]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
@@ -720,18 +705,16 @@
                                                       [:card-effect {:card card}]]}))))
 
 (defn- innovation-on-gain [game {:keys [player-no gained-card-id]}]
-  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
-        types (ut/get-types game card)
+  (let [{{:keys [name]} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
         gained-actions (->> (get-in game [:players player-no :gained-cards])
                             (filter (comp :action (partial ut/get-types game)))
                             count)]
     (cond-> game
-            (and (:action types)
-                 (<= gained-actions 1)) (give-choice {:player-no player-no
-                                                      :text      (str "You may play the gained " (ut/format-name name) ".")
-                                                      :choice    [::innovation-play-action {:gained-card-id gained-card-id}]
-                                                      :options   [:player :gaining {:id gained-card-id}]
-                                                      :max       1}))))
+            (<= gained-actions 1) (give-choice {:player-no player-no
+                                                :text      (str "You may play the gained " (ut/format-name name) ".")
+                                                :choice    [::innovation-play-action {:gained-card-id gained-card-id}]
+                                                :options   [:player :gaining {:id gained-card-id}]
+                                                :max       1}))))
 
 (effects/register {::innovation-play-action innovation-play-action
                    ::innovation-on-gain     innovation-on-gain})
@@ -741,6 +724,7 @@
                  :type    :project
                  :cost    6
                  :trigger {:trigger :on-gain
+                           :type    :action
                            :effects [[::innovation-on-gain]]}})
 
 (defn- pageant-pay-for-coffers [game {:keys [player-no choice]}]

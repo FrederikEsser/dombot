@@ -338,7 +338,8 @@
                               :gaining   [gold]
                               :discard   [copper]
                               :actions   0
-                              :coins     2}]
+                              :coins     2
+                              :triggers  [(assoc cargo-ship-trigger :card-id 1)]}]
               :effect-stack [{:text      "You may set the gained Gold aside on Cargo Ship."
                               :player-no 0
                               :card-id   1
@@ -346,6 +347,8 @@
                               :source    :gaining
                               :options   [:gold]
                               :max       1}
+                             {:player-no 0
+                              :effect    [:remove-triggers {:trigger :on-gain}]}
                              {:player-no 0
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :gold
@@ -392,7 +395,8 @@
                               :play-area [cargo-ship sculptor]
                               :discard   [copper]
                               :actions   0
-                              :coins     2}]
+                              :coins     2
+                              :triggers  [(assoc cargo-ship-trigger :card-id 1)]}]
               :effect-stack [{:text      "You may set the gained Border Guard aside on Cargo Ship."
                               :player-no 0
                               :card-id   1
@@ -400,6 +404,8 @@
                               :source    :gaining
                               :options   [:border-guard]
                               :max       1}
+                             {:player-no 0
+                              :effect    [:remove-triggers {:trigger :on-gain}]}
                              {:player-no 0
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :border-guard
@@ -454,9 +460,9 @@
                          :discard   [copper]
                          :actions   0
                          :coins     4
-                         :triggers  [(merge set-aside=>hand-trigger {:card-id   1
-                                                                     :set-aside [gold]})
-                                     (assoc cargo-ship-trigger :card-id 2)]}]}))
+                         :triggers  [(assoc cargo-ship-trigger :card-id 2)
+                                     (merge set-aside=>hand-trigger {:card-id   1
+                                                                     :set-aside [gold]})]}]}))
       (is (= (-> {:supply  [{:card border-guard :pile-size 10}]
                   :players [{:hand    [cargo-ship inventor]
                              :discard [copper]
@@ -559,6 +565,8 @@
                             :discard       [copper]
                             :actions       0
                             :coins         4
+                            :triggers      [(assoc cargo-ship-trigger :card-id 1)
+                                            (assoc cargo-ship-trigger :card-id 1)]
                             :repeated-play [{:source 8
                                              :target 1}]}]
             :effect-stack [{:text      "You may set the gained Gold aside on Cargo Ship."
@@ -569,11 +577,12 @@
                             :options   [:gold]
                             :max       1}
                            {:player-no 0
-                            :card-id   1
-                            :effect    [:dombot.cards.renaissance/cargo-ship-give-choice]
-                            :args      {:player-no      0
-                                        :card-name      :gold
-                                        :gained-card-id 5}}
+                            :effect    [:dombot.cards.renaissance/cargo-ship-give-choice {:player-no      0
+                                                                                          :card-id        1
+                                                                                          :card-name      :gold
+                                                                                          :gained-card-id 5}]}
+                           {:player-no 0
+                            :effect    [:remove-triggers {:trigger :on-gain}]}
                            {:player-no 0
                             :effect    [:finalize-gain {:player-no      0
                                                         :card-name      :gold
@@ -592,9 +601,9 @@
                        :discard       [copper]
                        :actions       0
                        :coins         4
-                       :triggers      [(merge set-aside=>hand-trigger {:card-id   1
-                                                                       :set-aside [gold]})
-                                       (assoc cargo-ship-trigger :card-id 1)]
+                       :triggers      [(assoc cargo-ship-trigger :card-id 1)
+                                       (merge set-aside=>hand-trigger {:card-id   1
+                                                                       :set-aside [gold]})]
                        :repeated-play [{:source 8
                                         :target 1}]}]}))
     (is (= (-> {:supply  [{:card gold :pile-size 30}]
@@ -655,9 +664,9 @@
                        :coins         1
                        :buys          0
                        :triggers      [(merge set-aside=>hand-trigger {:card-id   1
-                                                                       :set-aside [(assoc experiment :id 1)]})
+                                                                       :set-aside [(assoc experiment :id 2)]})
                                        (merge set-aside=>hand-trigger {:card-id   1
-                                                                       :set-aside [(assoc experiment :id 2)]})]
+                                                                       :set-aside [(assoc experiment :id 1)]})]
                        :repeated-play [{:source 8
                                         :target 1}]}]}))))
 
@@ -687,6 +696,8 @@
                               :source         :hand
                               :options        [:copper :copper]
                               :max            1}
+                             {:player-no 0
+                              :effect    [:remove-triggers {:trigger :on-gain}]}
                              {:player-no 0
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :ducat
@@ -2611,7 +2622,15 @@
                                      :gained-cards [{:cost  4
                                                      :name  :mountain-village
                                                      :types #{:action}}]
-                                     :triggers     [(get-project-trigger innovation)]}]})))))
+                                     :triggers     [(get-project-trigger innovation)]}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:deck     [silver silver]
+                             :triggers [(get-project-trigger innovation)]}]}
+                 (gain {:player-no 0 :card-name :silver}))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:deck     [silver silver]
+                         :discard  [silver]
+                         :triggers [(get-project-trigger innovation)]}]})))))
 
 (deftest pageant-test
   (testing "Pageant"

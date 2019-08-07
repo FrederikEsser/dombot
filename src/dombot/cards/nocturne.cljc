@@ -1,5 +1,6 @@
 (ns dombot.cards.nocturne
-  (:require [dombot.operations :refer [push-effect-stack give-choice move-card attack-other-players gain state-maintenance check-stack]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice move-card attack-other-players gain state-maintenance
+                                       check-stack get-on-buy-effects get-on-gain-effects]]
             [dombot.cards.common :refer [reveal-hand add-trigger setup-extra-cards]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -381,16 +382,20 @@
                                                                  :from      :supply
                                                                  :to        :discard}]]})))
 
-(defn- changeling-on-gain [{:keys [supply extra-cards] :as game} {:keys [player-no gained-card-id bought] :as args}]
-  (let [{{:keys [name on-gain on-buy] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
-        pile-location (cond (some (comp #{name} :name :card) supply) :supply
-                            (some (comp #{name} :name :card) extra-cards) :extra-cards)
-        cost          (ut/get-cost game card)
+(defn- changeling-on-gain [{:keys [supply extra-cards] :as game} {:keys [player-no gained-card-id bought]}]
+  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
+        pile-location   (cond (some (comp #{name} :name :card) supply) :supply
+                              (some (comp #{name} :name :card) extra-cards) :extra-cards)
+        cost            (ut/get-cost game card)
+        on-buy-effects  (concat (get-on-buy-effects game player-no name)
+                                (get-on-buy-effects game player-no :changeling))
+        on-gain-effects (->> (get-on-gain-effects game player-no name)
+                             (remove #{[::changeling-on-gain]}))
         {:keys [pile-size]} (ut/get-pile-idx game :changeling)
-        ignore-gain?  (or (= :changeling name)
-                          (and bought
-                               (nil? on-gain)
-                               (nil? on-buy)))]
+        ignore-gain?    (or (= :changeling name)
+                            (and bought
+                                 (empty? on-buy-effects)
+                                 (empty? on-gain-effects)))]
     (cond-> game
             (and card
                  pile-location
@@ -792,7 +797,8 @@
             :effects  [[:draw 1]
                        [:give-actions 1]
                        [::pixie-give-choice]]
-            :heirloom goat})
+            :heirloom goat
+            :setup    [[:setup-boons]]})
 
 (def cursed-gold {:name       :cursed-gold
                   :set        :nocturne

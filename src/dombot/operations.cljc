@@ -302,33 +302,44 @@
         (update-in game [to-path idx :pile-size] inc))
       (update-in game to-path add-card-to-coll card))))
 
+(defn get-on-gain-effects [game player-no card-name]
+  (let [{:keys [card tokens]} (ut/get-pile-idx game card-name)
+        {:keys [on-gain]} card
+        types                 (ut/get-types game card)
+        token-effects         (->> tokens
+                                   (mapcat :on-gain))
+        while-in-play-effects (->> (get-in game [:players player-no :play-area])
+                                   (mapcat (comp :on-gain :while-in-play))
+                                   (map (partial ut/add-effect-args {:card-name card-name})))
+        trigger-effects       (->> (get-in game [:players player-no :triggers])
+                                   (filter (fn [{:keys [trigger type]}]
+                                             (and (= :on-gain trigger)
+                                                  (or (not type)
+                                                      (contains? types type)))))
+                                   (mapcat (fn [{:keys [card-id effects]}]
+                                             (cond->> effects
+                                                      card-id (map (partial ut/add-effect-args {:card-id card-id}))))))]
+    (concat on-gain while-in-play-effects trigger-effects token-effects)))
+
 (defn handle-on-gain [{:keys [track-gained-cards? current-player] :as game}
                       {:keys [player-no gained-card-id from bought]
                        :or   {from :supply}
                        :as   args}]
-  (let [{{:keys [name on-gain cost] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
-        {:keys [hand play-area]} (get-in game [:players player-no])
-        reaction-effects      (->> hand
-                                   (mapcat (comp :on-gain :reaction))
-                                   (map (partial ut/add-effect-args {:gained-card-id gained-card-id})))
-        token-effects         (when (= :supply from)
-                                (->> (ut/get-pile-idx game name)
-                                     :tokens
-                                     (mapcat :on-gain)
-                                     (map (partial ut/add-effect-args {:card-name name}))))
-        while-in-play-effects (->> play-area
-                                   (mapcat (comp :on-gain :while-in-play))
-                                   (map (partial ut/add-effect-args {:gained-card-id gained-card-id})))]
+  (let [{{:keys [name cost] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
+        {:keys [hand]} (get-in game [:players player-no])
+        reaction-effects (->> hand
+                              (mapcat (comp :on-gain :reaction))
+                              (map (partial ut/add-effect-args {:gained-card-id gained-card-id})))
+        on-gain-effects  (->> (get-on-gain-effects game player-no name)
+                              (map (partial ut/add-effect-args (merge args
+                                                                      {:card-name      name
+                                                                       :gained-card-id gained-card-id}))))]
     (if card
       (cond-> game
               (or (not-empty reaction-effects)
-                  on-gain
-                  (not-empty token-effects)
-                  (not-empty while-in-play-effects)) (push-effect-stack (merge args {:effects (concat reaction-effects
-                                                                                                      (map (partial ut/add-effect-args args) on-gain)
-                                                                                                      token-effects
-                                                                                                      while-in-play-effects)}))
-              :always (apply-triggers player-no :on-gain args)
+                  (not-empty on-gain-effects)) (push-effect-stack (merge args {:effects (concat reaction-effects
+                                                                                                on-gain-effects
+                                                                                                [[:remove-triggers {:trigger :on-gain}]])}))
               (and track-gained-cards?
                    (or (nil? current-player)
                        (= current-player player-no))) (update-in [:players player-no :gained-cards]
@@ -382,22 +393,28 @@
                    :gain           gain
                    :overpay-choice overpay-choice})
 
-(defn buy-card [{:keys [effect-stack] :as game} player-no card-name]
-  (let [{:keys [buys coins phase play-area]} (get-in game [:players player-no])
-        {:keys [card pile-size tokens] :as supply-pile} (ut/get-pile-idx game card-name)
-        cost                  (ut/get-buy-cost game player-no card)
-        {:keys [on-buy overpay]} card
-        overpay-effects       (when (and overpay (pos? (- coins cost)))
-                                [[:give-choice {:text    (str "You may overpay for your " (ut/format-name card-name) ". Choose amount:")
-                                                :choice  [:overpay-choice {:effect overpay}]
-                                                :options [:overpay]
-                                                :min     1
-                                                :max     1}]])
+(defn get-on-buy-effects [game player-no card-name]
+  (let [{:keys [card tokens]} (ut/get-pile-idx game card-name)
+        {:keys [on-buy]} card
         token-effects         (->> tokens
                                    (mapcat :on-buy))
-        while-in-play-effects (->> play-area
+        while-in-play-effects (->> (get-in game [:players player-no :play-area])
                                    (mapcat (comp :on-buy :while-in-play))
                                    (map (partial ut/add-effect-args {:card-name card-name})))]
+    (concat on-buy token-effects while-in-play-effects)))
+
+(defn buy-card [{:keys [effect-stack] :as game} player-no card-name]
+  (let [{:keys [buys coins phase]} (get-in game [:players player-no])
+        {:keys [card pile-size] :as supply-pile} (ut/get-pile-idx game card-name)
+        cost            (ut/get-buy-cost game player-no card)
+        {:keys [overpay]} card
+        on-buy-effects  (get-on-buy-effects game player-no card-name)
+        overpay-effects (when (and overpay (pos? (- coins cost)))
+                          [[:give-choice {:text    (str "You may overpay for your " (ut/format-name card-name) ". Choose amount:")
+                                          :choice  [:overpay-choice {:effect overpay}]
+                                          :options [:overpay]
+                                          :min     1
+                                          :max     1}]])]
     (assert (empty? effect-stack) "You can't buy cards when you have a choice to make.")
     (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
     (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))
@@ -412,9 +429,7 @@
         (push-effect-stack {:player-no player-no
                             :effects   (concat [[:set-phase {:phase :buy}]]
                                                overpay-effects
-                                               on-buy
-                                               token-effects
-                                               while-in-play-effects
+                                               on-buy-effects
                                                [[:gain {:card-name card-name
                                                         :bought    true}]])})
         check-stack)))

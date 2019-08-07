@@ -996,6 +996,8 @@
                               :options   [:gold]
                               :max       1}
                              {:player-no 0
+                              :effect    [:remove-triggers {:trigger :on-gain}]}
+                             {:player-no 0
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :gold
                                                           :gained-card-id 0
@@ -1344,6 +1346,8 @@
                               :min       1
                               :max       1}
                              {:player-no 0
+                              :effect    [:remove-triggers {:trigger :on-gain}]}
+                             {:player-no 0
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :gold
                                                           :gained-card-id 0
@@ -1404,6 +1408,8 @@
                                           {:option :nothing :text "Don't reveal Watchtower."}]
                               :min       1
                               :max       1}
+                             {:player-no 1
+                              :effect    [:remove-triggers {:trigger :on-gain}]}
                              {:player-no 1
                               :effect    [:finalize-gain {:player-no           1
                                                           :card-name           :curse

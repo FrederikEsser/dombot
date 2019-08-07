@@ -6,7 +6,9 @@
             [dombot.cards.common :refer :all]
             [dombot.cards.dominion :refer [throne-room witch]]
             [dombot.cards.intrigue :refer [lurker]]
-            [dombot.cards.nocturne :as nocturne :refer :all]))
+            [dombot.cards.prosperity :as prosperity :refer [hoard mint talisman]]
+            [dombot.cards.nocturne :as nocturne :refer :all]
+            [dombot.cards.renaissance :refer [silk-merchant academy]]))
 
 (defn fixture [f]
   (with-rand-seed 123 (f)))
@@ -311,6 +313,8 @@
                               :min       1
                               :max       1}
                              {:player-no 0
+                              :effect    [:remove-triggers {:trigger :on-gain}]}
+                             {:player-no 0
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :blessed-village
                                                           :gained-card-id 0}]}]}))
@@ -542,22 +546,6 @@
                           {:card conclave :pile-size 10}]
                 :players [{:discard  [changeling]
                            :triggers [changeling-trigger]}]}))
-        (is (= (-> {:supply  [{:card changeling :pile-size 10}
-                              {:card conclave :pile-size 10}]
-                    :players [{:triggers [changeling-trigger]}]}
-                   (gain {:player-no 0 :card-name :changeling}))
-               {:supply  [{:card changeling :pile-size 9}
-                          {:card conclave :pile-size 10}]
-                :players [{:discard  [changeling]
-                           :triggers [changeling-trigger]}]}))
-        (is (= (-> {:supply  [{:card changeling :pile-size 0}
-                              {:card conclave :pile-size 10}]
-                    :players [{:triggers [changeling-trigger]}]}
-                   (gain {:player-no 0 :card-name :conclave}))
-               {:supply  [{:card changeling :pile-size 0}
-                          {:card conclave :pile-size 9}]
-                :players [{:discard  [conclave]
-                           :triggers [changeling-trigger]}]}))
         (is (= (-> {:track-gained-cards? true
                     :supply              [{:card changeling :pile-size 10}
                                           {:card conclave :pile-size 10}]
@@ -570,17 +558,231 @@
                                       {:card conclave :pile-size 10}]
                 :players             [{:discard      [changeling]
                                        :gained-cards [{:name :conclave :cost 4 :types #{:action}}]
-                                       :triggers     [changeling-trigger]}]})))
-      (let [ghost (assoc ghost :id 1)]
-        (is (= (-> {:extra-cards [{:card ghost :pile-size 6}]
-                    :supply      [{:card changeling :pile-size 10}]
-                    :players     [{:triggers [changeling-trigger]}]}
-                   (gain {:player-no 0 :card-name :ghost :from :extra-cards})
-                   (choose :ghost))
-               {:extra-cards [{:card ghost :pile-size 6}]
-                :supply      [{:card changeling :pile-size 9}]
-                :players     [{:discard  [changeling]
+                                       :triggers     [changeling-trigger]}]}))
+        (is (= (-> {:supply  [{:card changeling :pile-size 0}
+                              {:card conclave :pile-size 10}]
+                    :players [{:triggers [changeling-trigger]}]}
+                   (gain {:player-no 0 :card-name :conclave}))
+               {:supply  [{:card changeling :pile-size 0}
+                          {:card conclave :pile-size 9}]
+                :players [{:discard  [conclave]
+                           :triggers [changeling-trigger]}]})))
+      (testing "ignoring gains"
+        (let [conclave (assoc conclave :id 1)]
+          (is (= (-> {:supply  [{:card changeling :pile-size 9}
+                                {:card conclave :pile-size 9}]
+                      :players [{:hand      [changeling]
+                                 :play-area [conclave]
+                                 :triggers  [changeling-trigger]}]}
+                     (play 0 :changeling)
+                     (choose :conclave)
+                     (choose nil))
+                 {:supply  [{:card changeling :pile-size 9}
+                            {:card conclave :pile-size 8}]
+                  :players [{:play-area [conclave]
+                             :discard   [conclave]
+                             :triggers  [changeling-trigger]}]
+                  :trash   [changeling]}))
+          (is (= (-> {:supply  [{:card changeling :pile-size 10}
+                                {:card conclave :pile-size 10}]
+                      :players [{:triggers [changeling-trigger]}]}
+                     (gain {:player-no 0 :card-name :changeling}))
+                 {:supply  [{:card changeling :pile-size 9}
+                            {:card conclave :pile-size 10}]
+                  :players [{:discard  [changeling]
+                             :triggers [changeling-trigger]}]}))
+          (is (= (-> {:supply  [{:card changeling :pile-size 10}
+                                {:card conclave :pile-size 10}]
+                      :players [{:coins    4
+                                 :buys     1
+                                 :triggers [changeling-trigger]}]}
+                     (buy-card 0 :conclave))
+                 {:supply  [{:card changeling :pile-size 10}
+                            {:card conclave :pile-size 9}]
+                  :players [{:discard  [conclave]
+                             :coins    0
+                             :buys     0
+                             :triggers [changeling-trigger]}]}))
+          (let [mint (assoc mint :id 2)]
+            (is (= (-> {:supply  [{:card changeling :pile-size 10}
+                                  {:card mint :pile-size 10}]
+                        :players [{:play-area (repeat 5 copper)
+                                   :coins     5
+                                   :buys      1
+                                   :triggers  [changeling-trigger]}]}
+                       (buy-card 0 :mint)
+                       (choose :mint))
+                   {:supply  [{:card changeling :pile-size 9}
+                              {:card mint :pile-size 10}]
+                    :players [{:discard  [changeling]
+                               :coins    0
+                               :buys     0
+                               :triggers [changeling-trigger]}]
+                    :trash   (repeat 5 copper)})))
+          (let [duchy (assoc duchy :id 2)
+                gold  (assoc gold :id 3)]
+            (is (= (-> {:supply  [{:card changeling :pile-size 10}
+                                  {:card duchy :pile-size 8}
+                                  {:card gold :pile-size 30}]
+                        :players [{:play-area [hoard]
+                                   :coins     5
+                                   :buys      1
+                                   :triggers  [changeling-trigger]}]}
+                       (buy-card 0 :duchy)
+                       (choose nil)                         ; don't exchange gained Gold
+                       (choose :duchy))                     ;exchange bought Duchy
+                   {:supply  [{:card changeling :pile-size 9}
+                              {:card duchy :pile-size 8}
+                              {:card gold :pile-size 29}]
+                    :players [{:play-area [hoard]
+                               :discard   [gold changeling]
+                               :coins     0
+                               :buys      0
+                               :triggers  [changeling-trigger]}]})))
+          (let [curse (assoc curse :id 2)]
+            (is (= (-> {:supply  [{:card curse :pile-size 10}
+                                  {:card changeling :pile-size 10}
+                                  {:card   conclave :pile-size 10
+                                   :tokens [{:token-type :embargo
+                                             :on-buy     [[:gain {:card-name :curse}]]}]}]
+                        :players [{:coins    4
+                                   :buys     1
+                                   :triggers [changeling-trigger]}]}
+                       (buy-card 0 :conclave)
+                       (choose :conclave))
+                   {:supply  [{:card curse :pile-size 9}
+                              {:card changeling :pile-size 9}
+                              {:card   conclave :pile-size 10
+                               :tokens [{:token-type :embargo
+                                         :on-buy     [[:gain {:card-name :curse}]]}]}]
+                    :players [{:discard  [curse changeling]
+                               :coins    0
+                               :buys     0
+                               :triggers [changeling-trigger]}]}))
+            (is (= (-> {:supply  [{:card curse :pile-size 10}
+                                  {:card   changeling :pile-size 10
+                                   :tokens [{:token-type :embargo
+                                             :on-buy     [[:gain {:card-name :curse}]]}]}
+                                  {:card conclave :pile-size 10}]
+                        :players [{:coins    4
+                                   :buys     1
+                                   :triggers [changeling-trigger]}]}
+                       (buy-card 0 :conclave)
+                       (choose :conclave))
+                   {:supply  [{:card curse :pile-size 10}
+                              {:card   changeling :pile-size 9
+                               :tokens [{:token-type :embargo
+                                         :on-buy     [[:gain {:card-name :curse}]]}]}
+                              {:card conclave :pile-size 10}]
+                    :players [{:discard  [changeling]
+                               :coins    0
+                               :buys     0
                                :triggers [changeling-trigger]}]})))
+          (let [silk-merchant (assoc silk-merchant :id 2)]
+            (is (= (-> {:supply  [{:card changeling :pile-size 10}
+                                  {:card silk-merchant :pile-size 10}]
+                        :players [{:coins    4
+                                   :buys     1
+                                   :triggers [changeling-trigger]}]}
+                       (buy-card 0 :silk-merchant)
+                       (choose :silk-merchant))
+                   {:supply  [{:card changeling :pile-size 9}
+                              {:card silk-merchant :pile-size 10}]
+                    :players [{:discard   [changeling]
+                               :coins     0
+                               :buys      0
+                               :villagers 1
+                               :coffers   1
+                               :triggers  [changeling-trigger]}]})))
+          (let [duchy (assoc duchy :id 2)]
+            (is (= (-> {:supply  [{:card changeling :pile-size 10}
+                                  {:card   duchy :pile-size 8
+                                   :tokens [{:token-type :trade-route
+                                             :on-gain    [[::prosperity/trade-route-move-token]]}]}]
+                        :players [{:coins    5
+                                   :buys     1
+                                   :triggers [changeling-trigger]}]}
+                       (buy-card 0 :duchy)
+                       (choose :duchy))
+                   {:trade-route-mat 1
+                    :supply          [{:card changeling :pile-size 9}
+                                      {:card duchy :pile-size 8}]
+                    :players         [{:discard  [changeling]
+                                       :coins    0
+                                       :buys     0
+                                       :triggers [changeling-trigger]}]})))
+          (is (= (-> {:supply  [{:card changeling :pile-size 10}
+                                {:card conclave :pile-size 10}]
+                      :players [{:play-area [talisman]
+                                 :coins     4
+                                 :buys      1
+                                 :triggers  [changeling-trigger]}]}
+                     (buy-card 0 :conclave)
+                     (choose nil)                           ; keep bought Conclave
+                     (choose :conclave))                    ; exchange gained Conclave
+                 {:supply  [{:card changeling :pile-size 9}
+                            {:card conclave :pile-size 9}]
+                  :players [{:play-area [talisman]
+                             :discard   [conclave changeling]
+                             :coins     0
+                             :buys      0
+                             :triggers  [changeling-trigger]}]}))
+          (is (= (-> {:supply  [{:card changeling :pile-size 10}
+                                {:card conclave :pile-size 10}]
+                      :players [{:play-area [talisman]
+                                 :coins     4
+                                 :buys      1
+                                 :triggers  [changeling-trigger]}]}
+                     (buy-card 0 :conclave)
+                     (choose :conclave)                     ; exchange bought Conclave
+                     (choose nil))                          ; keep gained Conclave
+                 {:supply  [{:card changeling :pile-size 9}
+                            {:card conclave :pile-size 9}]
+                  :players [{:play-area [talisman]
+                             :discard   [changeling conclave]
+                             :coins     0
+                             :buys      0
+                             :triggers  [changeling-trigger]}]}))
+          (is (= (-> {:supply  [{:card changeling :pile-size 10}
+                                {:card conclave :pile-size 10}]
+                      :players [{:play-area [tracker]
+                                 :coins     4
+                                 :buys      1
+                                 :triggers  [changeling-trigger]}]}
+                     (buy-card 0 :conclave)
+                     (choose :conclave))                    ; topdeck Conclave from Tracker
+                 {:supply  [{:card changeling :pile-size 10}
+                            {:card conclave :pile-size 9}]
+                  :players [{:play-area [tracker]
+                             :deck      [conclave]
+                             :coins     0
+                             :buys      0
+                             :triggers  [changeling-trigger]}]}))
+          (is (= (-> {:supply  [{:card changeling :pile-size 10}
+                                {:card conclave :pile-size 10}]
+                      :players [{:coins    4
+                                 :buys     1
+                                 :triggers [changeling-trigger (:trigger academy)]}]}
+                     (buy-card 0 :conclave)
+                     (choose :conclave))
+                 {:supply  [{:card changeling :pile-size 9}
+                            {:card conclave :pile-size 10}]
+                  :players [{:discard   [changeling]
+                             :coins     0
+                             :buys      0
+                             :villagers 1
+                             :triggers  [changeling-trigger (:trigger academy)]}]}))))
+      (testing "gaining from Extra Cards"
+        (let [ghost (assoc ghost :id 1)]
+          (is (= (-> {:extra-cards [{:card ghost :pile-size 6}]
+                      :supply      [{:card changeling :pile-size 10}]
+                      :players     [{:triggers [changeling-trigger]}]}
+                     (gain {:player-no 0 :card-name :ghost :from :extra-cards})
+                     (choose :ghost))
+                 {:extra-cards [{:card ghost :pile-size 6}]
+                  :supply      [{:card changeling :pile-size 9}]
+                  :players     [{:discard  [changeling]
+                                 :triggers [changeling-trigger]}]}))))
       (testing "gaining from Trash"
         (let [conclave (assoc conclave :id 1)]
           (is (= (-> {:supply  [{:card changeling :pile-size 10}
