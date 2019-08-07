@@ -129,7 +129,7 @@
               :players [{:boons    [river-gift]
                          :triggers [{:trigger  :at-draw-hand
                                      :duration :once
-                                     :effects  [[:draw 1]]}
+                                     :effects  [[:draw {:arg 1 :player-no 0}]]}
                                     {:trigger  :at-clean-up
                                      :duration :once
                                      :effects  [[:return-boon {:boon-name :the-river's-gift}]]}]}]}))
@@ -1883,6 +1883,111 @@
                 :players [{:play-area [cursed-gold]
                            :discard   [curse]
                            :coins     3}]}))))))
+
+(deftest sacred-grove-test
+  (let [sacred-grove (assoc sacred-grove :id 0)]
+    (testing "Sacred Grove"
+      (is (= (-> {:boons   {:deck [sea-gift]}
+                  :players [{:hand    [sacred-grove]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0
+                             :buys    1}
+                            {:deck [estate estate]}]}
+                 (play 0 :sacred-grove))
+             {:boons        {:discard [sea-gift]}
+              :players      [{:hand      [copper]
+                              :play-area [sacred-grove]
+                              :deck      [copper]
+                              :actions   0
+                              :coins     3
+                              :buys      2}
+                             {:deck [estate estate]}]
+              :effect-stack [{:text      "You may receive The Sea's Gift."
+                              :player-no 1
+                              :choice    [::nocturne/sacred-grove-choice {:boon sea-gift}]
+                              :source    :special
+                              :options   [{:option :yes :text "Yes please!"}
+                                          {:option :no :text "No thank you."}]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:boons   {:deck [sea-gift]}
+                  :players [{:hand    [sacred-grove]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0
+                             :buys    1}
+                            {:deck [estate estate]}]}
+                 (play 0 :sacred-grove)
+                 (choose :no))
+             {:boons   {:discard [sea-gift]}
+              :players [{:hand      [copper]
+                         :play-area [sacred-grove]
+                         :deck      [copper]
+                         :actions   0
+                         :coins     3
+                         :buys      2}
+                        {:deck [estate estate]}]}))
+      (is (= (-> {:boons   {:deck [sea-gift]}
+                  :players [{:hand    [sacred-grove]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0
+                             :buys    1}
+                            {:deck [estate estate]}]}
+                 (play 0 :sacred-grove)
+                 (choose :yes))
+             {:boons   {:discard [sea-gift]}
+              :players [{:hand      [copper]
+                         :play-area [sacred-grove]
+                         :deck      [copper]
+                         :actions   0
+                         :coins     3
+                         :buys      2}
+                        {:hand [estate]
+                         :deck [estate]}]}))
+      (is (= (-> {:boons   {:deck [field-gift]}
+                  :players [{:hand    [sacred-grove]
+                             :actions 1
+                             :coins   0
+                             :buys    1}
+                            {:deck [estate estate]}]}
+                 (play 0 :sacred-grove))
+             {:boons   {}
+              :players [{:play-area [sacred-grove]
+                         :actions   1
+                         :coins     4
+                         :buys      2
+                         :boons     [field-gift]
+                         :triggers  [{:trigger  :at-clean-up
+                                      :duration :once
+                                      :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}
+                        {:deck [estate estate]}]}))
+      (is (= (-> {:boons   {:deck [river-gift]}
+                  :players [{:hand    [sacred-grove]
+                             :deck    (repeat 7 copper)
+                             :actions 1
+                             :coins   0
+                             :buys    1}
+                            {:hand [copper copper copper copper copper]
+                             :deck [estate estate]}]}
+                 (play 0 :sacred-grove)
+                 (choose :yes)
+                 (end-turn 0))
+             {:boons          {:discard [river-gift]}
+              :current-player 1
+              :players        [{:hand    (repeat 6 copper)
+                                :deck    [copper]
+                                :discard [sacred-grove]
+                                :actions 0
+                                :coins   0
+                                :buys    0
+                                :phase   :out-of-turn}
+                               {:hand    [copper copper copper copper copper estate]
+                                :deck    [estate]
+                                :actions 1
+                                :coins   0
+                                :buys    1}]})))))
 
 (deftest raider-test
   (let [raider (assoc raider :id 0)]

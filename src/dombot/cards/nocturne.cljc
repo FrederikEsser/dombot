@@ -175,11 +175,18 @@
                     :type    :boon
                     :effects [[:gain {:card-name :silver}]]})
 
+(defn- receive-river-gift [{:keys [current-player] :as game} {:keys [player-no]}]
+  (add-trigger game {:player-no (or current-player 0)
+                     :trigger   {:trigger  :at-draw-hand
+                                 :duration :once
+                                 :effects  [[:draw {:arg       1
+                                                    :player-no player-no}]]}}))
+
+(effects/register {::receive-river-gift receive-river-gift})
+
 (def river-gift {:name                 :the-river's-gift
                  :type                 :boon
-                 :effects              [[:add-trigger {:trigger {:trigger  :at-draw-hand
-                                                                 :duration :once
-                                                                 :effects  [[:draw 1]]}}]]
+                 :effects              [[::receive-river-gift]]
                  :keep-until-clean-up? true})
 
 (def sea-gift {:name    :the-sea's-gift
@@ -227,22 +234,22 @@
                                          :min     2
                                          :max     2}]]})
 
-(def boons [earth-gift
-            field-gift
-            flame-gift
-            forest-gift
-            moon-gift
-            mountain-gift
-            river-gift
-            sea-gift
-            sky-gift
-            sun-gift
-            swamp-gift
-            wind-gift])
+(def all-boons [earth-gift
+                field-gift
+                flame-gift
+                forest-gift
+                moon-gift
+                mountain-gift
+                river-gift
+                sea-gift
+                sky-gift
+                sun-gift
+                swamp-gift
+                wind-gift])
 
 (defn- setup-boons [game args]
   (cond-> game
-          (not (:boons game)) (-> (assoc :boons {:deck (shuffle boons)})
+          (not (:boons game)) (-> (assoc :boons {:deck (shuffle all-boons)})
                                   (setup-extra-cards {:extra-cards [(:will-o'-wisp spirit-piles)]}))))
 
 (defn- maybe-shuffle-boons [{:keys [deck discard] :as piles} & {:keys [number-of-boons]
@@ -277,11 +284,12 @@
           (cond-> keep-until-clean-up? (update-in [:players player-no :boons] concat [boon]))
           (receive-boon {:player-no player-no
                          :boon      boon})))
-    (let [{:keys [name effects keep-until-clean-up?]} boon]
+    (let [{:keys [name effects keep-until-clean-up?]} boon
+          has-boon? (some (comp #{name} :name) (get-in game [:players player-no :boons]))]
       (-> game
           (push-effect-stack {:player-no player-no
                               :effects   (concat effects
-                                                 (when keep-until-clean-up?
+                                                 (when (and has-boon? keep-until-clean-up?)
                                                    [[:add-trigger {:trigger {:trigger  :at-clean-up
                                                                              :duration :once
                                                                              :effects  [[:return-boon {:boon-name name}]]}}]]))})
@@ -891,6 +899,46 @@
                                       :max     1}]]
             :heirloom cursed-gold})
 
+(defn- sacred-grove-choice [game {:keys [choice] :as args}]
+  (case choice
+    :yes (receive-boon game args)
+    :no game))
+
+(defn- sacred-grove-receive-boon [game {:keys [player-no]}]
+  (let [{[{:keys [name effects keep-until-clean-up?] :as boon} & deck] :deck
+         discard                                                       :discard} (maybe-shuffle-boons (:boons game))
+        discard     (if keep-until-clean-up?
+                      discard
+                      (concat discard [boon]))
+        gives-coin? (some (comp #{:give-coins} first) effects)]
+    (-> game
+        (assoc :boons (merge {}
+                             (when deck {:deck deck})
+                             (when discard {:discard discard})))
+        (cond-> keep-until-clean-up? (update-in [:players player-no :boons] concat [boon]))
+        (push-effect-stack {:player-no player-no
+                            :effects   (concat [[:receive-boon {:boon boon}]]
+                                               (when (not gives-coin?)
+                                                 [[:other-players {:effects [[:give-choice {:text    (str "You may receive " (ut/format-name name) ".")
+                                                                                            :choice  [::sacred-grove-choice {:boon boon}]
+                                                                                            :options [:special
+                                                                                                      {:option :yes :text "Yes please!"}
+                                                                                                      {:option :no :text "No thank you."}]
+                                                                                            :min     1
+                                                                                            :max     1}]]}]]))}))))
+
+(effects/register {::sacred-grove-choice       sacred-grove-choice
+                   ::sacred-grove-receive-boon sacred-grove-receive-boon})
+
+(def sacred-grove {:name    :sacred-grove
+                   :set     :nocturne
+                   :types   #{:action :fate}
+                   :cost    5
+                   :effects [[:give-buys 1]
+                             [:give-coins 3]
+                             [::sacred-grove-receive-boon]]
+                   :setup   [[:setup-boons]]})
+
 (defn- raider-attack [game {:keys [player-no card-names]}]
   (let [hand               (get-in game [:players player-no :hand])
         has-eligible-card? (some (comp card-names :name) hand)]
@@ -1066,6 +1114,7 @@
                     night-watchman
                     pixie
                     pooka
+                    sacred-grove
                     raider
                     secret-cave
                     shepherd
