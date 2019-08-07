@@ -1120,6 +1120,167 @@
                              :discard   [ghost]}]
               :trash       [duchy]})))))
 
+(deftest fool-test
+  (let [fool (assoc fool :id 0)
+        gold (assoc gold :id 1)]
+    (testing "Fool"
+      (is (= (-> {:artifacts {:lost-in-the-woods (assoc lost-in-the-woods :owner 0)}
+                  :players   [{:hand     [fool]
+                               :actions  1
+                               :triggers [(merge (:trigger lost-in-the-woods)
+                                                 {:duration :lost-in-the-woods})]}]}
+                 (play 0 :fool))
+             {:artifacts {:lost-in-the-woods (assoc lost-in-the-woods :owner 0)}
+              :players   [{:play-area [fool]
+                           :actions   0
+                           :triggers  [(merge (:trigger lost-in-the-woods)
+                                              {:duration :lost-in-the-woods})]}]}))
+      (is (= (-> {:boons     {:deck    [field-gift sea-gift]
+                              :discard [sky-gift river-gift]}
+                  :artifacts {:lost-in-the-woods lost-in-the-woods}
+                  :players   [{:hand    [fool]
+                               :actions 1}]}
+                 (play 0 :fool))
+             {:boons        {:deck [river-gift]}
+              :artifacts    {:lost-in-the-woods (assoc lost-in-the-woods :owner 0)}
+              :players      [{:play-area [fool]
+                              :actions   0
+                              :boons     [field-gift sea-gift sky-gift]
+                              :triggers  [(merge (:trigger lost-in-the-woods)
+                                                 {:duration :lost-in-the-woods})]}]
+              :effect-stack [{:text      "Receive the Boons in any order."
+                              :player-no 0
+                              :choice    [::nocturne/fool-receive-boon {:boons [field-gift sea-gift sky-gift]}]
+                              :source    :boons
+                              :options   [:the-field's-gift :the-sea's-gift :the-sky's-gift]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:boons     {:deck [field-gift sea-gift sky-gift river-gift]}
+                  :artifacts {:lost-in-the-woods lost-in-the-woods}
+                  :players   [{:hand    [fool gold gold copper copper]
+                               :deck    [estate estate]
+                               :actions 1}]}
+                 (play 0 :fool)
+                 (choose :the-sea's-gift))
+             {:boons        {:deck    [river-gift]
+                             :discard [sea-gift]}
+              :artifacts    {:lost-in-the-woods (assoc lost-in-the-woods :owner 0)}
+              :players      [{:hand      [gold gold copper copper estate]
+                              :play-area [fool]
+                              :deck      [estate]
+                              :actions   0
+                              :boons     [field-gift sky-gift]
+                              :triggers  [(merge (:trigger lost-in-the-woods)
+                                                 {:duration :lost-in-the-woods})]}]
+              :effect-stack [{:text      "Receive the Boons in any order."
+                              :player-no 0
+                              :choice    [::nocturne/fool-receive-boon {:boons [field-gift sky-gift]}]
+                              :source    :boons
+                              :options   [:the-field's-gift :the-sky's-gift]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:boons     {:deck [field-gift sea-gift sky-gift river-gift]}
+                  :artifacts {:lost-in-the-woods lost-in-the-woods}
+                  :players   [{:hand    [fool gold gold copper copper]
+                               :deck    [estate estate]
+                               :actions 1
+                               :coins   0}]}
+                 (play 0 :fool)
+                 (choose :the-sea's-gift)
+                 (choose :the-field's-gift))
+             {:boons        {:deck    [river-gift]
+                             :discard [sea-gift]}
+              :artifacts    {:lost-in-the-woods (assoc lost-in-the-woods :owner 0)}
+              :players      [{:hand      [gold gold copper copper estate]
+                              :play-area [fool]
+                              :deck      [estate]
+                              :actions   1
+                              :coins     1
+                              :boons     [field-gift sky-gift]
+                              :triggers  [(merge (:trigger lost-in-the-woods)
+                                                 {:duration :lost-in-the-woods})
+                                          {:trigger  :at-clean-up
+                                           :duration :once
+                                           :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]
+              :effect-stack [{:text      "Receive the Boons in any order."
+                              :player-no 0
+                              :choice    [::nocturne/fool-receive-boon {:boons [sky-gift]}]
+                              :source    :boons
+                              :options   [:the-sky's-gift]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:boons     {:deck [field-gift sea-gift sky-gift river-gift]}
+                  :artifacts {:lost-in-the-woods lost-in-the-woods}
+                  :supply    [{:card gold :pile-size 30}]
+                  :players   [{:hand    [fool gold gold copper copper]
+                               :deck    [estate estate]
+                               :actions 1
+                               :coins   0}]}
+                 (play 0 :fool)
+                 (choose :the-sea's-gift)
+                 (choose :the-field's-gift)
+                 (choose :the-sky's-gift)
+                 (choose [:copper :copper :estate]))
+             {:boons     {:deck    [river-gift]
+                          :discard [sea-gift sky-gift]}
+              :artifacts {:lost-in-the-woods (assoc lost-in-the-woods :owner 0)}
+              :supply    [{:card gold :pile-size 29}]
+              :players   [{:hand      [gold gold]
+                           :play-area [fool]
+                           :discard   [copper copper estate gold]
+                           :deck      [estate]
+                           :actions   1
+                           :coins     1
+                           :boons     [field-gift]
+                           :triggers  [(merge (:trigger lost-in-the-woods)
+                                              {:duration :lost-in-the-woods})
+                                       {:trigger  :at-clean-up
+                                        :duration :once
+                                        :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]}))
+      (is (= (-> {:boons   {:deck [sea-gift]}
+                  :players [{:deck     (repeat 7 copper)
+                             :triggers [(merge (:trigger lost-in-the-woods)
+                                               {:duration :lost-in-the-woods})]}]}
+                 (end-turn 0)
+                 (choose nil))
+             {:current-player 0
+              :boons          {:deck [sea-gift]}
+              :players        [{:hand     (repeat 5 copper)
+                                :deck     [copper copper]
+                                :actions  1
+                                :coins    0
+                                :buys     1
+                                :phase    :action
+                                :triggers [(merge (:trigger lost-in-the-woods)
+                                                  {:duration :lost-in-the-woods})]}]}))
+      (is (= (-> {:boons   {:deck [sea-gift]}
+                  :players [{:deck     (repeat 7 copper)
+                             :triggers [(merge (:trigger lost-in-the-woods)
+                                               {:duration :lost-in-the-woods})]}]}
+                 (end-turn 0)
+                 (choose :copper))
+             {:current-player 0
+              :boons          {:discard [sea-gift]}
+              :players        [{:hand     (repeat 5 copper)
+                                :deck     [copper]
+                                :discard  [copper]
+                                :actions  1
+                                :coins    0
+                                :buys     1
+                                :phase    :action
+                                :triggers [(merge (:trigger lost-in-the-woods)
+                                                  {:duration :lost-in-the-woods})]}]})))
+    (testing "Lucky Coin"
+      (let [silver (assoc silver :id 1)]
+        (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                    :players [{:hand  [lucky-coin]
+                               :coins 0}]}
+                   (play 0 :lucky-coin))
+               {:supply  [{:card silver :pile-size 39}]
+                :players [{:play-area [lucky-coin]
+                           :discard   [silver]
+                           :coins     1}]}))))))
+
 (deftest ghost-test
   (let [ghost (assoc ghost :id 0)]
     (testing "Ghost"

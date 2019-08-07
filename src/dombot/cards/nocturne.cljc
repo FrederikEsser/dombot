@@ -245,9 +245,10 @@
           (not (:boons game)) (-> (assoc :boons {:deck (shuffle boons)})
                                   (setup-extra-cards {:extra-cards [(:will-o'-wisp spirit-piles)]}))))
 
-(defn- maybe-shuffle-boons [{:keys [deck discard] :as piles}]
-  (if (empty? deck)
-    {:deck (shuffle discard)}
+(defn- maybe-shuffle-boons [{:keys [deck discard] :as piles} & {:keys [number-of-boons]
+                                                                :or   {number-of-boons 1}}]
+  (if (< (count deck) number-of-boons)
+    {:deck (concat deck (shuffle discard))}
     piles))
 
 (defn- remove-boon-from-player [{:keys [boons] :as player} boon-name]
@@ -585,6 +586,72 @@
                                         :min     1
                                         :max     1}]]
                :setup   [[:setup-extra-cards {:extra-cards (vals spirit-piles)}]]})
+
+(def lucky-coin {:name       :lucky-coin
+                 :set        :nocturne
+                 :types      #{:treasure :heirloom}
+                 :cost       4
+                 :coin-value 1
+                 :effects    [[:gain {:card-name :silver}]]})
+
+(defn- discard-for-boon [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:discard-from-hand {:card-name card-name}]
+                                                    [:receive-boon]]})))
+
+(effects/register {::discard-for-boon discard-for-boon})
+
+(def lost-in-the-woods {:name    :lost-in-the-woods
+                        :trigger {:trigger           :at-start-turn
+                                  :simultaneous-mode :auto
+                                  :effects           [[:give-choice {:text    "You may discard a card to receive a Boon."
+                                                                     :choice  ::discard-for-boon
+                                                                     :options [:player :hand]
+                                                                     :max     1}]]}})
+
+(defn- fools-choice [boons]
+  {:text    "Receive the Boons in any order."
+   :choice  [::fool-receive-boon {:boons boons}]
+   :options [:player :boons {:names (->> boons (map :name) set)}]
+   :min     1
+   :max     1})
+
+(defn- fool-receive-boon [game {:keys [player-no card-name boons]}]
+  (let [{{:keys [keep-until-clean-up?] :as boon} :card} (ut/get-card-idx game [:players player-no :boons] {:name card-name})
+        remaining-boons (remove (comp #{card-name} :name) boons)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (concat (when-not keep-until-clean-up?
+                                                  [[:return-boon {:boon-name card-name}]])
+                                                [[:receive-boon {:boon boon}]]
+                                                (when (not-empty remaining-boons)
+                                                  [[:give-choice (fools-choice remaining-boons)]]))})))
+
+(defn- fools-errand [game {:keys [player-no]}]
+  (let [{:keys [owner]} (get-in game [:artifacts :lost-in-the-woods])]
+    (cond-> game
+            (not= player-no owner)
+            (as-> game (let [{:keys [deck discard]} (maybe-shuffle-boons (:boons game) :number-of-boons 3)
+                             [fool-boons deck] (split-at 3 deck)]
+                         (-> game
+                             (assoc :boons (merge (when (not-empty deck) {:deck deck})
+                                                  (when discard {:discard discard})))
+                             (update-in [:players player-no :boons] concat fool-boons)
+                             (push-effect-stack {:player-no player-no
+                                                 :effects   [[:take-artifact {:artifact-name :lost-in-the-woods}]
+                                                             [:give-choice (fools-choice fool-boons)]]})))))))
+
+(effects/register {::fool-receive-boon fool-receive-boon
+                   ::fools-errand      fools-errand})
+
+(def fool {:name     :fool
+           :set      :nocturne
+           :types    #{:action :fate}
+           :cost     3
+           :effects  [[::fools-errand]]
+           :heirloom lucky-coin
+           :setup    [[:setup-boons]
+                      [:add-artifact {:artifact lost-in-the-woods}]]})
 
 (def ghost-town {:name    :ghost-town
                  :set     :nocturne
@@ -990,6 +1057,7 @@
                     den-of-sin
                     devils-workshop
                     exorcist
+                    fool
                     ghost-town
                     guardian
                     idol

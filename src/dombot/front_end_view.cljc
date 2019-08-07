@@ -90,10 +90,14 @@
                        {:interaction :buyable})
                      (choice-interaction name :mixed choice))))))
 
-(defn view-boon [{:keys [name type]}]
-  (merge {:name    name
-          :name-ui (ut/format-name name)
-          :type    type}))
+(defn view-boon
+  ([boon]
+    (view-boon nil boon))
+  ([choice {:keys [name type]}]
+   (merge {:name    name
+           :name-ui (ut/format-name name)
+           :type    type}
+          (choice-interaction name :boons choice))))
 
 (defn view-boons [{:keys [deck discard]}]
   (let [boon-discard (->> discard
@@ -281,7 +285,7 @@
          (when choice
            {:choice (view-choice choice)})
          (when boons
-           {:boons (map view-boon boons)})
+           {:boons (map (partial view-boon choice) boons)})
          (when victory-points
            {:victory-points victory-points})
          (when-not (nil? winner)

@@ -113,11 +113,15 @@
            (when cost (str " ($" cost ")"))
            (when participants (str " " (->> participants (string/join " ")))))]]))
 
-(defn view-boon [{:keys [name-ui type]} & [{:keys [on-click]}]]
+(defn view-boon [{:keys [name name-ui type interaction]} & [{:keys [on-click]}]]
+  (let [disabled (nil? interaction)]
   [:div
-   [:button {:style    (button-style true #{type} 1)
-             :on-click on-click}
-    name-ui]])
+     [:button {:style    (button-style disabled #{type} 1)
+               :on-click (if interaction
+                           (fn [] (case interaction
+                                    :quick-choosable (swap! state assoc :game (cmd/choose name))))
+                           on-click)}
+      name-ui]]))
 
 (defn mapk [f coll]
   (->> coll
