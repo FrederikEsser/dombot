@@ -1,24 +1,11 @@
 (ns dombot.cards.renaissance
   (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards gain card-effect affect-other-players state-maintenance]]
-            [dombot.cards.common :refer [reveal-hand reveal-from-deck add-trigger give-coins give-coffers give-villagers set-aside=>hand-trigger]]
+            [dombot.cards.common :refer [reveal-hand reveal-from-deck add-trigger give-coins give-coffers give-villagers set-aside=>hand-trigger take-artifact]]
             [dombot.cards.dominion :as dominion]
             [dombot.cards.guilds :as guilds]
             [dombot.utils :as ut]
             [dombot.effects :as effects])
   (:refer-clojure :exclude [key]))
-
-(defn take-artifact [game {:keys [player-no artifact-name]}]
-  (let [{:keys [owner trigger]} (get-in game [:artifacts artifact-name])]
-    (cond-> game
-            (not= player-no owner) (-> (assoc-in [:artifacts artifact-name :owner] player-no)
-                                       (cond->
-                                         trigger (update-in [:players player-no :triggers] concat [(assoc trigger :duration artifact-name)])
-                                         owner (-> (update-in [:players owner :triggers] (partial remove (comp #{artifact-name} :duration)))
-                                                   (update-in [:players owner] ut/dissoc-if-empty :triggers)))))))
-
-(effects/register {::take-artifact take-artifact})
-
-
 
 (def acting-troupe {:name    :acting-troupe
                     :set     :renaissance
@@ -85,8 +72,8 @@
                                             :min     1
                                             :max     1}]
                              [:discard-all-revealed]]
-                   :setup   [[::add-artifact {:artifact-name :horn}]
-                             [::add-artifact {:artifact-name :lantern}]]})
+                   :setup   [[:add-artifact {:artifact horn}]
+                             [:add-artifact {:artifact lantern}]]})
 
 (def cargo-ship-trigger {:trigger  :on-gain
                          :duration :turn
@@ -165,9 +152,9 @@
                   :types    #{:action}
                   :cost     4
                   :effects  [[:give-coins 2]]
-                  :on-gain  [[::take-artifact {:artifact-name :flag}]]
-                  :on-trash [[::take-artifact {:artifact-name :flag}]]
-                  :setup    [[::add-artifact {:artifact-name :flag}]]})
+                  :on-gain  [[:take-artifact {:artifact-name :flag}]]
+                  :on-trash [[:take-artifact {:artifact-name :flag}]]
+                  :setup    [[:add-artifact {:artifact flag}]]})
 
 (defn hideout-trash [game {:keys [player-no card-name] :as args}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
@@ -468,7 +455,7 @@
                                                     :effects   (concat
                                                                  [[:give-coffers 1]]
                                                                  (when (and coffers (<= 3 coffers))
-                                                                   [[::take-artifact {:artifact-name :treasure-chest}]]))}))))
+                                                                   [[:take-artifact {:artifact-name :treasure-chest}]]))}))))
 
 (effects/register {::swashbuckler-check-discard swashbuckler-check-discard})
 
@@ -478,7 +465,7 @@
                    :cost    5
                    :effects [[:draw 3]
                              [::swashbuckler-check-discard]]
-                   :setup   [[::add-artifact {:artifact-name :treasure-chest}]]})
+                   :setup   [[:add-artifact {:artifact treasure-chest}]]})
 
 (def key {:name    :key
           :trigger {:trigger           :at-start-turn
@@ -516,7 +503,7 @@
                                                    {:option :key :text "Take the Key."}]
                                          :min     1
                                          :max     1}]]
-                :setup   [[::add-artifact {:artifact-name :key}]]})
+                :setup   [[:add-artifact {:artifact key}]]})
 
 (defn villain-attack [game {:keys [player-no]}]
   (let [hand               (get-in game [:players player-no :hand])
@@ -564,17 +551,6 @@
                     swashbuckler
                     treasurer
                     villain])
-
-(def artifacts {:flag           flag
-                :horn           horn
-                :key            key
-                :lantern        lantern
-                :treasure-chest treasure-chest})
-
-(defn add-artifact [game {:keys [artifact-name]}]
-  (assoc-in game [:artifacts artifact-name] (get artifacts artifact-name)))
-
-(effects/register {::add-artifact add-artifact})
 
 (def academy {:name    :academy
               :set     :renaissance

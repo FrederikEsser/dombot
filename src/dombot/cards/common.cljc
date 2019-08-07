@@ -544,7 +544,20 @@
 (effects/register {:topdeck-from-gained   topdeck-from-gained
                    :topdeck-gained-choice topdeck-gained-choice})
 
+(defn add-artifact [game {:keys [artifact]}]
+  (assoc-in game [:artifacts (:name artifact)] artifact))
 
+(defn take-artifact [game {:keys [player-no artifact-name]}]
+  (let [{:keys [owner trigger]} (get-in game [:artifacts artifact-name])]
+    (cond-> game
+            (not= player-no owner) (-> (assoc-in [:artifacts artifact-name :owner] player-no)
+                                       (cond->
+                                         trigger (update-in [:players player-no :triggers] concat [(assoc trigger :duration artifact-name)])
+                                         owner (-> (update-in [:players owner :triggers] (partial remove (comp #{artifact-name} :duration)))
+                                                   (update-in [:players owner] ut/dissoc-if-empty :triggers)))))))
+
+(effects/register {:add-artifact add-artifact
+                   :take-artifact take-artifact})
 
 (defn setup-extra-cards [game {:keys [extra-cards]}]
   (update game :extra-cards (fn [cards]
