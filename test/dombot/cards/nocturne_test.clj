@@ -4,9 +4,10 @@
             [dombot.operations :refer :all]
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
-            [dombot.cards.dominion :refer [throne-room witch]]
+            [dombot.cards.dominion :refer [militia throne-room witch]]
             [dombot.cards.intrigue :refer [lurker]]
             [dombot.cards.prosperity :as prosperity :refer [hoard mint talisman]]
+            [dombot.cards.cornucopia :refer [trusty-steed]]
             [dombot.cards.nocturne :as nocturne :refer :all]
             [dombot.cards.renaissance :refer [silk-merchant academy]]))
 
@@ -1120,6 +1121,141 @@
                              :discard   [ghost]}]
               :trash       [duchy]})))))
 
+(deftest faithful-hound-test
+  (let [faithful-hound (assoc faithful-hound :id 0)]
+    (testing "Faithful Hound"
+      (is (= (-> {:players [{:hand    [faithful-hound]
+                             :deck    (repeat 7 copper)
+                             :actions 1}]}
+                 (play 0 :faithful-hound))
+             {:players [{:hand      [copper copper]
+                         :play-area [faithful-hound]
+                         :deck      (repeat 5 copper)
+                         :actions   0}]}))
+      (is (= (-> {:players [{:hand    [faithful-hound]
+                             :deck    (repeat 7 copper)
+                             :actions 1}]}
+                 (play 0 :faithful-hound)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand    (repeat 5 copper)
+                                :discard [copper copper faithful-hound]
+                                :actions 1
+                                :coins   0
+                                :buys    1
+                                :phase   :action}]}))
+      (is (= (-> {:players [{:hand    [faithful-hound]
+                             :deck    (repeat 7 copper)
+                             :actions 1}]}
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand    (repeat 5 copper)
+                                :deck    [copper copper]
+                                :discard [faithful-hound]
+                                :actions 1
+                                :coins   0
+                                :buys    1
+                                :phase   :action}]}))
+      (let [silver (assoc silver :id 1)]
+        (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                    :players [{:hand    [trusty-steed]
+                               :deck    [faithful-hound]
+                               :actions 1}]}
+                   (play 0 :trusty-steed)
+                   (choose [:actions :silvers]))
+               {:supply  [{:card silver :pile-size 36}]
+                :players [{:play-area [trusty-steed]
+                           :discard   [silver silver silver silver faithful-hound]
+                           :actions   2}]})))
+      (is (= (-> {:supply  [{:card faithful-hound :pile-size 10}]
+                  :players [{:coins 2
+                             :buys  1}]}
+                 (buy-card 0 :faithful-hound))
+             {:supply  [{:card faithful-hound :pile-size 9}]
+              :players [{:discard [faithful-hound]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:boons   {:deck [wind-gift]}
+                  :players [{:hand    [faithful-hound copper]
+                             :deck    [estate copper]
+                             :discard [silver]}]}
+                 (receive-boon {:player-no 0})
+                 (choose [:faithful-hound :estate]))
+             {:boons        {:discard [wind-gift]}
+              :players      [{:hand    [copper estate copper]
+                              :discard [silver faithful-hound]}]
+              :effect-stack [{:text      "You may set Faithful Hound aside, and put it into your hand at end of this turn."
+                              :player-no 0
+                              :choice    ::nocturne/faithful-hound-set-aside
+                              :source    :discard
+                              :options   [:faithful-hound]
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:move-card {:player-no 0
+                                                      :card-id   nil
+                                                      :card-name :estate
+                                                      :from      :hand
+                                                      :to        :discard}]}]}))
+      (is (= (-> {:boons   {:deck [wind-gift]}
+                  :players [{:hand [faithful-hound copper]
+                             :deck [estate copper]}]}
+                 (receive-boon {:player-no 0})
+                 (choose [:faithful-hound :estate])
+                 (choose nil))
+             {:boons   {:discard [wind-gift]}
+              :players [{:hand    [copper copper]
+                         :discard [faithful-hound estate]}]}))
+      (is (= (-> {:boons   {:deck [wind-gift]}
+                  :players [{:hand [faithful-hound copper]
+                             :deck [estate copper]}]}
+                 (receive-boon {:player-no 0})
+                 (choose [:faithful-hound :estate])
+                 (choose :faithful-hound))
+             {:boons   {:discard [wind-gift]}
+              :players [{:hand      [copper copper]
+                         :set-aside [faithful-hound]
+                         :discard   [estate]
+                         :triggers  [{:trigger  :at-draw-hand
+                                      :duration :once
+                                      :effects  [[:move-card {:player-no 0
+                                                              :card-name :faithful-hound
+                                                              :from      :set-aside
+                                                              :to        :hand}]]}]}]}))
+      (is (= (-> {:players [{:set-aside [faithful-hound]
+                             :deck      (repeat 7 copper)
+                             :triggers  [{:trigger  :at-draw-hand
+                                          :duration :once
+                                          :effects  [[:move-card {:player-no 0
+                                                                  :card-name :faithful-hound
+                                                                  :from      :set-aside
+                                                                  :to        :hand}]]}]}]}
+                 (clean-up {:player-no 0}))
+             {:players [{:hand    [copper copper copper copper copper faithful-hound]
+                         :deck    [copper copper]
+                         :actions 0
+                         :coins   0
+                         :buys    0
+                         :phase   :out-of-turn}]}))
+      (is (= (-> {:players [{:hand    [militia]
+                             :actions 1
+                             :coins   0}
+                            {:hand [copper copper copper copper faithful-hound]}]}
+                 (play 0 :militia)
+                 (choose [:copper :faithful-hound])
+                 (choose :faithful-hound)
+                 (end-turn 0))
+             {:current-player 1
+              :players        [{:hand    [militia]
+                                :actions 0
+                                :coins   0
+                                :buys    0
+                                :phase   :out-of-turn}
+                               {:hand    [copper copper copper faithful-hound]
+                                :discard [copper]
+                                :actions 1
+                                :coins   0
+                                :buys    1}]})))))
+
 (deftest fool-test
   (let [fool (assoc fool :id 0)
         gold (assoc gold :id 1)]
@@ -1237,39 +1373,40 @@
                                        {:trigger  :at-clean-up
                                         :duration :once
                                         :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]}))
-      (is (= (-> {:boons   {:deck [sea-gift]}
-                  :players [{:deck     (repeat 7 copper)
-                             :triggers [(merge (:trigger lost-in-the-woods)
-                                               {:duration :lost-in-the-woods})]}]}
-                 (end-turn 0)
-                 (choose nil))
-             {:current-player 0
-              :boons          {:deck [sea-gift]}
-              :players        [{:hand     (repeat 5 copper)
-                                :deck     [copper copper]
-                                :actions  1
-                                :coins    0
-                                :buys     1
-                                :phase    :action
-                                :triggers [(merge (:trigger lost-in-the-woods)
-                                                  {:duration :lost-in-the-woods})]}]}))
-      (is (= (-> {:boons   {:deck [sea-gift]}
-                  :players [{:deck     (repeat 7 copper)
-                             :triggers [(merge (:trigger lost-in-the-woods)
-                                               {:duration :lost-in-the-woods})]}]}
-                 (end-turn 0)
-                 (choose :copper))
-             {:current-player 0
-              :boons          {:discard [sea-gift]}
-              :players        [{:hand     (repeat 5 copper)
-                                :deck     [copper]
-                                :discard  [copper]
-                                :actions  1
-                                :coins    0
-                                :buys     1
-                                :phase    :action
-                                :triggers [(merge (:trigger lost-in-the-woods)
-                                                  {:duration :lost-in-the-woods})]}]})))
+      (testing "Lost in the Woods"
+        (is (= (-> {:boons   {:deck [sea-gift]}
+                    :players [{:deck     (repeat 7 copper)
+                               :triggers [(merge (:trigger lost-in-the-woods)
+                                                 {:duration :lost-in-the-woods})]}]}
+                   (end-turn 0)
+                   (choose nil))
+               {:current-player 0
+                :boons          {:deck [sea-gift]}
+                :players        [{:hand     (repeat 5 copper)
+                                  :deck     [copper copper]
+                                  :actions  1
+                                  :coins    0
+                                  :buys     1
+                                  :phase    :action
+                                  :triggers [(merge (:trigger lost-in-the-woods)
+                                                    {:duration :lost-in-the-woods})]}]}))
+        (is (= (-> {:boons   {:deck [sea-gift]}
+                    :players [{:deck     (repeat 7 copper)
+                               :triggers [(merge (:trigger lost-in-the-woods)
+                                                 {:duration :lost-in-the-woods})]}]}
+                   (end-turn 0)
+                   (choose :copper))
+               {:current-player 0
+                :boons          {:discard [sea-gift]}
+                :players        [{:hand     (repeat 5 copper)
+                                  :deck     [copper]
+                                  :discard  [copper]
+                                  :actions  1
+                                  :coins    0
+                                  :buys     1
+                                  :phase    :action
+                                  :triggers [(merge (:trigger lost-in-the-woods)
+                                                    {:duration :lost-in-the-woods})]}]}))))
     (testing "Lucky Coin"
       (let [silver (assoc silver :id 1)]
         (is (= (-> {:supply  [{:card silver :pile-size 40}]

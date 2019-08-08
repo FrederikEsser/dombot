@@ -521,6 +521,11 @@
     (cond-> game
             on-reveal (push-effect-stack (merge args {:effects on-reveal})))))
 
+(defn handle-on-discard [game {:keys [player-no card-name] :as args}]
+  (let [{{:keys [on-discard]} :card} (ut/get-card-idx game [:players player-no :discard] {:name card-name})]
+    (cond-> game
+            on-discard (push-effect-stack (merge args {:effects on-discard})))))
+
 (defn move-card [game {:keys [player-no from to] :as args}]
   (let [{:keys [deck discard]} (get-in game [:players player-no])
         {{card-name :name} :card} (get-card game args)]
@@ -534,7 +539,10 @@
                                           (when (= to :trash)
                                             [:on-trash args])
                                           (when (= to :revealed)
-                                            [:on-reveal {:card-name card-name}])]})
+                                            [:on-reveal {:card-name card-name}])
+                                          (when (and (= to :discard)
+                                                     (not= from :gaining))
+                                            [:on-discard {:card-name card-name}])]})
           check-stack))))
 
 (defn move-cards [game {:keys [player-no card-name card-names number-of-cards from-position] :as args}]
@@ -559,6 +567,7 @@
 (effects/register {:do-move-card do-move-card
                    :on-trash     handle-on-trash
                    :on-reveal    handle-on-reveal
+                   :on-discard   handle-on-discard
                    :move-card    move-card
                    :move-cards   move-cards})
 

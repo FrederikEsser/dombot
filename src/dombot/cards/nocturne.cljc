@@ -595,6 +595,33 @@
                                         :max     1}]]
                :setup   [[:setup-extra-cards {:extra-cards (vals spirit-piles)}]]})
 
+(defn- faithful-hound-set-aside [{:keys [current-player] :as game} {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:move-card {:card-name :faithful-hound
+                                                                 :from      :discard
+                                                                 :to        :set-aside}]
+                                                    [:add-trigger {:player-no (or current-player 0)
+                                                                   :trigger   {:trigger  :at-draw-hand
+                                                                               :duration :once
+                                                                               :effects  [[:move-card {:player-no player-no
+                                                                                                       :card-name :faithful-hound
+                                                                                                       :from      :set-aside
+                                                                                                       :to        :hand}]]}}]]})))
+
+(effects/register {::faithful-hound-set-aside faithful-hound-set-aside})
+
+(def faithful-hound {:name       :faithful-hound
+                     :set        :nocturne
+                     :types      #{:action :reaction}
+                     :cost       2
+                     :effects    [[:draw 2]]
+                     :on-discard [[:give-choice {:text    "You may set Faithful Hound aside, and put it into your hand at end of this turn."
+                                                 :choice  ::faithful-hound-set-aside
+                                                 :options [:player :discard {:last true
+                                                                             :name :faithful-hound}]
+                                                 :max     1}]]})
+
 (def lucky-coin {:name       :lucky-coin
                  :set        :nocturne
                  :types      #{:treasure :heirloom}
@@ -1105,6 +1132,7 @@
                     den-of-sin
                     devils-workshop
                     exorcist
+                    faithful-hound
                     fool
                     ghost-town
                     guardian
