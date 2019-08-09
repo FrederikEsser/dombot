@@ -4,6 +4,32 @@
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
+
+(defn- captain-play-from-supply [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-pile-idx game card-name)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:card-effect {:card card}]]})))
+
+(effects/register {::captain-play-from-supply captain-play-from-supply})
+
+(def captain-choice {:text    "Play a non-Duration Action card from the Supply costing up to $4."
+                     :choice  ::captain-play-from-supply
+                     :options [:supply {:type     :action
+                                        :not-type :duration
+                                        :max-cost 4}]
+                     :min     1
+                     :max     1})
+
+(def captain {:name    :captain
+              :set     :promos
+              :types   #{:action :duration}
+              :cost    6
+              :effects [[:give-choice captain-choice]]
+              :trigger {:trigger           :at-start-turn
+                        :duration          :once
+                        :simultaneous-mode :auto
+                        :effects           [[:give-choice captain-choice]]}})
+
 (defn- church-set-aside [game {:keys [player-no card-id]}]
   (let [set-aside (get-in game [:players player-no :church-set-aside])]
     (-> game
@@ -98,7 +124,8 @@
                                             :min     1
                                             :max     1}]]})
 
-(def kingdom-cards [church
+(def kingdom-cards [captain
+                    church
                     dismantle
                     envoy
                     stash])

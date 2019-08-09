@@ -477,10 +477,11 @@
 
 (defn return-this-to-supply [game {:keys [player-no card-id area]
                                    :or   {area :supply}}]
-  (move-card game {:player-no    player-no
-                   :move-card-id card-id
-                   :from         :play-area
-                   :to           area}))
+  (cond-> game
+          card-id (move-card {:player-no    player-no
+                              :move-card-id card-id
+                              :from         :play-area
+                              :to           area})))
 
 (effects/register {:return-this-to-supply return-this-to-supply
                    :return-to-supply      return-to-supply})
@@ -556,7 +557,7 @@
                                          owner (-> (update-in [:players owner :triggers] (partial remove (comp #{artifact-name} :duration)))
                                                    (update-in [:players owner] ut/dissoc-if-empty :triggers)))))))
 
-(effects/register {:add-artifact add-artifact
+(effects/register {:add-artifact  add-artifact
                    :take-artifact take-artifact})
 
 (defn setup-extra-cards [game {:keys [extra-cards]}]

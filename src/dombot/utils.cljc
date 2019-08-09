@@ -219,8 +219,6 @@
 
 (defn options-from-player
   ([game player-no card-id area & [{:keys [last this id ids name names not-name type reacts-to min-cost leaves-play]}]]
-   (when this
-     (assert card-id (str "Card has no id, but is referring to :this in " area ".")))
    (cond->> (get-in game [:players player-no area])
             last (take-last 1)                              ; it's important that 'last' is evaluated first
             this (filter (comp #{card-id} :id))
@@ -238,11 +236,12 @@
 
 (effects/register-options {:player options-from-player})
 
-(defn options-from-supply [{:keys [supply] :as game} player-no card-id & [{:keys [max-cost cost type names all]}]]
+(defn options-from-supply [{:keys [supply] :as game} player-no card-id & [{:keys [max-cost cost type not-type names all] :as args}]]
   (cond->> supply
            max-cost (filter (comp (partial >= max-cost) (partial get-cost game) :card))
            cost (filter (comp #{cost} (partial get-cost game) :card))
            type (filter (comp type (partial get-types game) :card))
+           not-type (remove (comp not-type (partial get-types game) :card))
            names (filter (comp names :name :card))
            (not all) (filter (comp pos? :pile-size))
            :always (map (comp :name :card))))

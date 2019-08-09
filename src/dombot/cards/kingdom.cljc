@@ -23,10 +23,13 @@
                      renaissance/kingdom-cards
                      promos/kingdom-cards))
 
-(defn- random-kingdom [sets]
-  (let [[kingdom randomizers] (->> kingdom-cards
+(defn- random-kingdom [sets included-card-names]
+  (let [included-cards (filter (comp included-card-names :name) kingdom-cards)
+        [kingdom randomizers] (->> kingdom-cards
+                                   (remove (comp included-card-names :name))
                                    (filter (comp sets :set))
                                    shuffle
+                                   (concat included-cards)
                                    (split-at 10))]
     (if (some (comp #{:young-witch} :name) kingdom)
       (let [kingdom  (vec (concat kingdom
@@ -91,7 +94,7 @@
                             3 12
                             4 12)
         starting-player   (rand-int number-of-players)
-        kingdom           (random-kingdom sets)
+        kingdom           (random-kingdom sets #{})
         elps              (->> kingdom
                                (take 10)
                                (drop 2)

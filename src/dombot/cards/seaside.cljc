@@ -424,7 +424,7 @@
                                             [:gain-to-topdeck {:card-name :curse}]]}]]})
 
 (defn smugglers-give-choice [{:keys [players] :as game} {:keys [player-no] :as args}]
-  (let [prev-player (mod (dec player-no) (count players))
+  (let [prev-player      (mod (dec player-no) (count players))
         valid-card-names (->> (get-in game [:players prev-player :gained-cards])
                               (keep (fn [{:keys [name] :as card}]
                                       (when (<= (ut/get-cost game card) 6)
@@ -500,8 +500,10 @@
     (empty? bought-victory-cards)))
 
 (defn treasury-clean-up [game {:keys [player-no card-id]}]
-  (ut/update-in-vec game [:players player-no :play-area] {:id card-id}
-                    assoc :at-clean-up [[:topdeck-this-from-play-area]]))
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
+    (cond-> game
+            card (ut/update-in-vec [:players player-no :play-area] {:id card-id}
+                                   assoc :at-clean-up [[:topdeck-this-from-play-area]]))))
 
 (effects/register {::treasury-can-topdeck? treasury-can-topdeck?
                    ::treasury-clean-up     treasury-clean-up})

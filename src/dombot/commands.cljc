@@ -19,6 +19,7 @@
 ; show face-down cards in trash (Necromancer)
 ; handle simultaneous duration effects at-start-turn
 ; handle simultaneous effects for all reactions
+; fix Captain / Improve
 ; fix Throne Room / Improve
 ; fix Improve / double Border Guard bug
 ; fix Torturer / Masquerade (empty hand)

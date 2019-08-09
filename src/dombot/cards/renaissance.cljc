@@ -198,8 +198,10 @@
                      :max       1}))
 
 (defn improve-clean-up [game {:keys [player-no card-id]}]
-  (ut/update-in-vec game [:players player-no :play-area] {:id card-id}
-                    assoc :at-clean-up [[::improve-give-choice]]))
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
+    (cond-> game
+            card (ut/update-in-vec [:players player-no :play-area] {:id card-id}
+                                   assoc :at-clean-up [[::improve-give-choice]]))))
 
 (effects/register {::improve-trash       improve-trash
                    ::improve-give-choice improve-give-choice
