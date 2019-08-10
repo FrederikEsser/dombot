@@ -1037,12 +1037,7 @@
                          :play-area [throne-room throne-room mining-village-1]
                          :actions   8
                          :coins     2}]
-              :trash   [mining-village-2]}))
-      (is (thrown-with-msg? AssertionError #"Card has no id, but is referring to :this in :play-area."
-                            (-> {:players [{:hand    [mining-village]
-                                            :deck    [copper]
-                                            :actions 1}]}
-                                (play 0 :mining-village)))))))
+              :trash   [mining-village-2]})))))
 
 (deftest minion-test
   (testing "Minion"

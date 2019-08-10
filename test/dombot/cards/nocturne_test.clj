@@ -272,15 +272,64 @@
 
 (deftest hexes-test
   (testing "Hexes"
-    (testing "Plague"
-      (let [curse (assoc curse :id 0)]
-        (is (= (-> {:hexes   {:deck [plague]}
-                    :supply  [{:card curse :pile-size 10}]
-                    :players [{}]}
-                   (receive-hex {:player-no 0}))
-               {:hexes   {:discard [plague]}
-                :supply  [{:card curse :pile-size 9}]
-                :players [{:hand [curse]}]}))))
+    (testing "Famine"
+      (is (= (-> {:hexes   {:deck [famine]}
+                  :players [{:deck [estate copper copper copper]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [famine]}
+              :players [{:deck [copper copper copper estate]}]}))
+      (is (= (-> {:hexes   {:deck [famine]}
+                  :players [{:deck [estate skulk copper copper]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [famine]}
+              :players [{:deck           [copper estate copper]
+                         :discard        [skulk]
+                         :revealed-cards {:discard 1}}]}))
+      (is (= (-> {:hexes   {:deck [famine]}
+                  :players [{:deck [skulk skulk monastery skulk]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [famine]}
+              :players [{:deck           [monastery skulk]
+                         :discard        [skulk skulk]
+                         :revealed-cards {:discard 2}}]}))
+      (is (= (-> {:hexes   {:deck [famine]}
+                  :players [{:deck [skulk skulk skulk skulk]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [famine]}
+              :players [{:deck           [skulk]
+                         :discard        [skulk skulk skulk]
+                         :revealed-cards {:discard 3}}]})))
+    (testing "Fear"
+      (is (= (-> {:hexes   {:deck [fear]}
+                  :players [{:hand [estate copper copper copper]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [fear]}
+              :players [{:hand [estate copper copper copper]}]}))
+      (is (= (-> {:hexes   {:deck [fear]}
+                  :players [{:hand [estate copper copper copper skulk]}]}
+                 (receive-hex {:player-no 0})
+                 (choose :copper))
+             {:hexes   {:discard [fear]}
+              :players [{:hand    [estate copper copper skulk]
+                         :discard [copper]}]}))
+      (is (= (-> {:hexes   {:deck [fear]}
+                  :players [{:hand [estate copper copper copper skulk]}]}
+                 (receive-hex {:player-no 0})
+                 (choose :skulk))
+             {:hexes   {:discard [fear]}
+              :players [{:hand    [estate copper copper copper]
+                         :discard [skulk]}]}))
+      (is (thrown-with-msg? AssertionError #"Choose error: Estate is not a valid option."
+                            (-> {:hexes   {:deck [fear]}
+                                 :players [{:hand [estate copper copper copper skulk]}]}
+                                (receive-hex {:player-no 0})
+                                (choose :estate))))
+      (is (= (-> {:hexes   {:deck [fear]}
+                  :players [{:hand (repeat 5 estate)}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [fear]}
+              :players [{:hand           (repeat 5 estate)
+                         :revealed-cards {:hand 5}}]})))
     (testing "Greed"
       (let [copper (assoc copper :id 0)]
         (is (= (-> {:hexes   {:deck [greed]}
@@ -314,6 +363,15 @@
              {:hexes   {:discard [haunting]}
               :players [{:hand [copper copper copper]
                          :deck [silver]}]})))
+    (testing "Plague"
+      (let [curse (assoc curse :id 0)]
+        (is (= (-> {:hexes   {:deck [plague]}
+                    :supply  [{:card curse :pile-size 10}]
+                    :players [{}]}
+                   (receive-hex {:player-no 0}))
+               {:hexes   {:discard [plague]}
+                :supply  [{:card curse :pile-size 9}]
+                :players [{:hand [curse]}]}))))
     (testing "Poverty"
       (is (= (-> {:hexes   {:deck [poverty]}
                   :players [{:hand [copper copper copper]}]}
@@ -2481,6 +2539,41 @@
                {:supply  [{:card skulk :pile-size 9}
                           {:card gold :pile-size 29}]
                 :players [{:discard [gold skulk]}]}))))))
+
+(deftest tormentor-test
+  (let [tormentor (assoc tormentor :id 0)
+        imp       (assoc imp :id 1)]
+    (testing "Tormentor"
+      (is (= (-> {:hexes       {:deck [poverty]}
+                  :extra-cards [{:card imp :pile-size 13}]
+                  :players     [{:hand    [tormentor]
+                                 :actions 1
+                                 :coins   0}
+                                {:hand [copper copper copper copper copper]}]}
+                 (play 0 :tormentor))
+             {:hexes       {:deck [poverty]}
+              :extra-cards [{:card imp :pile-size 12}]
+              :players     [{:play-area [tormentor]
+                             :discard   [imp]
+                             :actions   0
+                             :coins     2}
+                            {:hand [copper copper copper copper copper]}]}))
+      (is (= (-> {:hexes       {:deck [poverty]}
+                  :extra-cards [{:card imp :pile-size 12}]
+                  :players     [{:hand      [tormentor]
+                                 :play-area [imp]
+                                 :actions   1
+                                 :coins     0}
+                                {:hand [copper copper copper copper copper]}]}
+                 (play 0 :tormentor)
+                 (choose [:copper :copper]))
+             {:hexes       {:discard [poverty]}
+              :extra-cards [{:card imp :pile-size 12}]
+              :players     [{:play-area [imp tormentor]
+                             :actions   0
+                             :coins     2}
+                            {:hand    [copper copper copper]
+                             :discard [copper copper]}]})))))
 
 (deftest tracker-test
   (let [tracker (assoc tracker :id 0)]

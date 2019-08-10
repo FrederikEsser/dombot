@@ -234,6 +234,51 @@
                                          :min     2
                                          :max     2}]]})
 
+(defn- famine-shuffle-deck [game {:keys [player-no]}]
+  (-> game
+      (update-in [:players player-no :deck] shuffle)
+      (update-in [:players player-no :revealed-cards] dissoc :deck)
+      (update-in [:players player-no] ut/dissoc-if-empty :revealed-cards)))
+
+(defn- famine-discard-actions [game {:keys [player-no]}]
+  (let [action-names (->> (get-in game [:players player-no :revealed])
+                          (filter (comp :action (partial ut/get-types game)))
+                          (map :name))]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:discard-from-revealed {:card-names action-names}]
+                                         [:topdeck-all-revealed]
+                                         [::famine-shuffle-deck]]})))
+
+(effects/register {::famine-shuffle-deck    famine-shuffle-deck
+                   ::famine-discard-actions famine-discard-actions})
+
+(def famine {:name    :famine
+             :type    :hex
+             :effects [[:reveal-from-deck 3]
+                       [::famine-discard-actions]]})
+
+(defn fear-discard [game {:keys [player-no]}]
+  (let [hand (get-in game [:players player-no :hand])]
+    (cond
+      (< (count hand) 5) game
+
+      (some (partial ut/types-match game #{:action :treasure}) hand)
+      (give-choice game {:player-no player-no
+                         :text      "Discard an Action or Treasure."
+                         :choice    :discard-from-hand
+                         :options   [:player :hand {:types #{:action :treasure}}]
+                         :min       1
+                         :max       1})
+
+      :else (-> game
+                (reveal-hand {:player-no player-no})))))
+
+(effects/register {::fear-discard fear-discard})
+
+(def fear {:name    :fear
+           :type    :hex
+           :effects [[::fear-discard]]})
+
 (def greed {:name    :greed
             :type    :hex
             :effects [[:gain-to-topdeck {:card-name :copper}]]})
@@ -275,7 +320,9 @@
                 swamp-gift
                 wind-gift])
 
-(def all-hexes [greed
+(def all-hexes [famine
+                fear
+                greed
                 haunting
                 plague
                 poverty])
@@ -940,7 +987,7 @@
   (let [{:keys [name effects keep-until-clean-up?]} boon]
     (cond-> game
             card-name (-> (cond-> keep-until-clean-up? (-> (update-in [:boons :discard] (partial remove #{boon}))
-                                                           (update :boons ut/remove-if-empty :discard)
+                                                           (update :boons ut/dissoc-if-empty :discard)
                                                            (update-in [:players player-no :boons] concat [boon])))
                           (push-effect-stack {:player-no player-no
                                               :effects   (concat [[:trash-from-play-area {:trash-card-id card-id}]]
@@ -1171,6 +1218,27 @@
             :on-gain [[:gain {:card-name :gold}]]
             :setup   [[:setup-hexes]]})
 
+(defn- tormentor-imp-or-hex [game {:keys [player-no card-id]}]
+  (let [no-other-cards-in-play? (->> (get-in game [:players player-no :play-area])
+                                     (remove (comp #{card-id} :id))
+                                     empty?)]
+    (if no-other-cards-in-play?
+      (gain game {:player-no player-no
+                  :card-name :imp
+                  :from      :extra-cards})
+      (others-receive-next-hex game {:player-no player-no}))))
+
+(effects/register {::tormentor-imp-or-hex tormentor-imp-or-hex})
+
+(def tormentor {:name    :tormentor
+                :set     :nocturne
+                :types   #{:action :attack :doom}
+                :cost    5
+                :effects [[:give-coins 2]
+                          [::tormentor-imp-or-hex]]
+                :setup   [[:setup-extra-cards {:extra-cards [(:imp spirit-piles)]}]
+                          [:setup-hexes]]})
+
 (def pouch {:name       :pouch
             :set        :nocturne
             :types      #{:treasure :heirloom}
@@ -1235,6 +1303,7 @@
                     secret-cave
                     shepherd
                     skulk
+                    tormentor
                     tracker
                     tragic-hero])
 

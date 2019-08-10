@@ -1,5 +1,6 @@
 (ns dombot.utils
   (:require [clojure.string :as s]
+            [clojure.set :refer [intersection]]
             [dombot.effects :as effects]))
 
 (defonce id-state (atom 0))
@@ -64,10 +65,6 @@
   (let [vcoll (vec coll)]
     (vec (concat (subvec vcoll 0 pos) (subvec vcoll (inc pos))))))
 
-(defn remove-if-empty [map key]
-  (cond-> map
-          (empty? (get map key)) (dissoc key)))
-
 (defn frequencies-of [coll key]
   (->> coll
        (map key)
@@ -76,7 +73,7 @@
 
 (defn dissoc-if-empty [map key]
   (cond-> map
-          (empty? (get map key)) (dissoc map key)))
+          (empty? (get map key)) (dissoc key)))
 
 (defn match [data1]
   (fn [data2]
@@ -217,8 +214,14 @@
       (can-react-fn game player-no))
     true))
 
+(defn types-match [game types card]
+  (->> card
+       (get-types game)
+       (intersection types)
+       not-empty))
+
 (defn options-from-player
-  ([game player-no card-id area & [{:keys [last this id ids name names not-name type reacts-to min-cost leaves-play]}]]
+  ([game player-no card-id area & [{:keys [last this id ids name names not-name type types reacts-to min-cost leaves-play]}]]
    (cond->> (get-in game [:players player-no area])
             last (take-last 1)                              ; it's important that 'last' is evaluated first
             this (filter (comp #{card-id} :id))
@@ -227,6 +230,7 @@
             names (filter (comp names :name))
             not-name (remove (comp not-name :name))
             type (filter (comp type (partial get-types game)))
+            types (filter (partial types-match game types))
             reacts-to (filter (every-pred (comp #{reacts-to} :reacts-to)
                                           (partial can-react? game player-no)))
             min-cost (filter (comp (partial <= min-cost) (partial get-cost game)))
