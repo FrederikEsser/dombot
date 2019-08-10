@@ -427,11 +427,6 @@
                                 [:discard-all-revealed]]
               :auto-play-index 1})
 
-(defn watchtower-draw [game {:keys [player-no]}]
-  (let [{:keys [hand]} (get-in game [:players player-no])]
-    (draw game {:player-no player-no
-                :arg       (- 6 (count hand))})))
-
 (defn watchtower-choice [game {:keys [player-no choice gained-card-id]}]
   (case choice
     :trash (move-card game {:player-no    player-no
@@ -458,15 +453,14 @@
                                :min       1
                                :max       1}))))
 
-(effects/register {::watchtower-draw        watchtower-draw
-                   ::watchtower-choice      watchtower-choice
+(effects/register {::watchtower-choice      watchtower-choice
                    ::watchtower-give-choice watchtower-give-choice})
 
 (def watchtower {:name     :watchtower
                  :set      :prosperity
                  :types    #{:action :reaction}
                  :cost     3
-                 :effects  [[::watchtower-draw]]
+                 :effects  [[:draw-up-to 6]]
                  :reaction {:on-gain [[::watchtower-give-choice]]}})
 
 (def workers-village {:name    :worker's-village

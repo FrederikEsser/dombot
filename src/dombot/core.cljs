@@ -47,7 +47,8 @@
                               (:curse types) "#B890D7"
                               (:artifact types) "#F9CD88"
                               (:project types) "#FCA19A"
-                              (:boon types) "#F6E359")
+                              (:boon types) "#F6E359"
+                              (:hex types) "#9677B3")
           :border-color     (cond
                               (zero? number-of-cards) :red
                               (:curse types) "#9F76B8"
@@ -61,6 +62,7 @@
                               (:artifact types) "#B4763B"
                               (:project types) "#EF8984"
                               (:boon types) "#AD9727"
+                              (:hex types) "#5A487A"
                               :else :grey)
           :border-width     2}
          (when (:attack types)
@@ -115,13 +117,19 @@
 
 (defn view-boon [{:keys [name name-ui type interaction]} & [{:keys [on-click]}]]
   (let [disabled (nil? interaction)]
-  [:div
+    [:div
      [:button {:style    (button-style disabled #{type} 1)
                :on-click (if interaction
                            (fn [] (case interaction
                                     :quick-choosable (swap! state assoc :game (cmd/choose name))))
                            on-click)}
       name-ui]]))
+
+(defn view-hex [{:keys [name-ui type]} & [{:keys [on-click]}]]
+  [:div
+   [:button {:style    (button-style false #{type} 1)
+             :on-click on-click}
+    name-ui]])
 
 (defn mapk [f coll]
   (->> coll
@@ -197,7 +205,7 @@
 
 (defn home-page []
   (fn []
-    (let [{:keys [sets setup-game? selection trash-unfolded? boons-unfolded?]} @state]
+    (let [{:keys [setup-game? selection trash-unfolded? boons-unfolded? hexes-unfolded?]} @state]
       [:div [:h2 "Dominion"]
 
        (when setup-game?
@@ -232,8 +240,8 @@
             (view-row (concat [nil] row2))
             (view-row row3)
             (view-row row4)]])]
-       (let [{:keys [projects boons]} (:game @state)]
-         (when (or projects boons)
+       (let [{:keys [projects boons hexes]} (:game @state)]
+         (when (or projects boons hexes)
            [:div "Landscape"
             [:table
              [:tbody
@@ -252,7 +260,20 @@
                                                 (fn [] (swap! state assoc :boons-unfolded? false)))}
                            (str "Boons x" number-of-cards)]
                       (mapk view-boon boon-discard)]
-                     [:td (view-boon top-boon {:on-click (fn [] (swap! state assoc :boons-unfolded? true))})])))]]]]))
+                     [:td (view-boon top-boon {:on-click (fn [] (swap! state assoc :boons-unfolded? true))})])))
+               (when hexes
+                 (let [{:keys [number-of-cards hex-discard top-hex]} hexes]
+                   (if (or hexes-unfolded? (nil? top-hex))
+                     [:td [:button {:style    {:color            "#4F4D91"
+                                               :font-weight      :bold
+                                               :background-color "#D2A4CB"
+                                               :border-color     "#8D4E7F"
+                                               :border-width     2}
+                                    :on-click (when (not-empty hex-discard)
+                                                (fn [] (swap! state assoc :hexes-unfolded? false)))}
+                           (str "Hexes x" number-of-cards)]
+                      (mapk view-hex hex-discard)]
+                     [:td (view-hex top-hex {:on-click (fn [] (swap! state assoc :hexes-unfolded? true))})])))]]]]))
        (when (-> @state :game :trade-route-mat)
          [:div "Trade Route Mat: " (-> @state :game :trade-route-mat)])
        [:div "Players"

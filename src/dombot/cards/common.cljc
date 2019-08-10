@@ -1,5 +1,5 @@
 (ns dombot.cards.common
-  (:require [dombot.operations :refer [gain move-card move-cards give-choice push-effect-stack]]
+  (:require [dombot.operations :refer [gain move-card move-cards draw give-choice push-effect-stack]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -416,6 +416,13 @@
                     :to              :look-at}))
 
 (effects/register {:look-at look-at})
+
+(defn draw-up-to [game {:keys [player-no arg]}]
+  (let [{:keys [hand]} (get-in game [:players player-no])]
+    (draw game {:player-no player-no
+                :arg       (- arg (count hand))})))
+
+(effects/register {:draw-up-to draw-up-to})
 
 (defn put-all-revealed-into-hand [game {:keys [player-no]}]
   (let [revealed (get-in game [:players player-no :revealed])]

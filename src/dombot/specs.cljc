@@ -6,7 +6,7 @@
 (s/def ::name-ui string?)
 
 (s/def ::type #{:curse :victory :treasure :action :attack :reaction :duration :artifact :prize :project
-                :night :heirloom :spirit :zombie :fate :boon})
+                :night :heirloom :spirit :zombie :fate :boon :doom :hex})
 
 (s/def ::types (s/coll-of ::type :distinct true))
 
@@ -68,6 +68,18 @@
 (s/def ::boons (s/keys :req-un [::boon-discard
                                 ::number-of-cards]
                        :opt-un [::top-boon]))
+
+(s/def ::hex (s/keys :req-un [::name
+                              ::name-ui
+                              ::type]))
+
+(s/def ::top-hex ::hex)
+
+(s/def ::hex-discard (s/coll-of ::hex))
+
+(s/def ::hexes (s/keys :req-un [::hex-discard
+                                ::number-of-cards]
+                       :opt-un [::top-hex]))
 
 (s/def ::prosperity? boolean?)
 

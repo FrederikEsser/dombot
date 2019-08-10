@@ -270,6 +270,38 @@
               :players [{:hand    [copper gold copper silver]
                          :discard [estate estate]}]})))))
 
+(deftest hexes-test
+  (testing "Hexes"
+    (testing "Plague"
+      (let [curse (assoc curse :id 0)]
+        (is (= (-> {:hexes   {:deck [plague]}
+                    :supply  [{:card curse :pile-size 10}]
+                    :players [{}]}
+                   (receive-hex {:player-no 0}))
+               {:hexes   {:discard [plague]}
+                :supply  [{:card curse :pile-size 9}]
+                :players [{:hand [curse]}]}))))
+    (testing "Poverty"
+      (is (= (-> {:hexes   {:deck [poverty]}
+                  :players [{:hand [copper copper copper]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [poverty]}
+              :players [{:hand [copper copper copper]}]}))
+      (is (= (-> {:hexes   {:deck [poverty]}
+                  :players [{:hand [copper copper copper copper]}]}
+                 (receive-hex {:player-no 0})
+                 (choose :copper))
+             {:hexes   {:discard [poverty]}
+              :players [{:hand    [copper copper copper]
+                         :discard [copper]}]}))
+      (is (= (-> {:hexes   {:deck [poverty]}
+                  :players [{:hand [copper copper copper copper copper]}]}
+                 (receive-hex {:player-no 0})
+                 (choose [:copper :copper]))
+             {:hexes   {:discard [poverty]}
+              :players [{:hand    [copper copper copper]
+                         :discard [copper copper]}]})))))
+
 (deftest bard-test
   (let [bard (assoc bard :id 0)]
     (testing "Bard"
@@ -1001,6 +1033,35 @@
                                 :coins     0
                                 :buys      1
                                 :phase     :action}]})))))
+
+(deftest cursed-village-test
+  (let [cursed-village (assoc cursed-village :id 0)]
+    (testing "Cursed Village"
+      (is (= (-> {:players [{:hand    [cursed-village]
+                             :deck    (repeat 7 copper)
+                             :actions 1}]}
+                 (play 0 :cursed-village))
+             {:players [{:hand      (repeat 6 copper)
+                         :play-area [cursed-village]
+                         :deck      [copper]
+                         :actions   2}]}))
+      (is (= (-> {:players [{:hand    [cursed-village copper copper copper copper]
+                             :deck    (repeat 3 copper)
+                             :actions 1}]}
+                 (play 0 :cursed-village))
+             {:players [{:hand      (repeat 6 copper)
+                         :play-area [cursed-village]
+                         :deck      [copper]
+                         :actions   2}]}))
+      (is (= (-> {:hexes   {:deck [poverty]}
+                  :supply  [{:card cursed-village :pile-size 10}]
+                  :players [{:hand [copper copper copper copper copper]}]}
+                 (gain {:player-no 0 :card-name :cursed-village})
+                 (choose [:copper :copper]))
+             {:hexes   {:discard [poverty]}
+              :supply  [{:card cursed-village :pile-size 9}]
+              :players [{:hand    [copper copper copper]
+                         :discard [copper copper cursed-village]}]})))))
 
 (deftest den-of-sin-test
   (let [den-of-sin (assoc den-of-sin :id 0)]

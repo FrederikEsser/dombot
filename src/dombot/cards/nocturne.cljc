@@ -234,6 +234,14 @@
                                          :min     2
                                          :max     2}]]})
 
+(def plague {:name    :plague
+             :type    :hex
+             :effects [[:gain-to-hand {:card-name :curse}]]})
+
+(def poverty {:name    :poverty
+              :type    :hex
+              :effects [[:discard-down-to 3]]})
+
 (def all-boons [earth-gift
                 field-gift
                 flame-gift
@@ -247,14 +255,24 @@
                 swamp-gift
                 wind-gift])
 
+(def all-hexes [plague
+                poverty])
+
 (defn- setup-boons [game args]
   (cond-> game
           (not (:boons game)) (-> (assoc :boons {:deck (shuffle all-boons)})
                                   (setup-extra-cards {:extra-cards [(:will-o'-wisp spirit-piles)]}))))
 
-(defn- maybe-shuffle-boons [{:keys [deck discard] :as piles} & {:keys [number-of-boons]
-                                                                :or   {number-of-boons 1}}]
-  (if (< (count deck) number-of-boons)
+(defn- setup-hexes [game args]
+  (cond-> game
+          (not (:hexes game)) (assoc :hexes {:deck (shuffle all-hexes)})))
+
+(effects/register {:setup-boons setup-boons
+                   :setup-hexes setup-hexes})
+
+(defn- maybe-shuffle [{:keys [deck discard] :as piles} & {:keys [number-of-cards]
+                                                          :or   {number-of-cards 1}}]
+  (if (< (count deck) number-of-cards)
     {:deck (concat deck (shuffle discard))}
     piles))
 
@@ -273,7 +291,7 @@
 (defn receive-boon [game {:keys [player-no boon]}]
   (if (not boon)
     (let [{[{:keys [keep-until-clean-up?] :as boon} & deck] :deck
-           discard                                          :discard} (maybe-shuffle-boons (:boons game))
+           discard                                          :discard} (maybe-shuffle (:boons game))
           discard (if keep-until-clean-up?
                     discard
                     (concat discard [boon]))]
@@ -295,9 +313,26 @@
                                                                              :effects  [[:return-boon {:boon-name name}]]}}]]))})
           check-stack))))
 
-(effects/register {:setup-boons  setup-boons
-                   :return-boon  return-boon
-                   :receive-boon receive-boon})
+(defn receive-hex [game {:keys [player-no hex]}]
+  (if (not hex)
+    (let [{[hex & deck] :deck
+           discard      :discard} (maybe-shuffle (:hexes game))
+          discard (concat discard [hex])]
+      (-> game
+          (assoc :hexes (merge {}
+                               (when deck {:deck deck})
+                               (when discard {:discard discard})))
+          (receive-hex {:player-no player-no
+                        :hex       hex})))
+    (let [{:keys [effects]} hex]
+      (-> game
+          (push-effect-stack {:player-no player-no
+                              :effects   effects})
+          check-stack))))
+
+(effects/register {:return-boon  return-boon
+                   :receive-boon receive-boon
+                   :receive-hex  receive-hex})
 
 (def bard {:name    :bard
            :set     :nocturne
@@ -323,7 +358,7 @@
 
 (defn- blessed-village-take-boon [game {:keys [player-no]}]
   (let [{[{:keys [name] :as boon} & deck] :deck
-         discard                          :discard} (maybe-shuffle-boons (:boons game))]
+         discard                          :discard} (maybe-shuffle (:boons game))]
     (-> game
         (assoc :boons (merge {}
                              (when deck {:deck deck})
@@ -535,6 +570,15 @@
                                      :choice  ::crypt-choose-treasures
                                      :options [:player :play-area {:type :treasure}]}]]})
 
+(def cursed-village {:name    :cursed-village
+                     :set     :nocturne
+                     :types   #{:action :doom}
+                     :cost    5
+                     :effects [[:give-actions 2]
+                               [:draw-up-to 6]]
+                     :on-gain [[:receive-hex]]
+                     :setup   [[:setup-hexes]]})
+
 (def den-of-sin {:name    :den-of-sin
                  :set     :nocturne
                  :types   #{:night :duration}
@@ -666,7 +710,7 @@
   (let [{:keys [owner]} (get-in game [:artifacts :lost-in-the-woods])]
     (cond-> game
             (not= player-no owner)
-            (as-> game (let [{:keys [deck discard]} (maybe-shuffle-boons (:boons game) :number-of-boons 3)
+            (as-> game (let [{:keys [deck discard]} (maybe-shuffle (:boons game) :number-of-cards 3)
                              [fool-boons deck] (split-at 3 deck)]
                          (-> game
                              (assoc :boons (merge (when (not-empty deck) {:deck deck})
@@ -875,7 +919,7 @@
 
 (defn- pixie-give-choice [game {:keys [player-no card-id]}]
   (let [{[{:keys [name] :as boon} & deck] :deck
-         discard                          :discard} (maybe-shuffle-boons (:boons game))]
+         discard                          :discard} (maybe-shuffle (:boons game))]
     (-> game
         (assoc :boons (merge {}
                              (when deck {:deck deck})
@@ -933,7 +977,7 @@
 
 (defn- sacred-grove-receive-boon [game {:keys [player-no]}]
   (let [{[{:keys [name effects keep-until-clean-up?] :as boon} & deck] :deck
-         discard                                                       :discard} (maybe-shuffle-boons (:boons game))
+         discard                                                       :discard} (maybe-shuffle (:boons game))
         discard     (if keep-until-clean-up?
                       discard
                       (concat discard [boon]))
@@ -1129,6 +1173,7 @@
                     cobbler
                     conclave
                     crypt
+                    cursed-village
                     den-of-sin
                     devils-workshop
                     exorcist
