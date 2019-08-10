@@ -234,6 +234,26 @@
                                          :min     2
                                          :max     2}]]})
 
+(def greed {:name    :greed
+            :type    :hex
+            :effects [[:gain-to-topdeck {:card-name :copper}]]})
+
+(defn haunting-topdeck [game {:keys [player-no]}]
+  (let [hand (get-in game [:players player-no :hand])]
+    (cond-> game
+            (<= 4 (count hand)) (give-choice {:player-no player-no
+                                              :text      "Put a card from your hand onto your deck."
+                                              :choice    :topdeck-from-hand
+                                              :options   [:player :hand]
+                                              :min       1
+                                              :max       1}))))
+
+(effects/register {::haunting-topdeck haunting-topdeck})
+
+(def haunting {:name    :haunting
+               :type    :hex
+               :effects [[::haunting-topdeck]]})
+
 (def plague {:name    :plague
              :type    :hex
              :effects [[:gain-to-hand {:card-name :curse}]]})
@@ -255,7 +275,9 @@
                 swamp-gift
                 wind-gift])
 
-(def all-hexes [plague
+(def all-hexes [greed
+                haunting
+                plague
                 poverty])
 
 (defn- setup-boons [game args]
@@ -330,9 +352,21 @@
                               :effects   effects})
           check-stack))))
 
-(effects/register {:return-boon  return-boon
-                   :receive-boon receive-boon
-                   :receive-hex  receive-hex})
+(defn others-receive-next-hex [game {:keys [player-no]}]
+  (let [{[hex & deck] :deck
+         discard      :discard} (maybe-shuffle (:hexes game))
+        discard (concat discard [hex])]
+    (-> game
+        (assoc :hexes (merge {}
+                             (when deck {:deck deck})
+                             (when discard {:discard discard})))
+        (attack-other-players {:player-no player-no
+                               :effects   [[:receive-hex {:hex hex}]]}))))
+
+(effects/register {:return-boon             return-boon
+                   :receive-boon            receive-boon
+                   :receive-hex             receive-hex
+                   :others-receive-next-hex others-receive-next-hex})
 
 (def bard {:name    :bard
            :set     :nocturne
@@ -1128,6 +1162,15 @@
                                          :options [:player :hand {:type :victory}]}]]
                :heirloom pasture})
 
+(def skulk {:name    :skulk
+            :set     :nocturne
+            :types   #{:action :attack :doom}
+            :cost    4
+            :effects [[:give-buys 1]
+                      [:others-receive-next-hex]]
+            :on-gain [[:gain {:card-name :gold}]]
+            :setup   [[:setup-hexes]]})
+
 (def pouch {:name       :pouch
             :set        :nocturne
             :types      #{:treasure :heirloom}
@@ -1191,6 +1234,7 @@
                     raider
                     secret-cave
                     shepherd
+                    skulk
                     tracker
                     tragic-hero])
 
