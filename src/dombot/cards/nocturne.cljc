@@ -326,6 +326,52 @@
                :type    :hex
                :effects [[::haunting-topdeck]]})
 
+(defn- locusts-trash [game {:keys [player-no]}]
+  (let [[{:keys [name] :as top-card}] (get-in game [:players player-no :deck])
+        cost  (ut/get-cost game top-card)
+        types (ut/get-types game top-card)]
+    (cond-> game
+            top-card (push-effect-stack {:player-no player-no
+                                         :effects   [[:trash-from-topdeck]
+                                                     (if (#{:copper :estate} name)
+                                                       [:gain {:card-name :curse}]
+                                                       [:give-choice {:text    (str "Gain a " (ut/format-types types) " card costing up to $" (dec cost) ".")
+                                                                      :choice  :gain
+                                                                      :options [:supply {:types    types
+                                                                                         :max-cost (dec cost)}]
+                                                                      :min     1
+                                                                      :max     1}])]}))))
+
+(effects/register {::locusts-trash locusts-trash})
+
+(def locusts {:name    :locusts
+              :type    :hex
+              :effects [[:peek-deck 1]
+                        [::locusts-trash]]})
+
+(def miserable {:name           :miserable
+                :type           :state
+                :victory-points -2})
+
+(def twice-miserable {:name           :twice-miserable
+                      :type           :state
+                      :victory-points -4})
+
+(defn- make-miserable [game {:keys [player-no]}]
+  (let [states (get-in game [:players player-no :states])]
+    (cond (some (comp #{:twice-miserable} :name) states) game
+          (some (comp #{:miserable} :name) states) (update-in game [:players player-no :states] (fn [states]
+                                                                                                  (->> states
+                                                                                                       (remove #{miserable})
+                                                                                                       (concat [twice-miserable]))))
+          :else (update-in game [:players player-no :states] concat [miserable]))))
+
+(effects/register {::make-miserable make-miserable})
+
+(def misery {:name    :misery
+             :type    :hex
+             :effects [[::make-miserable]]})
+
 (def plague {:name    :plague
              :type    :hex
              :effects [[:gain-to-hand {:card-name :curse}]]})
@@ -370,6 +416,8 @@
                 fear
                 greed
                 haunting
+                locusts
+                misery
                 plague
                 poverty
                 war])
@@ -810,6 +858,7 @@
 (effects/register {::discard-for-boon discard-for-boon})
 
 (def lost-in-the-woods {:name    :lost-in-the-woods
+                        :type    :state
                         :trigger {:trigger           :at-start-turn
                                   :simultaneous-mode :auto
                                   :effects           [[:give-choice {:text    "You may discard a card to receive a Boon."
@@ -1343,6 +1392,22 @@
                             [:give-buys 1]
                             [::tragic-hero-demise]]})
 
+(defn- werewolf-hunt [game {:keys [player-no]}]
+  (let [phase (get-in game [:players player-no :phase])]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [(if (= :night phase)
+                                           [:others-receive-next-hex]
+                                           [:draw 3])]})))
+
+(effects/register {::werewolf-hunt werewolf-hunt})
+
+(def werewolf {:name    :werewolf
+               :set     :nocturne
+               :types   #{:action :night :attack :doom}
+               :cost    5
+               :effects [[::werewolf-hunt]]
+               :setup   [[:setup-hexes]]})
+
 (def kingdom-cards [bard
                     blessed-village
                     cemetery
@@ -1372,7 +1437,8 @@
                     skulk
                     tormentor
                     tracker
-                    tragic-hero])
+                    tragic-hero
+                    werewolf])
 
 ; Doable without Boons / Hexes:
 ; Faithful Hound - On discard other than Clean Up

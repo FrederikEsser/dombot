@@ -6,7 +6,7 @@
 (s/def ::name-ui string?)
 
 (s/def ::type #{:curse :victory :treasure :action :attack :reaction :duration :artifact :prize :project
-                :night :heirloom :spirit :zombie :fate :boon :doom :hex})
+                :night :heirloom :spirit :zombie :fate :boon :doom :hex :state})
 
 (s/def ::types (s/coll-of ::type :distinct true))
 
@@ -127,6 +127,8 @@
 
 (s/def ::artifacts ::cards)
 
+(s/def ::states ::cards)
+
 (s/def ::text string?)
 
 (s/def ::min nat-int?)
@@ -181,6 +183,7 @@
                                  ::coffers
                                  ::villagers
                                  ::artifacts
+                                 ::states
                                  ::choice
                                  ::victory-points
                                  ::winner?]))

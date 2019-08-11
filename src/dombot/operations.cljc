@@ -853,12 +853,16 @@
       (vp-fn cards))
     victory-points))
 
-(defn calc-victory-points [{:keys [vp-tokens] :as player}]
-  (let [cards (all-cards player)]
+(defn calc-victory-points [{:keys [vp-tokens states] :as player}]
+  (let [cards          (all-cards player)
+        vp-from-tokens (or vp-tokens 0)
+        vp-from-states (->> states
+                            (keep :victory-points)
+                            (apply + 0))]
     (->> cards
          (filter :victory-points)
          (map (partial get-victory-points cards))
-         (apply + (or vp-tokens 0)))))
+         (apply + (+ vp-from-tokens vp-from-states)))))
 
 (def calc-score (juxt calc-victory-points (comp - :number-of-turns)))
 

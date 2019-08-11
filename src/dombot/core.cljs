@@ -35,6 +35,7 @@
 (defn button-style [& [disabled types number-of-cards]]
   (merge {:color            (cond disabled :grey
                                   (:night types) :white
+                                  (:hex types) "#5A487A"
                                   :else :black)
           :font-weight      :bold
           :background-color (cond
@@ -48,7 +49,8 @@
                               (:artifact types) "#F9CD88"
                               (:project types) "#FCA19A"
                               (:boon types) "#F6E359"
-                              (:hex types) "#9677B3")
+                              (:hex types) "#9677B3"
+                              (:state types) "#F1EBEB")
           :border-color     (cond
                               (zero? number-of-cards) :red
                               (:curse types) "#9F76B8"
@@ -63,6 +65,7 @@
                               (:project types) "#EF8984"
                               (:boon types) "#AD9727"
                               (:hex types) "#5A487A"
+                              (:state types) "#CE9883"
                               :else :grey)
           :border-width     2}
          (when (:attack types)
@@ -283,7 +286,7 @@
           (->> (get-in @state [:game :players])
                (mapk (fn [{:keys               [name-ui hand play-area deck discard
                                                 actions coins buys set-aside
-                                                coffers villagers artifacts
+                                                coffers villagers artifacts states
                                                 island-mat native-village-mat pirate-ship-coins
                                                 boons
                                                 vp-tokens active? victory-points winner?]
@@ -341,7 +344,9 @@
                                 (when vp-tokens
                                   [:div "Victory Points: " vp-tokens])
                                 (when artifacts
-                                  (mapk view-card artifacts))])]
+                                  (mapk view-card artifacts))
+                                (when states
+                                  (mapk view-card states))])]
                         (if text
                           [:td text
                            [:div (mapk (fn [{:keys [option text]}]

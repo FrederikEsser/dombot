@@ -257,6 +257,7 @@
                             coffers
                             villagers
                             boons
+                            states
                             victory-points
                             winner]} :player
                     choice           :choice
@@ -296,9 +297,13 @@
                                          (#{:action} phase))
                                 {:interaction :spendable}))})
          (when (not-empty artifacts)
-           {:artifacts (->> artifacts (map (fn [{:keys [name]}] {:name    name
-                                                                 :name-ui (ut/format-name name)
-                                                                 :types   #{:artifact}})))})
+           {:artifacts (->> artifacts (map (fn [{:keys [name type]}] {:name    name
+                                                                      :name-ui (ut/format-name name)
+                                                                      :types   #{type}})))})
+         (when (not-empty states)
+           {:states (->> states (map (fn [{:keys [name type]}] {:name    name
+                                                                :name-ui (ut/format-name name)
+                                                                :types   #{type}})))})
          (when choice
            {:choice (view-choice choice)})
          (when boons

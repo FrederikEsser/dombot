@@ -395,6 +395,80 @@
              {:hexes   {:discard [haunting]}
               :players [{:hand [copper copper copper]
                          :deck [silver]}]})))
+    (testing "Locusts"
+      (let [curse  (assoc curse :id 0)
+            copper (assoc copper :id 1)]
+        (is (= (-> {:hexes   {:deck [locusts]}
+                    :players [{}]}
+                   (receive-hex {:player-no 0}))
+               {:hexes   {:discard [locusts]}
+                :players [{}]}))
+        (is (= (-> {:hexes   {:deck [locusts]}
+                    :players [{:deck [curse]}]}
+                   (receive-hex {:player-no 0}))
+               {:hexes   {:discard [locusts]}
+                :players [{}]
+                :trash   [curse]}))
+        (is (= (-> {:hexes   {:deck [locusts]}
+                    :supply  [{:card curse :pile-size 10}]
+                    :players [{:deck [copper]}]}
+                   (receive-hex {:player-no 0}))
+               {:hexes   {:discard [locusts]}
+                :supply  [{:card curse :pile-size 9}]
+                :players [{:discard [curse]}]
+                :trash   [copper]}))
+        (is (= (-> {:hexes   {:deck [locusts]}
+                    :supply  [{:card curse :pile-size 10}]
+                    :players [{:deck [estate]}]}
+                   (receive-hex {:player-no 0}))
+               {:hexes   {:discard [locusts]}
+                :supply  [{:card curse :pile-size 9}]
+                :players [{:discard [curse]}]
+                :trash   [estate]}))
+        (is (= (-> {:hexes   {:deck [locusts]}
+                    :supply  (base/supply 2 8)
+                    :players [{:deck [silver]}]}
+                   (receive-hex {:player-no 0}))
+               {:hexes        {:discard [locusts]}
+                :supply       (base/supply 2 8)
+                :players      [{}]
+                :effect-stack [{:text      (str "Gain a Treasure card costing up to $2.")
+                                :player-no 0
+                                :choice    :gain
+                                :source    :supply
+                                :options   [:copper]
+                                :min       1
+                                :max       1}]
+                :trash        [silver]}))
+        (is (= (-> {:hexes   {:deck [locusts]}
+                    :supply  [{:card copper :pile-size 46}]
+                    :players [{:deck [silver]}]}
+                   (receive-hex {:player-no 0})
+                   (choose :copper))
+               {:hexes   {:discard [locusts]}
+                :supply  [{:card copper :pile-size 45}]
+                :players [{:discard [copper]}]
+                :trash   [silver]}))))
+    (testing "Misery"
+      (is (= (-> {:hexes   {:deck [misery]}
+                  :players [{}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [misery]}
+              :players [{:states [miserable]}]}))
+      (is (= (-> {:hexes   {:deck [misery]}
+                  :players [{:states [miserable]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [misery]}
+              :players [{:states [twice-miserable]}]}))
+      (is (= (-> {:hexes   {:deck [misery]}
+                  :players [{:states [twice-miserable]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [misery]}
+              :players [{:states [twice-miserable]}]}))
+      (is (= (calc-victory-points {:states [miserable]})
+             -2))
+      (is (= (calc-victory-points {:states [twice-miserable]})
+             -4)))
     (testing "Plague"
       (let [curse (assoc curse :id 0)]
         (is (= (-> {:hexes   {:deck [plague]}
@@ -2753,6 +2827,31 @@
                            :actions 0
                            :buys    2}]
                 :trash   [tragic-hero]}))))))
+
+(deftest werewolf-test
+  (let [werewolf (assoc werewolf :id 0)]
+    (testing "Werewolf"
+      (is (= (-> {:players [{:hand    [werewolf]
+                             :deck    [estate estate estate copper]
+                             :actions 1}]}
+                 (play 0 :werewolf))
+             {:players [{:hand      [estate estate estate]
+                         :play-area [werewolf]
+                         :deck      [copper]
+                         :actions   0}]}))
+      (is (= (-> {:hexes   {:deck [poverty]}
+                  :players [{:hand  [werewolf]
+                             :deck  [estate estate estate copper]
+                             :phase :night}
+                            {:hand [copper copper copper copper copper]}]}
+                 (play 0 :werewolf)
+                 (choose [:copper :copper]))
+             {:hexes   {:discard [poverty]}
+              :players [{:play-area [werewolf]
+                         :deck      [estate estate estate copper]
+                         :phase     :night}
+                        {:hand    [copper copper copper]
+                         :discard [copper copper]}]})))))
 
 (deftest will-o-wisp-test
   (testing "Will-o'-Wisp"

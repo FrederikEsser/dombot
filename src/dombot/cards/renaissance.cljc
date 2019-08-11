@@ -23,10 +23,12 @@
 (effects/register {::horn-at-clean-up horn-at-clean-up})
 
 (def horn {:name    :horn
+           :type    :artifact
            :trigger {:trigger :at-clean-up
                      :effects [[::horn-at-clean-up]]}})
 
-(def lantern {:name :lantern})
+(def lantern {:name :lantern
+              :type :artifact})
 
 (defn border-guard-choice [game {:keys [player-no choice]}]
   (case choice
@@ -144,6 +146,7 @@
                  :on-gain [[::experiment-on-gain]]})
 
 (def flag {:name    :flag
+           :type    :artifact
            :trigger {:trigger :at-draw-hand
                      :effects [[:draw 1]]}})
 
@@ -447,6 +450,7 @@
              :on-gain    [[:give-coffers 2]]})
 
 (def treasure-chest {:name    :treasure-chest
+                     :type    :artifact
                      :trigger {:trigger :at-start-buy
                                :effects [[:gain {:card-name :gold}]]}})
 
@@ -470,6 +474,7 @@
                    :setup   [[:add-artifact {:artifact treasure-chest}]]})
 
 (def key {:name    :key
+          :type    :artifact
           :trigger {:trigger           :at-start-turn
                     :simultaneous-mode :auto
                     :effects           [[:give-coins 1]]}})
