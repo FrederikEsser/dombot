@@ -197,6 +197,15 @@
 
 (effects/register {:put-deck-into-discard put-deck-into-discard})
 
+(defn put-revealed-into-discard [game {:keys [player-no]}]
+  (let [revealed (get-in game [:players player-no :revealed])]
+    (-> game
+        (update-in [:players player-no] dissoc :revealed)
+        (update-in [:players player-no :discard] concat revealed)
+        (assoc-in [:players player-no :revealed-cards :discard] (count revealed)))))
+
+(effects/register {:put-revealed-into-discard put-revealed-into-discard})
+
 (defn set-aside [game args]
   (move-cards game (merge args {:from          :deck
                                 :from-position :top
@@ -392,6 +401,16 @@
                   :card-names (map :name hand)})))
 
 (effects/register {:reveal-hand reveal-hand})
+
+(defn reveal-discard [game {:keys [player-no]}]
+  (let [discard (get-in game [:players player-no :discard])]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:move-cards {:card-names (map :name discard)
+                                                       :from       :discard
+                                                       :to         :revealed}]
+                                         [:put-revealed-into-discard]]})))
+
+(effects/register {:reveal-discard reveal-discard})
 
 (defn reveal-from-hand [game args]
   (move-cards game (merge args {:from :hand

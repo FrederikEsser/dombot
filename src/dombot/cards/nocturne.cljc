@@ -1,7 +1,7 @@
 (ns dombot.cards.nocturne
-  (:require [dombot.operations :refer [push-effect-stack give-choice move-card attack-other-players gain state-maintenance
-                                       check-stack get-on-buy-effects get-on-gain-effects]]
-            [dombot.cards.common :refer [reveal-hand add-trigger setup-extra-cards]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice move-card move-cards attack-other-players gain
+                                       state-maintenance check-stack get-on-buy-effects get-on-gain-effects]]
+            [dombot.cards.common :refer [reveal-hand reveal-discard add-trigger setup-extra-cards]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -234,6 +234,33 @@
                                          :min     2
                                          :max     2}]]})
 
+(defn- bad-omens-topdeck-coppers [game {:keys [player-no]}]
+  (let [discard            (get-in game [:players player-no :discard])
+        coppers-in-discard (->> discard
+                                (filter (comp #{:copper} :name))
+                                count
+                                (min 2))]
+    (cond-> game
+            (pos? coppers-in-discard) (move-cards {:player-no  player-no
+                                                   :card-names (repeat coppers-in-discard :copper)
+                                                   :from       :discard
+                                                   :to         :deck}))))
+
+(defn- bad-omens-reveal [game {:keys [player-no]}]
+  (let [cards-in-deck (count (get-in game [:players player-no :deck]))]
+    (cond-> game
+            (pos? cards-in-deck) (assoc-in [:players player-no :revealed-cards :deck] cards-in-deck)
+            (< cards-in-deck 2) (reveal-discard {:player-no player-no}))))
+
+(effects/register {::bad-omens-topdeck-coppers bad-omens-topdeck-coppers
+                   ::bad-omens-reveal          bad-omens-reveal})
+
+(def bad-omens {:name    :bad-omens
+                :type    :hex
+                :effects [[:put-deck-into-discard]
+                          [::bad-omens-topdeck-coppers]
+                          [::bad-omens-reveal]]})
+
 (defn- famine-shuffle-deck [game {:keys [player-no]}]
   (-> game
       (update-in [:players player-no :deck] shuffle)
@@ -307,6 +334,24 @@
               :type    :hex
               :effects [[:discard-down-to 3]]})
 
+(defn- war-reveal [game {:keys [player-no]}]
+  (let [{:keys [revealed deck discard]} (get-in game [:players player-no])
+        {:keys [name] :as card} (last revealed)
+        cost (ut/get-cost game card)]
+    (cond (#{3 4} cost) (push-effect-stack game {:player-no player-no
+                                                 :effects   [[:trash-from-revealed {:card-name name}]]})
+          (not-empty (concat deck discard)) (push-effect-stack game {:player-no player-no
+                                                                     :effects   [[:reveal-from-deck 1]
+                                                                                 [::war-reveal]]})
+          :else game)))
+
+(effects/register {::war-reveal war-reveal})
+
+(def war {:name    :war
+          :type    :hex
+          :effects [[::war-reveal]
+                    [:discard-all-revealed]]})
+
 (def all-boons [earth-gift
                 field-gift
                 flame-gift
@@ -320,12 +365,14 @@
                 swamp-gift
                 wind-gift])
 
-(def all-hexes [famine
+(def all-hexes [bad-omens
+                famine
                 fear
                 greed
                 haunting
                 plague
-                poverty])
+                poverty
+                war])
 
 (defn- setup-boons [game args]
   (cond-> game
@@ -855,6 +902,25 @@
            :effects    [[::idol-boon-or-curse]]
            :setup      [[:setup-boons]]})
 
+(defn- leprechaun-wish-or-hex [game {:keys [player-no]}]
+  (let [play-area (get-in game [:players player-no :play-area])]
+    (if (= 7 (count play-area))
+      (gain game {:player-no player-no
+                  :card-name :wish
+                  :from      :extra-cards})
+      (receive-hex game {:player-no player-no}))))
+
+(effects/register {::leprechaun-wish-or-hex leprechaun-wish-or-hex})
+
+(def leprechaun {:name    :leprechaun
+                 :set     :nocturne
+                 :types   #{:action :doom}
+                 :cost    3
+                 :effects [[:gain {:card-name :gold}]
+                           [::leprechaun-wish-or-hex]]
+                 :setup   [[:setup-extra-cards {:extra-cards [wish-pile]}]
+                           [:setup-hexes]]})
+
 (defn- monastery-trash [game {:keys [player-no]}]
   (let [gained-cards (count (get-in game [:players player-no :gained-cards]))]
     (cond-> game
@@ -1293,6 +1359,7 @@
                     ghost-town
                     guardian
                     idol
+                    leprechaun
                     monastery
                     necromancer
                     night-watchman

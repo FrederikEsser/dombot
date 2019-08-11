@@ -9,7 +9,7 @@
             [dombot.cards.prosperity :as prosperity :refer [hoard mint talisman]]
             [dombot.cards.cornucopia :refer [trusty-steed]]
             [dombot.cards.nocturne :as nocturne :refer :all]
-            [dombot.cards.renaissance :refer [silk-merchant academy]]))
+            [dombot.cards.renaissance :refer [patron silk-merchant academy]]))
 
 (defn fixture [f]
   (with-rand-seed 123 (f)))
@@ -272,7 +272,7 @@
 
 (deftest hexes-test
   (testing "Hexes"
-    (testing "Famine"
+    (testing "Famine"                                       ; keep Famine test first to avoid reshuffling
       (is (= (-> {:hexes   {:deck [famine]}
                   :players [{:deck [estate copper copper copper]}]}
                  (receive-hex {:player-no 0}))
@@ -299,6 +299,38 @@
               :players [{:deck           [skulk]
                          :discard        [skulk skulk skulk]
                          :revealed-cards {:discard 3}}]})))
+    (testing "Bad Omens"
+      (is (= (-> {:hexes   {:deck [bad-omens]}
+                  :players [{:deck [faithful-hound patron copper copper copper]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [bad-omens]}
+              :players [{:deck           [copper copper]
+                         :discard        [faithful-hound patron copper]
+                         :revealed-cards {:deck 2}}]}))
+      (is (= (-> {:hexes   {:deck [bad-omens]}
+                  :players [{:deck    [copper faithful-hound patron]
+                             :discard [gold copper]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [bad-omens]}
+              :players [{:deck           [copper copper]
+                         :discard        [gold faithful-hound patron]
+                         :revealed-cards {:deck 2}}]}))
+      (is (= (-> {:hexes   {:deck [bad-omens]}
+                  :players [{:deck [copper faithful-hound patron gold]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [bad-omens]}
+              :players [{:deck           [copper]
+                         :discard        [faithful-hound patron gold]
+                         :revealed-cards {:deck    1
+                                          :discard 3}
+                         :coffers        1}]}))
+      (is (= (-> {:hexes   {:deck [bad-omens]}
+                  :players [{:deck [faithful-hound patron gold]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [bad-omens]}
+              :players [{:discard        [faithful-hound patron gold]
+                         :revealed-cards {:discard 3}
+                         :coffers        1}]})))
     (testing "Fear"
       (is (= (-> {:hexes   {:deck [fear]}
                   :players [{:hand [estate copper copper copper]}]}
@@ -391,7 +423,42 @@
                  (choose [:copper :copper]))
              {:hexes   {:discard [poverty]}
               :players [{:hand    [copper copper copper]
-                         :discard [copper copper]}]})))))
+                         :discard [copper copper]}]})))
+    (testing "War"
+      (is (= (-> {:hexes   {:deck [war]}
+                  :players [{:deck [silver]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [war]}
+              :players [{}]
+              :trash   [silver]}))
+      (is (= (-> {:hexes   {:deck [war]}
+                  :players [{:deck [patron]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [war]}
+              :players [{:coffers 1}]
+              :trash   [patron]}))
+      (is (= (-> {:hexes   {:deck [war]}
+                  :players [{:deck [copper estate silver copper]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [war]}
+              :players [{:deck           [copper]
+                         :discard        [copper estate]
+                         :revealed-cards {:discard 2}}]
+              :trash   [silver]}))
+      (is (= (-> {:hexes   {:deck [war]}
+                  :players [{:deck    [copper estate]
+                             :discard [silver]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [war]}
+              :players [{:discard        [copper estate]
+                         :revealed-cards {:discard 2}}]
+              :trash   [silver]}))
+      (is (= (-> {:hexes   {:deck [war]}
+                  :players [{:deck [copper estate duchy gold]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [war]}
+              :players [{:discard        [copper estate duchy gold]
+                         :revealed-cards {:discard 4}}]})))))
 
 (deftest bard-test
   (let [bard (assoc bard :id 0)]
@@ -1760,6 +1827,56 @@
                        :play-area [imp]
                        :deck      [copper]
                        :actions   0}]}))))
+
+(deftest leprechaun-test
+  (let [leprechaun (assoc leprechaun :id 0)
+        gold       (assoc gold :id 1)
+        wish       (assoc wish :id 2)]
+    (testing "Leprechaun"
+      (is (= (-> {:hexes       {:deck [poverty]}
+                  :extra-cards [{:card wish :pile-size 12}]
+                  :supply      [{:card gold :pile-size 30}]
+                  :players     [{:hand      [leprechaun copper copper copper copper]
+                                 :play-area (repeat 5 secret-cave)
+                                 :actions   1}]}
+                 (play 0 :leprechaun)
+                 (choose :copper))
+             {:hexes       {:discard [poverty]}
+              :extra-cards [{:card wish :pile-size 12}]
+              :supply      [{:card gold :pile-size 29}]
+              :players     [{:hand      [copper copper copper]
+                             :play-area (concat (repeat 5 secret-cave) [leprechaun])
+                             :discard   [gold copper]
+                             :actions   0}]}))
+      (is (= (-> {:hexes       {:deck [poverty]}
+                  :extra-cards [{:card wish :pile-size 12}]
+                  :supply      [{:card gold :pile-size 30}]
+                  :players     [{:hand      [leprechaun copper copper copper copper]
+                                 :play-area (repeat 6 secret-cave)
+                                 :actions   1}]}
+                 (play 0 :leprechaun))
+             {:hexes       {:deck [poverty]}
+              :extra-cards [{:card wish :pile-size 11}]
+              :supply      [{:card gold :pile-size 29}]
+              :players     [{:hand      [copper copper copper copper]
+                             :play-area (concat (repeat 6 secret-cave) [leprechaun])
+                             :discard   [gold wish]
+                             :actions   0}]}))
+      (is (= (-> {:hexes       {:deck [poverty]}
+                  :extra-cards [{:card wish :pile-size 12}]
+                  :supply      [{:card gold :pile-size 30}]
+                  :players     [{:hand      [leprechaun copper copper copper copper]
+                                 :play-area (repeat 7 secret-cave)
+                                 :actions   1}]}
+                 (play 0 :leprechaun)
+                 (choose :copper))
+             {:hexes       {:discard [poverty]}
+              :extra-cards [{:card wish :pile-size 12}]
+              :supply      [{:card gold :pile-size 29}]
+              :players     [{:hand      [copper copper copper]
+                             :play-area (concat (repeat 7 secret-cave) [leprechaun])
+                             :discard   [gold copper]
+                             :actions   0}]})))))
 
 (deftest monastery-test
   (let [monastery (assoc monastery :id 0)]
