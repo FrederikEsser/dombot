@@ -73,20 +73,16 @@
            :cost    5
            :effects [[::city-effects]]})
 
-(defn contraband-choice [game {:keys [card-name]}]
-  (update game :unbuyable-cards (comp set conj) card-name))
-
 (defn contraband-give-choice [{:keys [players] :as game} {:keys [player-no]}]
   (let [next-player (mod (inc player-no) (count players))]
     (give-choice game {:player-no next-player
                        :text      "Name a card that can't be bought this turn."
-                       :choice    ::contraband-choice
+                       :choice    :mark-unbuyable
                        :options   [:supply {:all true}]
                        :min       1
                        :max       1})))
 
-(effects/register {::contraband-choice      contraband-choice
-                   ::contraband-give-choice contraband-give-choice})
+(effects/register {::contraband-give-choice contraband-give-choice})
 
 (def contraband {:name            :contraband
                  :set             :prosperity

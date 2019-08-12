@@ -261,6 +261,55 @@
                           [::bad-omens-topdeck-coppers]
                           [::bad-omens-reveal]]})
 
+(defn- take-state [game {:keys [player-no state]}]
+  (let [has-deluded-or-envious? (->> (get-in game [:players player-no :states])
+                                     (some (comp #{:deluded :envious} :name)))]
+    (if has-deluded-or-envious?
+      game
+      (-> game
+          (update-in [:players player-no :states] concat [state])
+          (add-trigger {:player-no player-no
+                        :trigger   (:trigger state)})))))
+
+(defn- return-state [game {:keys [player-no state-name]}]
+  (-> game
+      (update-in [:players player-no :states] (partial remove (comp #{state-name} :name)))
+      (update-in [:players player-no] ut/dissoc-if-empty :states)))
+
+(effects/register {:take-state   take-state
+                   :return-state return-state})
+
+(def deluded {:name    :deluded
+              :type    :state
+              :trigger {:trigger  :at-start-buy
+                        :duration :once
+                        :effects  [[:return-state {:state-name :deluded}]
+                                   [:mark-unbuyable {:type :action}]]}})
+
+(def delusion {:name    :delusion
+               :type    :hex
+               :effects [[:take-state {:state deluded}]]})
+
+(def envious-silver-trigger {:trigger  [:play :silver]
+                             :duration :turn
+                             :effects  [[:give-coins -1]]})
+
+(def envious-gold-trigger {:trigger  [:play :gold]
+                           :duration :turn
+                           :effects  [[:give-coins -2]]})
+
+(def envious {:name    :envious
+              :type    :state
+              :trigger {:trigger  :at-start-buy
+                        :duration :once
+                        :effects  [[:return-state {:state-name :envious}]
+                                   [:add-trigger {:trigger envious-silver-trigger}]
+                                   [:add-trigger {:trigger envious-gold-trigger}]]}})
+
+(def envy {:name    :envy
+           :type    :hex
+           :effects [[:take-state {:state envious}]]})
+
 (defn- famine-shuffle-deck [game {:keys [player-no]}]
   (-> game
       (update-in [:players player-no :deck] shuffle)
@@ -412,6 +461,8 @@
                 wind-gift])
 
 (def all-hexes [bad-omens
+                delusion
+                envy
                 famine
                 fear
                 greed

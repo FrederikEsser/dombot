@@ -189,9 +189,10 @@
       (get-buy-cost game player-no card)
       (get-cost-with-reduction game player-no card))))
 
-(defn card-buyable? [{:keys [unbuyable-cards] :as game} player-no {:keys [name buyable?] :as card}]
+(defn card-buyable? [{:keys [unbuyable-cards unbuyable-type] :as game} player-no {:keys [name buyable?] :as card}]
   (cond
     (and unbuyable-cards (unbuyable-cards name)) false
+    (and unbuyable-type (unbuyable-type (get-types game card))) false
     buyable? (let [buyable-fn (effects/get-effect buyable?)]
                (buyable-fn game {:player-no player-no}))
     :else true))

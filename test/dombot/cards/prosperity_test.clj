@@ -186,7 +186,7 @@
                            {}]
             :effect-stack [{:text      "Name a card that can't be bought this turn."
                             :player-no 1
-                            :choice    ::prosperity/contraband-choice
+                            :choice    :mark-unbuyable
                             :source    :supply
                             :options   [:curse :estate :duchy :province :copper :silver :gold]
                             :min       1

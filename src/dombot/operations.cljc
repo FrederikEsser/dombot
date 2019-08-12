@@ -142,7 +142,8 @@
         (-> game
             (assoc-in [:players player-no :phase] next-phase)
             (push-effect-stack {:player-no player-no
-                                :effects   (concat phase-change-effects
+                                :effects   (concat [[:remove-triggers {:trigger phase-change}]]
+                                                   phase-change-effects
                                                    (when (not= next-phase phase)
                                                      [[:set-phase {:phase phase}]]))})))
       game)))
@@ -403,36 +404,46 @@
                                    (map (partial ut/add-effect-args {:card-name card-name})))]
     (concat on-buy token-effects while-in-play-effects)))
 
-(defn buy-card [{:keys [effect-stack] :as game} player-no card-name]
-  (let [{:keys [buys coins phase]} (get-in game [:players player-no])
-        {:keys [card pile-size] :as supply-pile} (ut/get-pile-idx game card-name)
-        cost            (ut/get-buy-cost game player-no card)
-        {:keys [overpay]} card
-        on-buy-effects  (get-on-buy-effects game player-no card-name)
-        overpay-effects (when (and overpay (pos? (- coins cost)))
-                          [[:give-choice {:text    (str "You may overpay for your " (ut/format-name card-name) ". Choose amount:")
-                                          :choice  [:overpay-choice {:effect overpay}]
-                                          :options [:overpay]
-                                          :min     1
-                                          :max     1}]])]
-    (assert (empty? effect-stack) "You can't buy cards when you have a choice to make.")
-    (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
-    (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))
-    (assert (and coins cost (>= coins cost)) (str "Buy error: " (ut/format-name card-name) " costs " cost " and you only have " coins " coins."))
-    (assert (and pile-size (pos? pile-size)) (str "Buy error: " (ut/format-name card-name) " supply is empty."))
-    (assert (ut/card-buyable? game player-no card) (str (ut/format-name card-name) " can't be bought."))
-    (when phase
-      (assert (#{:action :pay :buy} phase) (str "You can't buy cards when you're in the " (ut/format-name phase) " phase.")))
-    (-> game
-        (update-in [:players player-no :coins] - cost)
-        (update-in [:players player-no :buys] - 1)
-        (push-effect-stack {:player-no player-no
-                            :effects   (concat [[:set-phase {:phase :buy}]]
-                                               overpay-effects
-                                               on-buy-effects
-                                               [[:gain {:card-name card-name
-                                                        :bought    true}]])})
-        check-stack)))
+(defn buy-card
+  ([game {:keys [player-no card-name]}]
+   (buy-card game player-no card-name))
+  ([{:keys [effect-stack] :as game} player-no card-name]
+   (let [{:keys [buys coins phase]} (get-in game [:players player-no])
+         {:keys [card pile-size] :as supply-pile} (ut/get-pile-idx game card-name)
+         cost            (ut/get-buy-cost game player-no card)
+         {:keys [overpay]} card
+         on-buy-effects  (get-on-buy-effects game player-no card-name)
+         overpay-effects (when (and overpay (pos? (- coins cost)))
+                           [[:give-choice {:text    (str "You may overpay for your " (ut/format-name card-name) ". Choose amount:")
+                                           :choice  [:overpay-choice {:effect overpay}]
+                                           :options [:overpay]
+                                           :min     1
+                                           :max     1}]])]
+     (assert (empty? effect-stack) "You can't buy cards when you have a choice to make.")
+     (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
+     (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))
+     (assert (and coins cost (>= coins cost)) (str "Buy error: " (ut/format-name card-name) " costs " cost " and you only have " coins " coins."))
+     (assert (and pile-size (pos? pile-size)) (str "Buy error: " (ut/format-name card-name) " supply is empty."))
+     (assert (ut/card-buyable? game player-no card) (str (ut/format-name card-name) " can't be bought."))
+     (when phase
+       (assert (#{:action :pay :buy} phase) (str "You can't buy cards when you're in the " (ut/format-name phase) " phase.")))
+     (if (and phase (not= :buy phase))
+       (-> game
+           (push-effect-stack {:player-no player-no
+                               :effects   [[:set-phase {:phase :buy}]
+                                           [:buy {:card-name card-name}]]})
+           check-stack)
+       (-> game
+           (update-in [:players player-no :coins] - cost)
+           (update-in [:players player-no :buys] - 1)
+           (push-effect-stack {:player-no player-no
+                               :effects   (concat overpay-effects
+                                                  on-buy-effects
+                                                  [[:gain {:card-name card-name
+                                                           :bought    true}]])})
+           check-stack)))))
+
+(effects/register {:buy buy-card})
 
 (defn buy-project [{:keys [effect-stack] :as game} player-no project-name]
   (let [{:keys [buys coins phase]} (get-in game [:players player-no])
@@ -788,11 +799,15 @@
    (let [{:keys [phase actions actions-played triggers]
           :or   {phase :action}} (get-in game [:players player-no])
          {{:keys [effects coin-value trigger] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-         types     (ut/get-types game card)
-         play-type (cond
-                     (and (#{:action} phase) (:action types) (pos? actions)) :action
-                     (and (#{:action :pay} phase) (:treasure types)) :treasure
-                     (and (#{:action :pay :buy :night} phase) (:night types)) :night)]
+         types      (ut/get-types game card)
+         play-type  (cond
+                      (and (#{:action} phase) (:action types) (pos? actions)) :action
+                      (and (#{:action :pay} phase) (:treasure types)) :treasure
+                      (and (#{:action :pay :buy :night} phase) (:night types)) :night)
+         next-phase (case play-type
+                      :treasure :pay
+                      :night :night
+                      phase)]
      (assert (-> effect-stack first :choice not) "You can't play cards when you have a choice to make.")
      (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
      (assert types (str "Play error: " (ut/format-name card-name) " has no types."))
@@ -805,23 +820,27 @@
                           (when (and (#{:action} phase) (:action types))
                             (str " and have " actions " actions left"))
                           ".")))
-     (-> game
-         (cond-> (= :action play-type) (update-in [:players player-no :actions] - 1))
-         (push-effect-stack {:player-no player-no
-                             :effects   (concat [(cond (= :treasure play-type) [:set-phase {:phase :pay}]
-                                                       (= :night play-type) [:set-phase {:phase :night}])
-                                                 [:move-card {:card-name card-name
-                                                              :from      :hand
-                                                              :to        :play-area}]
-                                                 [:card-effect {:card card}]]
-                                                (when (some (comp #{[:play card-name]} :trigger) triggers)
-                                                  [[:apply-triggers {:trigger [:play card-name]}]])
-                                                (when (and (:action types)
-                                                           (empty? actions-played)
-                                                           (some (comp #{:play-first-action} :trigger) triggers))
-                                                  [[:apply-triggers {:trigger :play-first-action
-                                                                     :card    card}]]))})
-         check-stack))))
+     (if (and (get-in game [:players player-no :phase]) (not= phase next-phase))
+       (-> game
+           (push-effect-stack {:player-no player-no
+                               :effects   [[:set-phase {:phase next-phase}]
+                                           [:play {:card-name card-name}]]})
+           check-stack)
+       (-> game
+           (cond-> (= :action play-type) (update-in [:players player-no :actions] - 1))
+           (push-effect-stack {:player-no player-no
+                               :effects   (concat [[:move-card {:card-name card-name
+                                                                :from      :hand
+                                                                :to        :play-area}]
+                                                   [:card-effect {:card card}]]
+                                                  (when (some (comp #{[:play card-name]} :trigger) triggers)
+                                                    [[:apply-triggers {:trigger [:play card-name]}]])
+                                                  (when (and (:action types)
+                                                             (empty? actions-played)
+                                                             (some (comp #{:play-first-action} :trigger) triggers))
+                                                    [[:apply-triggers {:trigger :play-first-action
+                                                                       :card    card}]]))})
+           check-stack)))))
 
 (effects/register {:play play})
 
@@ -909,7 +928,7 @@
         (update-in [:players player-no] clean-up-player)
         (set-approx-discard-size player-no)
         (update :players (partial mapv (fn [player] (dissoc player :revealed-cards))))
-        (dissoc :cost-reductions :unbuyable-cards)
+        (dissoc :cost-reductions :unbuyable-cards :unbuyable-type)
         (ut/update-if-present :trash (partial map #(dissoc % :face))))))
 
 (defn at-clean-up-choice [game {:keys [player-no card-name]}]

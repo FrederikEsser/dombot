@@ -571,6 +571,13 @@
 (effects/register {:topdeck-from-gained   topdeck-from-gained
                    :topdeck-gained-choice topdeck-gained-choice})
 
+(defn mark-unbuyable [game {:keys [card-name type]}]
+  (cond-> game
+          card-name (update :unbuyable-cards (comp set conj) card-name)
+          type (assoc :unbuyable-type type)))
+
+(effects/register {:mark-unbuyable mark-unbuyable})
+
 (defn add-artifact [game {:keys [artifact]}]
   (assoc-in game [:artifacts (:name artifact)] artifact))
 

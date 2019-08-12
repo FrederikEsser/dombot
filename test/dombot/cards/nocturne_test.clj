@@ -331,6 +331,152 @@
               :players [{:discard        [faithful-hound patron gold]
                          :revealed-cards {:discard 3}
                          :coffers        1}]})))
+    (testing "Delusion"
+      (is (= (-> {:hexes   {:deck [delusion]}
+                  :players [{}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [delusion]}
+              :players [{:states   [deluded]
+                         :triggers [(:trigger deluded)]}]}))
+      (is (= (-> {:players [{:hand     [copper]
+                             :coins    0
+                             :phase    :action
+                             :states   [deluded]
+                             :triggers [(:trigger deluded)]}]}
+                 (play 0 :copper))
+             {:players        [{:play-area [copper]
+                                :coins     1
+                                :phase     :pay}]
+              :unbuyable-type :action}))
+      (let [conclave (assoc conclave :id 1)]
+        (is (thrown-with-msg? AssertionError #"Conclave can't be bought."
+                              (-> {:hexes   {:deck [delusion]}
+                                   :supply  [{:card conclave :pile-size 10}]
+                                   :players [{:hand  [copper]
+                                              :coins 3
+                                              :buys  1
+                                              :phase :action}]}
+                                  (receive-hex {:player-no 0})
+                                  (play 0 :copper)
+                                  (buy-card 0 :conclave))))
+        (is (thrown-with-msg? AssertionError #"Conclave can't be bought."
+                              (-> {:hexes   {:deck [delusion]}
+                                   :supply  [{:card conclave :pile-size 10}]
+                                   :players [{:coins 4
+                                              :buys  1
+                                              :phase :action}]}
+                                  (receive-hex {:player-no 0})
+                                  (buy-card 0 :conclave))))
+        (is (= (-> {:hexes   {:deck [delusion]}
+                    :supply  [{:card conclave :pile-size 10}]
+                    :players [{:coins 4
+                               :buys  1
+                               :phase :pay}]}
+                   (receive-hex {:player-no 0})
+                   (buy-card 0 :conclave))
+               {:hexes   {:discard [delusion]}
+                :supply  [{:card conclave :pile-size 9}]
+                :players [{:discard  [conclave]
+                           :coins    0
+                           :buys     0
+                           :phase    :buy
+                           :states   [deluded]
+                           :triggers [(:trigger deluded)]}]})))
+      (let [silver (assoc silver :id 1)]
+        (is (= (-> {:supply         [{:card silver :pile-size 40}]
+                    :players        [{:coins 3
+                                      :buys  1}]
+                    :unbuyable-type :action}
+                   (buy-card 0 :silver))
+               {:supply         [{:card silver :pile-size 39}]
+                :players        [{:discard [silver]
+                                  :coins   0
+                                  :buys    0}]
+                :unbuyable-type :action})))
+      (is (= (-> {:hexes   {:deck [delusion]}
+                  :players [{:phase :action}]}
+                 (receive-hex {:player-no 0})
+                 (end-turn 0))
+             {:hexes          {:discard [delusion]}
+              :current-player 0
+              :players        [{:actions 1
+                                :coins   0
+                                :buys    1
+                                :phase   :action}]}))
+      (is (= (-> {:hexes   {:deck [delusion]}
+                  :players [{:phase :buy}]}
+                 (receive-hex {:player-no 0})
+                 (end-turn 0))
+             {:hexes          {:discard [delusion]}
+              :current-player 0
+              :players        [{:actions  1
+                                :coins    0
+                                :buys     1
+                                :phase    :action
+                                :states   [deluded]
+                                :triggers [(:trigger deluded)]}]})))
+    (testing "Envy"
+      (is (= (-> {:hexes   {:deck [envy]}
+                  :players [{}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [envy]}
+              :players [{:states   [envious]
+                         :triggers [(:trigger envious)]}]}))
+      (is (= (-> {:hexes   {:deck [envy]}
+                  :players [{:hand  [copper]
+                             :coins 0
+                             :phase :action}]}
+                 (receive-hex {:player-no 0})
+                 (play 0 :copper))
+             {:hexes   {:discard [envy]}
+              :players [{:play-area [copper]
+                         :coins     1
+                         :phase     :pay
+                         :triggers  [envious-silver-trigger envious-gold-trigger]}]}))
+      (is (= (-> {:hexes   {:deck [envy]}
+                  :players [{:hand  [silver]
+                             :coins 0
+                             :phase :action}]}
+                 (receive-hex {:player-no 0})
+                 (play 0 :silver))
+             {:hexes   {:discard [envy]}
+              :players [{:play-area [silver]
+                         :coins     1
+                         :phase     :pay
+                         :triggers  [envious-silver-trigger envious-gold-trigger]}]}))
+      (is (= (-> {:hexes   {:deck [envy]}
+                  :players [{:hand  [silver silver]
+                             :coins 0
+                             :phase :action}]}
+                 (receive-hex {:player-no 0})
+                 (play 0 :silver)
+                 (play 0 :silver))
+             {:hexes   {:discard [envy]}
+              :players [{:play-area [silver silver]
+                         :coins     2
+                         :phase     :pay
+                         :triggers  [envious-silver-trigger envious-gold-trigger]}]}))
+      (is (= (-> {:hexes   {:deck [envy]}
+                  :players [{:hand  [gold]
+                             :coins 0
+                             :phase :action}]}
+                 (receive-hex {:player-no 0})
+                 (play 0 :gold))
+             {:hexes   {:discard [envy]}
+              :players [{:play-area [gold]
+                         :coins     1
+                         :phase     :pay
+                         :triggers  [envious-silver-trigger envious-gold-trigger]}]}))
+      (is (= (-> {:hexes   {:deck [envy]}
+                  :players [{:phase :action}]}
+                 (receive-hex {:player-no 0})
+                 (end-turn 0))
+             {:hexes          {:discard [envy]}
+              :current-player 0
+              :players        [{:actions 1
+                                :coins   0
+                                :buys    1
+                                :phase   :action}]})))
     (testing "Fear"
       (is (= (-> {:hexes   {:deck [fear]}
                   :players [{:hand [estate copper copper copper]}]}

@@ -5,6 +5,8 @@
 
 ; todo:
 
+; consider refac buy and play separating set-phase and the rest
+; show Actions as unbuyable when Deluded (and in action phase)
 ; fix Ghost on Durations - and Ghost stays in play
 ; test swiftable for multi/mixed choices
 ; remove set-aside cards from triggers when activated - trigger-ids
