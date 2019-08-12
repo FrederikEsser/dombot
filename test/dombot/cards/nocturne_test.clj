@@ -272,33 +272,6 @@
 
 (deftest hexes-test
   (testing "Hexes"
-    (testing "Famine"                                       ; keep Famine test first to avoid reshuffling
-      (is (= (-> {:hexes   {:deck [famine]}
-                  :players [{:deck [estate copper copper copper]}]}
-                 (receive-hex {:player-no 0}))
-             {:hexes   {:discard [famine]}
-              :players [{:deck [copper copper copper estate]}]}))
-      (is (= (-> {:hexes   {:deck [famine]}
-                  :players [{:deck [estate skulk copper copper]}]}
-                 (receive-hex {:player-no 0}))
-             {:hexes   {:discard [famine]}
-              :players [{:deck           [copper estate copper]
-                         :discard        [skulk]
-                         :revealed-cards {:discard 1}}]}))
-      (is (= (-> {:hexes   {:deck [famine]}
-                  :players [{:deck [skulk skulk monastery skulk]}]}
-                 (receive-hex {:player-no 0}))
-             {:hexes   {:discard [famine]}
-              :players [{:deck           [monastery skulk]
-                         :discard        [skulk skulk]
-                         :revealed-cards {:discard 2}}]}))
-      (is (= (-> {:hexes   {:deck [famine]}
-                  :players [{:deck [skulk skulk skulk skulk]}]}
-                 (receive-hex {:player-no 0}))
-             {:hexes   {:discard [famine]}
-              :players [{:deck           [skulk]
-                         :discard        [skulk skulk skulk]
-                         :revealed-cards {:discard 3}}]})))
     (testing "Bad Omens"
       (is (= (-> {:hexes   {:deck [bad-omens]}
                   :players [{:deck [faithful-hound patron copper copper copper]}]}
@@ -477,6 +450,33 @@
                                 :coins   0
                                 :buys    1
                                 :phase   :action}]})))
+    (testing "Famine"
+      (is (= (-> {:hexes   {:deck [famine]}
+                  :players [{:deck [estate copper copper copper]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [famine]}
+              :players [{:deck [copper copper copper estate]}]}))
+      (is (= (-> {:hexes   {:deck [famine]}
+                  :players [{:deck [estate skulk copper copper]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [famine]}
+              :players [{:deck           [estate copper copper]
+                         :discard        [skulk]
+                         :revealed-cards {:discard 1}}]}))
+      (is (= (-> {:hexes   {:deck [famine]}
+                  :players [{:deck [skulk skulk monastery skulk]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [famine]}
+              :players [{:deck           [skulk monastery]
+                         :discard        [skulk skulk]
+                         :revealed-cards {:discard 2}}]}))
+      (is (= (-> {:hexes   {:deck [famine]}
+                  :players [{:deck [skulk skulk skulk skulk]}]}
+                 (receive-hex {:player-no 0}))
+             {:hexes   {:discard [famine]}
+              :players [{:deck           [skulk]
+                         :discard        [skulk skulk skulk]
+                         :revealed-cards {:discard 3}}]})))
     (testing "Fear"
       (is (= (-> {:hexes   {:deck [fear]}
                   :players [{:hand [estate copper copper copper]}]}
@@ -2973,6 +2973,104 @@
                            :actions 0
                            :buys    2}]
                 :trash   [tragic-hero]}))))))
+
+(deftest vampire-test
+  (let [vampire (assoc vampire :id 0)
+        bat     (assoc bat :id 1)]
+    (testing "Vampire"
+      (let [tragic-hero (assoc tragic-hero :id 2)]
+        (is (= (-> {:hexes       {:deck [poverty]}
+                    :extra-cards [{:card bat :pile-size 10}]
+                    :supply      [{:card tragic-hero :pile-size 10}
+                                  {:card vampire :pile-size 9}]
+                    :players     [{:hand [vampire]}
+                                  {:hand [copper copper copper copper copper]}]}
+                   (play 0 :vampire)
+                   (choose [:copper :copper])
+                   (choose :tragic-hero))
+               {:hexes       {:discard [poverty]}
+                :extra-cards [{:card bat :pile-size 9}]
+                :supply      [{:card tragic-hero :pile-size 9}
+                              {:card vampire :pile-size 10}]
+                :players     [{:discard [tragic-hero bat]}
+                              {:hand    [copper copper copper]
+                               :discard [copper copper]}]}))
+        (is (thrown-with-msg? AssertionError #"Choose error: Vampire is not a valid option."
+                              (-> {:hexes       {:deck [poverty]}
+                                   :extra-cards [{:card bat :pile-size 10}]
+                                   :supply      [{:card tragic-hero :pile-size 10}
+                                                 {:card vampire :pile-size 9}]
+                                   :players     [{:hand [vampire]}]}
+                                  (play 0 :vampire)
+                                  (choose :vampire))))
+        (is (= (-> {:hexes       {:deck [poverty]}
+                    :extra-cards [{:card bat :pile-size 0}]
+                    :supply      [{:card tragic-hero :pile-size 10}
+                                  {:card vampire :pile-size 9}]
+                    :players     [{:hand [vampire]}]}
+                   (play 0 :vampire)
+                   (choose :tragic-hero))
+               {:hexes       {:discard [poverty]}
+                :extra-cards [{:card bat :pile-size 0}]
+                :supply      [{:card tragic-hero :pile-size 9}
+                              {:card vampire :pile-size 9}]
+                :players     [{:play-area [vampire]
+                               :discard   [tragic-hero]}]}))))
+    (testing "Bat"
+      (is (= (-> {:extra-cards [{:card bat :pile-size 9}]
+                  :supply      [{:card vampire :pile-size 10}]
+                  :players     [{:hand [bat copper copper copper copper]}]}
+                 (play 0 :bat)
+                 (choose [:copper :copper]))
+             {:extra-cards [{:card bat :pile-size 10}]
+              :supply      [{:card vampire :pile-size 9}]
+              :players     [{:hand    [copper copper]
+                             :discard [vampire]}]
+              :trash       [copper copper]}))
+      (is (= (-> {:extra-cards [{:card bat :pile-size 9}]
+                  :supply      [{:card vampire :pile-size 10}]
+                  :players     [{:hand [bat copper copper copper copper]}]}
+                 (play 0 :bat)
+                 (choose :copper))
+             {:extra-cards [{:card bat :pile-size 10}]
+              :supply      [{:card vampire :pile-size 9}]
+              :players     [{:hand    [copper copper copper]
+                             :discard [vampire]}]
+              :trash       [copper]}))
+      (is (= (-> {:extra-cards [{:card bat :pile-size 9}]
+                  :supply      [{:card vampire :pile-size 10}]
+                  :players     [{:hand [bat copper copper copper copper]}]}
+                 (play 0 :bat)
+                 (choose nil))
+             {:extra-cards [{:card bat :pile-size 9}]
+              :supply      [{:card vampire :pile-size 10}]
+              :players     [{:hand      [copper copper copper copper]
+                             :play-area [bat]}]}))
+      (is (= (-> {:extra-cards [{:card bat :pile-size 9}]
+                  :supply      [{:card vampire :pile-size 10}]
+                  :players     [{:hand [bat copper]}]}
+                 (play 0 :bat)
+                 (choose :copper))
+             {:extra-cards [{:card bat :pile-size 10}]
+              :supply      [{:card vampire :pile-size 9}]
+              :players     [{:discard [vampire]}]
+              :trash       [copper]}))
+      (is (= (-> {:extra-cards [{:card bat :pile-size 9}]
+                  :supply      [{:card vampire :pile-size 10}]
+                  :players     [{:hand [bat copper]}]}
+                 (play 0 :bat)
+                 (choose nil))
+             {:extra-cards [{:card bat :pile-size 9}]
+              :supply      [{:card vampire :pile-size 10}]
+              :players     [{:hand      [copper]
+                             :play-area [bat]}]}))
+      (is (= (-> {:extra-cards [{:card bat :pile-size 9}]
+                  :supply      [{:card vampire :pile-size 10}]
+                  :players     [{:hand [bat]}]}
+                 (play 0 :bat))
+             {:extra-cards [{:card bat :pile-size 9}]
+              :supply      [{:card vampire :pile-size 10}]
+              :players     [{:play-area [bat]}]})))))
 
 (deftest werewolf-test
   (let [werewolf (assoc werewolf :id 0)]

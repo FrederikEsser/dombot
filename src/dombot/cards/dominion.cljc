@@ -28,7 +28,7 @@
                                            [:give-choice {:text    "Trash a revealed Treasure other than Copper, and discards the rest."
                                                           :choice  :trash-from-revealed
                                                           :options [:player :revealed {:type     :treasure
-                                                                                       :not-name #{:copper}}]
+                                                                                       :not-names #{:copper}}]
                                                           :min     1
                                                           :max     1}]
                                            [:discard-all-revealed]]}]]})

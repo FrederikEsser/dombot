@@ -64,7 +64,7 @@
                        :text      "You may play an Action card from your hand that you don't have a copy of in play."
                        :choice    ::imp-play-action
                        :options   [:player :hand {:type     :action
-                                                  :not-name actions-in-play}]
+                                                  :not-names actions-in-play}]
                        :max       1})))
 
 (effects/register {::imp-play-action imp-play-action
@@ -726,7 +726,7 @@
                        :text      "You may play an Action card from your hand that you don't have a copy of in play."
                        :choice    ::conclave-play-action
                        :options   [:player :hand {:type     :action
-                                                  :not-name actions-in-play}]
+                                                  :not-names actions-in-play}]
                        :max       1})))
 
 (effects/register {::conclave-play-action conclave-play-action
@@ -1213,7 +1213,7 @@
             :effects  [[:give-choice {:text    "You may trash a Treasure other than Cursed Gold from your hand, for +4 Cards."
                                       :choice  ::pooka-trash
                                       :options [:player :hand {:type     :treasure
-                                                               :not-name #{:cursed-gold}}]
+                                                               :not-names #{:cursed-gold}}]
                                       :max     1}]]
             :heirloom cursed-gold})
 
@@ -1443,6 +1443,58 @@
                             [:give-buys 1]
                             [::tragic-hero-demise]]})
 
+(defn- bat-trash [game {:keys [player-no card-id card-name card-names]}]
+  (let [card-names (if card-name [card-name] card-names)]
+    (cond-> game
+            (not-empty card-names) (push-effect-stack {:player-no player-no
+                                                       :effects   [[:trash-from-hand {:card-names card-names}]
+                                                                   [:move-card {:move-card-id card-id
+                                                                                :from         :play-area
+                                                                                :to           :extra-cards}]
+                                                                   [:move-card {:card-name :vampire
+                                                                                :from      :supply
+                                                                                :to        :discard}]]}))))
+
+(effects/register {::bat-trash bat-trash})
+
+(def bat {:name    :bat
+          :set     :nocturne
+          :types   #{:night}
+          :cost    2
+          :effects [[:give-choice {:text    "Trash up to 2 cards from your hand."
+                                   :choice  ::bat-trash
+                                   :options [:player :hand]
+                                   :max     2}]]})
+
+(defn- vampire-exchange-for-bat [game {:keys [player-no card-id]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})
+        {:keys [pile-size]} (ut/get-pile-idx game :extra-cards :bat)]
+    (cond-> game
+            (and card (pos? pile-size)) (push-effect-stack {:player-no player-no
+                                                            :effects   [[:move-card {:move-card-id card-id
+                                                                                     :from         :play-area
+                                                                                     :to           :supply}]
+                                                                        [:move-card {:card-name :bat
+                                                                                     :from      :extra-cards
+                                                                                     :to        :discard}]]}))))
+
+(effects/register {::vampire-exchange-for-bat vampire-exchange-for-bat})
+
+(def vampire {:name    :vampire
+              :set     :nocturne
+              :types   #{:night :attack :doom}
+              :cost    5
+              :effects [[:others-receive-next-hex]
+                        [:give-choice {:text    "Gain a card costing up to $5 other than a Vampire."
+                                       :choice  :gain
+                                       :options [:supply {:max-cost 5
+                                                          :not-names #{:vampire}}]
+                                       :min     1
+                                       :max     1}]
+                        [::vampire-exchange-for-bat]]
+              :setup   [[:setup-extra-cards {:extra-cards [{:card bat :pile-size 10}]}]
+                        [:setup-hexes]]})
+
 (defn- werewolf-hunt [game {:keys [player-no]}]
   (let [phase (get-in game [:players player-no :phase])]
     (push-effect-stack game {:player-no player-no
@@ -1489,6 +1541,7 @@
                     tormentor
                     tracker
                     tragic-hero
+                    vampire
                     werewolf])
 
 ; Doable without Boons / Hexes:
