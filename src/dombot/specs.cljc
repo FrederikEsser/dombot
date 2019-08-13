@@ -69,6 +69,8 @@
                                 ::number-of-cards]
                        :opt-un [::top-boon]))
 
+(s/def ::druid-boons (s/coll-of ::boon))
+
 (s/def ::hex (s/keys :req-un [::name
                               ::name-ui
                               ::type]))
@@ -217,4 +219,6 @@
                       :opt-un [::extra-cards
                                ::projects
                                ::boons
+                               ::druid-boons
+                               ::hexes
                                ::trade-route-mat]))

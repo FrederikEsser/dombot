@@ -9,7 +9,8 @@
             [dombot.cards.prosperity :as prosperity :refer [hoard mint talisman]]
             [dombot.cards.cornucopia :refer [trusty-steed]]
             [dombot.cards.nocturne :as nocturne :refer :all]
-            [dombot.cards.renaissance :refer [patron silk-merchant academy]]))
+            [dombot.cards.renaissance :refer [patron silk-merchant academy]]
+            [dombot.cards.kingdom :refer [setup-game]]))
 
 (defn fixture [f]
   (with-rand-seed 123 (f)))
@@ -269,6 +270,37 @@
              {:boons   {:discard [wind-gift]}
               :players [{:hand    [copper gold copper silver]
                          :discard [estate estate]}]})))))
+
+(deftest setup-boons-test
+  (testing "Setup"
+    (is (= (-> {:supply [{:card druid :pile-size 10}]}
+               setup-game)
+           {:supply      [{:card druid :pile-size 10}]
+            :druid-boons [field-gift mountain-gift swamp-gift]
+            :extra-cards [{:card will-o-wisp :pile-size 12}]}))
+    (is (= (-> {:supply [{:card druid :pile-size 10}]}
+               setup-game)
+           {:supply      [{:card druid :pile-size 10}]
+            :druid-boons [field-gift flame-gift wind-gift]}))
+    (is (= (-> {:extra-cards [{:card will-o-wisp :pile-size 12}]
+                :supply      [{:card druid :pile-size 10}]
+                :boons       {:deck all-boons}}
+               setup-game)
+           {:extra-cards [{:card will-o-wisp :pile-size 12}]
+            :supply      [{:card druid :pile-size 10}]
+            :boons       {:deck [sun-gift earth-gift mountain-gift
+                                 sea-gift river-gift field-gift
+                                 moon-gift wind-gift sky-gift]}
+            :druid-boons [flame-gift forest-gift swamp-gift]}))
+    (is (= (-> {:supply      [{:card blessed-village :pile-size 10}]
+                :druid-boons [flame-gift moon-gift wind-gift]}
+               setup-game)
+           {:extra-cards [{:card will-o-wisp :pile-size 12}]
+            :supply      [{:card blessed-village :pile-size 10}]
+            :boons       {:deck [mountain-gift sea-gift earth-gift
+                                 river-gift sky-gift swamp-gift
+                                 sun-gift field-gift forest-gift]}
+            :druid-boons [flame-gift moon-gift wind-gift]}))))
 
 (deftest hexes-test
   (testing "Hexes"
@@ -1502,6 +1534,84 @@
                                        :gained-cards [{:name :gold :cost 6 :types #{:treasure}}
                                                       {:name :silver :cost 3 :types #{:treasure}}
                                                       {:name :imp :cost 2 :types #{:action :spirit}}]}]}))))))
+
+(deftest druid-test
+  (let [druid       (assoc druid :id 0)
+        will-o-wisp (assoc will-o-wisp :id 1)]
+    (testing "Druid"
+      (is (= (-> {:druid-boons [field-gift sea-gift swamp-gift]
+                  :extra-cards [{:card will-o-wisp :pile-size 12}]
+                  :players     [{:hand    [druid]
+                                 :deck    [copper copper]
+                                 :actions 1
+                                 :coins   0
+                                 :buys    1}]}
+                 (play 0 :druid))
+             {:druid-boons  [field-gift sea-gift swamp-gift]
+              :extra-cards  [{:card will-o-wisp :pile-size 12}]
+              :players      [{:play-area [druid]
+                              :deck      [copper copper]
+                              :actions   0
+                              :coins     0
+                              :buys      2}]
+              :effect-stack [{:text      "Receive one of the Druid Boons."
+                              :player-no 0
+                              :card-id   0
+                              :choice    ::nocturne/druid-receive-boon
+                              :source    :druid-boons
+                              :options   [:the-field's-gift :the-sea's-gift :the-swamp's-gift]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:druid-boons [field-gift sea-gift swamp-gift]
+                  :extra-cards [{:card will-o-wisp :pile-size 12}]
+                  :players     [{:hand    [druid]
+                                 :deck    [copper copper]
+                                 :actions 1
+                                 :coins   0
+                                 :buys    1}]}
+                 (play 0 :druid)
+                 (choose :the-field's-gift))
+             {:druid-boons [field-gift sea-gift swamp-gift]
+              :extra-cards [{:card will-o-wisp :pile-size 12}]
+              :players     [{:play-area [druid]
+                             :deck      [copper copper]
+                             :actions   1
+                             :coins     1
+                             :buys      2}]}))
+      (is (= (-> {:druid-boons [field-gift sea-gift swamp-gift]
+                  :extra-cards [{:card will-o-wisp :pile-size 12}]
+                  :players     [{:hand    [druid]
+                                 :deck    [copper copper]
+                                 :actions 1
+                                 :coins   0
+                                 :buys    1}]}
+                 (play 0 :druid)
+                 (choose :the-sea's-gift))
+             {:druid-boons [field-gift sea-gift swamp-gift]
+              :extra-cards [{:card will-o-wisp :pile-size 12}]
+              :players     [{:hand      [copper]
+                             :play-area [druid]
+                             :deck      [copper]
+                             :actions   0
+                             :coins     0
+                             :buys      2}]}))
+      (is (= (-> {:druid-boons [field-gift sea-gift swamp-gift]
+                  :extra-cards [{:card will-o-wisp :pile-size 12}]
+                  :players     [{:hand    [druid]
+                                 :deck    [copper copper]
+                                 :actions 1
+                                 :coins   0
+                                 :buys    1}]}
+                 (play 0 :druid)
+                 (choose :the-swamp's-gift))
+             {:druid-boons [field-gift sea-gift swamp-gift]
+              :extra-cards [{:card will-o-wisp :pile-size 11}]
+              :players     [{:play-area [druid]
+                             :deck      [copper copper]
+                             :discard   [will-o-wisp]
+                             :actions   0
+                             :coins     0
+                             :buys      2}]})))))
 
 (deftest exorcist-test
   (let [exorcist    (assoc exorcist :id 0)

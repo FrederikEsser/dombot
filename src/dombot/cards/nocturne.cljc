@@ -63,7 +63,7 @@
     (give-choice game {:player-no player-no
                        :text      "You may play an Action card from your hand that you don't have a copy of in play."
                        :choice    ::imp-play-action
-                       :options   [:player :hand {:type     :action
+                       :options   [:player :hand {:type      :action
                                                   :not-names actions-in-play}]
                        :max       1})))
 
@@ -473,10 +473,22 @@
                 poverty
                 war])
 
-(defn- setup-boons [game args]
-  (cond-> game
-          (not (:boons game)) (-> (assoc :boons {:deck (shuffle all-boons)})
-                                  (setup-extra-cards {:extra-cards [(:will-o'-wisp spirit-piles)]}))))
+(defn- setup-boons [{:keys [boons druid-boons] :as game} {:keys [for-druid?]}]
+  (let [{:keys [card]} (ut/get-pile-idx game :extra-cards :will-o'-wisp)]
+    (if for-druid?
+      (let [druid-boons (->> all-boons shuffle (take 3) (sort-by :name))]
+        (-> game
+            (assoc :druid-boons druid-boons)
+            (cond->
+              (some (comp #{:the-swamp's-gift} :name) druid-boons) (setup-extra-cards {:extra-cards [(:will-o'-wisp spirit-piles)]})
+              boons (assoc :boons {:deck (->> all-boons
+                                              (remove (set druid-boons))
+                                              shuffle)}))))
+      (cond-> game
+             (not boons) (assoc :boons {:deck (->> all-boons
+                                                   (remove (set druid-boons))
+                                                   shuffle)})
+             (not card) (setup-extra-cards {:extra-cards [(:will-o'-wisp spirit-piles)]})))))
 
 (defn- setup-hexes [game args]
   (cond-> game
@@ -725,7 +737,7 @@
     (give-choice game {:player-no player-no
                        :text      "You may play an Action card from your hand that you don't have a copy of in play."
                        :choice    ::conclave-play-action
-                       :options   [:player :hand {:type     :action
+                       :options   [:player :hand {:type      :action
                                                   :not-names actions-in-play}]
                        :max       1})))
 
@@ -839,6 +851,26 @@
                       :cost    4
                       :effects [[::devils-workshop-gain]]
                       :setup   [[:setup-extra-cards {:extra-cards [(:imp spirit-piles)]}]]})
+
+(defn- druid-receive-boon [game {:keys [player-no card-name]}]
+  (let [{boon :card} (ut/get-card-idx game [:druid-boons] {:name card-name})]
+    (assert boon (str (ut/format-name card-name) " is not set aside for Druid."))
+    (push-effect-stack game {:player-no player-no
+                             :effects   (:effects boon)})))
+
+(effects/register {::druid-receive-boon druid-receive-boon})
+
+(def druid {:name    :druid
+            :set     :nocturne
+            :types   #{:action :fate}
+            :cost    2
+            :effects [[:give-buys 1]
+                      [:give-choice {:text    "Receive one of the Druid Boons."
+                                     :choice  ::druid-receive-boon
+                                     :options [:druid-boons]
+                                     :min     1
+                                     :max     1}]]
+            :setup   [[:setup-boons {:for-druid? true}]]})
 
 (defn- exorcist-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
@@ -1212,7 +1244,7 @@
             :cost     5
             :effects  [[:give-choice {:text    "You may trash a Treasure other than Cursed Gold from your hand, for +4 Cards."
                                       :choice  ::pooka-trash
-                                      :options [:player :hand {:type     :treasure
+                                      :options [:player :hand {:type      :treasure
                                                                :not-names #{:cursed-gold}}]
                                       :max     1}]]
             :heirloom cursed-gold})
@@ -1487,7 +1519,7 @@
               :effects [[:others-receive-next-hex]
                         [:give-choice {:text    "Gain a card costing up to $5 other than a Vampire."
                                        :choice  :gain
-                                       :options [:supply {:max-cost 5
+                                       :options [:supply {:max-cost  5
                                                           :not-names #{:vampire}}]
                                        :min     1
                                        :max     1}]
@@ -1521,6 +1553,7 @@
                     cursed-village
                     den-of-sin
                     devils-workshop
+                    druid
                     exorcist
                     faithful-hound
                     fool

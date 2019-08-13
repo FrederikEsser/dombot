@@ -284,6 +284,11 @@
 
 (effects/register-options {:trash options-from-trash})
 
+(defn options-from-druid [{:keys [druid-boons] :as game} player-no card-id]
+  (map :name druid-boons))
+
+(effects/register-options {:druid-boons options-from-druid})
+
 (defn special-options [game player-no card-id & options]
   options)
 

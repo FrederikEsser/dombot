@@ -92,12 +92,12 @@
 
 (defn view-boon
   ([boon]
-   (view-boon nil boon))
-  ([choice {:keys [name type]}]
+   (view-boon nil nil boon))
+  ([choice area {:keys [name type]}]
    (merge {:name    name
            :name-ui (ut/format-name name)
            :type    type}
-          (choice-interaction name :boons choice))))
+          (choice-interaction name area choice))))
 
 (defn view-boons [{:keys [deck discard]}]
   (let [boon-discard (->> discard
@@ -307,7 +307,7 @@
          (when choice
            {:choice (view-choice choice)})
          (when boons
-           {:boons (map (partial view-boon choice) boons)})
+           {:boons (map (partial view-boon choice :boons) boons)})
          (when victory-points
            {:victory-points victory-points})
          (when-not (nil? winner)
@@ -357,7 +357,7 @@
                                      (<= 3 potential-coins)) "You can buy a card."
                                 (some (comp :night (partial ut/get-types game)) hand) "You can play Night cards.")}))
 
-(defn view-game [{:keys [supply extra-cards artifacts projects boons hexes
+(defn view-game [{:keys [supply extra-cards artifacts projects druid-boons boons hexes
                          trade-route-mat players effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
@@ -387,6 +387,8 @@
            (when projects
              {:projects (view-projects (merge game {:player (assoc player :player-no current-player)
                                                     :choice choice}))})
+           (when druid-boons
+             {:druid-boons (map (partial view-boon choice :druid-boons) druid-boons)})
            (when boons
              {:boons (view-boons boons)})
            (when hexes

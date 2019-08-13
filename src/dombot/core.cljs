@@ -118,15 +118,17 @@
            (when cost (str " ($" cost ")"))
            (when participants (str " " (->> participants (string/join " ")))))]]))
 
-(defn view-boon [{:keys [name name-ui type interaction]} & [{:keys [on-click]}]]
-  (let [disabled (nil? interaction)]
-    [:div
-     [:button {:style    (button-style disabled #{type} 1)
-               :on-click (if interaction
-                           (fn [] (case interaction
-                                    :quick-choosable (swap! state assoc :game (cmd/choose name))))
-                           on-click)}
-      name-ui]]))
+(defn view-boon [{:keys [name name-ui type interaction]} & [{:keys [on-click orientation]}]]
+  (let [disabled    (nil? interaction)
+        boon-button [:button {:style    (button-style disabled #{type} 1)
+                              :on-click (if interaction
+                                          (fn [] (case interaction
+                                                   :quick-choosable (swap! state assoc :game (cmd/choose name))))
+                                          on-click)}
+                     name-ui]]
+    (if (= :horizontal orientation)
+      boon-button
+      [:div boon-button])))
 
 (defn view-hex [{:keys [name-ui type]} & [{:keys [on-click]}]]
   [:div
@@ -243,6 +245,14 @@
             (view-row (concat [nil] row2))
             (view-row row3)
             (view-row row4)]])]
+       (when (get-in @state [:game :druid-boons])
+         [:div [:button {:style {:color            "#4F4D91"
+                                 :font-weight      :bold
+                                 :background-color "#C5E3BF"
+                                 :border-color     "#788B5D"
+                                 :border-width     2}}
+                "Druid Boons"]
+          (mapk #(view-boon % {:orientation :horizontal}) (get-in @state [:game :druid-boons]))])
        (let [{:keys [projects boons hexes]} (:game @state)]
          (when (or projects boons hexes)
            [:div "Landscape"
