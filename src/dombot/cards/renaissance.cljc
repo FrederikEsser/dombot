@@ -40,9 +40,12 @@
 
 (defn border-guard-take-revealed [game {:keys [player-no] :as args}]
   (let [revealed           (get-in game [:players player-no :revealed])
+        has-lantern?       (= player-no (get-in game [:artifacts :lantern :owner]))
+        has-horn?          (= player-no (get-in game [:artifacts :horn :owner]))
         may-take-artifact? (and (= (border-guard-number-of-revealed-cards game player-no)
                                    (count revealed))
-                                (every? :action (map (partial ut/get-types game) revealed)))]
+                                (every? :action (map (partial ut/get-types game) revealed))
+                                (or (not has-lantern?) (not has-horn?)))]
     (push-effect-stack game {:player-no player-no
                              :effects   (concat [[:put-revealed-into-hand args]]
                                                 (when may-take-artifact?
