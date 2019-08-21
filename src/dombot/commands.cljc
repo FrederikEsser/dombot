@@ -5,14 +5,17 @@
 
 ; todo:
 
+; maybe refac gain to destination, but pass gained card as argument to on-gain effects
+; check Experiment with Innovation
+; fix extra Outpost turn after Fleet turn
 ; consider refac buy and play separating set-phase and the rest
 ; show Actions as unbuyable when Deluded (and in action phase)
 ; fix Ghost on Durations - and Ghost stays in play
+; check Ghost with Citadel
 ; test swiftable for multi/mixed choices
 ; remove set-aside cards from triggers when activated - trigger-ids
-; fix Changeling to ask unless some on-gain/on-buy effect is active on either card.
 ; make "any order" option for all topdecking (Sentry, Navigator, Rabble, Doctor, Seer, Night Watchman)
-; make extra-cards (Prizes) and unique cards (Zombies & Heirlooms) visible for Wishing Well / Doctor / Journeyman
+; make extra-cards (Prizes, Spirits, etc.) and unique cards (Zombies & Heirlooms) visible/choosable for Wishing Well / Doctor / Journeyman
 ; view card images
 ; store commands in history
 ; save / load game

@@ -494,6 +494,13 @@
 
 (effects/register {:take-from-revealed take-from-revealed})
 
+(defn take-from-look-at [game {:keys [card-name card-names] :as args}]
+  (cond-> game
+          (or card-name card-names) (move-cards (merge args {:from :look-at
+                                                             :to   :hand}))))
+
+(effects/register {:take-from-look-at take-from-look-at})
+
 (defn return-to-supply [game {:keys [card-name card-names area]
                               :or   {area :supply}
                               :as   args}]

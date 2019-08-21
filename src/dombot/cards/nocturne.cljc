@@ -1576,7 +1576,3 @@
                     tragic-hero
                     vampire
                     werewolf])
-
-; Doable without Boons / Hexes:
-; Faithful Hound - On discard other than Clean Up
-; Exorcist - viewing extra cards

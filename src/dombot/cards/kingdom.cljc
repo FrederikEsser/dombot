@@ -7,6 +7,7 @@
             [dombot.cards.prosperity :as prosperity]
             [dombot.cards.cornucopia :as cornucopia]
             [dombot.cards.guilds :as guilds]
+            [dombot.cards.adventures :as adventures]
             [dombot.cards.nocturne :as nocturne]
             [dombot.cards.renaissance :as renaissance]
             [dombot.cards.promos :as promos]
@@ -19,6 +20,7 @@
                      prosperity/kingdom-cards
                      cornucopia/kingdom-cards
                      guilds/kingdom-cards
+                     adventures/kingdom-cards
                      nocturne/kingdom-cards
                      renaissance/kingdom-cards
                      promos/kingdom-cards))
