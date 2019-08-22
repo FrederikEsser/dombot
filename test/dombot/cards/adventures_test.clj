@@ -4,7 +4,8 @@
             [dombot.operations :refer :all]
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
-            [dombot.cards.adventures :as adventures :refer :all]))
+            [dombot.cards.adventures :as adventures :refer :all]
+            [dombot.cards.intrigue :refer [harem]]))
 
 (defn fixture [f]
   (with-rand-seed 123 (f)))
@@ -87,6 +88,67 @@
                                 :buys      1
                                 :phase     :action}]})))))
 
+(deftest magpie-test
+  (let [magpie (assoc magpie :id 0)]
+    (testing "Magpie"
+      (is (= (-> {:supply  [{:card magpie :pile-size 9}]
+                  :players [{:hand    [magpie]
+                             :deck    [estate silver copper]
+                             :actions 1}]}
+                 (play 0 :magpie))
+             {:supply  [{:card magpie :pile-size 9}]
+              :players [{:hand           [estate silver]
+                         :play-area      [magpie]
+                         :deck           [copper]
+                         :revealed-cards {:hand 1}
+                         :actions        1}]}))
+      (is (= (-> {:supply  [{:card magpie :pile-size 9}]
+                  :players [{:hand    [magpie]
+                             :deck    [estate estate]
+                             :actions 1}]}
+                 (play 0 :magpie))
+             {:supply  [{:card magpie :pile-size 8}]
+              :players [{:hand           [estate]
+                         :play-area      [magpie]
+                         :deck           [estate]
+                         :discard        [magpie]
+                         :revealed-cards {:deck 1}
+                         :actions        1}]}))
+      (is (= (-> {:supply  [{:card magpie :pile-size 8}]
+                  :players [{:hand    [magpie]
+                             :deck    [estate magpie]
+                             :actions 1}]}
+                 (play 0 :magpie))
+             {:supply  [{:card magpie :pile-size 7}]
+              :players [{:hand           [estate]
+                         :play-area      [magpie]
+                         :deck           [magpie]
+                         :discard        [magpie]
+                         :revealed-cards {:deck 1}
+                         :actions        1}]}))
+      (is (= (-> {:supply  [{:card magpie :pile-size 9}]
+                  :players [{:hand    [magpie]
+                             :deck    [estate harem]
+                             :actions 1}]}
+                 (play 0 :magpie))
+             {:supply  [{:card magpie :pile-size 8}]
+              :players [{:hand           [estate harem]
+                         :play-area      [magpie]
+                         :discard        [magpie]
+                         :revealed-cards {:hand 1}
+                         :actions        1}]}))
+      (is (= (-> {:supply  [{:card magpie :pile-size 9}]
+                  :players [{:hand    [magpie]
+                             :deck    [estate curse]
+                             :actions 1}]}
+                 (play 0 :magpie))
+             {:supply  [{:card magpie :pile-size 9}]
+              :players [{:hand           [estate]
+                         :play-area      [magpie]
+                         :deck           [curse]
+                         :revealed-cards {:deck 1}
+                         :actions        1}]})))))
+
 (deftest raze-test
   (let [raze (assoc raze :id 0)]
     (testing "Raze"
@@ -162,4 +224,13 @@
                  (play 0 :raze)
                  (choose {:area :play-area :card-name :raze}))
              {:players [{:actions 1}]
-              :trash   [raze]})))))
+              :trash   [raze]}))
+      (is (= (-> {:players [{:hand    [raze copper]
+                             :deck    [gold]
+                             :actions 1}]}
+                 (play 0 :raze)
+                 (choose {:area :hand :card-name :copper}))
+             {:players [{:play-area [raze]
+                         :deck      [gold]
+                         :actions   1}]
+              :trash   [copper]})))))

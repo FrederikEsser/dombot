@@ -36,6 +36,27 @@
                        :simultaneous-mode :auto
                        :effects           [[:give-choice amulet-choice]]}})
 
+(defn- magpie-check-revealed [game {:keys [player-no]}]
+  (let [{:keys [name] :as card} (last (get-in game [:players player-no :revealed]))
+        types (ut/get-types game card)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [(when (:treasure types)
+                                           [:take-from-revealed {:card-name name}])
+                                         (when (or (:action types) (:victory types))
+                                           [:gain {:card-name :magpie}])]})))
+
+(effects/register {::magpie-check-revealed magpie-check-revealed})
+
+(def magpie {:name    :magpie
+             :set     :adventures
+             :types   #{:action}
+             :cost    4
+             :effects [[:draw 1]
+                       [:give-actions 1]
+                       [:reveal-from-deck 1]
+                       [::magpie-check-revealed]
+                       [:topdeck-all-revealed]]})
+
 (defn- raze-trash-from-area [game {:keys [player-no choice]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no (:area choice)] {:name (:card-name choice)})
         cost (ut/get-cost game card)]
@@ -65,4 +86,5 @@
                                     :max     1}]]})
 
 (def kingdom-cards [amulet
+                    magpie
                     raze])
