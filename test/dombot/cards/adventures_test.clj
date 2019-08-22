@@ -11,6 +11,82 @@
 
 (use-fixtures :each fixture)
 
+(deftest amulet-test
+  (let [amulet (assoc amulet :id 0)
+        silver (assoc silver :id 1)]
+    (testing "Amulet"
+      (is (= (-> {:players [{:hand    [amulet]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :amulet)
+                 (choose :coin))
+             {:players [{:play-area [amulet]
+                         :actions   0
+                         :coins     1
+                         :triggers  [(merge (:trigger amulet)
+                                            {:card-id 0})]}]}))
+      (is (= (-> {:players [{:hand    [amulet estate]
+                             :actions 1}]}
+                 (play 0 :amulet)
+                 (choose :trash)
+                 (choose :estate))
+             {:players [{:play-area [amulet]
+                         :actions   0
+                         :triggers  [(merge (:trigger amulet)
+                                            {:card-id 0})]}]
+              :trash   [estate]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [amulet]
+                             :actions 1}]}
+                 (play 0 :amulet)
+                 (choose :silver))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:play-area [amulet]
+                         :discard   [silver]
+                         :actions   0
+                         :triggers  [(merge (:trigger amulet)
+                                            {:card-id 0})]}]}))
+      (is (= (-> {:players [{:play-area [amulet]
+                             :triggers  [(merge (:trigger amulet)
+                                                {:card-id 0})]}]}
+                 (end-turn 0)
+                 (choose :coin))
+             {:current-player 0
+              :players        [{:play-area [amulet]
+                                :actions   1
+                                :coins     1
+                                :buys      1
+                                :phase     :action}]}))
+      (is (= (-> {:players [{:play-area [amulet]
+                             :deck      (repeat 5 copper)
+                             :triggers  [(merge (:trigger amulet)
+                                                {:card-id 0})]}]}
+                 (end-turn 0)
+                 (choose :trash)
+                 (choose :copper))
+             {:current-player 0
+              :players        [{:hand      (repeat 4 copper)
+                                :play-area [amulet]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]
+              :trash          [copper]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:play-area [amulet]
+                             :triggers  [(merge (:trigger amulet)
+                                                {:card-id 0})]}]}
+                 (end-turn 0)
+                 (choose :silver))
+             {:current-player 0
+              :supply         [{:card silver :pile-size 39}]
+              :players        [{:play-area [amulet]
+                                :discard   [silver]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]})))))
+
 (deftest raze-test
   (let [raze (assoc raze :id 0)]
     (testing "Raze"
