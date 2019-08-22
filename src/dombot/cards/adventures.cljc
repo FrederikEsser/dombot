@@ -36,6 +36,14 @@
                        :simultaneous-mode :auto
                        :effects           [[:give-choice amulet-choice]]}})
 
+(def lost-city {:name    :lost-city
+                :set     :adventures
+                :types   #{:action}
+                :cost    5
+                :effects [[:draw 2]
+                          [:give-actions 2]]
+                :on-gain [[:other-players {:effects [[:draw 1]]}]]})
+
 (defn- magpie-check-revealed [game {:keys [player-no]}]
   (let [{:keys [name] :as card} (last (get-in game [:players player-no :revealed]))
         types (ut/get-types game card)]
@@ -86,5 +94,6 @@
                                     :max     1}]]})
 
 (def kingdom-cards [amulet
+                    lost-city
                     magpie
                     raze])

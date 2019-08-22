@@ -88,6 +88,26 @@
                                 :buys      1
                                 :phase     :action}]})))))
 
+(deftest lost-city-test
+  (let [lost-city (assoc lost-city :id 0)]
+    (testing "Lost City"
+      (is (= (-> {:players [{:hand    [lost-city]
+                             :deck    [estate silver copper]
+                             :actions 1}]}
+                 (play 0 :lost-city))
+             {:players [{:hand      [estate silver]
+                         :play-area [lost-city]
+                         :deck      [copper]
+                         :actions   2}]}))
+      (is (= (-> {:supply  [{:card lost-city :pile-size 10}]
+                  :players [{}
+                            {:deck [copper copper]}]}
+                 (gain {:player-no 0 :card-name :lost-city}))
+             {:supply  [{:card lost-city :pile-size 9}]
+              :players [{:discard [lost-city]}
+                        {:hand [copper]
+                         :deck [copper]}]})))))
+
 (deftest magpie-test
   (let [magpie (assoc magpie :id 0)]
     (testing "Magpie"
