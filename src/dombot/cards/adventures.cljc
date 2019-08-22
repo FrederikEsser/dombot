@@ -36,6 +36,15 @@
                        :simultaneous-mode :auto
                        :effects           [[:give-choice amulet-choice]]}})
 
+(def hireling {:name    :hireling
+               :set     :adventures
+               :types   #{:action :duration}
+               :cost    6
+               :trigger {:trigger           :at-start-turn
+                         :duration          :game
+                         :simultaneous-mode :auto
+                         :effects           [[:draw 1]]}})
+
 (def lost-city {:name    :lost-city
                 :set     :adventures
                 :types   #{:action}
@@ -94,6 +103,7 @@
                                     :max     1}]]})
 
 (def kingdom-cards [amulet
+                    hireling
                     lost-city
                     magpie
                     raze])

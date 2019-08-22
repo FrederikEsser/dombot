@@ -812,7 +812,7 @@
      (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
      (assert types (str "Play error: " (ut/format-name card-name) " has no types."))
      (case play-type
-       :action (assert effects (str "Play error: " (ut/format-name card-name) " has no effect."))
+       :action (assert (or effects trigger) (str "Play error: " (ut/format-name card-name) " has no effect or trigger."))
        :treasure (assert (or coin-value effects) (str "Play error: " (ut/format-name card-name) " has no coin value or effects."))
        :night (assert (or effects trigger) (str "Play error: " (ut/format-name card-name) " has no effect or trigger."))
        (assert false (str "Play error: You can't play " (ut/format-types types) " cards"

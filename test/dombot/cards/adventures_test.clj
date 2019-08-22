@@ -88,6 +88,32 @@
                                 :buys      1
                                 :phase     :action}]})))))
 
+(deftest hireling-test
+  (let [hireling (assoc hireling :id 0)]
+    (testing "Hireling"
+      (is (= (-> {:players [{:hand    [hireling]
+                             :actions 1}]}
+                 (play 0 :hireling))
+             {:players [{:play-area [hireling]
+                         :actions   0
+                         :triggers  [(merge (:trigger hireling)
+                                            {:card-id 0})]}]}))
+      (is (= (-> {:players [{:play-area [hireling]
+                             :deck      (repeat 7 copper)
+                             :triggers  [(merge (:trigger hireling)
+                                                {:card-id 0})]}]}
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand      (repeat 6 copper)
+                                :play-area [hireling]
+                                :deck      [copper]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action
+                                :triggers  [(merge (:trigger hireling)
+                                                   {:card-id 0})]}]})))))
+
 (deftest lost-city-test
   (let [lost-city (assoc lost-city :id 0)]
     (testing "Lost City"
