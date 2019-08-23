@@ -36,6 +36,27 @@
                        :simultaneous-mode :auto
                        :effects           [[:give-choice amulet-choice]]}})
 
+(defn- caravan-guard-play [game {:keys [player-no card-id]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:id card-id})]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:play-from-hand {:card-name :caravan-guard}]
+                                         [:card-effect {:card card}]]})))
+
+(effects/register {::caravan-guard-play caravan-guard-play})
+
+(def caravan-guard {:name      :caravan-guard
+                    :set       :adventures
+                    :types     #{:action :duration :reaction}
+                    :cost      3
+                    :effects   [[:draw 1]
+                                [:give-actions 1]]
+                    :trigger   {:trigger           :at-start-turn
+                                :duration          :once
+                                :simultaneous-mode :auto
+                                :effects           [[:give-coins 1]]}
+                    :reacts-to :attack
+                    :reaction  [[::caravan-guard-play]]})
+
 (def hireling {:name    :hireling
                :set     :adventures
                :types   #{:action :duration}
@@ -103,6 +124,7 @@
                                     :max     1}]]})
 
 (def kingdom-cards [amulet
+                    caravan-guard
                     hireling
                     lost-city
                     magpie

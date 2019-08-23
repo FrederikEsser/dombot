@@ -5,6 +5,7 @@
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
             [dombot.cards.adventures :as adventures :refer :all]
+            [dombot.cards.dominion :refer [militia]]
             [dombot.cards.intrigue :refer [harem]]))
 
 (defn fixture [f]
@@ -85,6 +86,112 @@
                                 :discard   [silver]
                                 :actions   1
                                 :coins     0
+                                :buys      1
+                                :phase     :action}]})))))
+
+(deftest caravan-guard-test
+  (let [caravan-guard (assoc caravan-guard :id 0)]
+    (testing "Caravan Guard"
+      (is (= (-> {:players [{:hand    [caravan-guard]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :caravan-guard))
+             {:players [{:hand      [copper]
+                         :play-area [caravan-guard]
+                         :deck      [copper]
+                         :actions   1
+                         :triggers  [(merge (:trigger caravan-guard)
+                                            {:card-id 0})]}]}))
+      (is (= (-> {:players [{:play-area [caravan-guard]
+                             :triggers  [(merge (:trigger caravan-guard)
+                                                {:card-id 0})]}]}
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:play-area [caravan-guard]
+                                :actions   1
+                                :coins     1
+                                :buys      1
+                                :phase     :action}]}))
+      (is (= (-> {:players [{:hand    [militia]
+                             :actions 1
+                             :coins   0}
+                            {:hand [caravan-guard copper copper copper copper]}]}
+                 (play 0 :militia)
+                 (choose nil)
+                 (choose [:copper :copper]))
+             {:players [{:play-area [militia]
+                         :actions   0
+                         :coins     2}
+                        {:hand    [caravan-guard copper copper]
+                         :discard [copper copper]}]}))
+      (is (= (-> {:players [{:hand    [militia]
+                             :actions 1
+                             :coins   0}
+                            {:hand    [caravan-guard copper copper copper copper]
+                             :deck    [copper copper]
+                             :actions 0
+                             :phase   :out-of-turn}]}
+                 (play 0 :militia)
+                 (choose :caravan-guard)
+                 (choose [:copper :copper]))
+             {:players [{:play-area [militia]
+                         :actions   0
+                         :coins     2}
+                        {:hand      [copper copper copper]
+                         :play-area [caravan-guard]
+                         :deck      [copper]
+                         :discard   [copper copper]
+                         :actions   1
+                         :phase     :out-of-turn
+                         :triggers  [(merge (:trigger caravan-guard)
+                                            {:card-id 0})]}]}))
+      (let [caravan-guard-1 (assoc caravan-guard :id 1)]
+        (is (= (-> {:players [{:hand    [militia]
+                               :actions 1
+                               :coins   0}
+                              {:hand    [caravan-guard copper copper copper copper]
+                               :deck    [caravan-guard-1 copper]
+                               :actions 0
+                               :phase   :out-of-turn}]}
+                   (play 0 :militia)
+                   (choose :caravan-guard)
+                   (choose :caravan-guard)
+                   (choose [:copper :copper]))
+               {:players [{:play-area [militia]
+                           :actions   0
+                           :coins     2}
+                          {:hand      [copper copper copper]
+                           :play-area [caravan-guard caravan-guard-1]
+                           :discard   [copper copper]
+                           :actions   2
+                           :phase     :out-of-turn
+                           :triggers  [(merge (:trigger caravan-guard)
+                                              {:card-id 0})
+                                       (merge (:trigger caravan-guard)
+                                              {:card-id 1})]}]})))
+      (is (= (-> {:players [{:hand    [militia]
+                             :actions 1
+                             :coins   0}
+                            {:hand    [caravan-guard copper copper copper copper]
+                             :deck    [copper copper]
+                             :actions 0
+                             :phase   :out-of-turn}]}
+                 (play 0 :militia)
+                 (choose :caravan-guard)
+                 (choose [:copper :copper])
+                 (end-turn 0))
+             {:current-player 1
+              :players        [{:hand    [militia]
+                                :actions 0
+                                :coins   0
+                                :buys    0
+                                :phase   :out-of-turn}
+                               {:hand      [copper copper copper]
+                                :play-area [caravan-guard]
+                                :deck      [copper]
+                                :discard   [copper copper]
+                                :actions   1
+                                :coins     1
                                 :buys      1
                                 :phase     :action}]})))))
 
