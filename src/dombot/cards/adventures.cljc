@@ -36,6 +36,28 @@
                        :simultaneous-mode :auto
                        :effects           [[:give-choice amulet-choice]]}})
 
+(defn- artificer-discard [game {:keys [player-no card-names]}]
+  (let [cost (count card-names)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:discard-from-hand {:card-names card-names}]
+                                         [:give-choice {:text    (str "You may gain a card onto your deck costing exactly $" cost ".")
+                                                        :choice  :gain-to-topdeck
+                                                        :options [:supply {:cost cost}]
+                                                        :max     1}]]})))
+
+(effects/register {::artificer-discard artificer-discard})
+
+(def artificer {:name    :artificer
+                :set     :adventures
+                :types   #{:action}
+                :cost    5
+                :effects [[:draw 1]
+                          [:give-actions 1]
+                          [:give-coins 1]
+                          [:give-choice {:text    "Discard any number of cards."
+                                         :choice  ::artificer-discard
+                                         :options [:player :hand]}]]})
+
 (defn- caravan-guard-play [game {:keys [player-no card-id]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:id card-id})]
     (push-effect-stack game {:player-no player-no
@@ -124,6 +146,7 @@
                                     :max     1}]]})
 
 (def kingdom-cards [amulet
+                    artificer
                     caravan-guard
                     hireling
                     lost-city

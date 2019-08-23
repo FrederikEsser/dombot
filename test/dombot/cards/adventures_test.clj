@@ -89,6 +89,91 @@
                                 :buys      1
                                 :phase     :action}]})))))
 
+(deftest artificer-test
+  (let [artificer (assoc artificer :id 0)
+        copper    (assoc copper :id 1)
+        silver    (assoc silver :id 2)]
+    (testing "Artificer"
+      (is (= (-> {:supply  [{:card copper :pile-size 46}
+                            {:card silver :pile-size 40}]
+                  :players [{:hand    [artificer estate estate]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :artificer)
+                 (choose nil)
+                 (choose nil))
+             {:supply  [{:card copper :pile-size 46}
+                        {:card silver :pile-size 40}]
+              :players [{:hand      [estate estate copper]
+                         :play-area [artificer]
+                         :deck      [copper]
+                         :actions   1
+                         :coins     1}]}))
+      (is (= (-> {:supply  [{:card copper :pile-size 46}
+                            {:card silver :pile-size 40}]
+                  :players [{:hand    [artificer estate estate]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :artificer)
+                 (choose nil)
+                 (choose :copper))
+             {:supply  [{:card copper :pile-size 45}
+                        {:card silver :pile-size 40}]
+              :players [{:hand      [estate estate copper]
+                         :play-area [artificer]
+                         :deck      [copper copper]
+                         :actions   1
+                         :coins     1}]}))
+      (is (= (-> {:supply  [{:card copper :pile-size 46}
+                            {:card silver :pile-size 40}]
+                  :players [{:hand    [artificer estate estate]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :artificer)
+                 (choose [:estate :estate :copper])
+                 (choose :silver))
+             {:supply  [{:card copper :pile-size 46}
+                        {:card silver :pile-size 39}]
+              :players [{:play-area [artificer]
+                         :deck      [silver copper]
+                         :discard   [estate estate copper]
+                         :actions   1
+                         :coins     1}]}))
+      (is (= (-> {:supply  [{:card copper :pile-size 46}
+                            {:card silver :pile-size 40}]
+                  :players [{:hand    [artificer]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :artificer)
+                 (choose nil)
+                 (choose nil))
+             {:supply  [{:card copper :pile-size 46}
+                        {:card silver :pile-size 40}]
+              :players [{:hand      [copper]
+                         :play-area [artificer]
+                         :deck      [copper]
+                         :actions   1
+                         :coins     1}]}))
+      (is (= (-> {:supply  [{:card copper :pile-size 46}
+                            {:card silver :pile-size 40}]
+                  :players [{:hand    [artificer]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :artificer)
+                 (choose :copper))
+             {:supply  [{:card copper :pile-size 46}
+                        {:card silver :pile-size 40}]
+              :players [{:play-area [artificer]
+                         :deck      [copper]
+                         :discard   [copper]
+                         :actions   1
+                         :coins     1}]})))))
+
 (deftest caravan-guard-test
   (let [caravan-guard (assoc caravan-guard :id 0)]
     (testing "Caravan Guard"
