@@ -139,7 +139,8 @@
                            (concat card-triggers))]
     (assert (every? :name triggers) (str "Trigger error. All triggers need a name. \n" (->> triggers
                                                                                             (remove :name)
-                                                                                            clojure.pprint/pprint
+                                                                                            (#?(:clj  clojure.pprint/pprint
+                                                                                                :cljs cljs.pprint/pprint))
                                                                                             with-out-str)))
     (concat
       (get-trigger-effects triggers)
@@ -840,15 +841,19 @@
    (let [{:keys [phase actions actions-played triggers]
           :or   {phase :action}} (get-in game [:players player-no])
          {{:keys [effects coin-value trigger] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-         types      (ut/get-types game card)
-         play-type  (cond
-                      (and (#{:action} phase) (:action types) (pos? actions)) :action
-                      (and (#{:action :pay} phase) (:treasure types)) :treasure
-                      (and (#{:action :pay :buy :night} phase) (:night types)) :night)
-         next-phase (case play-type
-                      :treasure :pay
-                      :night :night
-                      phase)]
+         types             (ut/get-types game card)
+         play-type         (cond
+                             (and (#{:action} phase) (:action types) (pos? actions)) :action
+                             (and (#{:action :pay} phase) (:treasure types)) :treasure
+                             (and (#{:action :pay :buy :night} phase) (:night types)) :night)
+         next-phase        (case play-type
+                             :treasure :pay
+                             :night :night
+                             phase)
+         get-play-triggers (fn get-play-triggers [event]
+                             (when (some (comp #{event} :event) triggers)
+                               [[:apply-triggers {:event event
+                                                  :card  card}]]))]
      (assert (-> effect-stack first :choice not) "You can't play cards when you have a choice to make.")
      (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
      (assert types (str "Play error: " (ut/format-name card-name) " has no types."))
@@ -874,13 +879,10 @@
                                                                 :from      :hand
                                                                 :to        :play-area}]
                                                    [:card-effect {:card card}]]
-                                                  (when (some (comp #{[:play card-name]} :event) triggers)
-                                                    [[:apply-triggers {:event [:play card-name]}]])
-                                                  (when (and (:action types)
-                                                             (empty? actions-played)
-                                                             (some (comp #{:play-first-action} :event) triggers))
-                                                    [[:apply-triggers {:event :play-first-action
-                                                                       :card  card}]]))})
+                                                  (get-play-triggers :play-action)
+                                                  (get-play-triggers [:play card-name])
+                                                  (when (empty? actions-played)
+                                                    (get-play-triggers :play-first-action)))})
            check-stack)))))
 
 (effects/register {:play play})

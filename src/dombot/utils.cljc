@@ -197,7 +197,7 @@
                (buyable-fn game {:player-no player-no}))
     :else true))
 
-(defn stay-in-play [game player-no {:keys [id] :as card}]
+(defn stay-in-play [game player-no {:keys [id]}]
   (let [{:keys [play-area triggers repeated-play]} (get-in game [:players player-no])
         card-ids-in-play      (->> play-area (keep :id) set)
         repeated-card-ids     (->> repeated-play
@@ -205,7 +205,7 @@
                                    (filter (comp card-ids-in-play :target))
                                    (map :target)
                                    set)
-        stay-in-play-triggers (filter (comp #{:at-start-turn :at-end-turn} :event) triggers)]
+        stay-in-play-triggers (filter (comp #{:at-start-turn :at-end-turn :play-action} :event) triggers)]
     (or (some (comp #{id} :card-id) stay-in-play-triggers)
         (some (comp repeated-card-ids :card-id) stay-in-play-triggers))))
 

@@ -1,5 +1,5 @@
 (ns dombot.cards.adventures
-  (:require [dombot.operations :refer [push-effect-stack give-choice]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice move-card]]
             [dombot.cards.common :refer []]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -117,6 +117,105 @@
                        [::magpie-check-revealed]
                        [:topdeck-all-revealed]]})
 
+(defn- traveller-exchange [{:keys [supply extra-cards] :as game} {:keys [player-no from-card to-card]}]
+  (let [pile-location (cond (some (comp #{from-card} :name :card) supply) :supply
+                            (some (comp #{from-card} :name :card) extra-cards) :extra-cards)
+        {:keys [pile-size]} (ut/get-pile-idx game :extra-cards to-card)]
+    (cond-> game
+            (and pile-size
+                 (pos? pile-size)) (push-effect-stack {:player-no player-no
+                                                       :effects   [[:move-card {:card-name from-card
+                                                                                :from      :play-area
+                                                                                :to        pile-location}]
+                                                                   [:move-card {:card-name to-card
+                                                                                :from      :extra-cards
+                                                                                :to        :discard}]]}))))
+
+(effects/register {::traveller-exchange traveller-exchange})
+
+(def champion {:name    :champion
+               :set     :adventures
+               :types   #{:action :duration}
+               :cost    6
+               :effects [[:give-actions 1]
+                         [:mark-unaffected]]
+               :trigger {:event    :play-action
+                         :duration :game
+                         :mode     :auto
+                         :effects  [[:give-actions 1]]}})
+
+(def hero {:name        :hero
+           :set         :adventures
+           :types       #{:action :traveller}
+           :cost        5
+           :effects     [[:give-coins 2]
+                         [:give-choice {:text    "Gain a Treasure."
+                                        :choice  :gain
+                                        :options [:supply {:type :treasure}]
+                                        :min     1
+                                        :max     1}]]
+           :at-clean-up [[::traveller-exchange {:from-card :hero :to-card :champion}]]})
+
+(defn- warrior-trash [game {:keys [player-no]}]
+  (let [{:keys [name] :as card} (last (get-in game [:players player-no :discard]))
+        cost (ut/get-cost game card)]
+    (cond-> game
+            (and card (<= 3 cost 4)) (move-card {:player-no     player-no
+                                                 :card-name     name
+                                                 :from          :discard
+                                                 :from-position :bottom
+                                                 :to            :trash}))))
+
+(defn- warrior-attack [game {:keys [player-no attacking-player-no]}]
+  (let [travellers-in-play (->> (get-in game [:players attacking-player-no :play-area])
+                                (filter (comp :traveller (partial ut/get-types game)))
+                                count)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (->> (repeat travellers-in-play [[:discard-from-topdeck 1]
+                                                                         [::warrior-trash]])
+                                             (apply concat))})))
+
+(effects/register {::warrior-trash  warrior-trash
+                   ::warrior-attack warrior-attack})
+
+(def warrior {:name        :warrior
+              :set         :adventures
+              :types       #{:action :attack :traveller}
+              :cost        4
+              :effects     [[:draw 2]
+                            [:attack {:effects [[::warrior-attack]]}]]
+              :at-clean-up [[::traveller-exchange {:from-card :warrior :to-card :hero}]]})
+
+(defn- treasure-hunter-gain-silver [{:keys [players] :as game} {:keys [player-no]}]
+  (let [prev-player  (mod (dec player-no) (count players))
+        gained-cards (->> (get-in game [:players prev-player :gained-cards])
+                          count)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (repeat gained-cards [:gain {:card-name :silver}])})))
+
+(effects/register {::treasure-hunter-gain-silver treasure-hunter-gain-silver})
+
+(def treasure-hunter {:name        :treasure-hunter
+                      :set         :adventures
+                      :types       #{:action :traveller}
+                      :cost        3
+                      :effects     [[:give-actions 1]
+                                    [:give-coins 1]
+                                    [::treasure-hunter-gain-silver]]
+                      :at-clean-up [[::traveller-exchange {:from-card :treasure-hunter :to-card :warrior}]]})
+
+(def page {:name        :page
+           :set         :adventures
+           :types       #{:action :traveller}
+           :cost        2
+           :effects     [[:draw 1]
+                         [:give-actions 1]]
+           :at-clean-up [[::traveller-exchange {:from-card :page :to-card :treasure-hunter}]]
+           :setup       [[:setup-extra-cards {:extra-cards [{:card treasure-hunter :pile-size 5}
+                                                            {:card warrior :pile-size 5}
+                                                            {:card hero :pile-size 5}
+                                                            {:card champion :pile-size 5}]}]]})
+
 (defn- raze-trash-from-area [game {:keys [player-no choice]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no (:area choice)] {:name (:card-name choice)})
         cost (ut/get-cost game card)]
@@ -151,4 +250,5 @@
                     hireling
                     lost-city
                     magpie
+                    page
                     raze])

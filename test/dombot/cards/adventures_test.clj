@@ -381,6 +381,302 @@
                          :revealed-cards {:deck 1}
                          :actions        1}]})))))
 
+(deftest page-test
+  (let [page            (assoc page :id 0)
+        treasure-hunter (assoc treasure-hunter :id 1)]
+    (testing "Page"
+      (is (= (-> {:players [{:hand    [page]
+                             :deck    [silver copper]
+                             :actions 1}]}
+                 (play 0 :page))
+             {:players [{:hand      [silver]
+                         :play-area [page]
+                         :deck      [copper]
+                         :actions   1}]}))
+      (is (= (-> {:players [{:hand    [page]
+                             :deck    [silver copper]
+                             :actions 1
+                             :phase   :action}]}
+                 (play 0 :page)
+                 (clean-up {:player-no 0}))
+             {:players      [{:hand      [silver]
+                              :play-area [page]
+                              :deck      [copper]
+                              :actions   1
+                              :phase     :clean-up}]
+              :effect-stack [{:player-no 0
+                              :text      "You may activate cards, that do something when you discard them from play."
+                              :choice    [:simultaneous-effects-choice {:triggers [{:event   :at-clean-up
+                                                                                    :name    :page
+                                                                                    :card-id 0
+                                                                                    :mode    :optional
+                                                                                    :effects (:at-clean-up page)}]}]
+                              :source    :mixed
+                              :options   [{:area :play-area :card-name :page}]
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:sync-repeated-play]}
+                             {:player-no 0
+                              :effect    [:do-clean-up {:player-no 0}]}
+                             {:player-no 0
+                              :effect    [:draw 5]}
+                             {:player-no 0
+                              :effect    [:remove-triggers {:event :at-draw-hand}]}
+                             {:player-no 0
+                              :effect    [:check-game-ended]}]}))
+      (is (= (-> {:players [{:hand    [page]
+                             :deck    (repeat 7 copper)
+                             :actions 1
+                             :phase   :action}]}
+                 (play 0 :page)
+                 (clean-up {:player-no 0})
+                 (choose nil))
+             {:players [{:hand    (repeat 5 copper)
+                         :deck    [copper]
+                         :discard [copper page]
+                         :actions 0
+                         :coins   0
+                         :buys    0
+                         :phase   :out-of-turn}]}))
+      (is (= (-> {:extra-cards [{:card treasure-hunter :pile-size 5}]
+                  :supply      [{:card page :pile-size 9}]
+                  :players     [{:hand    [page]
+                                 :deck    (repeat 7 copper)
+                                 :actions 1
+                                 :phase   :action}]}
+                 (play 0 :page)
+                 (clean-up {:player-no 0})
+                 (choose {:area :play-area :card-name :page}))
+             {:extra-cards [{:card treasure-hunter :pile-size 4}]
+              :supply      [{:card page :pile-size 10}]
+              :players     [{:hand    (repeat 5 copper)
+                             :deck    [copper]
+                             :discard [treasure-hunter copper]
+                             :actions 0
+                             :coins   0
+                             :buys    0
+                             :phase   :out-of-turn}]})))))
+
+(deftest treasure-hunter-test
+  (let [treasure-hunter (assoc treasure-hunter :id 0)
+        silver          (assoc silver :id 1)
+        warrior         (assoc warrior :id 2)]
+    (testing "Treasure Hunter"
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [treasure-hunter]
+                             :actions 1
+                             :coins   0}
+                            {}]}
+                 (play 0 :treasure-hunter))
+             {:supply  [{:card silver :pile-size 40}]
+              :players [{:play-area [treasure-hunter]
+                         :actions   1
+                         :coins     1}
+                        {}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [treasure-hunter]
+                             :actions 1
+                             :coins   0}
+                            {:gained-cards [{:name  :gold
+                                             :types #{:treasure}
+                                             :cost  6}]}]}
+                 (play 0 :treasure-hunter))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:play-area [treasure-hunter]
+                         :discard   [silver]
+                         :actions   1
+                         :coins     1}
+                        {:gained-cards [{:name  :gold
+                                         :types #{:treasure}
+                                         :cost  6}]}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [treasure-hunter]
+                             :actions 1
+                             :coins   0}
+                            {:gained-cards [{:name  :silver
+                                             :types #{:treasure}
+                                             :cost  3}
+                                            {:name  :gold
+                                             :types #{:treasure}
+                                             :cost  6}]}]}
+                 (play 0 :treasure-hunter))
+             {:supply  [{:card silver :pile-size 38}]
+              :players [{:play-area [treasure-hunter]
+                         :discard   [silver silver]
+                         :actions   1
+                         :coins     1}
+                        {:gained-cards [{:name  :silver
+                                         :types #{:treasure}
+                                         :cost  3}
+                                        {:name  :gold
+                                         :types #{:treasure}
+                                         :cost  6}]}]}))
+      (is (= (-> {:players [{:hand    [treasure-hunter]
+                             :actions 1
+                             :coins   0
+                             :phase   :action}]}
+                 (play 0 :treasure-hunter)
+                 (clean-up {:player-no 0})
+                 (choose nil))
+             {:players [{:hand    [treasure-hunter]
+                         :actions 0
+                         :coins   0
+                         :buys    0
+                         :phase   :out-of-turn}]}))
+      (is (= (-> {:extra-cards [{:card treasure-hunter :pile-size 4}
+                                {:card warrior :pile-size 5}]
+                  :players     [{:hand    [treasure-hunter]
+                                 :deck    (repeat 7 copper)
+                                 :actions 1
+                                 :coins   0
+                                 :phase   :action}]}
+                 (play 0 :treasure-hunter)
+                 (clean-up {:player-no 0})
+                 (choose {:area :play-area :card-name :treasure-hunter}))
+             {:extra-cards [{:card treasure-hunter :pile-size 5}
+                            {:card warrior :pile-size 4}]
+              :players     [{:hand    (repeat 5 copper)
+                             :deck    [copper copper]
+                             :discard [warrior]
+                             :actions 0
+                             :coins   0
+                             :buys    0
+                             :phase   :out-of-turn}]})))))
+
+(deftest warrior-test
+  (let [warrior (assoc warrior :id 0)
+        hero    (assoc hero :id 1)]
+    (testing "Warrior"
+      (is (= (-> {:players [{:hand    [warrior]
+                             :deck    [copper copper]
+                             :actions 1}
+                            {}]}
+                 (play 0 :warrior))
+             {:players [{:hand      [copper copper]
+                         :play-area [warrior]
+                         :actions   0}
+                        {}]}))
+      (is (= (-> {:players [{:hand      [warrior]
+                             :play-area [page magpie]
+                             :deck      [copper copper]
+                             :actions   1}
+                            {:deck [estate silver]}]}
+                 (play 0 :warrior))
+             {:players [{:hand      [copper copper]
+                         :play-area [page magpie warrior]
+                         :actions   0}
+                        {:discard [estate]}]
+              :trash   [silver]}))
+      (is (= (-> {:players [{:hand      [warrior]
+                             :play-area [page page]
+                             :deck      [copper copper]
+                             :actions   1}
+                            {:deck [copper warrior duchy copper]}]}
+                 (play 0 :warrior))
+             {:players [{:hand      [copper copper]
+                         :play-area [page page warrior]
+                         :actions   0}
+                        {:deck    [copper]
+                         :discard [copper duchy]}]
+              :trash   [warrior]}))
+      (is (= (-> {:extra-cards [{:card warrior :pile-size 4}
+                                {:card hero :pile-size 5}]
+                  :players     [{:hand    [warrior]
+                                 :actions 1
+                                 :phase   :action}]}
+                 (play 0 :warrior)
+                 (clean-up {:player-no 0})
+                 (choose {:area :play-area :card-name :warrior}))
+             {:extra-cards [{:card warrior :pile-size 5}
+                            {:card hero :pile-size 4}]
+              :players     [{:hand    [hero]
+                             :actions 0
+                             :coins   0
+                             :buys    0
+                             :phase   :out-of-turn}]})))))
+
+(deftest hero-test
+  (let [hero     (assoc hero :id 0)
+        champion (assoc champion :id 1)
+        gold     (assoc gold :id 2)]
+    (testing "Hero"
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [hero]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :hero)
+                 (choose :gold))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:play-area [hero]
+                         :discard   [gold]
+                         :actions   0
+                         :coins     2}]}))
+      (is (= (-> {:extra-cards [{:card hero :pile-size 4}
+                                {:card champion :pile-size 5}]
+                  :players     [{:play-area [hero]
+                                 :phase     :action}]}
+                 (clean-up {:player-no 0})
+                 (choose {:area :play-area :card-name :hero}))
+             {:extra-cards [{:card hero :pile-size 5}
+                            {:card champion :pile-size 4}]
+              :players     [{:hand    [champion]
+                             :actions 0
+                             :coins   0
+                             :buys    0
+                             :phase   :out-of-turn}]})))))
+
+(deftest champion-test
+  (let [champion (assoc champion :id 0)]
+    (testing "Champion"
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand    [champion]
+                             :actions 1}]}
+                 (play 0 :champion))
+             {:players [{:play-area  [champion]
+                         :actions    1
+                         :unaffected [{:card-id 0}]
+                         :triggers   [(get-trigger champion)]}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand    [champion]
+                             :actions 1}]}
+                 (play 0 :champion)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:play-area  [champion]
+                                :actions    1
+                                :coins      0
+                                :buys       1
+                                :phase      :action
+                                :unaffected [{:card-id 0}]
+                                :triggers   [(get-trigger champion)]}]}))
+      (is (= (-> {:players [{:hand       [page]
+                             :play-area  [champion]
+                             :deck       [copper]
+                             :actions    1
+                             :unaffected [{:card-id 0}]
+                             :triggers   [(get-trigger champion)]}]}
+                 (play 0 :page))
+             {:players [{:hand       [copper]
+                         :play-area  [champion page]
+                         :actions    2
+                         :unaffected [{:card-id 0}]
+                         :triggers   [(get-trigger champion)]}]}))
+      (is (= (-> {:players [{:hand    [warrior]
+                             :deck    [copper copper]
+                             :actions 1}
+                            {:play-area  [champion]
+                             :deck       [silver]
+                             :unaffected [{:card-id 0}]
+                             :triggers   [(get-trigger champion)]}]}
+                 (play 0 :warrior))
+             {:players [{:hand      [copper copper]
+                         :play-area [warrior]
+                         :actions   0}
+                        {:play-area  [champion]
+                         :deck       [silver]
+                         :unaffected [{:card-id 0}]
+                         :triggers   [(get-trigger champion)]}]})))))
+
 (deftest raze-test
   (let [raze (assoc raze :id 0)]
     (testing "Raze"
