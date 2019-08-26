@@ -150,11 +150,11 @@
                    :from         :play-area
                    :to           :hand}))
 
-(def horse-traders-trigger {:trigger           :at-start-turn
-                            :duration          :once
-                            :simultaneous-mode :auto
-                            :effects           [[::horse-traders-return-to-hand]
-                                                [:draw 1]]})
+(def horse-traders-trigger {:trigger  :at-start-turn
+                            :duration :once
+                            :mode     :auto
+                            :effects  [[::horse-traders-return-to-hand]
+                                       [:draw 1]]})
 
 (defn- horse-traders-set-start-of-turn [game {:keys [player-no card-id]}]
   (push-effect-stack game {:player-no player-no

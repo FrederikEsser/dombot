@@ -15,10 +15,10 @@
                                         [:card-effect {:card card}]
                                         [:register-repeated-play {:target-id id}]]}))))
 
-(def ghost-trigger {:trigger           :at-start-turn
-                    :duration          :once
-                    :simultaneous-mode :auto
-                    :effects           [[::ghost-repeat-action]]})
+(def ghost-trigger {:trigger  :at-start-turn
+                    :duration :once
+                    :mode     :auto
+                    :effects  [[::ghost-repeat-action]]})
 
 (defn- ghost-reveal [game {:keys [player-no card-id]}]
   (let [{:keys [revealed deck discard]} (get-in game [:players player-no])
@@ -485,10 +485,10 @@
                                               (remove (set druid-boons))
                                               shuffle)}))))
       (cond-> game
-             (not boons) (assoc :boons {:deck (->> all-boons
-                                                   (remove (set druid-boons))
-                                                   shuffle)})
-             (not card) (setup-extra-cards {:extra-cards [(:will-o'-wisp spirit-piles)]})))))
+              (not boons) (assoc :boons {:deck (->> all-boons
+                                                    (remove (set druid-boons))
+                                                    shuffle)})
+              (not card) (setup-extra-cards {:extra-cards [(:will-o'-wisp spirit-piles)]})))))
 
 (defn- setup-hexes [game args]
   (cond-> game
@@ -590,10 +590,10 @@
       :now (push-effect-stack game {:player-no player-no
                                     :effects   boon-effects})
       :at-start-turn (add-trigger game {:player-no player-no
-                                        :trigger   {:trigger           :at-start-turn
-                                                    :duration          :once
-                                                    :simultaneous-mode :auto
-                                                    :effects           boon-effects}}))))
+                                        :trigger   {:trigger  :at-start-turn
+                                                    :duration :once
+                                                    :mode     :auto
+                                                    :effects  boon-effects}}))))
 
 (defn- blessed-village-take-boon [game {:keys [player-no]}]
   (let [{[{:keys [name] :as boon} & deck] :deck
@@ -712,14 +712,14 @@
               :set     :nocturne
               :types   #{:night :duration}
               :cost    5
-              :trigger {:trigger           :at-start-turn
-                        :duration          :once
-                        :simultaneous-mode :auto
-                        :effects           [[:give-choice {:text    "Gain a card to your hand costing up to $4."
-                                                           :choice  :gain-to-hand
-                                                           :options [:supply {:max-cost 4}]
-                                                           :min     1
-                                                           :max     1}]]}})
+              :trigger {:trigger  :at-start-turn
+                        :duration :once
+                        :mode     :auto
+                        :effects  [[:give-choice {:text    "Gain a card to your hand costing up to $4."
+                                                  :choice  :gain-to-hand
+                                                  :options [:supply {:max-cost 4}]
+                                                  :min     1
+                                                  :max     1}]]}})
 
 (defn- conclave-play-action [game {:keys [player-no card-name]}]
   (let [{card :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
@@ -774,10 +774,10 @@
 
 
 
-(def crypt-trigger {:trigger           :at-start-turn
-                    :duration          :until-empty
-                    :simultaneous-mode :auto
-                    :effects           [[::crypt-pick-treasure]]})
+(def crypt-trigger {:trigger  :at-start-turn
+                    :duration :until-empty
+                    :mode     :auto
+                    :effects  [[::crypt-pick-treasure]]})
 
 (defn- crypt-set-aside [game {:keys [player-no card-id]}]
   (let [set-aside (get-in game [:players player-no :crypt-set-aside])]
@@ -822,10 +822,10 @@
                  :set     :nocturne
                  :types   #{:night :duration}
                  :cost    5
-                 :trigger {:trigger           :at-start-turn
-                           :duration          :once
-                           :simultaneous-mode :auto
-                           :effects           [[:draw 2]]}
+                 :trigger {:trigger  :at-start-turn
+                           :duration :once
+                           :mode     :auto
+                           :effects  [[:draw 2]]}
                  :gain-to :hand})
 
 (defn- devils-workshop-gain [game {:keys [player-no]}]
@@ -942,12 +942,12 @@
 
 (def lost-in-the-woods {:name    :lost-in-the-woods
                         :type    :state
-                        :trigger {:trigger           :at-start-turn
-                                  :simultaneous-mode :auto
-                                  :effects           [[:give-choice {:text    "You may discard a card to receive a Boon."
-                                                                     :choice  ::discard-for-boon
-                                                                     :options [:player :hand]
-                                                                     :max     1}]]}})
+                        :trigger {:trigger :at-start-turn
+                                  :mode    :auto
+                                  :effects [[:give-choice {:text    "You may discard a card to receive a Boon."
+                                                           :choice  ::discard-for-boon
+                                                           :options [:player :hand]
+                                                           :max     1}]]}})
 
 (defn- fools-choice [boons]
   {:text    "Receive the Boons in any order."
@@ -996,11 +996,11 @@
                  :set     :nocturne
                  :types   #{:night :duration}
                  :cost    3
-                 :trigger {:trigger           :at-start-turn
-                           :duration          :once
-                           :simultaneous-mode :auto
-                           :effects           [[:draw 1]
-                                               [:give-actions 1]]}
+                 :trigger {:trigger  :at-start-turn
+                           :duration :once
+                           :mode     :auto
+                           :effects  [[:draw 1]
+                                      [:give-actions 1]]}
                  :gain-to :hand})
 
 (def guardian {:name    :guardian
@@ -1008,11 +1008,11 @@
                :types   #{:night :duration}
                :cost    2
                :effects [[:mark-unaffected]]
-               :trigger {:trigger           :at-start-turn
-                         :duration          :once
-                         :simultaneous-mode :auto
-                         :effects           [[:give-coins 1]
-                                             [:clear-unaffected]]}
+               :trigger {:trigger  :at-start-turn
+                         :duration :once
+                         :mode     :auto
+                         :effects  [[:give-coins 1]
+                                    [:clear-unaffected]]}
                :gain-to :hand})
 
 (defn- idol-boon-or-curse [game {:keys [player-no]}]
@@ -1316,10 +1316,10 @@
              :types   #{:night :duration :attack}
              :cost    6
              :effects [[::make-raider-attack]]
-             :trigger {:trigger           :at-start-turn
-                       :duration          :once
-                       :simultaneous-mode :auto
-                       :effects           [[:give-coins 3]]}})
+             :trigger {:trigger  :at-start-turn
+                       :duration :once
+                       :mode     :auto
+                       :effects  [[:give-coins 3]]}})
 
 (defn- magic-lamp-genie [game {:keys [player-no card-id]}]
   (let [singular-cards-in-play (->> (get-in game [:players player-no :play-area])
@@ -1345,10 +1345,10 @@
                  :coin-value 1
                  :effects    [[::magic-lamp-genie]]})
 
-(def secret-cave-trigger {:trigger           :at-start-turn
-                          :duration          :once
-                          :simultaneous-mode :auto
-                          :effects           [[:give-coins 3]]})
+(def secret-cave-trigger {:trigger  :at-start-turn
+                          :duration :once
+                          :mode     :auto
+                          :effects  [[:give-coins 3]]})
 
 (defn- secret-cave-discard [game {:keys [player-no card-id card-names] :as args}]
   (push-effect-stack game {:player-no player-no

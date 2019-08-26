@@ -781,11 +781,11 @@
               :players [{:deck     [copper copper]
                          :discard  [blessed-village]
                          :boons    [sea-gift]
-                         :triggers [{:trigger           :at-start-turn
-                                     :duration          :once
-                                     :simultaneous-mode :auto
-                                     :effects           [[:return-boon {:boon-name :the-sea's-gift}]
-                                                         [:receive-boon {:boon sea-gift}]]}]}]}))
+                         :triggers [{:trigger  :at-start-turn
+                                     :duration :once
+                                     :mode     :auto
+                                     :effects  [[:return-boon {:boon-name :the-sea's-gift}]
+                                                [:receive-boon {:boon sea-gift}]]}]}]}))
       (is (= (-> {:boons   {:deck [sea-gift]}
                   :supply  [{:card blessed-village :pile-size 10}]
                   :players [{:deck (repeat 7 copper)}]}
@@ -827,10 +827,10 @@
               :players [{:deck     [copper copper]
                          :discard  [blessed-village]
                          :boons    [forest-gift]
-                         :triggers [{:trigger           :at-start-turn
-                                     :duration          :once
-                                     :simultaneous-mode :auto
-                                     :effects           [[:receive-boon {:boon forest-gift}]]}]}]}))
+                         :triggers [{:trigger  :at-start-turn
+                                     :duration :once
+                                     :mode     :auto
+                                     :effects  [[:receive-boon {:boon forest-gift}]]}]}]}))
       (is (= (-> {:boons   {:deck [forest-gift]}
                   :supply  [{:card blessed-village :pile-size 10}]
                   :players [{:deck (repeat 5 copper)}]}

@@ -5,6 +5,10 @@
 
 ; todo:
 
+; at-end-buy: Exploration, Pageant
+; at-clean-up: Boons (River, Field, Forest), Horn, Improve, Treasury
+
+; fix Scepter / Caravan Guard reaction - not played this turn
 ; maybe refac gain to destination, but pass gained card as argument to on-gain effects
 ; check Experiment with Innovation
 ; fix extra Outpost turn after Fleet turn

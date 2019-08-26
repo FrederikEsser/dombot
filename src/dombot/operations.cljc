@@ -100,10 +100,10 @@
 (defn at-start-turn-effects [game {:keys [player-no]}]
   (let [start-turn-triggers (->> (get-in game [:players player-no :triggers])
                                  (filter (comp #{:at-start-turn} :trigger)))
-        auto-triggers       (filter (comp #{:auto} :simultaneous-mode) start-turn-triggers)
-        manual-triggers     (filter (comp #{:manual} :simultaneous-mode) start-turn-triggers)]
-    (assert (every? :simultaneous-mode start-turn-triggers) (str "Trigger error: Some triggers lack a simultaneous mode: "
-                                                                 (->> start-turn-triggers (remove :simultaneous-mode) (map :name) (clojure.string/join ", "))))
+        auto-triggers       (filter (comp #{:auto} :mode) start-turn-triggers)
+        manual-triggers     (filter (comp #{:manual} :mode) start-turn-triggers)]
+    (assert (every? :mode start-turn-triggers) (str "Trigger error: Some triggers lack a simultaneous mode: "
+                                                    (->> start-turn-triggers (remove :mode) (map :name) (clojure.string/join ", "))))
     (-> game
         (push-effect-stack {:player-no player-no
                             :effects   (concat

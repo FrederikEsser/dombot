@@ -21,47 +21,47 @@
                  (play 0 :church))
              {:players [{:play-area [church]
                          :actions   1
-                         :triggers  [{:trigger           :at-start-turn
-                                      :card-id           0
-                                      :duration          :once
-                                      :simultaneous-mode :auto
-                                      :effects           [[:put-set-aside-into-hand]
-                                                          [:give-choice {:text    "You may trash a card from your hand."
-                                                                         :choice  :trash-from-hand
-                                                                         :options [:player :hand]
-                                                                         :max     1}]]}]}]}))
+                         :triggers  [{:trigger  :at-start-turn
+                                      :card-id  0
+                                      :duration :once
+                                      :mode     :auto
+                                      :effects  [[:put-set-aside-into-hand]
+                                                 [:give-choice {:text    "You may trash a card from your hand."
+                                                                :choice  :trash-from-hand
+                                                                :options [:player :hand]
+                                                                :max     1}]]}]}]}))
       (is (= (-> {:players [{:hand    [church copper]
-                               :actions 1}]}
-                   (play 0 :church)
-                   (choose nil))
-               {:players [{:hand      [copper]
-                           :play-area [church]
-                           :actions   1
-                           :triggers  [{:trigger           :at-start-turn
-                                        :card-id           0
-                                        :duration          :once
-                                        :simultaneous-mode :auto
-                                        :effects           [[:put-set-aside-into-hand]
-                                                            [:give-choice {:text    "You may trash a card from your hand."
-                                                                           :choice  :trash-from-hand
-                                                                           :options [:player :hand]
-                                                                           :max     1}]]}]}]}))
+                             :actions 1}]}
+                 (play 0 :church)
+                 (choose nil))
+             {:players [{:hand      [copper]
+                         :play-area [church]
+                         :actions   1
+                         :triggers  [{:trigger  :at-start-turn
+                                      :card-id  0
+                                      :duration :once
+                                      :mode     :auto
+                                      :effects  [[:put-set-aside-into-hand]
+                                                 [:give-choice {:text    "You may trash a card from your hand."
+                                                                :choice  :trash-from-hand
+                                                                :options [:player :hand]
+                                                                :max     1}]]}]}]}))
       (is (= (-> {:players [{:hand    [church copper]
                              :actions 1}]}
                  (play 0 :church)
                  (choose :copper))
              {:players [{:play-area [church]
                          :actions   1
-                         :triggers  [{:trigger           :at-start-turn
-                                      :card-id           0
-                                      :set-aside         [copper]
-                                      :duration          :once
-                                      :simultaneous-mode :auto
-                                      :effects           [[:put-set-aside-into-hand]
-                                                          [:give-choice {:text    "You may trash a card from your hand."
-                                                                         :choice  :trash-from-hand
-                                                                         :options [:player :hand]
-                                                                         :max     1}]]}]}]}))
+                         :triggers  [{:trigger   :at-start-turn
+                                      :card-id   0
+                                      :set-aside [copper]
+                                      :duration  :once
+                                      :mode      :auto
+                                      :effects   [[:put-set-aside-into-hand]
+                                                  [:give-choice {:text    "You may trash a card from your hand."
+                                                                 :choice  :trash-from-hand
+                                                                 :options [:player :hand]
+                                                                 :max     1}]]}]}]}))
       (is (= (-> {:players [{:hand    [church copper copper copper]
                              :actions 1}]}
                  (play 0 :church)
@@ -69,31 +69,31 @@
              {:players [{:hand      [copper copper copper]
                          :play-area [church]
                          :actions   1
-                         :triggers  [{:trigger           :at-start-turn
-                                      :card-id           0
-                                      :duration          :once
-                                      :simultaneous-mode :auto
-                                      :effects           [[:put-set-aside-into-hand]
-                                                          [:give-choice {:text    "You may trash a card from your hand."
-                                                                         :choice  :trash-from-hand
-                                                                         :options [:player :hand]
-                                                                         :max     1}]]}]}]}))
+                         :triggers  [{:trigger  :at-start-turn
+                                      :card-id  0
+                                      :duration :once
+                                      :mode     :auto
+                                      :effects  [[:put-set-aside-into-hand]
+                                                 [:give-choice {:text    "You may trash a card from your hand."
+                                                                :choice  :trash-from-hand
+                                                                :options [:player :hand]
+                                                                :max     1}]]}]}]}))
       (is (= (-> {:players [{:hand    [church copper copper copper]
                              :actions 1}]}
                  (play 0 :church)
                  (choose [:copper :copper :copper]))
              {:players [{:play-area [church]
                          :actions   1
-                         :triggers  [{:trigger           :at-start-turn
-                                      :card-id           0
-                                      :set-aside         [copper copper copper]
-                                      :duration          :once
-                                      :simultaneous-mode :auto
-                                      :effects           [[:put-set-aside-into-hand]
-                                                          [:give-choice {:text    "You may trash a card from your hand."
-                                                                         :choice  :trash-from-hand
-                                                                         :options [:player :hand]
-                                                                         :max     1}]]}]}]})))))
+                         :triggers  [{:trigger   :at-start-turn
+                                      :card-id   0
+                                      :set-aside [copper copper copper]
+                                      :duration  :once
+                                      :mode      :auto
+                                      :effects   [[:put-set-aside-into-hand]
+                                                  [:give-choice {:text    "You may trash a card from your hand."
+                                                                 :choice  :trash-from-hand
+                                                                 :options [:player :hand]
+                                                                 :max     1}]]}]}]})))))
 
 (deftest dismantle-test
   (let [copper (assoc copper :id 0)

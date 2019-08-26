@@ -25,10 +25,10 @@
               :types   #{:action :duration}
               :cost    6
               :effects [[:give-choice captain-choice]]
-              :trigger {:trigger           :at-start-turn
-                        :duration          :once
-                        :simultaneous-mode :auto
-                        :effects           [[:give-choice captain-choice]]}})
+              :trigger {:trigger  :at-start-turn
+                        :duration :once
+                        :mode     :auto
+                        :effects  [[:give-choice captain-choice]]}})
 
 (defn- church-set-aside [game {:keys [player-no card-id]}]
   (let [set-aside (get-in game [:players player-no :church-set-aside])]

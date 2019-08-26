@@ -39,10 +39,10 @@
               :cost    4
               :effects [[:draw 1]
                         [:give-actions 1]]
-              :trigger {:trigger           :at-start-turn
-                        :duration          :once
-                        :simultaneous-mode :auto
-                        :effects           [[:draw 1]]}})
+              :trigger {:trigger  :at-start-turn
+                        :duration :once
+                        :mode     :auto
+                        :effects  [[:draw 1]]}})
 
 (defn cutpurse-attack [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])]
@@ -119,11 +119,11 @@
                       :cost    3
                       :effects [[:give-actions 2]
                                 [:give-coins 1]]
-                      :trigger {:trigger           :at-start-turn
-                                :duration          :once
-                                :simultaneous-mode :auto
-                                :effects           [[:give-actions 1]
-                                                    [:give-coins 1]]}})
+                      :trigger {:trigger  :at-start-turn
+                                :duration :once
+                                :mode     :auto
+                                :effects  [[:give-actions 1]
+                                           [:give-coins 1]]}})
 
 (def ghost-ship {:name    :ghost-ship
                  :set     :seaside
@@ -189,11 +189,11 @@
                  :effects [[:give-actions 1]
                            [:give-coins 1]
                            [:mark-unaffected]]
-                 :trigger {:trigger           :at-start-turn
-                           :duration          :once
-                           :simultaneous-mode :auto
-                           :effects           [[:give-coins 1]
-                                               [:clear-unaffected]]}})
+                 :trigger {:trigger  :at-start-turn
+                           :duration :once
+                           :mode     :auto
+                           :effects  [[:give-coins 1]
+                                      [:clear-unaffected]]}})
 
 (def lookout {:name    :lookout
               :set     :seaside
@@ -221,10 +221,10 @@
                     :types   #{:action :duration}
                     :cost    5
                     :effects [[:give-coins 2]]
-                    :trigger {:trigger           :at-start-turn
-                              :duration          :once
-                              :simultaneous-mode :auto
-                              :effects           [[:give-coins 2]]}})
+                    :trigger {:trigger  :at-start-turn
+                              :duration :once
+                              :mode     :auto
+                              :effects  [[:give-coins 2]]}})
 
 (defn native-village-choice [game {:keys [player-no choice]}]
   (let [native-village-cards (->> (get-in game [:players player-no :native-village-mat])
@@ -446,12 +446,12 @@
                 :cost    3
                 :effects [[::smugglers-give-choice]]})
 
-(def tactician-trigger {:trigger           :at-start-turn
-                        :duration          :once
-                        :simultaneous-mode :auto
-                        :effects           [[:draw 5]
-                                            [:give-actions 1]
-                                            [:give-buys 1]]})
+(def tactician-trigger {:trigger  :at-start-turn
+                        :duration :once
+                        :mode     :auto
+                        :effects  [[:draw 5]
+                                   [:give-actions 1]
+                                   [:give-buys 1]]})
 
 (defn tactician-discard [game {:keys [player-no card-id]}]
   (let [hand (get-in game [:players player-no :hand])]
@@ -536,11 +536,11 @@
             :cost    5
             :effects [[:draw 2]
                       [:give-buys 1]]
-            :trigger {:trigger           :at-start-turn
-                      :duration          :once
-                      :simultaneous-mode :auto
-                      :effects           [[:draw 2]
-                                          [:give-buys 1]]}})
+            :trigger {:trigger  :at-start-turn
+                      :duration :once
+                      :mode     :auto
+                      :effects  [[:draw 2]
+                                 [:give-buys 1]]}})
 
 (def kingdom-cards [ambassador
                     bazaar

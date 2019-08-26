@@ -469,10 +469,10 @@
 
 (effects/register {:put-revealed-types-into-hand put-revealed-types-into-hand})
 
-(def set-aside=>hand-trigger {:trigger           :at-start-turn
-                              :duration          :once
-                              :simultaneous-mode :auto
-                              :effects           [[:put-set-aside-into-hand]]})
+(def set-aside=>hand-trigger {:trigger  :at-start-turn
+                              :duration :once
+                              :mode     :auto
+                              :effects  [[:put-set-aside-into-hand]]})
 
 (defn put-set-aside-into-hand [game {:keys [player-no set-aside]}]
   (-> game
