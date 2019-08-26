@@ -39,7 +39,7 @@
               :cost    4
               :effects [[:draw 1]
                         [:give-actions 1]]
-              :trigger {:trigger  :at-start-turn
+              :trigger {:event    :at-start-turn
                         :duration :once
                         :mode     :auto
                         :effects  [[:draw 1]]}})
@@ -119,7 +119,7 @@
                       :cost    3
                       :effects [[:give-actions 2]
                                 [:give-coins 1]]
-                      :trigger {:trigger  :at-start-turn
+                      :trigger {:event    :at-start-turn
                                 :duration :once
                                 :mode     :auto
                                 :effects  [[:give-actions 1]
@@ -189,7 +189,7 @@
                  :effects [[:give-actions 1]
                            [:give-coins 1]
                            [:mark-unaffected]]
-                 :trigger {:trigger  :at-start-turn
+                 :trigger {:event    :at-start-turn
                            :duration :once
                            :mode     :auto
                            :effects  [[:give-coins 1]
@@ -221,7 +221,7 @@
                     :types   #{:action :duration}
                     :cost    5
                     :effects [[:give-coins 2]]
-                    :trigger {:trigger  :at-start-turn
+                    :trigger {:event    :at-start-turn
                               :duration :once
                               :mode     :auto
                               :effects  [[:give-coins 2]]}})
@@ -295,7 +295,7 @@
                                                    :number-of-cards 3}]
                                        [:start-turn]]}))
 
-(def outpost-trigger {:trigger  :at-end-turn
+(def outpost-trigger {:event    :at-end-turn
                       :duration :once
                       :effects  [[::outpost-extra-turn]]})
 
@@ -446,7 +446,7 @@
                 :cost    3
                 :effects [[::smugglers-give-choice]]})
 
-(def tactician-trigger {:trigger  :at-start-turn
+(def tactician-trigger {:event    :at-start-turn
                         :duration :once
                         :mode     :auto
                         :effects  [[:draw 5]
@@ -536,7 +536,7 @@
             :cost    5
             :effects [[:draw 2]
                       [:give-buys 1]]
-            :trigger {:trigger  :at-start-turn
+            :trigger {:event    :at-start-turn
                       :duration :once
                       :mode     :auto
                       :effects  [[:draw 2]

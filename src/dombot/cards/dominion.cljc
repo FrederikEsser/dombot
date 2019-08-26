@@ -27,7 +27,7 @@
                        [:attack {:effects [[:reveal-from-deck 2]
                                            [:give-choice {:text    "Trash a revealed Treasure other than Copper, and discards the rest."
                                                           :choice  :trash-from-revealed
-                                                          :options [:player :revealed {:type     :treasure
+                                                          :options [:player :revealed {:type      :treasure
                                                                                        :not-names #{:copper}}]
                                                           :min     1
                                                           :max     1}]
@@ -137,7 +137,7 @@
                                              :to            :set-aside}))))
 
 (defn library-check-for-action [game {:keys [player-no]}]
-  (let [hand (get-in game [:players player-no :hand])
+  (let [hand  (get-in game [:players player-no :hand])
         {:keys [name] :as card} (last hand)
         types (ut/get-types game card)]
     (cond-> game
@@ -176,7 +176,7 @@
                        [:give-coins 1]
                        [:give-buys 1]]})
 
-(def merchant-trigger {:trigger  [:play :silver]
+(def merchant-trigger {:event    [:play :silver]
                        :duration :once-turn
                        :effects  [[:give-coins 1]]})
 

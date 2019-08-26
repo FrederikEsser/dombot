@@ -1551,7 +1551,7 @@
                              {:player-no 0
                               :effect    [:draw 5]}
                              {:player-no 0
-                              :effect    [:remove-triggers {:trigger :at-draw-hand}]}
+                              :effect    [:remove-triggers {:event :at-draw-hand}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
       (is (= (-> {:players [{:deck         (repeat 7 copper)
@@ -1621,7 +1621,7 @@
                              {:player-no 0
                               :effect    [:draw 5]}
                              {:player-no 0
-                              :effect    [:remove-triggers {:trigger :at-draw-hand}]}
+                              :effect    [:remove-triggers {:event :at-draw-hand}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
       (is (= (-> {:players [{:deck    (repeat 7 copper)

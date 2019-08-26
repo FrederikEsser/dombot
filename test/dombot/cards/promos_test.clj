@@ -21,7 +21,7 @@
                  (play 0 :church))
              {:players [{:play-area [church]
                          :actions   1
-                         :triggers  [{:trigger  :at-start-turn
+                         :triggers  [{:event    :at-start-turn
                                       :card-id  0
                                       :duration :once
                                       :mode     :auto
@@ -37,7 +37,7 @@
              {:players [{:hand      [copper]
                          :play-area [church]
                          :actions   1
-                         :triggers  [{:trigger  :at-start-turn
+                         :triggers  [{:event    :at-start-turn
                                       :card-id  0
                                       :duration :once
                                       :mode     :auto
@@ -52,7 +52,7 @@
                  (choose :copper))
              {:players [{:play-area [church]
                          :actions   1
-                         :triggers  [{:trigger   :at-start-turn
+                         :triggers  [{:event     :at-start-turn
                                       :card-id   0
                                       :set-aside [copper]
                                       :duration  :once
@@ -69,7 +69,7 @@
              {:players [{:hand      [copper copper copper]
                          :play-area [church]
                          :actions   1
-                         :triggers  [{:trigger  :at-start-turn
+                         :triggers  [{:event    :at-start-turn
                                       :card-id  0
                                       :duration :once
                                       :mode     :auto
@@ -84,7 +84,7 @@
                  (choose [:copper :copper :copper]))
              {:players [{:play-area [church]
                          :actions   1
-                         :triggers  [{:trigger   :at-start-turn
+                         :triggers  [{:event     :at-start-turn
                                       :card-id   0
                                       :set-aside [copper copper copper]
                                       :duration  :once
@@ -295,7 +295,7 @@
                                                       :from-position :top
                                                       :to            :hand}]}
                              {:player-no 0
-                              :effect    [:remove-triggers {:trigger :at-draw-hand}]}
+                              :effect    [:remove-triggers {:event :at-draw-hand}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}
                              {:player-no 1
@@ -338,6 +338,6 @@
                                                         :from-position :top
                                                         :to            :hand}]}
                                {:player-no 1
-                                :effect    [:remove-triggers {:trigger :at-start-turn}]}
+                                :effect    [:remove-triggers {:event :at-start-turn}]}
                                {:player-no 1
                                 :effect    [:sync-repeated-play]}]})))))

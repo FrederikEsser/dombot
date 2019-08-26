@@ -51,7 +51,7 @@
               :players [{:actions  1
                          :coins    1
                          :boons    [field-gift]
-                         :triggers [{:trigger  :at-clean-up
+                         :triggers [{:event    :at-clean-up
                                      :duration :once
                                      :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]}))
       (is (= (-> {:boons   {:deck [field-gift]}
@@ -87,7 +87,7 @@
               :players [{:coins    1
                          :buys     2
                          :boons    [forest-gift]
-                         :triggers [{:trigger  :at-clean-up
+                         :triggers [{:event    :at-clean-up
                                      :duration :once
                                      :effects  [[:return-boon {:boon-name :the-forest's-gift}]]}]}]}))
       (is (= (-> {:boons   {:deck [forest-gift]}
@@ -129,10 +129,10 @@
                  (receive-boon {:player-no 0}))
              {:boons   {}
               :players [{:boons    [river-gift]
-                         :triggers [{:trigger  :at-draw-hand
+                         :triggers [{:event    :at-draw-hand
                                      :duration :once
                                      :effects  [[:draw {:arg 1 :player-no 0}]]}
-                                    {:trigger  :at-clean-up
+                                    {:event    :at-clean-up
                                      :duration :once
                                      :effects  [[:return-boon {:boon-name :the-river's-gift}]]}]}]}))
       (is (= (-> {:boons   {:deck [river-gift]}
@@ -756,7 +756,7 @@
                               :min       1
                               :max       1}
                              {:player-no 0
-                              :effect    [:remove-triggers {:trigger :on-gain}]}
+                              :effect    [:remove-triggers {:event :on-gain}]}
                              {:player-no 0
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :blessed-village
@@ -781,7 +781,7 @@
               :players [{:deck     [copper copper]
                          :discard  [blessed-village]
                          :boons    [sea-gift]
-                         :triggers [{:trigger  :at-start-turn
+                         :triggers [{:event    :at-start-turn
                                      :duration :once
                                      :mode     :auto
                                      :effects  [[:return-boon {:boon-name :the-sea's-gift}]
@@ -814,7 +814,7 @@
                          :coins    1
                          :buys     2
                          :boons    [forest-gift]
-                         :triggers [{:trigger  :at-clean-up
+                         :triggers [{:event    :at-clean-up
                                      :duration :once
                                      :effects  [[:return-boon {:boon-name :the-forest's-gift}]]}]}]}))
       (is (= (-> {:boons   {:deck [forest-gift]}
@@ -827,7 +827,7 @@
               :players [{:deck     [copper copper]
                          :discard  [blessed-village]
                          :boons    [forest-gift]
-                         :triggers [{:trigger  :at-start-turn
+                         :triggers [{:event    :at-start-turn
                                      :duration :once
                                      :mode     :auto
                                      :effects  [[:receive-boon {:boon forest-gift}]]}]}]}))
@@ -847,7 +847,7 @@
                                 :buys     2
                                 :phase    :action
                                 :boons    [forest-gift]
-                                :triggers [{:trigger  :at-clean-up
+                                :triggers [{:event    :at-clean-up
                                             :duration :once
                                             :effects  [[:return-boon {:boon-name :the-forest's-gift}]]}]}]})))))
 
@@ -1285,8 +1285,7 @@
                                 :min       1
                                 :max       1}
                                {:player-no 0
-                                :effect    [:remove-triggers
-                                            {:trigger :at-start-turn}]}
+                                :effect    [:remove-triggers {:event :at-start-turn}]}
                                {:player-no 0
                                 :effect    [:sync-repeated-play]}]})))))
 
@@ -1764,7 +1763,7 @@
               :players [{:hand      [copper copper]
                          :set-aside [faithful-hound]
                          :discard   [estate]
-                         :triggers  [{:trigger  :at-draw-hand
+                         :triggers  [{:event    :at-draw-hand
                                       :duration :once
                                       :effects  [[:move-card {:player-no 0
                                                               :card-name :faithful-hound
@@ -1772,7 +1771,7 @@
                                                               :to        :hand}]]}]}]}))
       (is (= (-> {:players [{:set-aside [faithful-hound]
                              :deck      (repeat 7 copper)
-                             :triggers  [{:trigger  :at-draw-hand
+                             :triggers  [{:event    :at-draw-hand
                                           :duration :once
                                           :effects  [[:move-card {:player-no 0
                                                                   :card-name :faithful-hound
@@ -1884,7 +1883,7 @@
                               :boons     [field-gift sky-gift]
                               :triggers  [(merge (:trigger lost-in-the-woods)
                                                  {:duration :lost-in-the-woods})
-                                          {:trigger  :at-clean-up
+                                          {:event    :at-clean-up
                                            :duration :once
                                            :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]
               :effect-stack [{:text      "Receive the Boons in any order."
@@ -1919,7 +1918,7 @@
                            :boons     [field-gift]
                            :triggers  [(merge (:trigger lost-in-the-woods)
                                               {:duration :lost-in-the-woods})
-                                       {:trigger  :at-clean-up
+                                       {:event    :at-clean-up
                                         :duration :once
                                         :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]}))
       (testing "Lost in the Woods"
@@ -2549,7 +2548,7 @@
               :players [{:actions  3
                          :coins    2
                          :boons    [field-gift]
-                         :triggers [{:trigger  :at-clean-up
+                         :triggers [{:event    :at-clean-up
                                      :duration :once
                                      :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]
               :trash   [pixie]})))
@@ -2695,7 +2694,7 @@
                          :coins     4
                          :buys      2
                          :boons     [field-gift]
-                         :triggers  [{:trigger  :at-clean-up
+                         :triggers  [{:event    :at-clean-up
                                       :duration :once
                                       :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}
                         {:deck [estate estate]}]}))

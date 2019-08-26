@@ -469,7 +469,7 @@
 
 (effects/register {:put-revealed-types-into-hand put-revealed-types-into-hand})
 
-(def set-aside=>hand-trigger {:trigger  :at-start-turn
+(def set-aside=>hand-trigger {:event    :at-start-turn
                               :duration :once
                               :mode     :auto
                               :effects  [[:put-set-aside-into-hand]]})

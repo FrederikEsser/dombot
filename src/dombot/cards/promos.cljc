@@ -25,7 +25,7 @@
               :types   #{:action :duration}
               :cost    6
               :effects [[:give-choice captain-choice]]
-              :trigger {:trigger  :at-start-turn
+              :trigger {:event    :at-start-turn
                         :duration :once
                         :mode     :auto
                         :effects  [[:give-choice captain-choice]]}})

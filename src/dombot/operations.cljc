@@ -8,7 +8,7 @@
         {colony-pile-size :pile-size} (ut/get-pile-idx game :colony)
         extra-turns? (->> players
                           (mapcat :triggers)
-                          (some (comp #{:at-end-game} :trigger)))]
+                          (some (comp #{:at-end-game} :event)))]
     (if (or (and province-pile-size (zero? province-pile-size))
             (and colony-pile-size (zero? colony-pile-size))
             (>= (ut/empty-supply-piles game) 3)
@@ -91,7 +91,7 @@
 
 (effects/register {:sync-repeated-play sync-repeated-play})
 
-(defn get-effects-from-trigger [{:keys [effects card-id set-aside] :as trigger}]
+(defn get-effects-from-trigger [{:keys [effects card-id set-aside]}]
   (let [effect-args (merge {:card-id card-id}
                            (when set-aside
                              {:set-aside set-aside}))]
@@ -99,7 +99,7 @@
 
 (defn at-start-turn-effects [game {:keys [player-no]}]
   (let [start-turn-triggers (->> (get-in game [:players player-no :triggers])
-                                 (filter (comp #{:at-start-turn} :trigger)))
+                                 (filter (comp #{:at-start-turn} :event)))
         auto-triggers       (filter (comp #{:auto} :mode) start-turn-triggers)
         manual-triggers     (filter (comp #{:manual} :mode) start-turn-triggers)]
     (assert (every? :mode start-turn-triggers) (str "Trigger error: Some triggers lack a simultaneous mode: "
@@ -109,7 +109,7 @@
                             :effects   (concat
                                          (mapcat get-effects-from-trigger auto-triggers)
                                          (get-trigger-effects manual-triggers)
-                                         [[:remove-triggers {:trigger :at-start-turn}]
+                                         [[:remove-triggers {:event :at-start-turn}]
                                           [:sync-repeated-play]])}))))
 
 (effects/register {:at-start-turn at-start-turn-effects})
@@ -137,12 +137,12 @@
             phase-change         (cond (#{:pay} next-phase) :at-start-buy
                                        (#{:buy} current-phase) :at-end-buy)
             phase-change-effects (->> (get-in game [:players player-no :triggers])
-                                      (filter (comp #{phase-change} :trigger))
+                                      (filter (comp #{phase-change} :event))
                                       (mapcat :effects))]
         (-> game
             (assoc-in [:players player-no :phase] next-phase)
             (push-effect-stack {:player-no player-no
-                                :effects   (concat [[:remove-triggers {:trigger phase-change}]]
+                                :effects   (concat [[:remove-triggers {:event phase-change}]]
                                                    phase-change-effects
                                                    (when (not= next-phase phase)
                                                      [[:set-phase {:phase phase}]]))})))
@@ -162,7 +162,7 @@
   ([game {:keys [player-no]}]
    (let [game-status (get-game-status game)
          extra-turn? (->> (get-in game [:players player-no :triggers])
-                          (some (comp #{:at-end-game} :trigger)))]
+                          (some (comp #{:at-end-game} :event)))]
      (cond (= :finished game-status) game
            (and (= :ending game-status)
                 (not extra-turn?)) (end-turn game player-no)
@@ -172,7 +172,7 @@
                      (push-effect-stack {:player-no player-no
                                          :effects   (concat
                                                       (when (= :ending game-status)
-                                                        [[:remove-triggers {:trigger :at-end-game}]])
+                                                        [[:remove-triggers {:event :at-end-game}]])
                                                       [[:set-phase {:phase :action}]
                                                        [:at-start-turn]])})
                      check-stack)))))
@@ -204,28 +204,28 @@
         (update-in [:players player-no :villagers] dec)
         (update-in [:players player-no :actions] inc))))
 
-(defn remove-triggers [game {:keys [player-no trigger]}]
+(defn remove-triggers [game {:keys [player-no event]}]
   (-> game
-      (update-in [:players player-no :triggers] (partial remove (every-pred (ut/match {:trigger trigger})
+      (update-in [:players player-no :triggers] (partial remove (every-pred (ut/match {:event event})
                                                                             (comp #{:once :once-turn} :duration))))
-      (update-in [:players player-no :triggers] (partial remove (every-pred (ut/match {:trigger trigger})
+      (update-in [:players player-no :triggers] (partial remove (every-pred (ut/match {:event event})
                                                                             (comp #{:until-empty} :duration)
                                                                             (comp empty? :set-aside))))
       (update-in [:players player-no] ut/dissoc-if-empty :triggers)))
 
 (defn- apply-triggers
-  ([game {:keys [player-no trigger] :as args}]
-   (apply-triggers game player-no trigger args))
-  ([game player-no trigger & [args]]
+  ([game {:keys [player-no event] :as args}]
+   (apply-triggers game player-no event args))
+  ([game player-no event & [args]]
    (let [triggers          (get-in game [:players player-no :triggers])
          apply-trigger     (fn [game {:keys [card-id effects]}] (push-effect-stack game {:player-no player-no
                                                                                          :card-id   card-id
                                                                                          :effects   effects
                                                                                          :args      args}))
-         matching-triggers (filter (comp #{trigger} :trigger) triggers)]
+         matching-triggers (filter (comp #{event} :event) triggers)]
      (-> (reduce apply-trigger game (reverse matching-triggers))
          (remove-triggers {:player-no player-no
-                           :trigger   trigger})))))
+                           :event     event})))))
 
 (effects/register {:remove-triggers remove-triggers
                    :apply-triggers  apply-triggers})
@@ -313,8 +313,8 @@
                                    (mapcat (comp :on-gain :while-in-play))
                                    (map (partial ut/add-effect-args {:card-name card-name})))
         trigger-effects       (->> (get-in game [:players player-no :triggers])
-                                   (filter (fn [{:keys [trigger type]}]
-                                             (and (= :on-gain trigger)
+                                   (filter (fn [{:keys [event type]}]
+                                             (and (= :on-gain event)
                                                   (or (not type)
                                                       (contains? types type)))))
                                    (mapcat (fn [{:keys [card-id effects]}]
@@ -340,7 +340,7 @@
               (or (not-empty reaction-effects)
                   (not-empty on-gain-effects)) (push-effect-stack (merge args {:effects (concat reaction-effects
                                                                                                 on-gain-effects
-                                                                                                [[:remove-triggers {:trigger :on-gain}]])}))
+                                                                                                [[:remove-triggers {:event :on-gain}]])}))
               (and track-gained-cards?
                    (or (nil? current-player)
                        (= current-player player-no))) (update-in [:players player-no :gained-cards]
@@ -485,7 +485,7 @@
         after      (->> discard
                         (mapcat :after-shuffle))
         on-shuffle (->> (get-in game [:players player-no :triggers])
-                        (filter (comp #{:on-shuffle} :trigger))
+                        (filter (comp #{:on-shuffle} :event))
                         (mapcat :effects))]
     (push-effect-stack game {:player-no player-no
                              :effects   (concat before
@@ -520,7 +520,7 @@
 (defn handle-on-trash [game {:keys [player-no card-name] :as args}]
   (let [{{:keys [on-trash]} :card} (ut/get-card-idx game [:trash] {:name card-name})
         on-trash-triggers (->> (get-in game [:players player-no :triggers])
-                               (filter (comp #{:on-trash} :trigger))
+                               (filter (comp #{:on-trash} :event))
                                (mapcat :effects)
                                (map (partial ut/add-effect-args args)))
         on-trash-effects  (concat on-trash-triggers on-trash)]
@@ -833,13 +833,13 @@
                                                                 :from      :hand
                                                                 :to        :play-area}]
                                                    [:card-effect {:card card}]]
-                                                  (when (some (comp #{[:play card-name]} :trigger) triggers)
-                                                    [[:apply-triggers {:trigger [:play card-name]}]])
+                                                  (when (some (comp #{[:play card-name]} :event) triggers)
+                                                    [[:apply-triggers {:event [:play card-name]}]])
                                                   (when (and (:action types)
                                                              (empty? actions-played)
-                                                             (some (comp #{:play-first-action} :trigger) triggers))
-                                                    [[:apply-triggers {:trigger :play-first-action
-                                                                       :card    card}]]))})
+                                                             (some (comp #{:play-first-action} :event) triggers))
+                                                    [[:apply-triggers {:event :play-first-action
+                                                                       :card  card}]]))})
            check-stack)))))
 
 (effects/register {:play play})
@@ -970,21 +970,21 @@
                       :or   {number-of-cards 5}
                       :as   args}]
   (let [at-clean-up-triggers  (->> (get-in game [:players player-no :triggers])
-                                   (filter (comp #{:at-clean-up} :trigger))
+                                   (filter (comp #{:at-clean-up} :event))
                                    (mapcat :effects))
         at-draw-hand-triggers (->> (get-in game [:players player-no :triggers])
-                                   (filter (comp #{:at-draw-hand} :trigger))
+                                   (filter (comp #{:at-draw-hand} :event))
                                    (mapcat :effects))]
     (-> game
         (push-effect-stack (merge args
                                   {:effects (concat [[:set-phase {:phase :clean-up}]]
                                                     at-clean-up-triggers
-                                                    [[:remove-triggers {:trigger :at-clean-up}]
+                                                    [[:remove-triggers {:event :at-clean-up}]
                                                      [:at-clean-up]
                                                      [:do-clean-up args]
                                                      [:draw number-of-cards]]
                                                     at-draw-hand-triggers
-                                                    [[:remove-triggers {:trigger :at-draw-hand}]
+                                                    [[:remove-triggers {:event :at-draw-hand}]
                                                      [:check-game-ended]])}))
         check-stack)))
 
@@ -994,13 +994,13 @@
 (defn end-turn [{:keys [effect-stack players] :as game} player-no]
   (assert (empty? effect-stack) "You can't end your turn when you have a choice to make.")
   (let [at-end-turn-effects (->> (get-in game [:players player-no :triggers])
-                                 (filter (comp #{:at-end-turn} :trigger))
+                                 (filter (comp #{:at-end-turn} :event))
                                  (mapcat :effects))]
     (if (not-empty at-end-turn-effects)
       (-> game
           (push-effect-stack {:player-no player-no
                               :effects   (concat at-end-turn-effects
-                                                 [[:remove-triggers {:trigger :at-end-turn}]])})
+                                                 [[:remove-triggers {:event :at-end-turn}]])})
           check-stack)
       (let [next-player (mod (inc player-no) (count players))]
         (-> game

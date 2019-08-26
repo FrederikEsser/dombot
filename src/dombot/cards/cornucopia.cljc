@@ -150,7 +150,7 @@
                    :from         :play-area
                    :to           :hand}))
 
-(def horse-traders-trigger {:trigger  :at-start-turn
+(def horse-traders-trigger {:event    :at-start-turn
                             :duration :once
                             :mode     :auto
                             :effects  [[::horse-traders-return-to-hand]

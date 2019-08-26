@@ -15,7 +15,7 @@
                                         [:card-effect {:card card}]
                                         [:register-repeated-play {:target-id id}]]}))))
 
-(def ghost-trigger {:trigger  :at-start-turn
+(def ghost-trigger {:event    :at-start-turn
                     :duration :once
                     :mode     :auto
                     :effects  [[::ghost-repeat-action]]})
@@ -177,7 +177,7 @@
 
 (defn- receive-river-gift [{:keys [current-player] :as game} {:keys [player-no]}]
   (add-trigger game {:player-no (or current-player 0)
-                     :trigger   {:trigger  :at-draw-hand
+                     :trigger   {:event    :at-draw-hand
                                  :duration :once
                                  :effects  [[:draw {:arg       1
                                                     :player-no player-no}]]}}))
@@ -281,7 +281,7 @@
 
 (def deluded {:name    :deluded
               :type    :state
-              :trigger {:trigger  :at-start-buy
+              :trigger {:event    :at-start-buy
                         :duration :once
                         :effects  [[:return-state {:state-name :deluded}]
                                    [:mark-unbuyable {:type :action}]]}})
@@ -290,17 +290,17 @@
                :type    :hex
                :effects [[:take-state {:state deluded}]]})
 
-(def envious-silver-trigger {:trigger  [:play :silver]
+(def envious-silver-trigger {:event    [:play :silver]
                              :duration :turn
                              :effects  [[:give-coins -1]]})
 
-(def envious-gold-trigger {:trigger  [:play :gold]
+(def envious-gold-trigger {:event    [:play :gold]
                            :duration :turn
                            :effects  [[:give-coins -2]]})
 
 (def envious {:name    :envious
               :type    :state
-              :trigger {:trigger  :at-start-buy
+              :trigger {:event    :at-start-buy
                         :duration :once
                         :effects  [[:return-state {:state-name :envious}]
                                    [:add-trigger {:trigger envious-silver-trigger}]
@@ -535,7 +535,7 @@
           (push-effect-stack {:player-no player-no
                               :effects   (concat effects
                                                  (when (and has-boon? keep-until-clean-up?)
-                                                   [[:add-trigger {:trigger {:trigger  :at-clean-up
+                                                   [[:add-trigger {:trigger {:event    :at-clean-up
                                                                              :duration :once
                                                                              :effects  [[:return-boon {:boon-name name}]]}}]]))})
           check-stack))))
@@ -590,7 +590,7 @@
       :now (push-effect-stack game {:player-no player-no
                                     :effects   boon-effects})
       :at-start-turn (add-trigger game {:player-no player-no
-                                        :trigger   {:trigger  :at-start-turn
+                                        :trigger   {:event    :at-start-turn
                                                     :duration :once
                                                     :mode     :auto
                                                     :effects  boon-effects}}))))
@@ -692,7 +692,7 @@
 (effects/register {::changeling-exchange changeling-exchange
                    ::changeling-on-gain  changeling-on-gain})
 
-(def changeling-trigger {:trigger  :on-gain
+(def changeling-trigger {:event    :on-gain
                          :duration :game
                          :effects  [[::changeling-on-gain]]})
 
@@ -712,7 +712,7 @@
               :set     :nocturne
               :types   #{:night :duration}
               :cost    5
-              :trigger {:trigger  :at-start-turn
+              :trigger {:event    :at-start-turn
                         :duration :once
                         :mode     :auto
                         :effects  [[:give-choice {:text    "Gain a card to your hand costing up to $4."
@@ -774,7 +774,7 @@
 
 
 
-(def crypt-trigger {:trigger  :at-start-turn
+(def crypt-trigger {:event    :at-start-turn
                     :duration :until-empty
                     :mode     :auto
                     :effects  [[::crypt-pick-treasure]]})
@@ -822,7 +822,7 @@
                  :set     :nocturne
                  :types   #{:night :duration}
                  :cost    5
-                 :trigger {:trigger  :at-start-turn
+                 :trigger {:event    :at-start-turn
                            :duration :once
                            :mode     :auto
                            :effects  [[:draw 2]]}
@@ -905,7 +905,7 @@
                                                                  :from      :discard
                                                                  :to        :set-aside}]
                                                     [:add-trigger {:player-no (or current-player 0)
-                                                                   :trigger   {:trigger  :at-draw-hand
+                                                                   :trigger   {:event    :at-draw-hand
                                                                                :duration :once
                                                                                :effects  [[:move-card {:player-no player-no
                                                                                                        :card-name :faithful-hound
@@ -942,7 +942,7 @@
 
 (def lost-in-the-woods {:name    :lost-in-the-woods
                         :type    :state
-                        :trigger {:trigger :at-start-turn
+                        :trigger {:event   :at-start-turn
                                   :mode    :auto
                                   :effects [[:give-choice {:text    "You may discard a card to receive a Boon."
                                                            :choice  ::discard-for-boon
@@ -996,7 +996,7 @@
                  :set     :nocturne
                  :types   #{:night :duration}
                  :cost    3
-                 :trigger {:trigger  :at-start-turn
+                 :trigger {:event    :at-start-turn
                            :duration :once
                            :mode     :auto
                            :effects  [[:draw 1]
@@ -1008,7 +1008,7 @@
                :types   #{:night :duration}
                :cost    2
                :effects [[:mark-unaffected]]
-               :trigger {:trigger  :at-start-turn
+               :trigger {:event    :at-start-turn
                          :duration :once
                          :mode     :auto
                          :effects  [[:give-coins 1]
@@ -1192,7 +1192,7 @@
                                                                  effects
                                                                  effects
                                                                  (when keep-until-clean-up?
-                                                                   [[:add-trigger {:trigger {:trigger  :at-clean-up
+                                                                   [[:add-trigger {:trigger {:event    :at-clean-up
                                                                                              :duration :once
                                                                                              :effects  [[:return-boon {:boon-name name}]]}}]]))})))))
 
@@ -1316,7 +1316,7 @@
              :types   #{:night :duration :attack}
              :cost    6
              :effects [[::make-raider-attack]]
-             :trigger {:trigger  :at-start-turn
+             :trigger {:event    :at-start-turn
                        :duration :once
                        :mode     :auto
                        :effects  [[:give-coins 3]]}})
@@ -1345,7 +1345,7 @@
                  :coin-value 1
                  :effects    [[::magic-lamp-genie]]})
 
-(def secret-cave-trigger {:trigger  :at-start-turn
+(def secret-cave-trigger {:event    :at-start-turn
                           :duration :once
                           :mode     :auto
                           :effects  [[:give-coins 3]]})

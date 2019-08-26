@@ -24,7 +24,7 @@
 
 (def horn {:name    :horn
            :type    :artifact
-           :trigger {:trigger :at-clean-up
+           :trigger {:event   :at-clean-up
                      :effects [[::horn-at-clean-up]]}})
 
 (def lantern {:name :lantern
@@ -80,7 +80,7 @@
                    :setup   [[:add-artifact {:artifact horn}]
                              [:add-artifact {:artifact lantern}]]})
 
-(def cargo-ship-trigger {:trigger  :on-gain
+(def cargo-ship-trigger {:event    :on-gain
                          :duration :turn
                          :effects  [[::cargo-ship-give-choice]]})
 
@@ -150,7 +150,7 @@
 
 (def flag {:name    :flag
            :type    :artifact
-           :trigger {:trigger :at-draw-hand
+           :trigger {:event   :at-draw-hand
                      :effects [[:draw 1]]}})
 
 (def flag-bearer {:name     :flag-bearer
@@ -278,7 +278,7 @@
                          [:give-coins 2]]
              :on-reveal [[:give-coffers 1]]})
 
-(def priest-trigger {:trigger  :on-trash
+(def priest-trigger {:event    :on-trash
                      :duration :turn
                      :effects  [[:give-coins 2]]})
 
@@ -454,7 +454,7 @@
 
 (def treasure-chest {:name    :treasure-chest
                      :type    :artifact
-                     :trigger {:trigger :at-start-buy
+                     :trigger {:event   :at-start-buy
                                :effects [[:gain {:card-name :gold}]]}})
 
 (defn- swashbuckler-check-discard [game {:keys [player-no]}]
@@ -478,7 +478,7 @@
 
 (def key {:name    :key
           :type    :artifact
-          :trigger {:trigger :at-start-turn
+          :trigger {:event   :at-start-turn
                     :mode    :auto
                     :effects [[:give-coins 1]]}})
 
@@ -566,7 +566,7 @@
               :set     :renaissance
               :type    :project
               :cost    5
-              :trigger {:trigger :on-gain
+              :trigger {:event   :on-gain
                         :type    :action
                         :effects [[:give-villagers 1]]}})
 
@@ -574,7 +574,7 @@
                :set     :renaissance
                :type    :project
                :cost    6
-               :trigger {:trigger :at-start-turn
+               :trigger {:event   :at-start-turn
                          :mode    :auto
                          :effects [[:give-actions 1]]}})
 
@@ -593,7 +593,7 @@
                 :set     :renaissance
                 :type    :project
                 :cost    3
-                :trigger {:trigger :at-start-turn
+                :trigger {:event   :at-start-turn
                           :mode    :manual
                           :effects [[:give-choice {:text    "Trash a card from your hand."
                                                    :choice  :trash-from-hand
@@ -605,14 +605,14 @@
               :set     :renaissance
               :type    :project
               :cost    8
-              :trigger {:trigger :play-first-action
+              :trigger {:event   :play-first-action
                         :effects [[:card-effect]]}})
 
 (def city-gate {:name    :city-gate
                 :set     :renaissance
                 :type    :project
                 :cost    3
-                :trigger {:trigger :at-start-turn
+                :trigger {:event   :at-start-turn
                           :mode    :manual
                           :effects [[:draw 1]
                                     [:give-choice {:text    "Put a card from your hand onto your deck."
@@ -633,7 +633,7 @@
                     :set     :renaissance
                     :type    :project
                     :cost    6
-                    :trigger {:trigger :at-start-turn
+                    :trigger {:event   :at-start-turn
                               :mode    :manual
                               :effects [[:give-choice {:text    "You may discard a Victory card for +2 Cards."
                                                        :choice  ::crop-rotation-discard
@@ -655,14 +655,14 @@
                   :set     :renaissance
                   :type    :project
                   :cost    4
-                  :trigger {:trigger :at-end-buy
+                  :trigger {:event   :at-end-buy
                             :effects [[::exploration-at-end-buy]]}})
 
 (def fair {:name    :fair
            :set     :renaissance
            :type    :project
            :cost    4
-           :trigger {:trigger :at-start-turn
+           :trigger {:event   :at-start-turn
                      :mode    :auto
                      :effects [[:give-buys 1]]}})
 
@@ -670,14 +670,14 @@
             :set     :renaissance
             :type    :project
             :cost    5
-            :trigger {:trigger  :at-end-game
+            :trigger {:event    :at-end-game
                       :duration :once}})
 
 (def guildhall {:name    :guildhall
                 :set     :renaissance
                 :type    :project
                 :cost    5
-                :trigger {:trigger :on-gain
+                :trigger {:event   :on-gain
                           :type    :treasure
                           :effects [[:give-coffers 1]]}})
 
@@ -709,7 +709,7 @@
                  :set     :renaissance
                  :type    :project
                  :cost    6
-                 :trigger {:trigger :on-gain
+                 :trigger {:event   :on-gain
                            :type    :action
                            :effects [[::innovation-on-gain]]}})
 
@@ -738,14 +738,14 @@
               :set     :renaissance
               :type    :project
               :cost    3
-              :trigger {:trigger :at-end-buy
+              :trigger {:event   :at-end-buy
                         :effects [[::pageant-give-choice]]}})
 
 (def piazza {:name    :piazza
              :set     :renaissance
              :type    :project
              :cost    5
-             :trigger {:trigger :at-start-turn
+             :trigger {:event   :at-start-turn
                        :mode    :manual
                        :effects [[:reveal-from-deck 1]
                                  [::guilds/herald-play-action]]}})
@@ -761,7 +761,7 @@
   (affect-other-players game {:player-no player-no
                               :effects   [[:add-trigger {:trigger {:name     :road-network
                                                                    :duration :game
-                                                                   :trigger  :on-gain
+                                                                   :event    :on-gain
                                                                    :effects  [[::road-network-on-gain {:player-no player-no}]]}}]]}))
 
 (effects/register {::road-network-on-gain      road-network-on-gain
@@ -787,14 +787,14 @@
              :set     :renaissance
              :type    :project
              :cost    3
-             :trigger {:trigger :on-trash
+             :trigger {:event   :on-trash
                        :effects [[::sewers-on-trash]]}})
 
 (def silos {:name    :silos
             :set     :renaissance
             :type    :project
             :cost    4
-            :trigger {:trigger :at-start-turn
+            :trigger {:event   :at-start-turn
                       :mode    :manual
                       :effects [[:give-choice {:text    "Discard any number of Coppers."
                                                :choice  ::dominion/cellar-sift
@@ -836,7 +836,7 @@
                     :set     :renaissance
                     :type    :project
                     :cost    4
-                    :trigger {:trigger :at-start-turn
+                    :trigger {:event   :at-start-turn
                               :mode    :manual
                               :effects [[::sinister-plot-give-choice]]}})
 
@@ -859,7 +859,7 @@
                  :set     :renaissance
                  :type    :project
                  :cost    3
-                 :trigger {:trigger :on-shuffle
+                 :trigger {:event   :on-shuffle
                            :effects [[:put-deck-into-discard]
                                      [:give-choice {:text    "You may pick one card to go on top of your deck."
                                                     :choice  ::star-chart-on-shuffle

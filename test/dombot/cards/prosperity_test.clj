@@ -996,7 +996,7 @@
                               :options   [:gold]
                               :max       1}
                              {:player-no 0
-                              :effect    [:remove-triggers {:trigger :on-gain}]}
+                              :effect    [:remove-triggers {:event :on-gain}]}
                              {:player-no 0
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :gold
@@ -1346,7 +1346,7 @@
                               :min       1
                               :max       1}
                              {:player-no 0
-                              :effect    [:remove-triggers {:trigger :on-gain}]}
+                              :effect    [:remove-triggers {:event :on-gain}]}
                              {:player-no 0
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :gold
@@ -1409,7 +1409,7 @@
                               :min       1
                               :max       1}
                              {:player-no 1
-                              :effect    [:remove-triggers {:trigger :on-gain}]}
+                              :effect    [:remove-triggers {:event :on-gain}]}
                              {:player-no 1
                               :effect    [:finalize-gain {:player-no           1
                                                           :card-name           :curse

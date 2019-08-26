@@ -148,7 +148,7 @@
                              {:player-no 0
                               :effect    [:draw 5]}
                              {:player-no 0
-                              :effect    [:remove-triggers {:trigger :at-draw-hand}]}
+                              :effect    [:remove-triggers {:event :at-draw-hand}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
       (is (= (-> {:artifacts {:horn    horn
@@ -348,7 +348,7 @@
                               :options   [:gold]
                               :max       1}
                              {:player-no 0
-                              :effect    [:remove-triggers {:trigger :on-gain}]}
+                              :effect    [:remove-triggers {:event :on-gain}]}
                              {:player-no 0
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :gold
@@ -405,7 +405,7 @@
                               :options   [:border-guard]
                               :max       1}
                              {:player-no 0
-                              :effect    [:remove-triggers {:trigger :on-gain}]}
+                              :effect    [:remove-triggers {:event :on-gain}]}
                              {:player-no 0
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :border-guard
@@ -582,7 +582,7 @@
                                                                                           :card-name      :gold
                                                                                           :gained-card-id 5}]}
                            {:player-no 0
-                            :effect    [:remove-triggers {:trigger :on-gain}]}
+                            :effect    [:remove-triggers {:event :on-gain}]}
                            {:player-no 0
                             :effect    [:finalize-gain {:player-no      0
                                                         :card-name      :gold
@@ -697,7 +697,7 @@
                               :options        [:copper :copper]
                               :max            1}
                              {:player-no 0
-                              :effect    [:remove-triggers {:trigger :on-gain}]}
+                              :effect    [:remove-triggers {:event :on-gain}]}
                              {:player-no 0
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :ducat
@@ -899,7 +899,7 @@
                              {:player-no 0
                               :effect    [:draw 5]}
                              {:player-no 0
-                              :effect    [:remove-triggers {:trigger :at-draw-hand}]}
+                              :effect    [:remove-triggers {:event :at-draw-hand}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
       (is (= (-> {:players [{:play-area [(assoc improve :at-clean-up [[::renaissance/improve-give-choice]])
@@ -921,7 +921,7 @@
                              {:player-no 0
                               :effect    [:draw 5]}
                              {:player-no 0
-                              :effect    [:remove-triggers {:trigger :at-draw-hand}]}
+                              :effect    [:remove-triggers {:event :at-draw-hand}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
       (is (= (-> {:players [{:play-area [research
@@ -948,7 +948,7 @@
                              {:player-no 0
                               :effect    [:draw 5]}
                              {:player-no 0
-                              :effect    [:remove-triggers {:trigger :at-draw-hand}]}
+                              :effect    [:remove-triggers {:event :at-draw-hand}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
       (is (= (-> {:supply  [{:card lackeys :pile-size 9}
@@ -977,7 +977,7 @@
                              {:player-no 0
                               :effect    [:draw 5]}
                              {:player-no 0
-                              :effect    [:remove-triggers {:trigger :at-draw-hand}]}
+                              :effect    [:remove-triggers {:event :at-draw-hand}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]})))))
 
@@ -2715,19 +2715,19 @@
                           :buys  0}
                          {:triggers [{:name     :road-network
                                       :duration :game
-                                      :trigger  :on-gain
+                                      :event    :on-gain
                                       :effects  [[::renaissance/road-network-on-gain {:player-no 0}]]}]}]}))
       (is (= (-> {:projects {:road-network (assoc road-network :participants [{:player-no 1}])}
                   :players  [{:coins    5
                               :buys     1
                               :triggers [{:name     :road-network
                                           :duration :game
-                                          :trigger  :on-gain
+                                          :event    :on-gain
                                           :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}]}
                              {}
                              {:triggers [{:name     :road-network
                                           :duration :game
-                                          :trigger  :on-gain
+                                          :event    :on-gain
                                           :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}]}]}
                  (buy-project 0 :road-network))
              {:projects {:road-network (assoc road-network :participants [{:player-no 1} {:player-no 0}])}
@@ -2735,26 +2735,26 @@
                           :buys     0
                           :triggers [{:name     :road-network
                                       :duration :game
-                                      :trigger  :on-gain
+                                      :event    :on-gain
                                       :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}]}
                          {:triggers [{:name     :road-network
                                       :duration :game
-                                      :trigger  :on-gain
+                                      :event    :on-gain
                                       :effects  [[::renaissance/road-network-on-gain {:player-no 0}]]}]}
                          {:triggers [{:name     :road-network
                                       :duration :game
-                                      :trigger  :on-gain
+                                      :event    :on-gain
                                       :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}
                                      {:name     :road-network
                                       :duration :game
-                                      :trigger  :on-gain
+                                      :event    :on-gain
                                       :effects  [[::renaissance/road-network-on-gain {:player-no 0}]]}]}]}))
       (is (= (-> {:supply  [{:card silver :pile-size 40}]
                   :players [{:coins    3
                              :buys     1
                              :triggers [{:name     :road-network
                                          :duration :game
-                                         :trigger  :on-gain
+                                         :event    :on-gain
                                          :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}]}
                             {:hand [copper copper copper copper copper]
                              :deck [silver silver]}]}
@@ -2765,7 +2765,7 @@
                          :buys     0
                          :triggers [{:name     :road-network
                                      :duration :game
-                                     :trigger  :on-gain
+                                     :event    :on-gain
                                      :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}]}
                         {:hand [copper copper copper copper copper]
                          :deck [silver silver]}]}))
@@ -2774,7 +2774,7 @@
                              :buys     1
                              :triggers [{:name     :road-network
                                          :duration :game
-                                         :trigger  :on-gain
+                                         :event    :on-gain
                                          :effects  [[::renaissance/road-network-on-gain {:player-no 2}]]}]}
                             {:hand [copper copper copper copper copper]
                              :deck [silver silver]}
@@ -2787,7 +2787,7 @@
                          :buys     0
                          :triggers [{:name     :road-network
                                      :duration :game
-                                     :trigger  :on-gain
+                                     :event    :on-gain
                                      :effects  [[::renaissance/road-network-on-gain {:player-no 2}]]}]}
                         {:hand [copper copper copper copper copper]
                          :deck [silver silver]}
@@ -2798,11 +2798,11 @@
                              :buys     1
                              :triggers [{:name     :road-network
                                          :duration :game
-                                         :trigger  :on-gain
+                                         :event    :on-gain
                                          :effects  [[::renaissance/road-network-on-gain {:player-no 2}]]}
                                         {:name     :road-network
                                          :duration :game
-                                         :trigger  :on-gain
+                                         :event    :on-gain
                                          :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}]}
                             {:hand [copper copper copper copper copper]
                              :deck [silver silver]}
@@ -2815,11 +2815,11 @@
                          :buys     0
                          :triggers [{:name     :road-network
                                      :duration :game
-                                     :trigger  :on-gain
+                                     :event    :on-gain
                                      :effects  [[::renaissance/road-network-on-gain {:player-no 2}]]}
                                     {:name     :road-network
                                      :duration :game
-                                     :trigger  :on-gain
+                                     :event    :on-gain
                                      :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}]}
                         {:hand [copper copper copper copper copper silver]
                          :deck [silver]}
@@ -3017,7 +3017,7 @@
                               :min       1
                               :max       1}
                              {:player-no 0
-                              :effect    [:remove-triggers {:trigger :at-start-turn}]}
+                              :effect    [:remove-triggers {:event :at-start-turn}]}
                              {:player-no 0
                               :effect    [:sync-repeated-play]}]}))
     (is (= (-> {:players [{:hand     [copper copper silver]

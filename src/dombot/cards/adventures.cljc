@@ -31,7 +31,7 @@
              :types   #{:action :duration}
              :cost    3
              :effects [[:give-choice amulet-choice]]
-             :trigger {:trigger  :at-start-turn
+             :trigger {:event    :at-start-turn
                        :duration :once
                        :mode     :auto
                        :effects  [[:give-choice amulet-choice]]}})
@@ -72,7 +72,7 @@
                     :cost      3
                     :effects   [[:draw 1]
                                 [:give-actions 1]]
-                    :trigger   {:trigger  :at-start-turn
+                    :trigger   {:event    :at-start-turn
                                 :duration :once
                                 :mode     :auto
                                 :effects  [[:give-coins 1]]}
@@ -83,7 +83,7 @@
                :set     :adventures
                :types   #{:action :duration}
                :cost    6
-               :trigger {:trigger  :at-start-turn
+               :trigger {:event    :at-start-turn
                          :duration :game
                          :mode     :auto
                          :effects  [[:draw 1]]}})

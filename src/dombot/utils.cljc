@@ -205,7 +205,7 @@
                                    (filter (comp card-ids-in-play :target))
                                    (map :target)
                                    set)
-        stay-in-play-triggers (filter (comp #{:at-start-turn :at-end-turn} :trigger) triggers)]
+        stay-in-play-triggers (filter (comp #{:at-start-turn :at-end-turn} :event) triggers)]
     (or (some (comp #{id} :card-id) stay-in-play-triggers)
         (some (comp repeated-card-ids :card-id) stay-in-play-triggers))))
 

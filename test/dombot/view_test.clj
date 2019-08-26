@@ -201,7 +201,7 @@
              :number-of-cards 2}]))
     (let [player {:player-no 0
                   :play-area [copper (assoc haven :id 1)]
-                  :triggers  [{:trigger   :at-start-turn
+                  :triggers  [{:event     :at-start-turn
                                :card-id   1
                                :set-aside [silver]}]}]
       (is (= (view-area :play-area {:player         player
