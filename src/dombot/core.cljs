@@ -105,7 +105,7 @@
      card)))
 
 (defn view-project
-  [{:keys [name name-ui type cost interaction participants]}]
+  [{:keys [name name-ui choice-value type cost interaction participants]}]
   (let [disabled (nil? interaction)]
     [:div
      [:button {:style    (button-style disabled #{type} 1)
@@ -113,7 +113,7 @@
                :on-click (when interaction
                            (fn [] (case interaction
                                     :buyable (swap! state assoc :game (cmd/buy-project name))
-                                    :quick-choosable (swap! state assoc :game (cmd/choose name)))))}
+                                    :quick-choosable (swap! state assoc :game (cmd/choose choice-value)))))}
       (str name-ui
            (when cost (str " ($" cost ")"))
            (when participants (str " " (->> participants (string/join " ")))))]]))

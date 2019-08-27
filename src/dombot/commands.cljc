@@ -18,7 +18,7 @@
 ; show Actions as unbuyable when Deluded (and in action phase)
 ; fix Ghost on Durations - and Ghost stays in play
 ; check Ghost with Citadel
-; test swiftable for multi/mixed choices
+; test swiftable for mixed choices
 ; make "any order" option for all topdecking (Sentry, Navigator, Rabble, Doctor, Seer, Night Watchman)
 ; make extra-cards (Prizes, Spirits, etc.) and unique cards (Zombies & Heirlooms) visible/choosable for Wishing Well / Doctor / Journeyman
 ; view card images

@@ -9,7 +9,7 @@
                       {:interaction :choosable})]
     (cond
       (and (= area source) ((set options) name)) interaction
-      (= :multi source) (let [card-names (->> options
+      (= :mixed source) (let [card-names (->> options
                                               (filter (comp #{area} :area))
                                               (map :card-name)
                                               set)]
@@ -88,7 +88,7 @@
                                 buys (pos? buys)
                                 coins (<= cost coins))
                        {:interaction :buyable})
-                     (choice-interaction name :mixed choice))))))
+                     (choice-interaction name :projects choice))))))
 
 (defn view-boon
   ([boon]

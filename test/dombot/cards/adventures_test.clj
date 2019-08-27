@@ -402,7 +402,7 @@
                               :player-no 0
                               :card-id   0
                               :choice    ::adventures/raze-trash-from-area
-                              :source    :multi
+                              :source    :mixed
                               :options   [{:area :play-area :card-name :raze}
                                           {:area :hand :card-name :estate}]
                               :min       1

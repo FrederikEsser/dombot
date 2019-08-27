@@ -255,13 +255,20 @@
 
 (effects/register-options {:supply options-from-supply})
 
-(defn options-from-extra-cards [{:keys [extra-cards] :as game} player-no card-id & [{:keys [max-cost cost type names all]}]]
+(defn options-from-extra-cards [{:keys [extra-cards] :as game} player-no card-id & [{:keys [max-cost type]}]]
   (cond->> extra-cards
            max-cost (filter (comp (partial >= max-cost) (partial get-cost game) :card))
            type (filter (comp type (partial get-types game) :card))
            :always (map (comp :name :card))))
 
 (effects/register-options {:extra-cards options-from-extra-cards})
+
+(defn options-from-projects [{:keys [projects] :as game} player-no card-id & [{:keys [names]}]]
+  (cond->> (vals projects)
+           names (filter (comp names :name))
+           :always (map (comp :name))))
+
+(effects/register-options {:projects options-from-projects})
 
 (defn options-from-deck-position [game player-no & args]
   (let [deck (get-in game [:players player-no :deck])]
@@ -292,8 +299,7 @@
 (defn special-options [game player-no card-id & options]
   options)
 
-(effects/register-options {:special special-options
-                           :mixed   special-options})
+(effects/register-options {:special special-options})
 
 (defn get-source [[name arg & [{:keys [id last]}]]]
   (if (= :player name)
@@ -303,7 +309,7 @@
              {:reveal-discard? true}))
     {:source name}))
 
-(defn multi-options [game player-no card-id & options]
+(defn mixed-options [game player-no card-id & options]
   (->> options
        (mapcat (fn [[opt-name & opt-args :as option]]
                  (let [opt-fn (effects/get-option opt-name)
@@ -313,7 +319,7 @@
                                {:area      source
                                 :card-name card-name}))))))))
 
-(effects/register-options {:multi multi-options})
+(effects/register-options {:mixed mixed-options})
 
 (defn empty-supply-piles [{:keys [supply] :as game}]
   (->> supply

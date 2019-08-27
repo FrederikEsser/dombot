@@ -139,7 +139,7 @@
            :effects [[:give-actions 1]
                      [:give-choice {:text    "Trash Raze or a card from your hand."
                                     :choice  ::raze-trash-from-area
-                                    :options [:multi
+                                    :options [:mixed
                                               [:player :play-area {:this true}]
                                               [:player :hand]]
                                     :min     1

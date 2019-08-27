@@ -2219,7 +2219,7 @@
               :effect-stack [{:text      "Trash up to 1 card from your hand or Coppers you have in play."
                               :player-no 0
                               :choice    :trash-from-area
-                              :source    :multi
+                              :source    :mixed
                               :options   [{:area :hand :card-name :estate}
                                           {:area :hand :card-name :copper}]
                               :max       1}]}))
@@ -2235,7 +2235,7 @@
               :effect-stack [{:text      "Trash up to 2 cards from your hand or Coppers you have in play."
                               :player-no 0
                               :choice    :trash-from-area
-                              :source    :multi
+                              :source    :mixed
                               :options   [{:area :hand :card-name :estate}
                                           {:area :hand :card-name :copper}
                                           {:area :play-area :card-name :copper}]

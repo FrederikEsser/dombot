@@ -1060,7 +1060,7 @@
                                               :text      (str "Trash up to " gained-cards " card" (when (< 1 gained-cards) "s")
                                                               " from your hand or Coppers you have in play.")
                                               :choice    :trash-from-area
-                                              :options   [:multi
+                                              :options   [:mixed
                                                           [:player :hand]
                                                           [:player :play-area {:name :copper}]]
                                               :max       gained-cards}))))

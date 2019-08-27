@@ -66,15 +66,15 @@
   (if (< 1 (count triggers))
     [[:give-choice {:text    "Multiple things happen simultaneous. Select which one happens next."
                     :choice  [:simultaneous-effects-choice {:triggers triggers}]
-                    :options (concat [:mixed]
-                                     (map :name triggers))
+                    :options [:mixed
+                              [:projects {:names (->> triggers (map :name) set)}]]
                     :min     1
                     :max     1}]]
     (mapcat :effects triggers)))
 
 (defn simultaneous-effects-choice [game {:keys [player-no triggers choice]}]
   (let [[{:keys [effects]} & more-triggers] (->> triggers
-                                                 (sort-by (comp not #{choice} :name)))]
+                                                 (sort-by (comp not #{(:card-name choice)} :name)))]
     (push-effect-stack game {:player-no player-no
                              :effects   (concat effects
                                                 (get-trigger-effects more-triggers))})))
@@ -645,7 +645,6 @@
                            :overpay :amount
                            :special :choice
                            :mixed :choice
-                           :multi :choice
                            :card-name)
         single-selection (if (sequential? selection)
                            (first selection)
@@ -671,7 +670,7 @@
                           :deck-position :position
                           :overpay :amount
                           :special :choices
-                          :multi :choices
+                          :mixed :choices
                           :card-names)
         multi-selection (if (sequential? selection)
                           selection

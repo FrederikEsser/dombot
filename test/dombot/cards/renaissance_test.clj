@@ -2874,15 +2874,15 @@
 
 (deftest sinister-plot-test
   (testing "Sinister Plot"
-    (is (= (-> {:projects {:sinister-plot (assoc fair :participants [{:player-no 0}])}
+    (is (= (-> {:projects {:sinister-plot (assoc sinister-plot :participants [{:player-no 0}])}
                 :players  [{:hand     [copper copper estate silver estate]
                             :deck     [gold gold duchy]
                             :phase    :out-of-turn
                             :triggers [(get-project-trigger sinister-plot)]}]}
                (start-turn {:player-no 0})
                (choose :add-token))
-           {:projects       {:sinister-plot (assoc fair :participants [{:player-no 0
-                                                                        :tokens    1}])}
+           {:projects       {:sinister-plot (assoc sinister-plot :participants [{:player-no 0
+                                                                                 :tokens    1}])}
             :current-player 0
             :players        [{:hand     [copper copper estate silver estate]
                               :deck     [gold gold duchy]
@@ -2891,16 +2891,16 @@
                               :buys     1
                               :phase    :action
                               :triggers [(get-project-trigger sinister-plot)]}]}))
-    (is (= (-> {:projects {:sinister-plot (assoc fair :participants [{:player-no 0
-                                                                      :tokens    1}])}
+    (is (= (-> {:projects {:sinister-plot (assoc sinister-plot :participants [{:player-no 0
+                                                                               :tokens    1}])}
                 :players  [{:hand     [copper copper estate silver estate]
                             :deck     [gold gold duchy]
                             :phase    :out-of-turn
                             :triggers [(get-project-trigger sinister-plot)]}]}
                (start-turn {:player-no 0})
                (choose :add-token))
-           {:projects       {:sinister-plot (assoc fair :participants [{:player-no 0
-                                                                        :tokens    2}])}
+           {:projects       {:sinister-plot (assoc sinister-plot :participants [{:player-no 0
+                                                                                 :tokens    2}])}
             :current-player 0
             :players        [{:hand     [copper copper estate silver estate]
                               :deck     [gold gold duchy]
@@ -2909,15 +2909,15 @@
                               :buys     1
                               :phase    :action
                               :triggers [(get-project-trigger sinister-plot)]}]}))
-    (is (= (-> {:projects {:sinister-plot (assoc fair :participants [{:player-no 0
-                                                                      :tokens    2}])}
+    (is (= (-> {:projects {:sinister-plot (assoc sinister-plot :participants [{:player-no 0
+                                                                               :tokens    2}])}
                 :players  [{:hand     [copper copper estate silver estate]
                             :deck     [gold gold duchy]
                             :phase    :out-of-turn
                             :triggers [(get-project-trigger sinister-plot)]}]}
                (start-turn {:player-no 0})
                (choose :remove-tokens))
-           {:projects       {:sinister-plot (assoc fair :participants [{:player-no 0}])}
+           {:projects       {:sinister-plot (assoc sinister-plot :participants [{:player-no 0}])}
             :current-player 0
             :players        [{:hand     [copper copper estate silver estate gold gold]
                               :deck     [duchy]
@@ -2926,14 +2926,14 @@
                               :buys     1
                               :phase    :action
                               :triggers [(get-project-trigger sinister-plot)]}]}))
-    (is (= (-> {:projects {:sinister-plot (assoc fair :participants [{:player-no 0}])}
+    (is (= (-> {:projects {:sinister-plot (assoc sinister-plot :participants [{:player-no 0}])}
                 :players  [{:hand     [copper copper estate silver estate]
                             :deck     [gold gold duchy]
                             :phase    :out-of-turn
                             :triggers [(get-project-trigger sinister-plot)]}]}
                (start-turn {:player-no 0})
                (choose :remove-tokens))
-           {:projects       {:sinister-plot (assoc fair :participants [{:player-no 0}])}
+           {:projects       {:sinister-plot (assoc sinister-plot :participants [{:player-no 0}])}
             :current-player 0
             :players        [{:hand     [copper copper estate silver estate]
                               :deck     [gold gold duchy]
@@ -2993,13 +2993,17 @@
 
 (deftest simultaneous-effects-test
   (testing "Simultaneous effects"
-    (is (= (-> {:players [{:hand     [copper copper silver]
-                           :deck     [estate gold copper copper]
-                           :phase    :out-of-turn
-                           :triggers [(get-project-trigger crop-rotation)
-                                      (get-project-trigger silos)]}]}
+    (is (= (-> {:projects {:crop-rotation (assoc crop-rotation :participants [{:player-no 0}])
+                           :silos         (assoc silos :participants [{:player-no 0}])}
+                :players  [{:hand     [copper copper silver]
+                            :deck     [estate gold copper copper]
+                            :phase    :out-of-turn
+                            :triggers [(get-project-trigger crop-rotation)
+                                       (get-project-trigger silos)]}]}
                (start-turn {:player-no 0}))
            {:current-player 0
+            :projects       {:crop-rotation (assoc crop-rotation :participants [{:player-no 0}])
+                             :silos         (assoc silos :participants [{:player-no 0}])}
             :players        [{:hand     [copper copper silver]
                               :deck     [estate gold copper copper]
                               :actions  1
@@ -3008,28 +3012,33 @@
                               :phase    :action
                               :triggers [(get-project-trigger crop-rotation)
                                          (get-project-trigger silos)]}]
-            :effect-stack   [{:text      "Multiple things happen at the start of your turn. Select which one happens next."
+            :effect-stack   [{:text      "Multiple things happen simultaneous. Select which one happens next."
                               :player-no 0
                               :choice    [:simultaneous-effects-choice {:triggers [(get-project-trigger crop-rotation)
                                                                                    (get-project-trigger silos)]}]
                               :source    :mixed
-                              :options   [:crop-rotation :silos]
+                              :options   [{:area :projects :card-name :crop-rotation}
+                                          {:area :projects :card-name :silos}]
                               :min       1
                               :max       1}
                              {:player-no 0
                               :effect    [:remove-triggers {:event :at-start-turn}]}
                              {:player-no 0
                               :effect    [:sync-repeated-play]}]}))
-    (is (= (-> {:players [{:hand     [copper copper silver]
-                           :deck     [estate gold copper copper]
-                           :phase    :out-of-turn
-                           :triggers [(get-project-trigger crop-rotation)
-                                      (get-project-trigger silos)]}]}
+    (is (= (-> {:projects {:crop-rotation (assoc crop-rotation :participants [{:player-no 0}])
+                           :silos         (assoc silos :participants [{:player-no 0}])}
+                :players  [{:hand     [copper copper silver]
+                            :deck     [estate gold copper copper]
+                            :phase    :out-of-turn
+                            :triggers [(get-project-trigger crop-rotation)
+                                       (get-project-trigger silos)]}]}
                (start-turn {:player-no 0})
-               (choose :silos)
+               (choose {:area :projects :card-name :silos})
                (choose [:copper :copper])
                (choose :estate))
            {:current-player 0
+            :projects       {:crop-rotation (assoc crop-rotation :participants [{:player-no 0}])
+                             :silos         (assoc silos :participants [{:player-no 0}])}
             :players        [{:hand     [silver gold copper copper]
                               :discard  [copper copper estate]
                               :actions  1
@@ -3038,16 +3047,20 @@
                               :phase    :action
                               :triggers [(get-project-trigger crop-rotation)
                                          (get-project-trigger silos)]}]}))
-    (is (= (-> {:players [{:hand     [copper copper silver estate]
-                           :deck     [gold copper copper silver silver silver]
-                           :phase    :out-of-turn
-                           :triggers [(get-project-trigger crop-rotation)
-                                      (get-project-trigger silos)]}]}
+    (is (= (-> {:projects {:crop-rotation (assoc crop-rotation :participants [{:player-no 0}])
+                           :silos         (assoc silos :participants [{:player-no 0}])}
+                :players  [{:hand     [copper copper silver estate]
+                            :deck     [gold copper copper silver silver silver]
+                            :phase    :out-of-turn
+                            :triggers [(get-project-trigger crop-rotation)
+                                       (get-project-trigger silos)]}]}
                (start-turn {:player-no 0})
-               (choose :crop-rotation)
+               (choose {:area :projects :card-name :crop-rotation})
                (choose :estate)
                (choose [:copper :copper :copper]))
            {:current-player 0
+            :projects       {:crop-rotation (assoc crop-rotation :participants [{:player-no 0}])
+                             :silos         (assoc silos :participants [{:player-no 0}])}
             :players        [{:hand     [silver gold copper silver silver]
                               :deck     [silver]
                               :discard  [estate copper copper copper]
@@ -3057,14 +3070,16 @@
                               :phase    :action
                               :triggers [(get-project-trigger crop-rotation)
                                          (get-project-trigger silos)]}]}))
-    (is (= (-> {:players [{:hand     [copper copper silver]
-                           :deck     [estate gold copper copper]
-                           :phase    :out-of-turn
-                           :triggers [(get-project-trigger key)
-                                      (get-project-trigger silos)]}]}
+    (is (= (-> {:projects {:silos (assoc silos :participants [{:player-no 0}])}
+                :players  [{:hand     [copper copper silver]
+                            :deck     [estate gold copper copper]
+                            :phase    :out-of-turn
+                            :triggers [(get-project-trigger key)
+                                       (get-project-trigger silos)]}]}
                (start-turn {:player-no 0})
                (choose [:copper :copper]))
            {:current-player 0
+            :projects       {:silos (assoc silos :participants [{:player-no 0}])}
             :players        [{:hand     [silver estate gold]
                               :deck     [copper copper]
                               :discard  [copper copper]
