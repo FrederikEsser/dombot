@@ -302,9 +302,11 @@
                               :effect    [:start-turn]}]}))
       (is (= (-> {:players [{:play-area       [copper copper copper copper copper]
                              :discard         [stash]
+                             :phase           :buy
                              :number-of-turns 1}
                             {:play-area       [caravan]
                              :discard         [stash copper]
+                             :phase           :out-of-turn
                              :number-of-turns 1
                              :triggers        [(get-trigger caravan)]}]}
                  (end-turn 0)
@@ -323,6 +325,7 @@
                                 :actions         1
                                 :coins           0
                                 :buys            1
+                                :phase           :action
                                 :number-of-turns 1
                                 :triggers        [(get-trigger caravan)]}]
               :effect-stack   [{:text      "Put the Stash anywhere in your deck."

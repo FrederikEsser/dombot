@@ -185,9 +185,9 @@
                        :coins          3}]}))))
 
 (deftest horn-of-plenty-test
-  (let [copper (assoc copper :id 0)
-        silver (assoc silver :id 1)
-        estate (assoc estate :id 2)
+  (let [copper         (assoc copper :id 0)
+        silver         (assoc silver :id 1)
+        estate         (assoc estate :id 2)
         horn-of-plenty (assoc horn-of-plenty :id 3)]
     (testing "Horn of Plenty"
       (is (= (-> {:supply  [{:card copper :pile-size 46}]
@@ -293,8 +293,9 @@
       (is (= (-> {:players [{:hand    [militia]
                              :actions 1
                              :coins   0}
-                            {:hand [horse-traders copper copper copper copper]
-                             :deck [silver silver]}]}
+                            {:hand  [horse-traders copper copper copper copper]
+                             :deck  [silver silver]
+                             :phase :out-of-turn}]}
                  (play 0 :militia)
                  (choose :horse-traders)
                  (choose :copper)
@@ -310,7 +311,8 @@
                                 :discard [copper]
                                 :actions 1
                                 :coins   0
-                                :buys    1}]})))))
+                                :buys    1
+                                :phase   :action}]})))))
 
 (deftest hunting-party-test
   (testing "Hunting Party"
@@ -354,9 +356,9 @@
                        :actions        1}]}))))
 
 (deftest jester-test
-  (let [curse (assoc curse :id 0)
+  (let [curse  (assoc curse :id 0)
         copper (assoc copper :id 1)
-        gold (assoc gold :id 2)]
+        gold   (assoc gold :id 2)]
     (testing "Jester"
       (is (= (-> {:players [{:name    :p1
                              :hand    [jester]
@@ -500,12 +502,12 @@
                                 (choose nil)))))))
 
 (deftest tournament-test
-  (let [duchy (assoc duchy :id 0)
+  (let [duchy       (assoc duchy :id 0)
         bag-of-gold (assoc bag-of-gold :id 1)
-        gold (assoc gold :id 2)
-        curse (assoc curse :id 3)
-        estate (assoc estate :id 4)
-        silver (assoc silver :id 5)]
+        gold        (assoc gold :id 2)
+        curse       (assoc curse :id 3)
+        estate      (assoc estate :id 4)
+        silver      (assoc silver :id 5)]
     (testing "Tournament"
       (is (= (-> {:players [{:hand    [tournament]
                              :deck    [copper copper]
@@ -674,7 +676,7 @@
                            :actions   0}]}))))))
 
 (deftest young-witch-test
-  (let [curse (assoc curse :id 0)
+  (let [curse  (assoc curse :id 0)
         hamlet (assoc hamlet :id 1 :bane? true)]
     (testing "Young Witch"
       (is (= (-> {:supply  [{:card curse :pile-size 10}]

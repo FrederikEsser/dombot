@@ -64,7 +64,7 @@
 
 (defn- get-trigger-effects [triggers]
   (if (< 1 (count triggers))
-    [[:give-choice {:text    "Multiple things happen at the start of your turn. Select which one happens next."
+    [[:give-choice {:text    "Multiple things happen simultaneous. Select which one happens next."
                     :choice  [:simultaneous-effects-choice {:triggers triggers}]
                     :options (concat [:mixed]
                                      (map :name triggers))
@@ -97,22 +97,17 @@
                              {:set-aside set-aside}))]
     (map (partial ut/add-effect-args effect-args) effects)))
 
-(defn at-start-turn-effects [game {:keys [player-no]}]
-  (let [start-turn-triggers (->> (get-in game [:players player-no :triggers])
-                                 (filter (comp #{:at-start-turn} :event)))
-        auto-triggers       (filter (comp #{:auto} :mode) start-turn-triggers)
-        manual-triggers     (filter (comp #{:manual} :mode) start-turn-triggers)]
-    (assert (every? :mode start-turn-triggers) (str "Trigger error: Some triggers lack a simultaneous mode: "
-                                                    (->> start-turn-triggers (remove :mode) (map :name) (clojure.string/join ", "))))
-    (-> game
-        (push-effect-stack {:player-no player-no
-                            :effects   (concat
-                                         (mapcat get-effects-from-trigger auto-triggers)
-                                         (get-trigger-effects manual-triggers)
-                                         [[:remove-triggers {:event :at-start-turn}]
-                                          [:sync-repeated-play]])}))))
-
-(effects/register {:at-start-turn at-start-turn-effects})
+(defn- get-phase-change-effects [game {:keys [player-no phase-change]}]
+  (let [phase-change-triggers (->> (get-in game [:players player-no :triggers])
+                                   (filter (comp #{phase-change} :event)))
+        auto-triggers         (filter (fn [{:keys [mode]}]
+                                        (or (nil? mode) (= :auto mode))) phase-change-triggers)
+        manual-triggers       (filter (comp #{:manual} :mode) phase-change-triggers)]
+    (concat
+      (mapcat get-effects-from-trigger auto-triggers)
+      (get-trigger-effects manual-triggers)
+      [[:remove-triggers {:event phase-change}]
+       [:sync-repeated-play]])))
 
 (def phase-order [:out-of-turn
                   :action
@@ -133,17 +128,15 @@
 (defn set-phase [game {:keys [player-no phase]}]
   (let [current-phase (get-in game [:players player-no :phase])]
     (if (and current-phase (not= current-phase phase))
-      (let [next-phase           (next-phase current-phase)
-            phase-change         (cond (#{:pay} next-phase) :at-start-buy
-                                       (#{:buy} current-phase) :at-end-buy)
-            phase-change-effects (->> (get-in game [:players player-no :triggers])
-                                      (filter (comp #{phase-change} :event))
-                                      (mapcat :effects))]
+      (let [next-phase   (next-phase current-phase)
+            phase-change (cond (#{:action} next-phase) :at-start-turn
+                               (#{:pay} next-phase) :at-start-buy
+                               (#{:buy} current-phase) :at-end-buy)]
         (-> game
             (assoc-in [:players player-no :phase] next-phase)
             (push-effect-stack {:player-no player-no
-                                :effects   (concat [[:remove-triggers {:event phase-change}]]
-                                                   phase-change-effects
+                                :effects   (concat (get-phase-change-effects game {:player-no    player-no
+                                                                                   :phase-change phase-change})
                                                    (when (not= next-phase phase)
                                                      [[:set-phase {:phase phase}]]))})))
       game)))
@@ -173,8 +166,7 @@
                                          :effects   (concat
                                                       (when (= :ending game-status)
                                                         [[:remove-triggers {:event :at-end-game}]])
-                                                      [[:set-phase {:phase :action}]
-                                                       [:at-start-turn]])})
+                                                      [[:set-phase {:phase :action}]])})
                      check-stack)))))
 
 (effects/register {:start-turn start-turn})

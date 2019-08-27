@@ -7,6 +7,8 @@
 
 ; at-end-buy: Exploration, Pageant
 ; at-clean-up: Boons (River, Field, Forest), Horn, Improve, Treasury
+; choose duration / artifact / project at simultaneous effects
+; remove set-aside cards from triggers when activated - trigger-ids
 
 ; fix Scepter / Caravan Guard reaction - not played this turn
 ; maybe refac gain to destination, but pass gained card as argument to on-gain effects
@@ -17,7 +19,6 @@
 ; fix Ghost on Durations - and Ghost stays in play
 ; check Ghost with Citadel
 ; test swiftable for multi/mixed choices
-; remove set-aside cards from triggers when activated - trigger-ids
 ; make "any order" option for all topdecking (Sentry, Navigator, Rabble, Doctor, Seer, Night Watchman)
 ; make extra-cards (Prizes, Spirits, etc.) and unique cards (Zombies & Heirlooms) visible/choosable for Wishing Well / Doctor / Journeyman
 ; view card images
