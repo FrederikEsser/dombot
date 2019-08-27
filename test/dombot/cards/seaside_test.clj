@@ -532,6 +532,7 @@
                          :actions   1
                          :triggers  [(merge set-aside=>hand-trigger
                                             {:card-id   1
+                                             :name      :haven
                                              :set-aside [copper]})]}]}))
       (is (= (-> {:players [{:hand    [haven estate]
                              :deck    [copper copper]
@@ -563,9 +564,11 @@
                          :actions       2
                          :triggers      [(merge set-aside=>hand-trigger
                                                 {:card-id   1
+                                                 :name      :haven
                                                  :set-aside [copper]})
                                          (merge set-aside=>hand-trigger
                                                 {:card-id   1
+                                                 :name      :haven
                                                  :set-aside [estate]})]
                          :repeated-play [{:source 2
                                           :target 1}]}]}))
@@ -950,7 +953,8 @@
                          :actions                  0
                          :previous-turn-was-yours? true
                          :triggers                 [(merge outpost-trigger
-                                                           {:card-id 1})]}]}))
+                                                           {:card-id 1
+                                                            :name    :outpost})]}]}))
       (is (= (-> {:players [{:hand            [outpost]
                              :deck            (repeat 5 copper)
                              :actions         1
@@ -1384,7 +1388,8 @@
                          :discard   [estate]
                          :actions   0
                          :triggers  [(merge tactician-trigger
-                                            {:card-id 1})]}]}))
+                                            {:card-id 1
+                                             :name    :tactician})]}]}))
       (is (= (-> {:players [{:hand    [tactician]
                              :actions 1}]}
                  (play 0 :tactician))
@@ -1424,7 +1429,8 @@
                          :discard       [estate]
                          :actions       0
                          :triggers      [(merge tactician-trigger
-                                                {:card-id 1})]
+                                                {:card-id 1
+                                                 :name    :tactician})]
                          :repeated-play [{:source 2
                                           :target 1}]}]}))
       (is (= (-> {:players [{:hand    [throne-room tactician estate]

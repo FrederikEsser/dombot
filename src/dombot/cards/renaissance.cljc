@@ -80,10 +80,6 @@
                    :setup   [[:add-artifact {:artifact horn}]
                              [:add-artifact {:artifact lantern}]]})
 
-(def cargo-ship-trigger {:event    :on-gain
-                         :duration :turn
-                         :effects  [[::cargo-ship-give-choice]]})
-
 (defn cargo-ship-set-aside [game {:keys [player-no card-id card-name gained-card-id]}]
   (if card-name
     (let [{card     :card
@@ -117,8 +113,10 @@
                  :set     :renaissance
                  :types   #{:action :duration}
                  :cost    3
-                 :effects [[:give-coins 2]
-                           [:add-trigger {:trigger cargo-ship-trigger}]]})
+                 :effects [[:give-coins 2]]
+                 :trigger {:event    :on-gain
+                           :duration :turn
+                           :effects  [[::cargo-ship-give-choice]]}})
 
 (def ducat {:name    :ducat
             :set     :renaissance

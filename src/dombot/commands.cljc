@@ -1,46 +1,57 @@
 (ns dombot.commands
   (:require [dombot.cards.kingdom :as kingdom]
             [dombot.operations :as op]
-            [dombot.front-end-view]))
+            [dombot.front-end-view]
+            [dombot.specs :as specs]
+            [clojure.spec.alpha :as s]))
 
-; todo:
+; TODOs:
 
+; Trigger refac:
 ; at-end-buy: Exploration, Pageant
 ; at-clean-up: Boons (River, Field, Forest), Horn, Improve, Treasury
-; choose duration / artifact / project at simultaneous effects
 ; remove set-aside cards from triggers when activated - trigger-ids
-
-; fix Scepter / Caravan Guard reaction - not played this turn
-; maybe refac gain to destination, but pass gained card as argument to on-gain effects
-; check Experiment with Innovation
-; fix extra Outpost turn after Fleet turn
-; consider refac buy and play separating set-phase and the rest
-; show Actions as unbuyable when Deluded (and in action phase)
+; handle modes :semi, :always-ask
+; handle mode :optional - at-clean-up
+; handle simultaneous effects for all reactions - at-clean-up
+; fix gain Blessed Village with Cobbler selecting to receive The Field's Gift next turn - will remove at-start-turn trigger immediately
 ; fix Ghost on Durations - and Ghost stays in play
 ; check Ghost with Citadel
-; test swiftable for mixed choices
-; make "any order" option for all topdecking (Sentry, Navigator, Rabble, Doctor, Seer, Night Watchman)
-; make extra-cards (Prizes, Spirits, etc.) and unique cards (Zombies & Heirlooms) visible/choosable for Wishing Well / Doctor / Journeyman
-; view card images
-; store commands in history
-; save / load game
-; show set-aside cards where their carrier has disappeared (Cargo Ship / Improve)
-; UI button for jumping to next phase
-; show face-down cards in trash (Necromancer)
-; handle simultaneous duration effects at-start-turn
-; handle simultaneous effects for all reactions
 ; fix Captain / Improve
 ; fix Throne Room / Improve
 ; fix Improve / double Border Guard bug
+; show set-aside cards where their carrier has disappeared (Cargo Ship / Improve)
+
+; Bugs & Testing:
+; test swiftable for mixed choices
+; fix Scepter / Caravan Guard reaction - not played this turn
+; check Experiment with Innovation
+; fix extra Outpost turn after Fleet turn
 ; fix Torturer / Masquerade (empty hand)
+; unit tests for affect-other-players, give-choice, choose, calc-victory-points, ...
+
+; Front End:
+; show Actions as unbuyable when Deluded (and in action phase)
+; make extra-cards (Prizes, Spirits, etc.) and unique cards (Zombies & Heirlooms) visible/choosable for Wishing Well / Doctor / Journeyman
 ; hide revealed cards on any movement (Border Guard)
-; handle revealed-cards in hand as a list of card-names
+; UI button for jumping to next phase
+; show face-down cards in trash (Necromancer)
+; make "any order" option for all topdecking (Sentry, Navigator, Rabble, Doctor, Seer, Night Watchman)
+; view card images
+
+; Refactoring:
+; maybe refac gain to destination, but pass gained card as argument to on-gain effects
+; consider refac buy and play separating set-phase and the rest
 ; refac supply to a map of lists of cards by name
 ; change options into lists of maps with :name and :id (cards?) - or not??
+; handle revealed-cards in hand as a list of card-names
 ; generalize checks for possible operations
+
+; Features:
+; store commands in history
+; save / load game
 ; slow mode
 ; make frequencies optional
-; unit tests for affect-other-players, give-choice, choose, calc-victory-points, ...
 ; game log / turn counter
 
 (defonce game-state (atom {}))

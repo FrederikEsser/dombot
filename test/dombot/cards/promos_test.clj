@@ -23,8 +23,9 @@
                          :actions   1
                          :triggers  [{:event    :at-start-turn
                                       :card-id  0
+                                      :name     :church
                                       :duration :once
-                                      :mode     :auto
+                                      :mode     :manual
                                       :effects  [[:put-set-aside-into-hand]
                                                  [:give-choice {:text    "You may trash a card from your hand."
                                                                 :choice  :trash-from-hand
@@ -39,8 +40,9 @@
                          :actions   1
                          :triggers  [{:event    :at-start-turn
                                       :card-id  0
+                                      :name     :church
                                       :duration :once
-                                      :mode     :auto
+                                      :mode     :manual
                                       :effects  [[:put-set-aside-into-hand]
                                                  [:give-choice {:text    "You may trash a card from your hand."
                                                                 :choice  :trash-from-hand
@@ -54,9 +56,10 @@
                          :actions   1
                          :triggers  [{:event     :at-start-turn
                                       :card-id   0
+                                      :name      :church
                                       :set-aside [copper]
                                       :duration  :once
-                                      :mode      :auto
+                                      :mode      :manual
                                       :effects   [[:put-set-aside-into-hand]
                                                   [:give-choice {:text    "You may trash a card from your hand."
                                                                  :choice  :trash-from-hand
@@ -71,8 +74,9 @@
                          :actions   1
                          :triggers  [{:event    :at-start-turn
                                       :card-id  0
+                                      :name     :church
                                       :duration :once
-                                      :mode     :auto
+                                      :mode     :manual
                                       :effects  [[:put-set-aside-into-hand]
                                                  [:give-choice {:text    "You may trash a card from your hand."
                                                                 :choice  :trash-from-hand
@@ -86,9 +90,10 @@
                          :actions   1
                          :triggers  [{:event     :at-start-turn
                                       :card-id   0
+                                      :name      :church
                                       :set-aside [copper copper copper]
                                       :duration  :once
-                                      :mode      :auto
+                                      :mode      :manual
                                       :effects   [[:put-set-aside-into-hand]
                                                   [:give-choice {:text    "You may trash a card from your hand."
                                                                  :choice  :trash-from-hand

@@ -471,7 +471,7 @@
 
 (def set-aside=>hand-trigger {:event    :at-start-turn
                               :duration :once
-                              :mode     :auto
+                              :mode     :semi
                               :effects  [[:put-set-aside-into-hand]]})
 
 (defn put-set-aside-into-hand [game {:keys [player-no set-aside]}]
@@ -520,9 +520,12 @@
                    :return-to-supply      return-to-supply})
 
 (defn add-trigger [game {:keys [player-no card-id trigger]}]
-  (update-in game [:players player-no :triggers] concat [(merge trigger
-                                                                (when card-id
-                                                                  {:card-id card-id}))]))
+  (let [{:keys [card]} (when card-id (ut/get-card-idx game [:players player-no :play-area] {:id card-id}))]
+    (update-in game [:players player-no :triggers] concat [(merge trigger
+                                                                  (when card-id
+                                                                    {:card-id card-id})
+                                                                  (when card
+                                                                    {:name (:name card)}))])))
 
 (effects/register {:add-trigger add-trigger})
 
@@ -593,7 +596,8 @@
     (cond-> game
             (not= player-no owner) (-> (assoc-in [:artifacts artifact-name :owner] player-no)
                                        (cond->
-                                         trigger (update-in [:players player-no :triggers] concat [(assoc trigger :duration artifact-name)])
+                                         trigger (update-in [:players player-no :triggers] concat [(assoc trigger :duration artifact-name
+                                                                                                                  :name artifact-name)])
                                          owner (-> (update-in [:players owner :triggers] (partial remove (comp #{artifact-name} :duration)))
                                                    (update-in [:players owner] ut/dissoc-if-empty :triggers)))))))
 

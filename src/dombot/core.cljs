@@ -118,12 +118,12 @@
            (when cost (str " ($" cost ")"))
            (when participants (str " " (->> participants (string/join " ")))))]]))
 
-(defn view-boon [{:keys [name name-ui type interaction]} & [{:keys [on-click orientation]}]]
+(defn view-boon [{:keys [name name-ui choice-value type interaction]} & [{:keys [on-click orientation]}]]
   (let [disabled    (nil? interaction)
         boon-button [:button {:style    (button-style disabled #{type} 1)
                               :on-click (if interaction
                                           (fn [] (case interaction
-                                                   :quick-choosable (swap! state assoc :game (cmd/choose name))))
+                                                   :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name)))))
                                           on-click)}
                      name-ui]]
     (if (= :horizontal orientation)

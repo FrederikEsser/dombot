@@ -25,8 +25,7 @@
              {:players [{:play-area [amulet]
                          :actions   0
                          :coins     1
-                         :triggers  [(merge (:trigger amulet)
-                                            {:card-id 0})]}]}))
+                         :triggers  [(get-trigger amulet)]}]}))
       (is (= (-> {:players [{:hand    [amulet estate]
                              :actions 1}]}
                  (play 0 :amulet)
@@ -34,8 +33,7 @@
                  (choose :estate))
              {:players [{:play-area [amulet]
                          :actions   0
-                         :triggers  [(merge (:trigger amulet)
-                                            {:card-id 0})]}]
+                         :triggers  [(get-trigger amulet)]}]
               :trash   [estate]}))
       (is (= (-> {:supply  [{:card silver :pile-size 40}]
                   :players [{:hand    [amulet]
@@ -46,11 +44,9 @@
               :players [{:play-area [amulet]
                          :discard   [silver]
                          :actions   0
-                         :triggers  [(merge (:trigger amulet)
-                                            {:card-id 0})]}]}))
+                         :triggers  [(get-trigger amulet)]}]}))
       (is (= (-> {:players [{:play-area [amulet]
-                             :triggers  [(merge (:trigger amulet)
-                                                {:card-id 0})]}]}
+                             :triggers  [(get-trigger amulet)]}]}
                  (end-turn 0)
                  (choose :coin))
              {:current-player 0
@@ -61,8 +57,7 @@
                                 :phase     :action}]}))
       (is (= (-> {:players [{:play-area [amulet]
                              :deck      (repeat 5 copper)
-                             :triggers  [(merge (:trigger amulet)
-                                                {:card-id 0})]}]}
+                             :triggers  [(get-trigger amulet)]}]}
                  (end-turn 0)
                  (choose :trash)
                  (choose :copper))
@@ -76,8 +71,7 @@
               :trash          [copper]}))
       (is (= (-> {:supply  [{:card silver :pile-size 40}]
                   :players [{:play-area [amulet]
-                             :triggers  [(merge (:trigger amulet)
-                                                {:card-id 0})]}]}
+                             :triggers  [(get-trigger amulet)]}]}
                  (end-turn 0)
                  (choose :silver))
              {:current-player 0
@@ -185,11 +179,9 @@
                          :play-area [caravan-guard]
                          :deck      [copper]
                          :actions   1
-                         :triggers  [(merge (:trigger caravan-guard)
-                                            {:card-id 0})]}]}))
+                         :triggers  [(get-trigger caravan-guard)]}]}))
       (is (= (-> {:players [{:play-area [caravan-guard]
-                             :triggers  [(merge (:trigger caravan-guard)
-                                                {:card-id 0})]}]}
+                             :triggers  [(get-trigger caravan-guard)]}]}
                  (end-turn 0))
              {:current-player 0
               :players        [{:play-area [caravan-guard]
@@ -228,8 +220,7 @@
                          :discard   [copper copper]
                          :actions   1
                          :phase     :out-of-turn
-                         :triggers  [(merge (:trigger caravan-guard)
-                                            {:card-id 0})]}]}))
+                         :triggers  [(get-trigger caravan-guard)]}]}))
       (let [caravan-guard-1 (assoc caravan-guard :id 1)]
         (is (= (-> {:players [{:hand    [militia]
                                :actions 1
@@ -250,10 +241,8 @@
                            :discard   [copper copper]
                            :actions   2
                            :phase     :out-of-turn
-                           :triggers  [(merge (:trigger caravan-guard)
-                                              {:card-id 0})
-                                       (merge (:trigger caravan-guard)
-                                              {:card-id 1})]}]})))
+                           :triggers  [(get-trigger caravan-guard)
+                                       (get-trigger caravan-guard-1)]}]})))
       (is (= (-> {:players [{:hand    [militia]
                              :actions 1
                              :coins   0}
@@ -288,12 +277,10 @@
                  (play 0 :hireling))
              {:players [{:play-area [hireling]
                          :actions   0
-                         :triggers  [(merge (:trigger hireling)
-                                            {:card-id 0})]}]}))
+                         :triggers  [(get-trigger hireling)]}]}))
       (is (= (-> {:players [{:play-area [hireling]
                              :deck      (repeat 7 copper)
-                             :triggers  [(merge (:trigger hireling)
-                                                {:card-id 0})]}]}
+                             :triggers  [(get-trigger hireling)]}]}
                  (end-turn 0))
              {:current-player 0
               :players        [{:hand      (repeat 6 copper)
@@ -303,8 +290,7 @@
                                 :coins     0
                                 :buys      1
                                 :phase     :action
-                                :triggers  [(merge (:trigger hireling)
-                                                   {:card-id 0})]}]})))))
+                                :triggers  [(get-trigger hireling)]}]})))))
 
 (deftest lost-city-test
   (let [lost-city (assoc lost-city :id 0)]

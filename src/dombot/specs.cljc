@@ -16,7 +16,7 @@
 
 (s/def ::interaction #{:buyable :playable :choosable :quick-choosable :spendable})
 
-(s/def ::area #{:hand :play-area})
+(s/def ::area #{:hand :play-area :projects :artifacts :boons})
 
 (s/def ::card-name ::name)
 
@@ -54,6 +54,7 @@
                                               ::type
                                               ::cost]
                                      :opt-un [::interaction
+                                              ::choice-value
                                               ::participants])))
 
 (s/def ::boon (s/keys :req-un [::name
@@ -184,6 +185,7 @@
                                  ::vp-tokens
                                  ::coffers
                                  ::villagers
+                                 ;::boons ; todo: spec for player boons
                                  ::artifacts
                                  ::states
                                  ::choice

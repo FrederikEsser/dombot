@@ -270,6 +270,13 @@
 
 (effects/register-options {:projects options-from-projects})
 
+(defn options-from-artifacts [{:keys [artifacts] :as game} player-no card-id & [{:keys [names]}]]
+  (cond->> (vals artifacts)
+           names (filter (comp names :name))
+           :always (map (comp :name))))
+
+(effects/register-options {:artifacts options-from-artifacts})
+
 (defn options-from-deck-position [game player-no & args]
   (let [deck (get-in game [:players player-no :deck])]
     (-> deck count inc range)))

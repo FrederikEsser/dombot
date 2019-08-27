@@ -297,9 +297,11 @@
                                          (#{:action} phase))
                                 {:interaction :spendable}))})
          (when (not-empty artifacts)
-           {:artifacts (->> artifacts (map (fn [{:keys [name type]}] {:name    name
-                                                                      :name-ui (ut/format-name name)
-                                                                      :types   #{type}})))})
+           {:artifacts (->> artifacts (map (fn [{:keys [name type]}]
+                                             (merge {:name    name
+                                                     :name-ui (ut/format-name name)
+                                                     :types   #{type}}
+                                                    (choice-interaction name :artifacts choice)))))})
          (when (not-empty states)
            {:states (->> states (map (fn [{:keys [name type]}] {:name    name
                                                                 :name-ui (ut/format-name name)

@@ -1,7 +1,8 @@
 (ns dombot.operations
   (:require [dombot.utils :as ut]
             [dombot.effects :as effects]
-            [clojure.set]))
+            [clojure.set]
+            [clojure.string :as string]))
 
 (defn get-game-status [{:keys [players game-ending?] :as game}]
   (let [{province-pile-size :pile-size} (ut/get-pile-idx game :province)
@@ -62,21 +63,34 @@
                                    :args      args})
                        check-stack))))
 
+(defn get-effects-from-trigger [{:keys [effects card-id set-aside]}]
+  (let [effect-args (merge {:card-id card-id}
+                           (when set-aside
+                             {:set-aside set-aside}))]
+    (map (partial ut/add-effect-args effect-args) effects)))
+
 (defn- get-trigger-effects [triggers]
   (if (< 1 (count triggers))
-    [[:give-choice {:text    "Multiple things happen simultaneous. Select which one happens next."
-                    :choice  [:simultaneous-effects-choice {:triggers triggers}]
-                    :options [:mixed
-                              [:projects {:names (->> triggers (map :name) set)}]]
-                    :min     1
-                    :max     1}]]
-    (mapcat :effects triggers)))
+    (let [trigger-names (->> triggers (map :name) set)]
+      [[:give-choice {:text    (str (-> (count triggers)
+                                        ut/number->text
+                                        string/capitalize)
+                                    " things happen simultaneous. Select which one happens next.")
+                      :choice  [:simultaneous-effects-choice {:triggers triggers}]
+                      :options [:mixed
+                                [:player :play-area {:names trigger-names}]
+                                [:player :boons {:names trigger-names}]
+                                [:artifacts {:names trigger-names}]
+                                [:projects {:names trigger-names}]]
+                      :min     1
+                      :max     1}]])
+    (mapcat get-effects-from-trigger triggers)))
 
 (defn simultaneous-effects-choice [game {:keys [player-no triggers choice]}]
-  (let [[{:keys [effects]} & more-triggers] (->> triggers
-                                                 (sort-by (comp not #{(:card-name choice)} :name)))]
+  (let [[trigger & more-triggers] (->> triggers
+                                       (sort-by (comp not #{(:card-name choice)} :name)))]
     (push-effect-stack game {:player-no player-no
-                             :effects   (concat effects
+                             :effects   (concat (get-effects-from-trigger trigger)
                                                 (get-trigger-effects more-triggers))})))
 
 (effects/register {:simultaneous-effects-choice simultaneous-effects-choice})
@@ -91,18 +105,13 @@
 
 (effects/register {:sync-repeated-play sync-repeated-play})
 
-(defn get-effects-from-trigger [{:keys [effects card-id set-aside]}]
-  (let [effect-args (merge {:card-id card-id}
-                           (when set-aside
-                             {:set-aside set-aside}))]
-    (map (partial ut/add-effect-args effect-args) effects)))
-
 (defn- get-phase-change-effects [game {:keys [player-no phase-change]}]
   (let [phase-change-triggers (->> (get-in game [:players player-no :triggers])
                                    (filter (comp #{phase-change} :event)))
         auto-triggers         (filter (fn [{:keys [mode]}]
-                                        (or (nil? mode) (= :auto mode))) phase-change-triggers)
+                                        (or (nil? mode) (#{:auto :semi} mode))) phase-change-triggers)
         manual-triggers       (filter (comp #{:manual} :mode) phase-change-triggers)]
+    (assert (every? :name manual-triggers) (str "Trigger error. All manual triggers need a name. " (remove :name manual-triggers)))
     (concat
       (mapcat get-effects-from-trigger auto-triggers)
       (get-trigger-effects manual-triggers)
@@ -765,7 +774,7 @@
 (effects/register {:reveal-reaction reveal-reaction})
 
 (defn card-effect [{:keys [track-played-actions?] :as game} {:keys [player-no card]}]
-  (let [{:keys [id effects coin-value trigger]} card
+  (let [{:keys [id name effects coin-value trigger]} card
         types (ut/get-types game card)]
     (cond-> game
             (and (:action types)
@@ -779,7 +788,8 @@
                                                            effects)})
             (:attack types) (affect-other-players {:player-no player-no
                                                    :effects   reaction-choice})
-            trigger (update-in [:players player-no :triggers] concat [(assoc trigger :card-id id)]))))
+            trigger (update-in [:players player-no :triggers] concat [(assoc trigger :card-id id
+                                                                                     :name name)]))))
 
 (effects/register {:card-effect card-effect})
 

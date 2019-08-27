@@ -152,7 +152,7 @@
 
 (def horse-traders-trigger {:event    :at-start-turn
                             :duration :once
-                            :mode     :auto
+                            :mode     :semi
                             :effects  [[::horse-traders-return-to-hand]
                                        [:draw 1]]})
 

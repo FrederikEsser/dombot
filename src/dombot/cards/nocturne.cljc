@@ -17,7 +17,7 @@
 
 (def ghost-trigger {:event    :at-start-turn
                     :duration :once
-                    :mode     :auto
+                    :mode     :manual
                     :effects  [[::ghost-repeat-action]]})
 
 (defn- ghost-reveal [game {:keys [player-no card-id]}]
@@ -591,8 +591,9 @@
                                     :effects   boon-effects})
       :at-start-turn (add-trigger game {:player-no player-no
                                         :trigger   {:event    :at-start-turn
+                                                    :name     boon-name
                                                     :duration :once
-                                                    :mode     :auto
+                                                    :mode     :manual
                                                     :effects  boon-effects}}))))
 
 (defn- blessed-village-take-boon [game {:keys [player-no]}]
@@ -714,7 +715,7 @@
               :cost    5
               :trigger {:event    :at-start-turn
                         :duration :once
-                        :mode     :auto
+                        :mode     :manual
                         :effects  [[:give-choice {:text    "Gain a card to your hand costing up to $4."
                                                   :choice  :gain-to-hand
                                                   :options [:supply {:max-cost 4}]
@@ -776,7 +777,7 @@
 
 (def crypt-trigger {:event    :at-start-turn
                     :duration :until-empty
-                    :mode     :auto
+                    :mode     :manual
                     :effects  [[::crypt-pick-treasure]]})
 
 (defn- crypt-set-aside [game {:keys [player-no card-id]}]
@@ -824,7 +825,7 @@
                  :cost    5
                  :trigger {:event    :at-start-turn
                            :duration :once
-                           :mode     :auto
+                           :mode     :semi
                            :effects  [[:draw 2]]}
                  :gain-to :hand})
 
@@ -943,7 +944,7 @@
 (def lost-in-the-woods {:name    :lost-in-the-woods
                         :type    :state
                         :trigger {:event   :at-start-turn
-                                  :mode    :auto
+                                  :mode    :manual
                                   :effects [[:give-choice {:text    "You may discard a card to receive a Boon."
                                                            :choice  ::discard-for-boon
                                                            :options [:player :hand]
@@ -998,7 +999,7 @@
                  :cost    3
                  :trigger {:event    :at-start-turn
                            :duration :once
-                           :mode     :auto
+                           :mode     :semi
                            :effects  [[:draw 1]
                                       [:give-actions 1]]}
                  :gain-to :hand})

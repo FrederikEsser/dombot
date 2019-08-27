@@ -782,8 +782,9 @@
                          :discard  [blessed-village]
                          :boons    [sea-gift]
                          :triggers [{:event    :at-start-turn
+                                     :name     :the-sea's-gift
                                      :duration :once
-                                     :mode     :auto
+                                     :mode     :manual
                                      :effects  [[:return-boon {:boon-name :the-sea's-gift}]
                                                 [:receive-boon {:boon sea-gift}]]}]}]}))
       (is (= (-> {:boons   {:deck [sea-gift]}
@@ -828,8 +829,9 @@
                          :discard  [blessed-village]
                          :boons    [forest-gift]
                          :triggers [{:event    :at-start-turn
+                                     :name     :the-forest's-gift
                                      :duration :once
-                                     :mode     :auto
+                                     :mode     :manual
                                      :effects  [[:receive-boon {:boon forest-gift}]]}]}]}))
       (is (= (-> {:boons   {:deck [forest-gift]}
                   :supply  [{:card blessed-village :pile-size 10}]
@@ -1366,6 +1368,7 @@
              {:players [{:play-area [crypt]
                          :triggers  [(merge crypt-trigger
                                             {:card-id   0
+                                             :name      :crypt
                                              :set-aside [gold]})]}]}))
       (is (= (-> {:players [{:hand      [crypt]
                              :play-area [copper silver gold]}]}
@@ -1374,11 +1377,13 @@
              {:players [{:play-area [crypt]
                          :triggers  [(merge crypt-trigger
                                             {:card-id   0
+                                             :name      :crypt
                                              :set-aside [copper silver gold]})]}]}))
       (is (= (-> {:players [{:play-area [crypt]
                              :deck      (repeat 6 copper)
                              :triggers  [(merge crypt-trigger
                                                 {:card-id   0
+                                                 :name      :crypt
                                                  :set-aside [copper silver gold]})]}]}
                  (end-turn 0)
                  (choose :gold))
@@ -1392,11 +1397,13 @@
                                 :phase     :action
                                 :triggers  [(merge crypt-trigger
                                                    {:card-id   0
+                                                    :name      :crypt
                                                     :set-aside [copper silver]})]}]}))
       (is (= (-> {:players [{:play-area [crypt]
                              :deck      (repeat 6 copper)
                              :triggers  [(merge crypt-trigger
                                                 {:card-id   0
+                                                 :name      :crypt
                                                  :set-aside [copper silver]})]}]}
                  (end-turn 0)
                  (choose :copper))
@@ -1410,11 +1417,13 @@
                                 :phase     :action
                                 :triggers  [(merge crypt-trigger
                                                    {:card-id   0
+                                                    :name      :crypt
                                                     :set-aside [silver]})]}]}))
       (is (= (-> {:players [{:play-area [crypt]
                              :deck      (repeat 6 copper)
                              :triggers  [(merge crypt-trigger
                                                 {:card-id   0
+                                                 :name      :crypt
                                                  :set-aside [silver]})]}]}
                  (end-turn 0)
                  (choose :silver))
@@ -1431,6 +1440,7 @@
                              :deck      (repeat 6 copper)
                              :triggers  [(merge crypt-trigger
                                                 {:card-id   0
+                                                 :name      :crypt
                                                  :set-aside [silver]})]}]}
                  (end-turn 0))
              {:mode           :swift
@@ -1811,13 +1821,13 @@
       (is (= (-> {:artifacts {:lost-in-the-woods (assoc lost-in-the-woods :owner 0)}
                   :players   [{:hand     [fool]
                                :actions  1
-                               :triggers [(merge (:trigger lost-in-the-woods)
+                               :triggers [(merge (get-trigger lost-in-the-woods)
                                                  {:duration :lost-in-the-woods})]}]}
                  (play 0 :fool))
              {:artifacts {:lost-in-the-woods (assoc lost-in-the-woods :owner 0)}
               :players   [{:play-area [fool]
                            :actions   0
-                           :triggers  [(merge (:trigger lost-in-the-woods)
+                           :triggers  [(merge (get-trigger lost-in-the-woods)
                                               {:duration :lost-in-the-woods})]}]}))
       (is (= (-> {:boons     {:deck    [field-gift sea-gift]
                               :discard [sky-gift river-gift]}
@@ -1830,7 +1840,7 @@
               :players      [{:play-area [fool]
                               :actions   0
                               :boons     [field-gift sea-gift sky-gift]
-                              :triggers  [(merge (:trigger lost-in-the-woods)
+                              :triggers  [(merge (get-trigger lost-in-the-woods)
                                                  {:duration :lost-in-the-woods})]}]
               :effect-stack [{:text      "Receive the Boons in any order."
                               :player-no 0
@@ -1854,7 +1864,7 @@
                               :deck      [estate]
                               :actions   0
                               :boons     [field-gift sky-gift]
-                              :triggers  [(merge (:trigger lost-in-the-woods)
+                              :triggers  [(merge (get-trigger lost-in-the-woods)
                                                  {:duration :lost-in-the-woods})]}]
               :effect-stack [{:text      "Receive the Boons in any order."
                               :player-no 0
@@ -1881,7 +1891,7 @@
                               :actions   1
                               :coins     1
                               :boons     [field-gift sky-gift]
-                              :triggers  [(merge (:trigger lost-in-the-woods)
+                              :triggers  [(merge (get-trigger lost-in-the-woods)
                                                  {:duration :lost-in-the-woods})
                                           {:event    :at-clean-up
                                            :duration :once
@@ -1916,7 +1926,7 @@
                            :actions   1
                            :coins     1
                            :boons     [field-gift]
-                           :triggers  [(merge (:trigger lost-in-the-woods)
+                           :triggers  [(merge (get-trigger lost-in-the-woods)
                                               {:duration :lost-in-the-woods})
                                        {:event    :at-clean-up
                                         :duration :once
@@ -1924,7 +1934,7 @@
       (testing "Lost in the Woods"
         (is (= (-> {:boons   {:deck [sea-gift]}
                     :players [{:deck     (repeat 7 copper)
-                               :triggers [(merge (:trigger lost-in-the-woods)
+                               :triggers [(merge (get-trigger lost-in-the-woods)
                                                  {:duration :lost-in-the-woods})]}]}
                    (end-turn 0)
                    (choose nil))
@@ -1936,11 +1946,11 @@
                                   :coins    0
                                   :buys     1
                                   :phase    :action
-                                  :triggers [(merge (:trigger lost-in-the-woods)
+                                  :triggers [(merge (get-trigger lost-in-the-woods)
                                                     {:duration :lost-in-the-woods})]}]}))
         (is (= (-> {:boons   {:deck [sea-gift]}
                     :players [{:deck     (repeat 7 copper)
-                               :triggers [(merge (:trigger lost-in-the-woods)
+                               :triggers [(merge (get-trigger lost-in-the-woods)
                                                  {:duration :lost-in-the-woods})]}]}
                    (end-turn 0)
                    (choose :copper))
@@ -1953,7 +1963,7 @@
                                   :coins    0
                                   :buys     1
                                   :phase    :action
-                                  :triggers [(merge (:trigger lost-in-the-woods)
+                                  :triggers [(merge (get-trigger lost-in-the-woods)
                                                     {:duration :lost-in-the-woods})]}]}))))
     (testing "Lucky Coin"
       (let [silver (assoc silver :id 1)]
@@ -1977,6 +1987,7 @@
                          :revealed-cards {:ghost 1}
                          :triggers       [(merge ghost-trigger
                                                  {:card-id   0
+                                                  :name      :ghost
                                                   :set-aside [conclave]})]}]}))
       (is (= (-> {:players [{:hand [ghost]
                              :deck [estate conclave estate]}]}
@@ -1988,6 +1999,7 @@
                                           :ghost   1}
                          :triggers       [(merge ghost-trigger
                                                  {:card-id   0
+                                                  :name      :ghost
                                                   :set-aside [conclave]})]}]}))
       (is (= (-> {:players [{:hand    [ghost]
                              :deck    [estate]
@@ -1999,6 +2011,7 @@
       (is (= (-> {:players [{:play-area [ghost]
                              :triggers  [(merge ghost-trigger
                                                 {:card-id   0
+                                                 :name      :ghost
                                                  :set-aside [conclave]})]}]}
                  (end-turn 0))
              {:current-player 0
@@ -2825,7 +2838,8 @@
                          :discard   [estate estate copper]
                          :actions   1
                          :triggers  [(merge secret-cave-trigger
-                                            {:card-id 0})]}]}))
+                                            {:card-id 0
+                                             :name    :secret-cave})]}]}))
       (is (= (-> {:players [{:hand    [secret-cave estate estate]
                              :deck    (repeat 7 copper)
                              :actions 1}]}

@@ -27,7 +27,7 @@
               :effects [[:give-choice captain-choice]]
               :trigger {:event    :at-start-turn
                         :duration :once
-                        :mode     :auto
+                        :mode     :manual
                         :effects  [[:give-choice captain-choice]]}})
 
 (defn- church-set-aside [game {:keys [player-no card-id]}]
@@ -36,12 +36,16 @@
         (update-in [:players player-no] dissoc :church-set-aside)
         (add-trigger {:player-no player-no
                       :card-id   card-id
-                      :trigger   (-> set-aside=>hand-trigger
-                                     (cond-> (not-empty set-aside) (assoc :set-aside set-aside))
-                                     (update :effects concat [[:give-choice {:text    "You may trash a card from your hand."
-                                                                             :choice  :trash-from-hand
-                                                                             :options [:player :hand]
-                                                                             :max     1}]]))}))))
+                      :trigger   (merge {:event    :at-start-turn
+                                         :duration :once
+                                         :mode     :manual
+                                         :effects  [[:put-set-aside-into-hand]
+                                                    [:give-choice {:text    "You may trash a card from your hand."
+                                                                   :choice  :trash-from-hand
+                                                                   :options [:player :hand]
+                                                                   :max     1}]]}
+                                        (when (not-empty set-aside)
+                                          {:set-aside set-aside}))}))))
 
 (defn church-choice [game {:keys [card-name card-names] :as args}]
   (cond-> game

@@ -41,7 +41,7 @@
                         [:give-actions 1]]
               :trigger {:event    :at-start-turn
                         :duration :once
-                        :mode     :auto
+                        :mode     :semi
                         :effects  [[:draw 1]]}})
 
 (defn cutpurse-attack [game {:keys [player-no]}]
@@ -448,7 +448,7 @@
 
 (def tactician-trigger {:event    :at-start-turn
                         :duration :once
-                        :mode     :auto
+                        :mode     :semi
                         :effects  [[:draw 5]
                                    [:give-actions 1]
                                    [:give-buys 1]]})
@@ -538,7 +538,7 @@
                       [:give-buys 1]]
             :trigger {:event    :at-start-turn
                       :duration :once
-                      :mode     :auto
+                      :mode     :semi
                       :effects  [[:draw 2]
                                  [:give-buys 1]]}})
 

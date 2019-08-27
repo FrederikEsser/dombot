@@ -8,6 +8,8 @@
             [dombot.cards.intrigue :as intrigue :refer [courtier ironworks lurker swindler]]
             [dombot.cards.seaside :refer [merchant-ship]]
             [dombot.cards.prosperity :refer [bank loan mint peddler venture watchtower]]
+            [dombot.cards.nocturne :refer [sea-gift lost-in-the-woods]]
+            [dombot.cards.adventures :refer [amulet]]
             [dombot.cards.promos :refer [stash]]
             [dombot.cards.renaissance :as renaissance :refer :all]
             [dombot.utils :as ut])
@@ -21,9 +23,9 @@
 
 (defn get-project-trigger [{:keys [name type trigger]}]
   (merge (if (= :project type)
-           {:name     name
-            :duration :game}
+           {:duration :game}
            {:duration name})
+         {:name name}
          trigger))
 
 (deftest acting-troupe-test
@@ -312,7 +314,7 @@
              {:players [{:play-area [cargo-ship]
                          :actions   0
                          :coins     2
-                         :triggers  [(assoc cargo-ship-trigger :card-id 1)]}]}))
+                         :triggers  [(get-trigger cargo-ship)]}]}))
       (is (= (-> {:players [{:hand    [cargo-ship]
                              :deck    (repeat 5 copper)
                              :actions 1
@@ -339,7 +341,7 @@
                               :discard   [copper]
                               :actions   0
                               :coins     2
-                              :triggers  [(assoc cargo-ship-trigger :card-id 1)]}]
+                              :triggers  [(get-trigger cargo-ship)]}]
               :effect-stack [{:text      "You may set the gained Gold aside on Cargo Ship."
                               :player-no 0
                               :card-id   1
@@ -367,6 +369,7 @@
                          :actions   0
                          :coins     2
                          :triggers  [(merge set-aside=>hand-trigger {:card-id   1
+                                                                     :name      :cargo-ship
                                                                      :set-aside [gold]})]}]}))
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [cargo-ship]
@@ -381,7 +384,7 @@
                          :discard   [copper gold]
                          :actions   0
                          :coins     2
-                         :triggers  [(assoc cargo-ship-trigger :card-id 1)]}]}))
+                         :triggers  [(get-trigger cargo-ship)]}]}))
       (is (= (-> {:supply  [{:card border-guard :pile-size 10}]
                   :players [{:hand    [cargo-ship sculptor]
                              :discard [copper]
@@ -396,7 +399,7 @@
                               :discard   [copper]
                               :actions   0
                               :coins     2
-                              :triggers  [(assoc cargo-ship-trigger :card-id 1)]}]
+                              :triggers  [(get-trigger cargo-ship)]}]
               :effect-stack [{:text      "You may set the gained Border Guard aside on Cargo Ship."
                               :player-no 0
                               :card-id   1
@@ -427,6 +430,7 @@
                          :actions   0
                          :coins     2
                          :triggers  [(merge set-aside=>hand-trigger {:card-id   1
+                                                                     :name      :cargo-ship
                                                                      :set-aside [border-guard]})]}]}))
       (is (= (-> {:supply  [{:card border-guard :pile-size 10}]
                   :players [{:hand    [cargo-ship sculptor border-guard-4]
@@ -445,6 +449,7 @@
                          :actions   0
                          :coins     2
                          :triggers  [(merge set-aside=>hand-trigger {:card-id   1
+                                                                     :name      :cargo-ship
                                                                      :set-aside [border-guard]})]}]}))
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [cargo-ship cargo-ship-2]
@@ -460,8 +465,9 @@
                          :discard   [copper]
                          :actions   0
                          :coins     4
-                         :triggers  [(assoc cargo-ship-trigger :card-id 2)
+                         :triggers  [(get-trigger cargo-ship-2)
                                      (merge set-aside=>hand-trigger {:card-id   1
+                                                                     :name      :cargo-ship
                                                                      :set-aside [gold]})]}]}))
       (is (= (-> {:supply  [{:card border-guard :pile-size 10}]
                   :players [{:hand    [cargo-ship inventor]
@@ -479,6 +485,7 @@
                                  :actions   0
                                  :coins     2
                                  :triggers  [(merge set-aside=>hand-trigger {:card-id   1
+                                                                             :name      :cargo-ship
                                                                              :set-aside [border-guard]})]}]}))
       (is (= (-> {:supply  [{:card inventor :pile-size 10}]
                   :players [{:hand    [cargo-ship improve]
@@ -500,6 +507,7 @@
                          :buys     0
                          :phase    :out-of-turn
                          :triggers [(merge set-aside=>hand-trigger {:card-id   1
+                                                                    ; :name :cargo-ship
                                                                     :set-aside [inventor]})]}]
               :trash   [cargo-ship]}))
       (is (= (-> {:supply  [{:card inventor :pile-size 10}]
@@ -534,7 +542,8 @@
                        :discard       [copper]
                        :actions       0
                        :coins         4
-                       :triggers      [(assoc cargo-ship-trigger :card-id 1) (assoc cargo-ship-trigger :card-id 1)]
+                       :triggers      [(get-trigger cargo-ship)
+                                       (get-trigger cargo-ship)]
                        :repeated-play [{:source 8
                                         :target 1}]}]}))
     (is (= (-> {:players [{:hand    [cargo-ship throne-room]
@@ -565,8 +574,8 @@
                             :discard       [copper]
                             :actions       0
                             :coins         4
-                            :triggers      [(assoc cargo-ship-trigger :card-id 1)
-                                            (assoc cargo-ship-trigger :card-id 1)]
+                            :triggers      [(get-trigger cargo-ship)
+                                            (get-trigger cargo-ship)]
                             :repeated-play [{:source 8
                                              :target 1}]}]
             :effect-stack [{:text      "You may set the gained Gold aside on Cargo Ship."
@@ -601,8 +610,9 @@
                        :discard       [copper]
                        :actions       0
                        :coins         4
-                       :triggers      [(assoc cargo-ship-trigger :card-id 1)
+                       :triggers      [(get-trigger cargo-ship)
                                        (merge set-aside=>hand-trigger {:card-id   1
+                                                                       :name      :cargo-ship
                                                                        :set-aside [gold]})]
                        :repeated-play [{:source 8
                                         :target 1}]}]}))
@@ -643,8 +653,10 @@
                        :actions       0
                        :coins         4
                        :triggers      [(merge set-aside=>hand-trigger {:card-id   1
+                                                                       :name      :cargo-ship
                                                                        :set-aside [gold]})
                                        (merge set-aside=>hand-trigger {:card-id   1
+                                                                       :name      :cargo-ship
                                                                        :set-aside [border-guard]})]
                        :repeated-play [{:source 8
                                         :target 1}]}]}))
@@ -664,8 +676,10 @@
                        :coins         1
                        :buys          0
                        :triggers      [(merge set-aside=>hand-trigger {:card-id   1
+                                                                       :name      :cargo-ship
                                                                        :set-aside [(assoc experiment :id 2)]})
                                        (merge set-aside=>hand-trigger {:card-id   1
+                                                                       :name      :cargo-ship
                                                                        :set-aside [(assoc experiment :id 1)]})]
                        :repeated-play [{:source 8
                                         :target 1}]}]}))))
@@ -1346,6 +1360,7 @@
                          :deck      [copper]
                          :actions   1
                          :triggers  [(merge set-aside=>hand-trigger {:card-id   1
+                                                                     :name      :research
                                                                      :set-aside [silver silver]})]}]
               :trash   [estate]}))
       (is (= (-> {:players [{:hand    [research estate copper copper]
@@ -1387,7 +1402,7 @@
         peddler        (assoc peddler :id 3)
         villain        (assoc villain :id 4)
         priest         (assoc priest :id 5)
-        priest-trigger (assoc priest-trigger :card-id 5)
+        priest-trigger (assoc priest-trigger :card-id 5 :name :priest)
         merchant-ship  (assoc merchant-ship :id 6)
         research       (assoc research :id 7)
         scepter        (assoc scepter :id 8)]
@@ -1501,7 +1516,8 @@
                          :actions-played [5]
                          :coins          6
                          :phase          :pay
-                         :triggers       [priest-trigger priest-trigger]}]
+                         :triggers       [priest-trigger
+                                          priest-trigger]}]
               :trash   [copper]}))
       (is (= (-> {:track-played-actions? true
                   :players               [{:hand    [merchant-ship scepter]
@@ -2161,20 +2177,22 @@
                             :coins     3
                             :villagers 1
                             :phase     :pay}]}))
-        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
-                    :players  [{:hand    [priest copper]
-                                :actions 0
-                                :coins   0
-                                :phase   :action}]}
-                   (play-treasures {:player-no 0})
-                   (choose :copper))
-               {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
-                :players  [{:play-area [priest]
-                            :actions   0
-                            :coins     2
-                            :phase     :pay
-                            :triggers  [priest-trigger]}]
-                :trash    [copper]})))
+        (let [priest (assoc priest :id 2)]
+          (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                      :players  [{:hand    [priest copper]
+                                  :actions 0
+                                  :coins   0
+                                  :phase   :action}]}
+                     (play-treasures {:player-no 0})
+                     (choose :copper))
+                 {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                  :players  [{:play-area [priest]
+                              :actions   0
+                              :coins     2
+                              :phase     :pay
+                              :triggers  [(assoc priest-trigger :card-id 2
+                                                                :name :priest)]}]
+                  :trash    [copper]}))))
       (testing "with Sculptor"
         (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
                     :supply   [{:card patron :pile-size 10}]
@@ -3012,7 +3030,7 @@
                               :phase    :action
                               :triggers [(get-project-trigger crop-rotation)
                                          (get-project-trigger silos)]}]
-            :effect-stack   [{:text      "Multiple things happen simultaneous. Select which one happens next."
+            :effect-stack   [{:text      "Two things happen simultaneous. Select which one happens next."
                               :player-no 0
                               :choice    [:simultaneous-effects-choice {:triggers [(get-project-trigger crop-rotation)
                                                                                    (get-project-trigger silos)]}]
@@ -3088,5 +3106,110 @@
                               :buys     1
                               :phase    :action
                               :triggers [(get-project-trigger key)
-                                         (get-project-trigger silos)]}]}))))
+                                         (get-project-trigger silos)]}]}))
+    (let [amulet (assoc amulet :id 0)]
+      (is (= (-> {:projects {:silos (assoc silos :participants [{:player-no 0}])}
+                  :players  [{:play-area [amulet]
+                              :phase     :out-of-turn
+                              :triggers  [(get-trigger amulet)
+                                          (get-project-trigger silos)]}]}
+                 (start-turn {:player-no 0}))
+             {:current-player 0
+              :projects       {:silos (assoc silos :participants [{:player-no 0}])}
+              :players        [{:play-area [amulet]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action
+                                :triggers  [(get-trigger amulet)
+                                            (get-project-trigger silos)]}]
+              :effect-stack   [{:player-no 0
+                                :text      "Two things happen simultaneous. Select which one happens next."
+                                :choice    [:simultaneous-effects-choice {:triggers [(get-trigger amulet)
+                                                                                     (get-project-trigger silos)]}]
+                                :source    :mixed
+                                :options   [{:area :play-area :card-name :amulet}
+                                            {:area :projects :card-name :silos}]
+                                :max       1
+                                :min       1}
+                               {:player-no 0
+                                :effect    [:remove-triggers {:event :at-start-turn}]}
+                               {:player-no 0
+                                :effect    [:sync-repeated-play]}]}))
+      (is (= (-> {:artifacts {:lost-in-the-woods (assoc lost-in-the-woods :owner 0)}
+                  :players   [{:play-area [amulet]
+                               :phase     :out-of-turn
+                               :triggers  [(get-trigger amulet)
+                                           (merge (get-trigger lost-in-the-woods)
+                                                  {:duration :lost-in-the-woods})]}]}
+                 (start-turn {:player-no 0}))
+             {:current-player 0
+              :artifacts      {:lost-in-the-woods (assoc lost-in-the-woods :owner 0)}
+              :players        [{:play-area [amulet]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action
+                                :triggers  [(get-trigger amulet)
+                                            (merge (get-trigger lost-in-the-woods)
+                                                   {:duration :lost-in-the-woods})]}]
+              :effect-stack   [{:player-no 0
+                                :text      "Two things happen simultaneous. Select which one happens next."
+                                :choice    [:simultaneous-effects-choice {:triggers [(get-trigger amulet)
+                                                                                     (merge (get-trigger lost-in-the-woods)
+                                                                                            {:duration :lost-in-the-woods})]}]
+                                :source    :mixed
+                                :options   [{:area :play-area :card-name :amulet}
+                                            {:area :artifacts :card-name :lost-in-the-woods}]
+                                :max       1
+                                :min       1}
+                               {:player-no 0
+                                :effect    [:remove-triggers {:event :at-start-turn}]}
+                               {:player-no 0
+                                :effect    [:sync-repeated-play]}]}))
+      (is (= (-> {:artifacts {:lost-in-the-woods (assoc lost-in-the-woods :owner 0)}
+                  :players   [{:play-area [amulet]
+                               :boons     [sea-gift]
+                               :phase     :out-of-turn
+                               :triggers  [(get-trigger amulet)
+                                           {:event    :at-start-turn
+                                            :name     :the-sea's-gift
+                                            :duration :once
+                                            :mode     :manual
+                                            :effects  [[:return-boon {:boon-name :the-sea's-gift}]
+                                                       [:receive-boon {:boon sea-gift}]]}]}]}
+                 (start-turn {:player-no 0}))
+             {:current-player 0
+              :artifacts      {:lost-in-the-woods (assoc lost-in-the-woods :owner 0)}
+              :players        [{:play-area [amulet]
+                                :boons     [sea-gift]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action
+                                :triggers  [(get-trigger amulet)
+                                            {:event    :at-start-turn
+                                             :name     :the-sea's-gift
+                                             :duration :once
+                                             :mode     :manual
+                                             :effects  [[:return-boon {:boon-name :the-sea's-gift}]
+                                                        [:receive-boon {:boon sea-gift}]]}]}]
+              :effect-stack   [{:player-no 0
+                                :text      "Two things happen simultaneous. Select which one happens next."
+                                :choice    [:simultaneous-effects-choice {:triggers [(get-trigger amulet)
+                                                                                     {:event    :at-start-turn
+                                                                                      :name     :the-sea's-gift
+                                                                                      :duration :once
+                                                                                      :mode     :manual
+                                                                                      :effects  [[:return-boon {:boon-name :the-sea's-gift}]
+                                                                                                 [:receive-boon {:boon sea-gift}]]}]}]
+                                :source    :mixed
+                                :options   [{:area :play-area :card-name :amulet}
+                                            {:area :boons :card-name :the-sea's-gift}]
+                                :max       1
+                                :min       1}
+                               {:player-no 0
+                                :effect    [:remove-triggers {:event :at-start-turn}]}
+                               {:player-no 0
+                                :effect    [:sync-repeated-play]}]})))))
 

@@ -33,7 +33,7 @@
              :effects [[:give-choice amulet-choice]]
              :trigger {:event    :at-start-turn
                        :duration :once
-                       :mode     :auto
+                       :mode     :manual
                        :effects  [[:give-choice amulet-choice]]}})
 
 (defn- artificer-discard [game {:keys [player-no card-names]}]
@@ -85,7 +85,7 @@
                :cost    6
                :trigger {:event    :at-start-turn
                          :duration :game
-                         :mode     :auto
+                         :mode     :semi
                          :effects  [[:draw 1]]}})
 
 (def lost-city {:name    :lost-city
