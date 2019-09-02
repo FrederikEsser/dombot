@@ -658,6 +658,7 @@
 
 (deftest merchant-test
   (testing "Merchant"
+    (ut/reset-ids!)
     (is (= (-> {:players [{:deck    [copper copper]
                            :hand    [merchant]
                            :actions 1
@@ -666,7 +667,7 @@
                (play 0 :copper))
            {:players [{:deck      [copper]
                        :play-area [merchant copper]
-                       :triggers  [merchant-trigger]
+                       :triggers  [(assoc merchant-trigger :id 1)]
                        :actions   1
                        :coins     1}]}))
     (is (= (-> {:players [{:deck    [silver copper]
@@ -1552,6 +1553,7 @@
                              {:player-no 0
                               :card-id   0
                               :effect    [:register-repeated-play {:target-id 0}]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:deck    [witch copper copper silver]
                              :hand    [throne-room throne-room merchant]
                              :actions 1}]}
@@ -1561,7 +1563,8 @@
              {:players      [{:deck      [copper silver]
                               :hand      [witch copper]
                               :play-area [throne-room throne-room merchant]
-                              :triggers  [merchant-trigger merchant-trigger]
+                              :triggers  [(assoc merchant-trigger :id 1)
+                                          (assoc merchant-trigger :id 2)]
                               :actions   2}]
               :effect-stack [{:text      "You may play an Action card from your hand twice."
                               :player-no 0

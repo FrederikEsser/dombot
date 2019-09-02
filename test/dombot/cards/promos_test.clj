@@ -1,6 +1,7 @@
 (ns dombot.cards.promos-test
   (:require [clojure.test :refer :all]
             [dombot.test-utils :refer :all]
+            [dombot.utils :as ut]
             [dombot.operations :refer :all]
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
@@ -16,12 +17,14 @@
 (deftest church-test
   (let [church (assoc church :id 0)]
     (testing "Church"
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [church]
                              :actions 1}]}
                  (play 0 :church))
              {:players [{:play-area [church]
                          :actions   1
-                         :triggers  [{:event    :at-start-turn
+                         :triggers  [{:id       1
+                                      :event    :at-start-turn
                                       :card-id  0
                                       :name     :church
                                       :duration :once
@@ -31,6 +34,7 @@
                                                                 :choice  :trash-from-hand
                                                                 :options [:player :hand]
                                                                 :max     1}]]}]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [church copper]
                              :actions 1}]}
                  (play 0 :church)
@@ -38,7 +42,8 @@
              {:players [{:hand      [copper]
                          :play-area [church]
                          :actions   1
-                         :triggers  [{:event    :at-start-turn
+                         :triggers  [{:id       1
+                                      :event    :at-start-turn
                                       :card-id  0
                                       :name     :church
                                       :duration :once
@@ -48,13 +53,15 @@
                                                                 :choice  :trash-from-hand
                                                                 :options [:player :hand]
                                                                 :max     1}]]}]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [church copper]
                              :actions 1}]}
                  (play 0 :church)
                  (choose :copper))
              {:players [{:play-area [church]
                          :actions   1
-                         :triggers  [{:event     :at-start-turn
+                         :triggers  [{:id        1
+                                      :event     :at-start-turn
                                       :card-id   0
                                       :name      :church
                                       :set-aside [copper]
@@ -65,6 +72,7 @@
                                                                  :choice  :trash-from-hand
                                                                  :options [:player :hand]
                                                                  :max     1}]]}]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [church copper copper copper]
                              :actions 1}]}
                  (play 0 :church)
@@ -72,7 +80,8 @@
              {:players [{:hand      [copper copper copper]
                          :play-area [church]
                          :actions   1
-                         :triggers  [{:event    :at-start-turn
+                         :triggers  [{:id       1
+                                      :event    :at-start-turn
                                       :card-id  0
                                       :name     :church
                                       :duration :once
@@ -82,13 +91,15 @@
                                                                 :choice  :trash-from-hand
                                                                 :options [:player :hand]
                                                                 :max     1}]]}]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [church copper copper copper]
                              :actions 1}]}
                  (play 0 :church)
                  (choose [:copper :copper :copper]))
              {:players [{:play-area [church]
                          :actions   1
-                         :triggers  [{:event     :at-start-turn
+                         :triggers  [{:id        1
+                                      :event     :at-start-turn
                                       :card-id   0
                                       :name      :church
                                       :set-aside [copper copper copper]
@@ -305,6 +316,7 @@
                               :effect    [:check-game-ended]}
                              {:player-no 1
                               :effect    [:start-turn]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:play-area       [copper copper copper copper copper]
                              :discard         [stash]
                              :phase           :buy
@@ -346,6 +358,6 @@
                                                         :from-position :top
                                                         :to            :hand}]}
                                {:player-no 1
-                                :effect    [:remove-triggers {:event :at-start-turn}]}
+                                :effect    [:remove-trigger {:trigger-id 1}]}
                                {:player-no 1
                                 :effect    [:sync-repeated-play]}]})))))

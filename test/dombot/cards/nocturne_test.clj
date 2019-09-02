@@ -6,13 +6,16 @@
             [dombot.cards.common :refer :all]
             [dombot.cards.dominion :refer [militia throne-room witch]]
             [dombot.cards.intrigue :refer [lurker]]
+            [dombot.cards.seaside :refer [fishing-village]]
             [dombot.cards.prosperity :as prosperity :refer [hoard mint talisman]]
             [dombot.cards.cornucopia :refer [trusty-steed]]
             [dombot.cards.nocturne :as nocturne :refer :all]
             [dombot.cards.renaissance :refer [patron silk-merchant academy]]
-            [dombot.cards.kingdom :refer [setup-game]]))
+            [dombot.cards.kingdom :refer [setup-game]]
+            [dombot.utils :as ut]))
 
 (defn fixture [f]
+  (ut/reset-ids!)
   (with-rand-seed 123 (f)))
 
 (use-fixtures :each fixture)
@@ -43,6 +46,7 @@
                 :players [{:hand    [estate]
                            :discard [copper bard]}]}))))
     (testing "The Field's Gift"
+      (ut/reset-ids!)
       (is (= (-> {:boons   {:deck [field-gift]}
                   :players [{:actions 0
                              :coins   0}]}
@@ -51,7 +55,8 @@
               :players [{:actions  1
                          :coins    1
                          :boons    [field-gift]
-                         :triggers [{:event    :at-clean-up
+                         :triggers [{:id       1
+                                     :event    :at-clean-up
                                      :duration :once
                                      :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]}))
       (is (= (-> {:boons   {:deck [field-gift]}
@@ -79,6 +84,7 @@
               :players [{}]
               :trash   [estate]})))
     (testing "The Forest's Gift"
+      (ut/reset-ids!)
       (is (= (-> {:boons   {:deck [forest-gift]}
                   :players [{:coins 0
                              :buys  1}]}
@@ -87,7 +93,8 @@
               :players [{:coins    1
                          :buys     2
                          :boons    [forest-gift]
-                         :triggers [{:event    :at-clean-up
+                         :triggers [{:id       1
+                                     :event    :at-clean-up
                                      :duration :once
                                      :effects  [[:return-boon {:boon-name :the-forest's-gift}]]}]}]}))
       (is (= (-> {:boons   {:deck [forest-gift]}
@@ -124,15 +131,18 @@
                 :supply  [{:card silver :pile-size 39}]
                 :players [{:discard [silver]}]}))))
     (testing "The River's Gift"
+      (ut/reset-ids!)
       (is (= (-> {:boons   {:deck [river-gift]}
                   :players [{}]}
                  (receive-boon {:player-no 0}))
              {:boons   {}
               :players [{:boons    [river-gift]
-                         :triggers [{:event    :at-draw-hand
+                         :triggers [{:id       1
+                                     :event    :at-draw-hand
                                      :duration :once
                                      :effects  [[:draw {:arg 1 :player-no 0}]]}
-                                    {:event    :at-clean-up
+                                    {:id       2
+                                     :event    :at-clean-up
                                      :duration :once
                                      :effects  [[:return-boon {:boon-name :the-river's-gift}]]}]}]}))
       (is (= (-> {:boons   {:deck [river-gift]}
@@ -337,12 +347,13 @@
                          :revealed-cards {:discard 3}
                          :coffers        1}]})))
     (testing "Delusion"
+      (ut/reset-ids!)
       (is (= (-> {:hexes   {:deck [delusion]}
                   :players [{}]}
                  (receive-hex {:player-no 0}))
              {:hexes   {:discard [delusion]}
               :players [{:states   [deluded]
-                         :triggers [(:trigger deluded)]}]}))
+                         :triggers [(assoc (:trigger deluded) :id 1)]}]}))
       (is (= (-> {:players [{:hand     [copper]
                              :coins    0
                              :phase    :action
@@ -372,6 +383,7 @@
                                               :phase :action}]}
                                   (receive-hex {:player-no 0})
                                   (buy-card 0 :conclave))))
+        (ut/reset-ids!)
         (is (= (-> {:hexes   {:deck [delusion]}
                     :supply  [{:card conclave :pile-size 10}]
                     :players [{:coins 4
@@ -386,7 +398,7 @@
                            :buys     0
                            :phase    :buy
                            :states   [deluded]
-                           :triggers [(:trigger deluded)]}]})))
+                           :triggers [(assoc (:trigger deluded) :id 1)]}]})))
       (let [silver (assoc silver :id 1)]
         (is (= (-> {:supply         [{:card silver :pile-size 40}]
                     :players        [{:coins 3
@@ -408,6 +420,7 @@
                                 :coins   0
                                 :buys    1
                                 :phase   :action}]}))
+      (ut/reset-ids!)
       (is (= (-> {:hexes   {:deck [delusion]}
                   :players [{:phase :buy}]}
                  (receive-hex {:player-no 0})
@@ -419,14 +432,16 @@
                                 :buys     1
                                 :phase    :action
                                 :states   [deluded]
-                                :triggers [(:trigger deluded)]}]})))
+                                :triggers [(assoc (:trigger deluded) :id 1)]}]})))
     (testing "Envy"
+      (ut/reset-ids!)
       (is (= (-> {:hexes   {:deck [envy]}
                   :players [{}]}
                  (receive-hex {:player-no 0}))
              {:hexes   {:discard [envy]}
               :players [{:states   [envious]
-                         :triggers [(:trigger envious)]}]}))
+                         :triggers [(assoc (:trigger envious) :id 1)]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:hexes   {:deck [envy]}
                   :players [{:hand  [copper]
                              :coins 0
@@ -437,7 +452,9 @@
               :players [{:play-area [copper]
                          :coins     1
                          :phase     :pay
-                         :triggers  [envious-silver-trigger envious-gold-trigger]}]}))
+                         :triggers  [(assoc envious-silver-trigger :id 2)
+                                     (assoc envious-gold-trigger :id 3)]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:hexes   {:deck [envy]}
                   :players [{:hand  [silver]
                              :coins 0
@@ -448,7 +465,9 @@
               :players [{:play-area [silver]
                          :coins     1
                          :phase     :pay
-                         :triggers  [envious-silver-trigger envious-gold-trigger]}]}))
+                         :triggers  [(assoc envious-silver-trigger :id 2)
+                                     (assoc envious-gold-trigger :id 3)]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:hexes   {:deck [envy]}
                   :players [{:hand  [silver silver]
                              :coins 0
@@ -460,7 +479,9 @@
               :players [{:play-area [silver silver]
                          :coins     2
                          :phase     :pay
-                         :triggers  [envious-silver-trigger envious-gold-trigger]}]}))
+                         :triggers  [(assoc envious-silver-trigger :id 2)
+                                     (assoc envious-gold-trigger :id 3)]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:hexes   {:deck [envy]}
                   :players [{:hand  [gold]
                              :coins 0
@@ -471,7 +492,8 @@
               :players [{:play-area [gold]
                          :coins     1
                          :phase     :pay
-                         :triggers  [envious-silver-trigger envious-gold-trigger]}]}))
+                         :triggers  [(assoc envious-silver-trigger :id 2)
+                                     (assoc envious-gold-trigger :id 3)]}]}))
       (is (= (-> {:hexes   {:deck [envy]}
                   :players [{:phase :action}]}
                  (receive-hex {:player-no 0})
@@ -771,6 +793,7 @@
               :players [{:hand    [copper]
                          :deck    [copper]
                          :discard [blessed-village]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:boons   {:deck [sea-gift]}
                   :supply  [{:card blessed-village :pile-size 10}]
                   :players [{:deck [copper copper]}]}
@@ -781,7 +804,8 @@
               :players [{:deck     [copper copper]
                          :discard  [blessed-village]
                          :boons    [sea-gift]
-                         :triggers [{:event    :at-start-turn
+                         :triggers [{:id       1
+                                     :event    :at-start-turn
                                      :name     :the-sea's-gift
                                      :duration :once
                                      :mode     :manual
@@ -803,6 +827,7 @@
                                 :coins   0
                                 :buys    1
                                 :phase   :action}]}))
+      (ut/reset-ids!)
       (is (= (-> {:boons   {:deck [forest-gift]}
                   :supply  [{:card blessed-village :pile-size 10}]
                   :players [{:coins 0
@@ -815,9 +840,11 @@
                          :coins    1
                          :buys     2
                          :boons    [forest-gift]
-                         :triggers [{:event    :at-clean-up
+                         :triggers [{:id       1
+                                     :event    :at-clean-up
                                      :duration :once
                                      :effects  [[:return-boon {:boon-name :the-forest's-gift}]]}]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:boons   {:deck [forest-gift]}
                   :supply  [{:card blessed-village :pile-size 10}]
                   :players [{:deck [copper copper]}]}
@@ -828,11 +855,13 @@
               :players [{:deck     [copper copper]
                          :discard  [blessed-village]
                          :boons    [forest-gift]
-                         :triggers [{:event    :at-start-turn
+                         :triggers [{:id       1
+                                     :event    :at-start-turn
                                      :name     :the-forest's-gift
                                      :duration :once
                                      :mode     :manual
                                      :effects  [[:receive-boon {:boon forest-gift}]]}]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:boons   {:deck [forest-gift]}
                   :supply  [{:card blessed-village :pile-size 10}]
                   :players [{:deck (repeat 5 copper)}]}
@@ -849,7 +878,8 @@
                                 :buys     2
                                 :phase    :action
                                 :boons    [forest-gift]
-                                :triggers [{:event    :at-clean-up
+                                :triggers [{:id       2
+                                            :event    :at-clean-up
                                             :duration :once
                                             :effects  [[:return-boon {:boon-name :the-forest's-gift}]]}]}]})))))
 
@@ -1266,6 +1296,7 @@
 (deftest cobbler-test
   (let [cobbler (assoc cobbler :id 0)]
     (testing "Cobbler"
+      (ut/reset-ids!)
       (is (= (-> {:supply  (base/supply 2 8)
                   :players [{:hand [cobbler]}]}
                  (play 0 :cobbler)
@@ -1287,9 +1318,35 @@
                                 :min       1
                                 :max       1}
                                {:player-no 0
-                                :effect    [:remove-triggers {:event :at-start-turn}]}
+                                :effect    [:remove-trigger {:trigger-id 1}]}
                                {:player-no 0
-                                :effect    [:sync-repeated-play]}]})))))
+                                :effect    [:sync-repeated-play]}]}))
+      (let [blessed-village (assoc blessed-village :id 1)]
+        (ut/reset-ids!)
+        (is (= (-> {:supply  [{:card blessed-village :pile-size 10}]
+                    :boons   {:deck [sea-gift]}
+                    :players [{:hand [cobbler]}]}
+                   (play 0 :cobbler)
+                   (end-turn 0)
+                   (choose :blessed-village)
+                   (choose :at-start-turn))
+               {:supply         [{:card blessed-village :pile-size 9}]
+                :boons          {}
+                :current-player 0
+                :players        [{:hand      [blessed-village]
+                                  :play-area [cobbler]
+                                  :boons     [sea-gift]
+                                  :actions   1
+                                  :coins     0
+                                  :buys      1
+                                  :phase     :action
+                                  :triggers  [{:id       2
+                                               :event    :at-start-turn
+                                               :name     :the-sea's-gift
+                                               :duration :once
+                                               :mode     :manual
+                                               :effects  [[:return-boon {:boon-name :the-sea's-gift}]
+                                                          [:receive-boon {:boon sea-gift}]]}]}]}))))))
 
 (deftest conclave-test
   (testing "Conclave"
@@ -1361,22 +1418,26 @@
                  (play 0 :crypt)
                  (choose nil))
              {:players [{:play-area [copper crypt]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand      [crypt]
                              :play-area [gold]}]}
                  (play 0 :crypt)
                  (choose :gold))
              {:players [{:play-area [crypt]
                          :triggers  [(merge crypt-trigger
-                                            {:card-id   0
+                                            {:id        1
+                                             :card-id   0
                                              :name      :crypt
                                              :set-aside [gold]})]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand      [crypt]
                              :play-area [copper silver gold]}]}
                  (play 0 :crypt)
                  (choose [:copper :silver :gold]))
              {:players [{:play-area [crypt]
                          :triggers  [(merge crypt-trigger
-                                            {:card-id   0
+                                            {:id        1
+                                             :card-id   0
                                              :name      :crypt
                                              :set-aside [copper silver gold]})]}]}))
       (is (= (-> {:players [{:play-area [crypt]
@@ -1763,6 +1824,7 @@
              {:boons   {:discard [wind-gift]}
               :players [{:hand    [copper copper]
                          :discard [faithful-hound estate]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:boons   {:deck [wind-gift]}
                   :players [{:hand [faithful-hound copper]
                              :deck [estate copper]}]}
@@ -1773,7 +1835,8 @@
               :players [{:hand      [copper copper]
                          :set-aside [faithful-hound]
                          :discard   [estate]
-                         :triggers  [{:event    :at-draw-hand
+                         :triggers  [{:id       1
+                                      :event    :at-draw-hand
                                       :duration :once
                                       :effects  [[:move-card {:player-no 0
                                                               :card-name :faithful-hound
@@ -1818,6 +1881,7 @@
   (let [fool (assoc fool :id 0)
         gold (assoc gold :id 1)]
     (testing "Fool"
+      (ut/reset-ids!)
       (is (= (-> {:artifacts {:lost-in-the-woods (assoc lost-in-the-woods :owner 0)}
                   :players   [{:hand     [fool]
                                :actions  1
@@ -1829,6 +1893,7 @@
                            :actions   0
                            :triggers  [(merge (get-trigger lost-in-the-woods)
                                               {:duration :lost-in-the-woods})]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:boons     {:deck    [field-gift sea-gift]
                               :discard [sky-gift river-gift]}
                   :artifacts {:lost-in-the-woods lost-in-the-woods}
@@ -1849,6 +1914,7 @@
                               :options   [:the-field's-gift :the-sea's-gift :the-sky's-gift]
                               :min       1
                               :max       1}]}))
+      (ut/reset-ids!)
       (is (= (-> {:boons     {:deck [field-gift sea-gift sky-gift river-gift]}
                   :artifacts {:lost-in-the-woods lost-in-the-woods}
                   :players   [{:hand    [fool gold gold copper copper]
@@ -1873,6 +1939,7 @@
                               :options   [:the-field's-gift :the-sky's-gift]
                               :min       1
                               :max       1}]}))
+      (ut/reset-ids!)
       (is (= (-> {:boons     {:deck [field-gift sea-gift sky-gift river-gift]}
                   :artifacts {:lost-in-the-woods lost-in-the-woods}
                   :players   [{:hand    [fool gold gold copper copper]
@@ -1893,7 +1960,8 @@
                               :boons     [field-gift sky-gift]
                               :triggers  [(merge (get-trigger lost-in-the-woods)
                                                  {:duration :lost-in-the-woods})
-                                          {:event    :at-clean-up
+                                          {:id       2
+                                           :event    :at-clean-up
                                            :duration :once
                                            :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]
               :effect-stack [{:text      "Receive the Boons in any order."
@@ -1903,6 +1971,7 @@
                               :options   [:the-sky's-gift]
                               :min       1
                               :max       1}]}))
+      (ut/reset-ids!)
       (is (= (-> {:boons     {:deck [field-gift sea-gift sky-gift river-gift]}
                   :artifacts {:lost-in-the-woods lost-in-the-woods}
                   :supply    [{:card gold :pile-size 30}]
@@ -1928,7 +1997,8 @@
                            :boons     [field-gift]
                            :triggers  [(merge (get-trigger lost-in-the-woods)
                                               {:duration :lost-in-the-woods})
-                                       {:event    :at-clean-up
+                                       {:id       2
+                                        :event    :at-clean-up
                                         :duration :once
                                         :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]}))
       (testing "Lost in the Woods"
@@ -1979,6 +2049,7 @@
 (deftest ghost-test
   (let [ghost (assoc ghost :id 0)]
     (testing "Ghost"
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand [ghost]
                              :deck [conclave estate]}]}
                  (play 0 :ghost))
@@ -1986,9 +2057,11 @@
                          :deck           [estate]
                          :revealed-cards {:ghost 1}
                          :triggers       [(merge ghost-trigger
-                                                 {:card-id   0
+                                                 {:id        1
+                                                  :card-id   0
                                                   :name      :ghost
                                                   :set-aside [conclave]})]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand [ghost]
                              :deck [estate conclave estate]}]}
                  (play 0 :ghost))
@@ -1998,7 +2071,8 @@
                          :revealed-cards {:discard 1
                                           :ghost   1}
                          :triggers       [(merge ghost-trigger
-                                                 {:card-id   0
+                                                 {:id        1
+                                                  :card-id   0
                                                   :name      :ghost
                                                   :set-aside [conclave]})]}]}))
       (is (= (-> {:players [{:hand    [ghost]
@@ -2019,29 +2093,60 @@
                                 :actions   1
                                 :coins     4
                                 :buys      1
-                                :phase     :action}]})))))
+                                :phase     :action}]}))
+      (let [fishing-village (assoc fishing-village :id 1)]
+        (ut/reset-ids!)
+        (is (= (-> {:players [{:hand [ghost]
+                               :deck [fishing-village]}]}
+                   (play 0 :ghost)
+                   (end-turn 0))
+               {:current-player 0
+                :players        [{:play-area     [ghost fishing-village]
+                                  :actions       5
+                                  :coins         2
+                                  :buys          1
+                                  :phase         :action
+                                  :triggers      [(assoc (get-trigger fishing-village) :id 2)
+                                                  (assoc (get-trigger fishing-village) :id 3)]
+                                  :repeated-play [{:source 0
+                                                   :target 1}]}]}))
+        (is (= (-> {:players [{:hand [ghost]
+                               :deck [fishing-village]}]}
+                   (play 0 :ghost)
+                   (end-turn 0)
+                   (end-turn 0))
+               {:current-player 0
+                :players        [{:play-area [ghost fishing-village]
+                                  :actions   3
+                                  :coins     2
+                                  :buys      1
+                                  :phase     :action}]}))))))
 
 (deftest ghost-town-test
   (let [ghost-town (assoc ghost-town :id 0)]
     (testing "Ghost Town"
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand  [ghost-town]
                              :phase :action}]}
                  (play 0 :ghost-town))
              {:players [{:play-area [ghost-town]
                          :phase     :night
                          :triggers  [(get-trigger ghost-town)]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand  [ghost-town]
                              :phase :pay}]}
                  (play 0 :ghost-town))
              {:players [{:play-area [ghost-town]
                          :phase     :night
                          :triggers  [(get-trigger ghost-town)]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand  [ghost-town]
                              :phase :buy}]}
                  (play 0 :ghost-town))
              {:players [{:play-area [ghost-town]
                          :phase     :night
                          :triggers  [(get-trigger ghost-town)]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand  [ghost-town]
                              :phase :night}]}
                  (play 0 :ghost-town))
@@ -2069,6 +2174,7 @@
 (deftest guardian-test
   (let [guardian (assoc guardian :id 0)]
     (testing "guardian"
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand [guardian]}]}
                  (play 0 :guardian))
              {:players [{:play-area  [guardian]
@@ -2551,6 +2657,7 @@
                          :deck      [copper]
                          :actions   2}]
               :trash   [pixie]}))
+      (ut/reset-ids!)
       (is (= (-> {:boons   {:deck [field-gift]}
                   :players [{:hand    [pixie]
                              :actions 1
@@ -2561,7 +2668,8 @@
               :players [{:actions  3
                          :coins    2
                          :boons    [field-gift]
-                         :triggers [{:event    :at-clean-up
+                         :triggers [{:id       1
+                                     :event    :at-clean-up
                                      :duration :once
                                      :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]
               :trash   [pixie]})))
@@ -2694,6 +2802,7 @@
                          :buys      2}
                         {:hand [estate]
                          :deck [estate]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:boons   {:deck [field-gift]}
                   :players [{:hand    [sacred-grove]
                              :actions 1
@@ -2707,7 +2816,8 @@
                          :coins     4
                          :buys      2
                          :boons     [field-gift]
-                         :triggers  [{:event    :at-clean-up
+                         :triggers  [{:id       1
+                                      :event    :at-clean-up
                                       :duration :once
                                       :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}
                         {:deck [estate estate]}]}))
@@ -2740,6 +2850,7 @@
 (deftest raider-test
   (let [raider (assoc raider :id 0)]
     (testing "Raider"
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand      [raider copper]
                              :play-area [silver conclave]}
                             {:hand [conclave copper raider silver gold]}]}
@@ -2757,6 +2868,7 @@
                               :max       1}
                              {:player-no 1
                               :effect    [:clear-unaffected {:works :once}]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand      [raider copper]
                              :play-area [silver conclave]}
                             {:hand [conclave copper raider silver gold]}]}
@@ -2767,6 +2879,7 @@
                          :triggers  [(get-trigger raider)]}
                         {:hand    [conclave copper raider gold]
                          :discard [silver]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand      [raider copper]
                              :play-area [silver conclave]}
                             {:hand [conclave copper raider gold]}]}
@@ -2775,6 +2888,7 @@
                          :play-area [silver conclave raider]
                          :triggers  [(get-trigger raider)]}
                         {:hand [conclave copper raider gold]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand      [raider copper]
                              :play-area [silver conclave]}
                             {:hand (repeat 5 copper)}]}
@@ -2828,6 +2942,7 @@
                          :play-area [secret-cave]
                          :deck      [copper]
                          :actions   1}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [secret-cave estate estate]
                              :deck    [copper copper]
                              :actions 1}]}
@@ -2838,7 +2953,8 @@
                          :discard   [estate estate copper]
                          :actions   1
                          :triggers  [(merge secret-cave-trigger
-                                            {:card-id 0
+                                            {:id      1
+                                             :card-id 0
                                              :name    :secret-cave})]}]}))
       (is (= (-> {:players [{:hand    [secret-cave estate estate]
                              :deck    (repeat 7 copper)

@@ -6,7 +6,8 @@
             [dombot.cards.common :refer :all]
             [dombot.cards.adventures :as adventures :refer :all]
             [dombot.cards.dominion :refer [militia]]
-            [dombot.cards.intrigue :refer [harem]]))
+            [dombot.cards.intrigue :refer [harem]]
+            [dombot.utils :as ut]))
 
 (defn fixture [f]
   (with-rand-seed 123 (f)))
@@ -17,6 +18,7 @@
   (let [amulet (assoc amulet :id 0)
         silver (assoc silver :id 1)]
     (testing "Amulet"
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [amulet]
                              :actions 1
                              :coins   0}]}
@@ -26,6 +28,7 @@
                          :actions   0
                          :coins     1
                          :triggers  [(get-trigger amulet)]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [amulet estate]
                              :actions 1}]}
                  (play 0 :amulet)
@@ -35,6 +38,7 @@
                          :actions   0
                          :triggers  [(get-trigger amulet)]}]
               :trash   [estate]}))
+      (ut/reset-ids!)
       (is (= (-> {:supply  [{:card silver :pile-size 40}]
                   :players [{:hand    [amulet]
                              :actions 1}]}
@@ -171,6 +175,7 @@
 (deftest caravan-guard-test
   (let [caravan-guard (assoc caravan-guard :id 0)]
     (testing "Caravan Guard"
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [caravan-guard]
                              :deck    [copper copper]
                              :actions 1}]}
@@ -201,6 +206,7 @@
                          :coins     2}
                         {:hand    [caravan-guard copper copper]
                          :discard [copper copper]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [militia]
                              :actions 1
                              :coins   0}
@@ -222,6 +228,7 @@
                          :phase     :out-of-turn
                          :triggers  [(get-trigger caravan-guard)]}]}))
       (let [caravan-guard-1 (assoc caravan-guard :id 1)]
+        (ut/reset-ids!)
         (is (= (-> {:players [{:hand    [militia]
                                :actions 1
                                :coins   0}
@@ -242,7 +249,7 @@
                            :actions   2
                            :phase     :out-of-turn
                            :triggers  [(get-trigger caravan-guard)
-                                       (get-trigger caravan-guard-1)]}]})))
+                                       (assoc (get-trigger caravan-guard-1) :id 2)]}]})))
       (is (= (-> {:players [{:hand    [militia]
                              :actions 1
                              :coins   0}
@@ -272,6 +279,7 @@
 (deftest hireling-test
   (let [hireling (assoc hireling :id 0)]
     (testing "Hireling"
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [hireling]
                              :actions 1}]}
                  (play 0 :hireling))

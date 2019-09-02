@@ -80,31 +80,32 @@
                    :setup   [[:add-artifact {:artifact horn}]
                              [:add-artifact {:artifact lantern}]]})
 
-(defn cargo-ship-set-aside [game {:keys [player-no card-id card-name gained-card-id]}]
+(defn cargo-ship-set-aside [game {:keys [player-no card-id card-name gained-card-id trigger-id]}]
   (if card-name
     (let [{card     :card
-           card-idx :idx} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
-          {trigger-idx :idx} (ut/get-trigger-idx game [:players player-no :triggers] {:card-id  card-id ; todo: Use trigger-id
-                                                                                      :duration :turn})]
+           card-idx :idx} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
       (-> game
           (update-in [:players player-no :gaining] ut/vec-remove card-idx)
-          (update-in [:players player-no :triggers] ut/vec-remove trigger-idx)
+          (update-in [:players player-no :triggers] (partial remove (comp #{trigger-id} :id)))
           (push-effect-stack {:player-no player-no
                               :effects   [[:add-trigger {:trigger (merge set-aside=>hand-trigger
-                                                                         {:set-aside [card]})
+                                                                         {:name      :cargo-ship
+                                                                          :set-aside [card]})
                                                          :card-id card-id}]]})
           (state-maintenance player-no :gaining :cargo-ship)))
     game))
 
-(defn cargo-ship-give-choice [game {:keys [player-no card-id gained-card-id]}]
-  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
+(defn cargo-ship-give-choice [game {:keys [player-no card-id gained-card-id trigger-id]}]
+  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
+        {:keys [trigger]} (ut/get-trigger-idx game [:players player-no :triggers] {:id trigger-id})]
     (cond-> game
-            card (give-choice {:player-no player-no
-                               :card-id   card-id
-                               :text      (str "You may set the gained " (ut/format-name name) " aside on Cargo Ship.")
-                               :choice    [::cargo-ship-set-aside {:gained-card-id gained-card-id}]
-                               :options   [:player :gaining {:id gained-card-id}]
-                               :max       1}))))
+            (and card trigger) (give-choice {:player-no player-no
+                                             :card-id   card-id
+                                             :text      (str "You may set the gained " (ut/format-name name) " aside on Cargo Ship.")
+                                             :choice    [::cargo-ship-set-aside {:gained-card-id gained-card-id
+                                                                                 :trigger-id     trigger-id}]
+                                             :options   [:player :gaining {:id gained-card-id}]
+                                             :max       1}))))
 
 (effects/register {::cargo-ship-set-aside   cargo-ship-set-aside
                    ::cargo-ship-give-choice cargo-ship-give-choice})

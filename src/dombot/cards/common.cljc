@@ -522,6 +522,7 @@
 (defn add-trigger [game {:keys [player-no card-id trigger]}]
   (let [{:keys [card]} (when card-id (ut/get-card-idx game [:players player-no :play-area] {:id card-id}))]
     (update-in game [:players player-no :triggers] concat [(merge trigger
+                                                                  {:id (ut/next-id!)}
                                                                   (when card-id
                                                                     {:card-id card-id})
                                                                   (when card
@@ -596,7 +597,8 @@
     (cond-> game
             (not= player-no owner) (-> (assoc-in [:artifacts artifact-name :owner] player-no)
                                        (cond->
-                                         trigger (update-in [:players player-no :triggers] concat [(assoc trigger :duration artifact-name
+                                         trigger (update-in [:players player-no :triggers] concat [(assoc trigger :id (ut/next-id!)
+                                                                                                                  :duration artifact-name
                                                                                                                   :name artifact-name)])
                                          owner (-> (update-in [:players owner :triggers] (partial remove (comp #{artifact-name} :duration)))
                                                    (update-in [:players owner] ut/dissoc-if-empty :triggers)))))))

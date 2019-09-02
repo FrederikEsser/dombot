@@ -33,6 +33,7 @@
                   (is (= [7 5 6 2 0 1 8 4 3 9] (shuffle (range 10))))))
 
 (defn get-trigger [{:keys [id name trigger]}]
-  (merge (when id {:card-id id})
-         (when name {:name    name})
+  (merge {:id 1}
+         (when id {:card-id id})
+         (when name {:name name})
          trigger))

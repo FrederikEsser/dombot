@@ -122,6 +122,7 @@
         caravan-2   (assoc caravan :id 2)
         throne-room (assoc throne-room :id 3)]
     (testing "Caravan"
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [caravan-1 estate estate estate copper]
                              :deck    [copper copper copper copper copper copper silver]
                              :actions 1}]}
@@ -131,6 +132,7 @@
                          :deck      [copper copper copper copper copper silver]
                          :actions   1
                          :triggers  [(get-trigger caravan-1)]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [caravan-1 estate estate estate copper]
                              :deck    [copper copper copper copper copper copper silver]
                              :actions 1}]}
@@ -158,6 +160,7 @@
                                 :coins     0
                                 :buys      1
                                 :phase     :action}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [caravan-1 caravan-2 copper copper copper]
                              :deck    [copper copper estate estate copper copper silver]
                              :actions 1}]}
@@ -171,7 +174,8 @@
                          :coins     0
                          :buys      0
                          :phase     :out-of-turn
-                         :triggers  [(get-trigger caravan-1) (get-trigger caravan-2)]}]}))
+                         :triggers  [(get-trigger caravan-1)
+                                     (assoc (get-trigger caravan-2) :id 2)]}]}))
       (is (= (-> {:players [{:hand    [caravan-1 caravan-2 copper copper copper]
                              :deck    [copper copper estate estate copper copper silver]
                              :actions 1}]}
@@ -186,6 +190,7 @@
                                 :coins     0
                                 :buys      1
                                 :phase     :action}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [caravan-1 throne-room copper copper copper]
                              :deck    [copper copper estate estate copper copper silver]
                              :actions 1}]}
@@ -199,7 +204,8 @@
                          :coins         0
                          :buys          0
                          :phase         :out-of-turn
-                         :triggers      [(get-trigger caravan-1) (get-trigger caravan-1)]
+                         :triggers      [(get-trigger caravan-1)
+                                         (assoc (get-trigger caravan-1) :id 2)]
                          :repeated-play [{:source 3 :target 1}]}]}))
       (is (= (-> {:players [{:hand    [caravan-1 throne-room copper copper copper]
                              :deck    [copper copper estate estate copper copper silver]
@@ -420,6 +426,7 @@
 (deftest fishing-village-test
   (let [fishing-village (assoc fishing-village :id 1)]
     (testing "Fishing Village"
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [fishing-village]
                              :actions 1
                              :coins   0}]}
@@ -521,6 +528,7 @@
                               :options   [:estate :copper]
                               :min       1
                               :max       1}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [haven estate]
                              :deck    [copper copper]
                              :actions 1}]}
@@ -531,7 +539,8 @@
                          :deck      [copper]
                          :actions   1
                          :triggers  [(merge set-aside=>hand-trigger
-                                            {:card-id   1
+                                            {:id        1
+                                             :card-id   1
                                              :name      :haven
                                              :set-aside [copper]})]}]}))
       (is (= (-> {:players [{:hand    [haven estate]
@@ -552,6 +561,7 @@
                  (play 0 :haven))
              {:players [{:play-area [haven]
                          :actions   1}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [throne-room haven estate]
                              :deck    [copper copper]
                              :actions 1}]}
@@ -563,11 +573,13 @@
                          :play-area     [throne-room haven]
                          :actions       2
                          :triggers      [(merge set-aside=>hand-trigger
-                                                {:card-id   1
+                                                {:id        1
+                                                 :card-id   1
                                                  :name      :haven
                                                  :set-aside [copper]})
                                          (merge set-aside=>hand-trigger
-                                                {:card-id   1
+                                                {:id        2
+                                                 :card-id   1
                                                  :name      :haven
                                                  :set-aside [estate]})]
                          :repeated-play [{:source 2
@@ -632,6 +644,7 @@
   (let [lighthouse-1 (assoc lighthouse :id 1)
         lighthouse-2 (assoc lighthouse :id 2)]
     (testing "Lighthouse"
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [lighthouse-1]
                              :actions 1
                              :coins   0}]}
@@ -641,6 +654,7 @@
                          :coins      1
                          :unaffected [{:card-id 1}]
                          :triggers   [(get-trigger lighthouse-1)]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [lighthouse-1]
                              :actions 1
                              :coins   0}
@@ -672,6 +686,7 @@
                           {:play-area  [lighthouse-1]
                            :unaffected [{:card-id 1}]
                            :triggers   [(get-trigger lighthouse-1)]}]}))
+        (ut/reset-ids!)
         (is (= (-> {:supply  [{:card curse :pile-size 20}]
                     :players [{:hand    [lighthouse-1]
                                :deck    [moat]
@@ -794,6 +809,7 @@
 (deftest merchant-ship-test
   (let [merchant-ship (assoc merchant-ship :id 1)]
     (testing "Merchant Ship"
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [merchant-ship]
                              :actions 1
                              :coins   0}]}
@@ -946,6 +962,7 @@
 (deftest outpost-test
   (let [outpost (assoc outpost :id 1)]
     (testing "Outpost"
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [outpost]
                              :actions 1}]}
                  (play 0 :outpost))
@@ -953,7 +970,8 @@
                          :actions                  0
                          :previous-turn-was-yours? true
                          :triggers                 [(merge outpost-trigger
-                                                           {:card-id 1
+                                                           {:id      1
+                                                            :card-id 1
                                                             :name    :outpost})]}]}))
       (is (= (-> {:players [{:hand            [outpost]
                              :deck            (repeat 5 copper)
@@ -1381,6 +1399,7 @@
   (let [tactician   (assoc tactician :id 1)
         throne-room (assoc throne-room :id 2)]
     (testing "Tactician"
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [tactician estate]
                              :actions 1}]}
                  (play 0 :tactician))
@@ -1388,7 +1407,8 @@
                          :discard   [estate]
                          :actions   0
                          :triggers  [(merge tactician-trigger
-                                            {:card-id 1
+                                            {:id      1
+                                             :card-id 1
                                              :name    :tactician})]}]}))
       (is (= (-> {:players [{:hand    [tactician]
                              :actions 1}]}
@@ -1421,6 +1441,7 @@
                                 :coins   0
                                 :buys    1
                                 :phase   :action}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [throne-room tactician estate]
                              :actions 1}]}
                  (play 0 :throne-room)
@@ -1429,7 +1450,8 @@
                          :discard       [estate]
                          :actions       0
                          :triggers      [(merge tactician-trigger
-                                                {:card-id 1
+                                                {:id      1
+                                                 :card-id 1
                                                  :name    :tactician})]
                          :repeated-play [{:source 2
                                           :target 1}]}]}))
@@ -1707,6 +1729,7 @@
 (deftest wharf-test
   (let [wharf (assoc wharf :id 1)]
     (testing "Wharf"
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [wharf estate estate estate copper]
                              :deck    [copper copper copper copper copper copper silver]
                              :actions 1

@@ -10,19 +10,17 @@
 ; Trigger refac:
 ; at-end-buy: Exploration, Pageant
 ; at-clean-up: Boons (River, Field, Forest), Horn, Improve, Treasury
-; remove set-aside cards from triggers when activated - trigger-ids
-; handle modes :semi, :always-ask
+; handle modes :semi, :always-ask - Fx. Caravan & Captain/Ghost with Watch Tower - or Blessed Village, Sun's Gift and Caravan
 ; handle mode :optional - at-clean-up
 ; handle simultaneous effects for all reactions - at-clean-up
-; fix gain Blessed Village with Cobbler selecting to receive The Field's Gift next turn - will remove at-start-turn trigger immediately
-; fix Ghost on Durations - and Ghost stays in play
-; check Ghost with Citadel
 ; fix Captain / Improve
 ; fix Throne Room / Improve
 ; fix Improve / double Border Guard bug
 ; show set-aside cards where their carrier has disappeared (Cargo Ship / Improve)
+; show Throne Room'ed Durations with set-aside cards as separate cards
 
 ; Bugs & Testing:
+; fix Ghost/Captain/Piazza/Innovation(with Cobbler?) with Citadel
 ; test swiftable for mixed choices
 ; fix Scepter / Caravan Guard reaction - not played this turn
 ; check Experiment with Innovation

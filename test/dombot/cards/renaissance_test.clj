@@ -25,7 +25,8 @@
   (merge (if (= :project type)
            {:duration :game}
            {:duration name})
-         {:name name}
+         {:id   1
+          :name name}
          trigger))
 
 (deftest acting-troupe-test
@@ -102,6 +103,7 @@
                              {:player-no 0
                               :card-id   1
                               :effect    [:discard-all-revealed]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:artifacts {:horn    horn
                               :lantern lantern}
                   :players   [{:hand    [border-guard]
@@ -120,6 +122,7 @@
                            :revealed-cards {:hand    1
                                             :discard 1}
                            :triggers       [(get-project-trigger horn)]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:artifacts {:horn    horn
                               :lantern lantern}
                   :players   [{:hand    [border-guard]
@@ -153,6 +156,7 @@
                               :effect    [:remove-triggers {:event :at-draw-hand}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:artifacts {:horn    horn
                               :lantern lantern}
                   :players   [{:hand    [border-guard]
@@ -173,6 +177,7 @@
                            :buys     0
                            :phase    :out-of-turn
                            :triggers [(get-project-trigger horn)]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:artifacts {:horn    horn
                               :lantern lantern}
                   :players   [{:hand      [border-guard]
@@ -328,6 +333,7 @@
                                 :coins   0
                                 :buys    1
                                 :phase   :action}]}))
+      (ut/reset-ids!)
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [cargo-ship]
                              :discard [copper]
@@ -345,7 +351,8 @@
               :effect-stack [{:text      "You may set the gained Gold aside on Cargo Ship."
                               :player-no 0
                               :card-id   1
-                              :choice    [::renaissance/cargo-ship-set-aside {:gained-card-id 5}]
+                              :choice    [::renaissance/cargo-ship-set-aside {:gained-card-id 5
+                                                                              :trigger-id     1}]
                               :source    :gaining
                               :options   [:gold]
                               :max       1}
@@ -355,6 +362,7 @@
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :gold
                                                           :gained-card-id 5}]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [cargo-ship]
                              :discard [copper]
@@ -368,9 +376,11 @@
                          :discard   [copper]
                          :actions   0
                          :coins     2
-                         :triggers  [(merge set-aside=>hand-trigger {:card-id   1
+                         :triggers  [(merge set-aside=>hand-trigger {:id        2
+                                                                     :card-id   1
                                                                      :name      :cargo-ship
                                                                      :set-aside [gold]})]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [cargo-ship]
                              :discard [copper]
@@ -385,6 +395,7 @@
                          :actions   0
                          :coins     2
                          :triggers  [(get-trigger cargo-ship)]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:supply  [{:card border-guard :pile-size 10}]
                   :players [{:hand    [cargo-ship sculptor]
                              :discard [copper]
@@ -403,7 +414,8 @@
               :effect-stack [{:text      "You may set the gained Border Guard aside on Cargo Ship."
                               :player-no 0
                               :card-id   1
-                              :choice    [::renaissance/cargo-ship-set-aside {:gained-card-id 3}]
+                              :choice    [::renaissance/cargo-ship-set-aside {:gained-card-id 3
+                                                                              :trigger-id     1}]
                               :source    :gaining
                               :options   [:border-guard]
                               :max       1}
@@ -414,6 +426,7 @@
                                                           :card-name      :border-guard
                                                           :gained-card-id 3
                                                           :to             :hand}]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:supply  [{:card border-guard :pile-size 10}]
                   :players [{:hand    [cargo-ship sculptor]
                              :discard [copper]
@@ -429,9 +442,11 @@
                          :discard   [copper]
                          :actions   0
                          :coins     2
-                         :triggers  [(merge set-aside=>hand-trigger {:card-id   1
+                         :triggers  [(merge set-aside=>hand-trigger {:id        2
+                                                                     :card-id   1
                                                                      :name      :cargo-ship
                                                                      :set-aside [border-guard]})]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:supply  [{:card border-guard :pile-size 10}]
                   :players [{:hand    [cargo-ship sculptor border-guard-4]
                              :discard [copper]
@@ -448,9 +463,11 @@
                          :discard   [copper]
                          :actions   0
                          :coins     2
-                         :triggers  [(merge set-aside=>hand-trigger {:card-id   1
+                         :triggers  [(merge set-aside=>hand-trigger {:id        2
+                                                                     :card-id   1
                                                                      :name      :cargo-ship
                                                                      :set-aside [border-guard]})]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [cargo-ship cargo-ship-2]
                              :discard [copper]
@@ -465,10 +482,12 @@
                          :discard   [copper]
                          :actions   0
                          :coins     4
-                         :triggers  [(get-trigger cargo-ship-2)
-                                     (merge set-aside=>hand-trigger {:card-id   1
+                         :triggers  [(assoc (get-trigger cargo-ship-2) :id 2)
+                                     (merge set-aside=>hand-trigger {:id        3
+                                                                     :card-id   1
                                                                      :name      :cargo-ship
                                                                      :set-aside [gold]})]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:supply  [{:card border-guard :pile-size 10}]
                   :players [{:hand    [cargo-ship inventor]
                              :discard [copper]
@@ -484,9 +503,11 @@
                                  :discard   [copper]
                                  :actions   0
                                  :coins     2
-                                 :triggers  [(merge set-aside=>hand-trigger {:card-id   1
+                                 :triggers  [(merge set-aside=>hand-trigger {:id        2
+                                                                             :card-id   1
                                                                              :name      :cargo-ship
                                                                              :set-aside [border-guard]})]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:supply  [{:card inventor :pile-size 10}]
                   :players [{:hand    [cargo-ship improve]
                              :deck    (repeat 5 copper)
@@ -506,8 +527,9 @@
                          :coins    0
                          :buys     0
                          :phase    :out-of-turn
-                         :triggers [(merge set-aside=>hand-trigger {:card-id   1
-                                                                    ; :name :cargo-ship
+                         :triggers [(merge set-aside=>hand-trigger {:id        2
+                                                                    :card-id   1
+                                                                    :name      :cargo-ship
                                                                     :set-aside [inventor]})]}]
               :trash   [cargo-ship]}))
       (is (= (-> {:supply  [{:card inventor :pile-size 10}]
@@ -532,6 +554,7 @@
                                 :buys    1
                                 :phase   :action}]
               :trash          [cargo-ship]})))
+    (ut/reset-ids!)
     (is (= (-> {:players [{:hand    [cargo-ship throne-room]
                            :discard [copper]
                            :actions 1
@@ -543,7 +566,7 @@
                        :actions       0
                        :coins         4
                        :triggers      [(get-trigger cargo-ship)
-                                       (get-trigger cargo-ship)]
+                                       (assoc (get-trigger cargo-ship) :id 2)]
                        :repeated-play [{:source 8
                                         :target 1}]}]}))
     (is (= (-> {:players [{:hand    [cargo-ship throne-room]
@@ -560,6 +583,7 @@
                               :coins   0
                               :buys    1
                               :phase   :action}]}))
+    (ut/reset-ids!)
     (is (= (-> {:supply  [{:card gold :pile-size 30}]
                 :players [{:hand    [cargo-ship throne-room]
                            :discard [copper]
@@ -575,13 +599,14 @@
                             :actions       0
                             :coins         4
                             :triggers      [(get-trigger cargo-ship)
-                                            (get-trigger cargo-ship)]
+                                            (assoc (get-trigger cargo-ship) :id 2)]
                             :repeated-play [{:source 8
                                              :target 1}]}]
             :effect-stack [{:text      "You may set the gained Gold aside on Cargo Ship."
                             :player-no 0
                             :card-id   1
-                            :choice    [::renaissance/cargo-ship-set-aside {:gained-card-id 5}]
+                            :choice    [::renaissance/cargo-ship-set-aside {:gained-card-id 5
+                                                                            :trigger-id     1}]
                             :source    :gaining
                             :options   [:gold]
                             :max       1}
@@ -589,13 +614,15 @@
                             :effect    [:dombot.cards.renaissance/cargo-ship-give-choice {:player-no      0
                                                                                           :card-id        1
                                                                                           :card-name      :gold
-                                                                                          :gained-card-id 5}]}
+                                                                                          :gained-card-id 5
+                                                                                          :trigger-id     2}]}
                            {:player-no 0
                             :effect    [:remove-triggers {:event :on-gain}]}
                            {:player-no 0
                             :effect    [:finalize-gain {:player-no      0
                                                         :card-name      :gold
                                                         :gained-card-id 5}]}]}))
+    (ut/reset-ids!)
     (is (= (-> {:supply  [{:card gold :pile-size 30}]
                 :players [{:hand    [cargo-ship throne-room]
                            :discard [copper]
@@ -610,8 +637,9 @@
                        :discard       [copper]
                        :actions       0
                        :coins         4
-                       :triggers      [(get-trigger cargo-ship)
-                                       (merge set-aside=>hand-trigger {:card-id   1
+                       :triggers      [(assoc (get-trigger cargo-ship) :id 2)
+                                       (merge set-aside=>hand-trigger {:id        3
+                                                                       :card-id   1
                                                                        :name      :cargo-ship
                                                                        :set-aside [gold]})]
                        :repeated-play [{:source 8
@@ -634,6 +662,7 @@
                               :coins     0
                               :buys      1
                               :phase     :action}]}))
+    (ut/reset-ids!)
     (is (= (-> {:supply  [{:card gold :pile-size 30}
                           {:card border-guard :pile-size 10}]
                 :players [{:hand    [cargo-ship throne-room]
@@ -652,14 +681,17 @@
                        :discard       [copper]
                        :actions       0
                        :coins         4
-                       :triggers      [(merge set-aside=>hand-trigger {:card-id   1
+                       :triggers      [(merge set-aside=>hand-trigger {:id        3
+                                                                       :card-id   1
                                                                        :name      :cargo-ship
                                                                        :set-aside [gold]})
-                                       (merge set-aside=>hand-trigger {:card-id   1
+                                       (merge set-aside=>hand-trigger {:id        4
+                                                                       :card-id   1
                                                                        :name      :cargo-ship
                                                                        :set-aside [border-guard]})]
                        :repeated-play [{:source 8
                                         :target 1}]}]}))
+    (ut/reset-ids!)
     (is (= (-> {:supply  [{:card experiment :pile-size 10}]
                 :players [{:hand    [cargo-ship throne-room]
                            :actions 1
@@ -675,12 +707,14 @@
                        :actions       0
                        :coins         1
                        :buys          0
-                       :triggers      [(merge set-aside=>hand-trigger {:card-id   1
+                       :triggers      [(merge set-aside=>hand-trigger {:id        5
+                                                                       :card-id   1
                                                                        :name      :cargo-ship
-                                                                       :set-aside [(assoc experiment :id 2)]})
-                                       (merge set-aside=>hand-trigger {:card-id   1
+                                                                       :set-aside [(assoc experiment :id 4)]})
+                                       (merge set-aside=>hand-trigger {:id        6
+                                                                       :card-id   1
                                                                        :name      :cargo-ship
-                                                                       :set-aside [(assoc experiment :id 1)]})]
+                                                                       :set-aside [(assoc experiment :id 3)]})]
                        :repeated-play [{:source 8
                                         :target 1}]}]}))))
 
@@ -809,6 +843,7 @@
               :artifacts {:flag (assoc flag :owner 0)}
               :players   [{:discard  [flag-bearer]
                            :triggers [(get-project-trigger flag)]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:supply    [{:card flag-bearer :pile-size 9}]
                   :artifacts {:flag (assoc flag :owner 0)}
                   :players   [{:triggers [(get-project-trigger flag)]}
@@ -820,6 +855,7 @@
               :players   [{}
                           {:discard  [flag-bearer]
                            :triggers [(get-project-trigger flag)]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:artifacts {:flag flag}
                   :players   [{:hand    [chapel flag-bearer]
                                :actions 1}]}
@@ -1206,6 +1242,7 @@
 
 (deftest priest-test
   (testing "Priest"
+    (ut/reset-ids!)
     (is (= (-> {:players [{:hand    [priest copper]
                            :actions 1
                            :coins   0}]}
@@ -1214,8 +1251,9 @@
            {:players [{:play-area [priest]
                        :actions   0
                        :coins     2
-                       :triggers  [priest-trigger]}]
+                       :triggers  [(assoc priest-trigger :id 1)]}]
             :trash   [copper]}))
+    (ut/reset-ids!)
     (is (= (-> {:players [{:hand     [priest copper]
                            :actions  1
                            :coins    0
@@ -1225,8 +1263,10 @@
            {:players [{:play-area [priest]
                        :actions   0
                        :coins     4
-                       :triggers  [priest-trigger priest-trigger]}]
+                       :triggers  [priest-trigger
+                                   (assoc priest-trigger :id 1)]}]
             :trash   [copper]}))
+    (ut/reset-ids!)
     (is (= (-> {:players [{:hand     [priest copper]
                            :actions  1
                            :coins    0
@@ -1236,8 +1276,9 @@
            {:players [{:play-area [priest]
                        :actions   0
                        :coins     6
-                       :triggers  [priest-trigger priest-trigger priest-trigger]}]
+                       :triggers  [priest-trigger priest-trigger (assoc priest-trigger :id 1)]}]
             :trash   [copper]}))
+    (ut/reset-ids!)
     (is (= (-> {:players [{:hand    [throne-room priest copper copper]
                            :actions 1
                            :coins   0}]}
@@ -1248,8 +1289,9 @@
            {:players [{:play-area [throne-room priest]
                        :actions   0
                        :coins     6
-                       :triggers  [priest-trigger priest-trigger]}]
+                       :triggers  [(assoc priest-trigger :id 1) (assoc priest-trigger :id 2)]}]
             :trash   [copper copper]}))
+    (ut/reset-ids!)
     (is (= (-> {:players [{:hand    [throne-room priest copper]
                            :actions 1
                            :coins   0}]}
@@ -1259,7 +1301,7 @@
            {:players [{:play-area [throne-room priest]
                        :actions   0
                        :coins     4
-                       :triggers  [priest-trigger priest-trigger]}]
+                       :triggers  [(assoc priest-trigger :id 1) (assoc priest-trigger :id 2)]}]
             :trash   [copper]}))))
 
 (deftest recruiter-test
@@ -1350,6 +1392,7 @@
                          :deck      [silver silver copper]
                          :actions   1}]
               :trash   [copper]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [research estate copper copper]
                              :deck    [silver silver copper]
                              :actions 1}]}
@@ -1359,7 +1402,8 @@
                          :play-area [research]
                          :deck      [copper]
                          :actions   1
-                         :triggers  [(merge set-aside=>hand-trigger {:card-id   1
+                         :triggers  [(merge set-aside=>hand-trigger {:id        1
+                                                                     :card-id   1
                                                                      :name      :research
                                                                      :set-aside [silver silver]})]}]
               :trash   [estate]}))
@@ -1502,6 +1546,7 @@
                          :phase          :pay}
                         {:hand           [copper copper copper copper peddler]
                          :revealed-cards {:hand 5}}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand           [scepter copper]
                              :play-area      [priest]
                              :actions-played [5]
@@ -1517,7 +1562,7 @@
                          :coins          6
                          :phase          :pay
                          :triggers       [priest-trigger
-                                          priest-trigger]}]
+                                          (assoc priest-trigger :id 1)]}]
               :trash   [copper]}))
       (is (= (-> {:track-played-actions? true
                   :players               [{:hand    [merchant-ship scepter]
@@ -2042,6 +2087,7 @@
         mountain-village (assoc mountain-village :id 1)
         experiment       (assoc experiment :id 2)]
     (testing "Academy"
+      (ut/reset-ids!)
       (is (= (-> {:projects {:academy academy}
                   :players  [{:coins 5
                               :buys  1
@@ -2051,7 +2097,7 @@
               :players  [{:coins    0
                           :buys     0
                           :phase    :buy
-                          :triggers [(get-project-trigger academy)]}]}))
+                          :triggers [(assoc (get-project-trigger academy) :id 1)]}]}))
       (is (= (-> {:supply  [{:card mountain-village :pile-size 10}]
                   :players [{:coins    4
                              :buys     1
@@ -2178,6 +2224,7 @@
                             :villagers 1
                             :phase     :pay}]}))
         (let [priest (assoc priest :id 2)]
+          (ut/reset-ids!)
           (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
                       :players  [{:hand    [priest copper]
                                   :actions 0
@@ -2190,7 +2237,8 @@
                               :actions   0
                               :coins     2
                               :phase     :pay
-                              :triggers  [(assoc priest-trigger :card-id 2
+                              :triggers  [(assoc priest-trigger :id 1
+                                                                :card-id 2
                                                                 :name :priest)]}]
                   :trash    [copper]}))))
       (testing "with Sculptor"
@@ -2723,6 +2771,7 @@
   (let [duchy  (assoc duchy :id 0)
         silver (assoc silver :id 1)]
     (testing "Road Network"
+      (ut/reset-ids!)
       (is (= (-> {:projects {:road-network road-network}
                   :players  [{:coins 5
                               :buys  1}
@@ -2731,10 +2780,12 @@
              {:projects {:road-network (assoc road-network :participants [{:player-no 0}])}
               :players  [{:coins 0
                           :buys  0}
-                         {:triggers [{:name     :road-network
+                         {:triggers [{:id       1
+                                      :name     :road-network
                                       :duration :game
                                       :event    :on-gain
                                       :effects  [[::renaissance/road-network-on-gain {:player-no 0}]]}]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:projects {:road-network (assoc road-network :participants [{:player-no 1}])}
                   :players  [{:coins    5
                               :buys     1
@@ -2755,7 +2806,8 @@
                                       :duration :game
                                       :event    :on-gain
                                       :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}]}
-                         {:triggers [{:name     :road-network
+                         {:triggers [{:id       1
+                                      :name     :road-network
                                       :duration :game
                                       :event    :on-gain
                                       :effects  [[::renaissance/road-network-on-gain {:player-no 0}]]}]}
@@ -2763,7 +2815,8 @@
                                       :duration :game
                                       :event    :on-gain
                                       :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}
-                                     {:name     :road-network
+                                     {:id       2
+                                      :name     :road-network
                                       :duration :game
                                       :event    :on-gain
                                       :effects  [[::renaissance/road-network-on-gain {:player-no 0}]]}]}]}))
@@ -2887,7 +2940,7 @@
                        :actions   0
                        :coins     2                         ; up for discussion; does Priest's on-trash apply to Sewers trash?
                        :triggers  [(get-project-trigger sewers)
-                                   priest-trigger]}]
+                                   (assoc priest-trigger :id 1)]}]
             :trash   [copper estate]}))))
 
 (deftest sinister-plot-test
@@ -3040,8 +3093,6 @@
                               :min       1
                               :max       1}
                              {:player-no 0
-                              :effect    [:remove-triggers {:event :at-start-turn}]}
-                             {:player-no 0
                               :effect    [:sync-repeated-play]}]}))
     (is (= (-> {:projects {:crop-rotation (assoc crop-rotation :participants [{:player-no 0}])
                            :silos         (assoc silos :participants [{:player-no 0}])}
@@ -3133,8 +3184,6 @@
                                 :max       1
                                 :min       1}
                                {:player-no 0
-                                :effect    [:remove-triggers {:event :at-start-turn}]}
-                               {:player-no 0
                                 :effect    [:sync-repeated-play]}]}))
       (is (= (-> {:artifacts {:lost-in-the-woods (assoc lost-in-the-woods :owner 0)}
                   :players   [{:play-area [amulet]
@@ -3163,8 +3212,6 @@
                                             {:area :artifacts :card-name :lost-in-the-woods}]
                                 :max       1
                                 :min       1}
-                               {:player-no 0
-                                :effect    [:remove-triggers {:event :at-start-turn}]}
                                {:player-no 0
                                 :effect    [:sync-repeated-play]}]}))
       (is (= (-> {:artifacts {:lost-in-the-woods (assoc lost-in-the-woods :owner 0)}
@@ -3208,8 +3255,6 @@
                                             {:area :boons :card-name :the-sea's-gift}]
                                 :max       1
                                 :min       1}
-                               {:player-no 0
-                                :effect    [:remove-triggers {:event :at-start-turn}]}
                                {:player-no 0
                                 :effect    [:sync-repeated-play]}]})))))
 

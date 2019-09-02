@@ -264,6 +264,7 @@
                          :actions   0
                          :coins     3
                          :buys      2}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [militia]
                              :actions 1
                              :coins   0}
@@ -277,7 +278,8 @@
                         {:hand      [copper copper copper]
                          :play-area [horse-traders]
                          :discard   [copper]
-                         :triggers  [(assoc horse-traders-trigger :card-id 0
+                         :triggers  [(assoc horse-traders-trigger :id 1
+                                                                  :card-id 0
                                                                   :name :horse-traders)]}]}))
       (is (= (-> {:players [{:hand    [militia]
                              :actions 1
