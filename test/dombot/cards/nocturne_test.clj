@@ -353,12 +353,13 @@
                  (receive-hex {:player-no 0}))
              {:hexes   {:discard [delusion]}
               :players [{:states   [deluded]
-                         :triggers [(assoc (:trigger deluded) :id 1)]}]}))
+                         :triggers [(assoc (:trigger deluded) :id 1
+                                                              :name :deluded)]}]}))
       (is (= (-> {:players [{:hand     [copper]
                              :coins    0
                              :phase    :action
                              :states   [deluded]
-                             :triggers [(:trigger deluded)]}]}
+                             :triggers [(assoc (:trigger deluded) :name :deluded)]}]}
                  (play 0 :copper))
              {:players        [{:play-area [copper]
                                 :coins     1
@@ -398,7 +399,8 @@
                            :buys     0
                            :phase    :buy
                            :states   [deluded]
-                           :triggers [(assoc (:trigger deluded) :id 1)]}]})))
+                           :triggers [(assoc (:trigger deluded) :id 1
+                                                                :name :deluded)]}]})))
       (let [silver (assoc silver :id 1)]
         (is (= (-> {:supply         [{:card silver :pile-size 40}]
                     :players        [{:coins 3
@@ -432,7 +434,8 @@
                                 :buys     1
                                 :phase    :action
                                 :states   [deluded]
-                                :triggers [(assoc (:trigger deluded) :id 1)]}]})))
+                                :triggers [(assoc (:trigger deluded) :id 1
+                                                                     :name :deluded)]}]})))
     (testing "Envy"
       (ut/reset-ids!)
       (is (= (-> {:hexes   {:deck [envy]}
@@ -440,7 +443,8 @@
                  (receive-hex {:player-no 0}))
              {:hexes   {:discard [envy]}
               :players [{:states   [envious]
-                         :triggers [(assoc (:trigger envious) :id 1)]}]}))
+                         :triggers [(assoc (:trigger envious) :id 1
+                                                              :name :envious)]}]}))
       (ut/reset-ids!)
       (is (= (-> {:hexes   {:deck [envy]}
                   :players [{:hand  [copper]
@@ -808,7 +812,7 @@
                                      :event    :at-start-turn
                                      :name     :the-sea's-gift
                                      :duration :once
-                                     :mode     :manual
+                                     :mode     :complex
                                      :effects  [[:return-boon {:boon-name :the-sea's-gift}]
                                                 [:receive-boon {:boon sea-gift}]]}]}]}))
       (is (= (-> {:boons   {:deck [sea-gift]}
@@ -859,7 +863,7 @@
                                      :event    :at-start-turn
                                      :name     :the-forest's-gift
                                      :duration :once
-                                     :mode     :manual
+                                     :mode     :complex
                                      :effects  [[:receive-boon {:boon forest-gift}]]}]}]}))
       (ut/reset-ids!)
       (is (= (-> {:boons   {:deck [forest-gift]}
@@ -1344,7 +1348,7 @@
                                                :event    :at-start-turn
                                                :name     :the-sea's-gift
                                                :duration :once
-                                               :mode     :manual
+                                               :mode     :complex
                                                :effects  [[:return-boon {:boon-name :the-sea's-gift}]
                                                           [:receive-boon {:boon sea-gift}]]}]}]}))))))
 

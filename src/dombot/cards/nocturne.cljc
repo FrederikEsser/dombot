@@ -17,7 +17,7 @@
 
 (def ghost-trigger {:event    :at-start-turn
                     :duration :once
-                    :mode     :manual
+                    :mode     :complex
                     :effects  [[::ghost-repeat-action]]})
 
 (defn- ghost-reveal [game {:keys [player-no card-id]}]
@@ -269,7 +269,7 @@
       (-> game
           (update-in [:players player-no :states] concat [state])
           (add-trigger {:player-no player-no
-                        :trigger   (:trigger state)})))))
+                        :trigger   (assoc (:trigger state) :name (:name state))})))))
 
 (defn- return-state [game {:keys [player-no state-name]}]
   (-> game
@@ -593,7 +593,7 @@
                                         :trigger   {:event    :at-start-turn
                                                     :name     boon-name
                                                     :duration :once
-                                                    :mode     :manual
+                                                    :mode     :complex
                                                     :effects  boon-effects}}))))
 
 (defn- blessed-village-take-boon [game {:keys [player-no]}]
@@ -944,7 +944,7 @@
 (def lost-in-the-woods {:name    :lost-in-the-woods
                         :type    :state
                         :trigger {:event   :at-start-turn
-                                  :mode    :manual
+                                  :mode    :complex
                                   :effects [[:give-choice {:text    "You may discard a card to receive a Boon."
                                                            :choice  ::discard-for-boon
                                                            :options [:player :hand]

@@ -27,7 +27,7 @@
               :effects [[:give-choice captain-choice]]
               :trigger {:event    :at-start-turn
                         :duration :once
-                        :mode     :manual
+                        :mode     :complex
                         :effects  [[:give-choice captain-choice]]}})
 
 (defn- church-set-aside [game {:keys [player-no card-id]}]

@@ -10,7 +10,6 @@
 ; Trigger refac:
 ; at-end-buy: Exploration, Pageant
 ; at-clean-up: Boons (River, Field, Forest), Horn, Improve, Treasury
-; handle modes :semi, :always-ask - Fx. Caravan & Captain/Ghost with Watch Tower - or Blessed Village, Sun's Gift and Caravan
 ; handle mode :optional - at-clean-up
 ; handle simultaneous effects for all reactions - at-clean-up
 ; fix Captain / Improve

@@ -71,21 +71,26 @@
             [[:remove-trigger {:trigger-id id}]])))
 
 (defn- get-trigger-effects [triggers]
-  (if (< 1 (count triggers))
-    (let [trigger-names (->> triggers (map :name) set)]
-      [[:give-choice {:text    (str (-> (count triggers)
-                                        ut/number->text
-                                        string/capitalize)
-                                    " things happen simultaneous. Select which one happens next.")
-                      :choice  [:simultaneous-effects-choice {:triggers triggers}]
-                      :options [:mixed
-                                [:player :play-area {:names trigger-names}]
-                                [:player :boons {:names trigger-names}]
-                                [:artifacts {:names trigger-names}]
-                                [:projects {:names trigger-names}]]
-                      :min     1
-                      :max     1}]])
-    (mapcat get-effects-from-trigger triggers)))
+  (let [complex?        (some (comp #{:complex} :mode) triggers)
+        auto-triggers   (filter (fn [{:keys [mode]}]
+                                  (or (nil? mode) (#{:auto (when-not complex? :semi)} mode))) triggers)
+        manual-triggers (filter (comp #{(when complex? :semi) :manual :complex} :mode) triggers)
+        trigger-names   (->> manual-triggers (map :name) set)]
+    (concat (mapcat get-effects-from-trigger auto-triggers)
+            (if (< 1 (count manual-triggers))
+              [[:give-choice {:text    (str (-> (count manual-triggers)
+                                                ut/number->text
+                                                string/capitalize)
+                                            " things happen simultaneous. Select which one happens next.")
+                              :choice  [:simultaneous-effects-choice {:triggers manual-triggers}]
+                              :options [:mixed
+                                        [:player :play-area {:names trigger-names}]
+                                        [:player :boons {:names trigger-names}]
+                                        [:artifacts {:names trigger-names}]
+                                        [:projects {:names trigger-names}]]
+                              :min     1
+                              :max     1}]]
+              (mapcat get-effects-from-trigger manual-triggers)))))
 
 (defn simultaneous-effects-choice [game {:keys [player-no triggers choice]}]
   (let [[trigger & more-triggers] (->> triggers
@@ -107,15 +112,14 @@
 (effects/register {:sync-repeated-play sync-repeated-play})
 
 (defn- get-phase-change-effects [game {:keys [player-no phase-change]}]
-  (let [phase-change-triggers (->> (get-in game [:players player-no :triggers])
-                                   (filter (comp #{phase-change} :event)))
-        auto-triggers         (filter (fn [{:keys [mode]}]
-                                        (or (nil? mode) (#{:auto :semi} mode))) phase-change-triggers)
-        manual-triggers       (filter (comp #{:manual} :mode) phase-change-triggers)]
-    (assert (every? :name manual-triggers) (str "Trigger error. All manual triggers need a name. " (remove :name manual-triggers)))
+  (let [triggers (->> (get-in game [:players player-no :triggers])
+                      (filter (comp #{phase-change} :event)))]
+    (assert (every? :name triggers) (str "Trigger error. All triggers need a name. \n" (->> triggers
+                                                                                            (remove :name)
+                                                                                            clojure.pprint/pprint
+                                                                                            with-out-str)))
     (concat
-      (mapcat get-effects-from-trigger auto-triggers)
-      (get-trigger-effects manual-triggers)
+      (get-trigger-effects triggers)
       [[:sync-repeated-play]])))
 
 (def phase-order [:out-of-turn

@@ -6,11 +6,11 @@
             [dombot.cards.common :refer :all]
             [dombot.cards.dominion :refer [mine throne-room chapel]]
             [dombot.cards.intrigue :as intrigue :refer [courtier ironworks lurker swindler]]
-            [dombot.cards.seaside :refer [merchant-ship]]
+            [dombot.cards.seaside :refer [caravan merchant-ship]]
             [dombot.cards.prosperity :refer [bank loan mint peddler venture watchtower]]
             [dombot.cards.nocturne :refer [sea-gift lost-in-the-woods]]
             [dombot.cards.adventures :refer [amulet]]
-            [dombot.cards.promos :refer [stash]]
+            [dombot.cards.promos :refer [captain stash]]
             [dombot.cards.renaissance :as renaissance :refer :all]
             [dombot.utils :as ut])
   (:refer-clojure :exclude [key]))
@@ -3214,20 +3214,18 @@
                                 :min       1}
                                {:player-no 0
                                 :effect    [:sync-repeated-play]}]}))
-      (is (= (-> {:artifacts {:lost-in-the-woods (assoc lost-in-the-woods :owner 0)}
-                  :players   [{:play-area [amulet]
-                               :boons     [sea-gift]
-                               :phase     :out-of-turn
-                               :triggers  [(get-trigger amulet)
-                                           {:event    :at-start-turn
-                                            :name     :the-sea's-gift
-                                            :duration :once
-                                            :mode     :manual
-                                            :effects  [[:return-boon {:boon-name :the-sea's-gift}]
-                                                       [:receive-boon {:boon sea-gift}]]}]}]}
+      (is (= (-> {:players [{:play-area [amulet]
+                             :boons     [sea-gift]
+                             :phase     :out-of-turn
+                             :triggers  [(get-trigger amulet)
+                                         {:event    :at-start-turn
+                                          :name     :the-sea's-gift
+                                          :duration :once
+                                          :mode     :manual
+                                          :effects  [[:return-boon {:boon-name :the-sea's-gift}]
+                                                     [:receive-boon {:boon sea-gift}]]}]}]}
                  (start-turn {:player-no 0}))
              {:current-player 0
-              :artifacts      {:lost-in-the-woods (assoc lost-in-the-woods :owner 0)}
               :players        [{:play-area [amulet]
                                 :boons     [sea-gift]
                                 :actions   1
@@ -3253,6 +3251,32 @@
                                 :source    :mixed
                                 :options   [{:area :play-area :card-name :amulet}
                                             {:area :boons :card-name :the-sea's-gift}]
+                                :max       1
+                                :min       1}
+                               {:player-no 0
+                                :effect    [:sync-repeated-play]}]})))
+    (let [caravan (assoc caravan :id 1)
+          captain (assoc captain :id 2)]
+      (is (= (-> {:players [{:play-area [caravan captain]
+                             :phase     :out-of-turn
+                             :triggers  [(get-trigger caravan)
+                                         (get-trigger captain)]}]}
+                 (start-turn {:player-no 0}))
+             {:current-player 0
+              :players        [{:play-area [caravan captain]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action
+                                :triggers  [(get-trigger caravan)
+                                            (get-trigger captain)]}]
+              :effect-stack   [{:player-no 0
+                                :text      "Two things happen simultaneous. Select which one happens next."
+                                :choice    [:simultaneous-effects-choice {:triggers [(get-trigger caravan)
+                                                                                     (get-trigger captain)]}]
+                                :source    :mixed
+                                :options   [{:area :play-area :card-name :caravan}
+                                            {:area :play-area :card-name :captain}]
                                 :max       1
                                 :min       1}
                                {:player-no 0

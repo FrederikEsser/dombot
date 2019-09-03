@@ -745,7 +745,7 @@
              :type    :project
              :cost    5
              :trigger {:event   :at-start-turn
-                       :mode    :manual
+                       :mode    :complex
                        :effects [[:reveal-from-deck 1]
                                  [::guilds/herald-play-action]]}})
 
