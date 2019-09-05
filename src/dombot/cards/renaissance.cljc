@@ -1,6 +1,7 @@
 (ns dombot.cards.renaissance
   (:require [dombot.operations :refer [push-effect-stack give-choice draw move-cards gain card-effect affect-other-players state-maintenance]]
-            [dombot.cards.common :refer [reveal-hand reveal-from-deck add-trigger give-coins give-coffers give-villagers set-aside=>hand-trigger take-artifact]]
+            [dombot.cards.common :refer [reveal-hand reveal-from-deck add-trigger give-coins give-coffers give-villagers
+                                         set-aside=>hand-trigger take-artifact topdeck-from-play-area]]
             [dombot.cards.dominion :as dominion]
             [dombot.cards.guilds :as guilds]
             [dombot.utils :as ut]
@@ -17,14 +18,15 @@
 (defn horn-at-clean-up [game {:keys [player-no]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:name :border-guard})]
     (cond-> game
-            card (ut/update-in-vec [:players player-no :play-area] {:name :border-guard}
-                                   assoc :at-clean-up [[:topdeck-this-from-play-area]]))))
+            card (topdeck-from-play-area {:player-no player-no
+                                          :card-name :border-guard}))))
 
 (effects/register {::horn-at-clean-up horn-at-clean-up})
 
 (def horn {:name    :horn
            :type    :artifact
            :trigger {:event   :at-clean-up
+                     :mode    :optional
                      :effects [[::horn-at-clean-up]]}})
 
 (def lantern {:name :lantern
@@ -184,13 +186,13 @@
 
 (defn improve-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:name card-name})
-        cost (inc (ut/get-cost game card))]
+        cost (ut/get-cost game card)]
     (cond-> game
             card (push-effect-stack {:player-no player-no
                                      :effects   [[:trash-from-play-area {:card-name card-name}]
-                                                 [:give-choice {:text    (str "Gain a card costing exactly $" cost ".")
+                                                 [:give-choice {:text    (str "Gain a card costing exactly $" (inc cost) ".")
                                                                 :choice  :gain
-                                                                :options [:supply {:cost cost}]
+                                                                :options [:supply {:cost (inc cost)}]
                                                                 :min     1
                                                                 :max     1}]]}))))
 
@@ -202,22 +204,18 @@
                                                      :leaves-play true}]
                      :max       1}))
 
-(defn improve-clean-up [game {:keys [player-no card-id]}]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
-    (cond-> game
-            card (ut/update-in-vec [:players player-no :play-area] {:id card-id}
-                                   assoc :at-clean-up [[::improve-give-choice]]))))
-
 (effects/register {::improve-trash       improve-trash
-                   ::improve-give-choice improve-give-choice
-                   ::improve-clean-up    improve-clean-up})
+                   ::improve-give-choice improve-give-choice})
 
 (def improve {:name    :improve
               :set     :renaissance
               :types   #{:action}
               :cost    3
-              :effects [[:give-coins 2]
-                        [::improve-clean-up]]})
+              :effects [[:give-coins 2]]
+              :trigger {:event    :at-clean-up
+                        :duration :once-turn
+                        :mode     :optional
+                        :effects  [[::improve-give-choice]]}})
 
 (def inventor {:name    :inventor
                :set     :renaissance

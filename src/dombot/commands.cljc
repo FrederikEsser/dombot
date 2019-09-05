@@ -8,17 +8,15 @@
 ; TODOs:
 
 ; Trigger refac:
-; at-end-buy: Exploration, Pageant
-; at-clean-up: Boons (River, Field, Forest), Horn, Improve, Treasury
-; handle mode :optional - at-clean-up
-; handle simultaneous effects for all reactions - at-clean-up
-; fix Captain / Improve
 ; fix Throne Room / Improve
-; fix Improve / double Border Guard bug
+; fix Captain / Improve
 ; show set-aside cards where their carrier has disappeared (Cargo Ship / Improve)
 ; show Throne Room'ed Durations with set-aside cards as separate cards
+; choose by trigger id when set aside cards - show different cards
 
 ; Bugs & Testing:
+; receiving boons & hexes can't be undone
+; give coin from Key when received at-start-turn
 ; fix Ghost/Captain/Piazza/Innovation(with Cobbler?) with Citadel
 ; test swiftable for mixed choices
 ; fix Scepter / Caravan Guard reaction - not played this turn

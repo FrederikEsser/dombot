@@ -6,6 +6,7 @@
             [dombot.cards.common :refer :all]
             [dombot.cards.dominion :refer [moat throne-room witch]]
             [dombot.cards.seaside :as seaside :refer :all]
+            [dombot.cards.renaissance :refer [improve]]
             [dombot.utils :as ut]))
 
 (deftest ambassador-test
@@ -1550,7 +1551,7 @@
                  (play 0 :treasury))
              {:players [{:deck      [copper copper]
                          :hand      [copper]
-                         :play-area [(assoc treasury-1 :at-clean-up [[:topdeck-this-from-play-area]])]
+                         :play-area [treasury-1]
                          :actions   1
                          :coins     1}]}))
       (is (= (-> {:players [{:deck         [copper copper copper]
@@ -1558,22 +1559,30 @@
                              :gained-cards [{:types #{:treasure} :bought true}
                                             {:types #{:victory}}]
                              :actions      1
-                             :coins        0}]}
+                             :coins        0
+                             :phase        :action}]}
                  (play 0 :treasury)
                  (clean-up {:player-no 0}))
              {:players      [{:deck         [copper copper]
                               :hand         [copper]
-                              :play-area    [(assoc treasury-1 :at-clean-up [[:topdeck-this-from-play-area]])]
+                              :play-area    [treasury-1]
                               :gained-cards [{:types #{:treasure} :bought true}
                                              {:types #{:victory}}]
                               :actions      1
-                              :coins        1}]
-              :effect-stack [{:text      "You may activate cards, that do something when you discard them from play."
-                              :player-no 0
-                              :choice    :at-clean-up-choice
-                              :source    :play-area
-                              :options   [:treasury]
+                              :coins        1
+                              :phase        :clean-up}]
+              :effect-stack [{:player-no 0
+                              :text      "You may activate cards, that do something when you discard them from play."
+                              :choice    [:simultaneous-effects-choice {:triggers [{:event   :at-clean-up
+                                                                                    :name    :treasury
+                                                                                    :card-id 1
+                                                                                    :mode    :optional
+                                                                                    :effects (:at-clean-up treasury)}]}]
+                              :source    :mixed
+                              :options   [{:area :play-area :card-name :treasury}]
                               :max       1}
+                             {:player-no 0
+                              :effect    [:sync-repeated-play]}
                              {:player-no 0
                               :effect    [:do-clean-up {:player-no 0}]}
                              {:player-no 0
@@ -1586,7 +1595,8 @@
                              :hand         [treasury-1]
                              :gained-cards [{:types #{:victory} :bought true}]
                              :actions      1
-                             :coins        0}]}
+                             :coins        0
+                             :phase        :action}]}
                  (play 0 :treasury)
                  (clean-up {:player-no 0}))
              {:players [{:hand         [copper copper copper copper copper]
@@ -1600,10 +1610,11 @@
       (is (= (-> {:players [{:deck    (repeat 7 copper)
                              :hand    [treasury-1]
                              :actions 1
-                             :coins   0}]}
+                             :coins   0
+                             :phase   :action}]}
                  (play 0 :treasury)
                  (clean-up {:player-no 0})
-                 (choose :treasury))
+                 (choose {:area :play-area :card-name :treasury}))
              {:players [{:hand    [treasury-1 copper copper copper copper]
                          :deck    [copper copper]
                          :discard [copper]
@@ -1614,7 +1625,8 @@
       (is (= (-> {:players [{:deck    (repeat 7 copper)
                              :hand    [treasury-1]
                              :actions 1
-                             :coins   0}]}
+                             :coins   0
+                             :phase   :action}]}
                  (play 0 :treasury)
                  (clean-up {:player-no 0})
                  (choose nil))
@@ -1628,22 +1640,30 @@
       (is (= (-> {:players [{:deck    (repeat 7 copper)
                              :hand    [treasury-1 treasury-2]
                              :actions 1
-                             :coins   0}]}
+                             :coins   0
+                             :phase   :action}]}
                  (play 0 :treasury)
                  (play 0 :treasury)
                  (clean-up {:player-no 0})
-                 (choose :treasury))
+                 (choose {:area :play-area :card-name :treasury}))
              {:players      [{:deck      (concat [treasury-1] (repeat 5 copper))
                               :hand      [copper copper]
-                              :play-area [(assoc treasury-2 :at-clean-up [[:topdeck-this-from-play-area]])]
+                              :play-area [treasury-2]
                               :actions   1
-                              :coins     2}]
-              :effect-stack [{:text      "You may activate cards, that do something when you discard them from play."
-                              :player-no 0
-                              :choice    :at-clean-up-choice
-                              :source    :play-area
-                              :options   [:treasury]
+                              :coins     2
+                              :phase     :clean-up}]
+              :effect-stack [{:player-no 0
+                              :text      "You may activate cards, that do something when you discard them from play."
+                              :choice    [:simultaneous-effects-choice {:triggers [{:event   :at-clean-up
+                                                                                    :name    :treasury
+                                                                                    :card-id 2
+                                                                                    :mode    :optional
+                                                                                    :effects (:at-clean-up treasury)}]}]
+                              :source    :mixed
+                              :options   [{:area :play-area :card-name :treasury}]
                               :max       1}
+                             {:player-no 0
+                              :effect    [:sync-repeated-play]}
                              {:player-no 0
                               :effect    [:do-clean-up {:player-no 0}]}
                              {:player-no 0
@@ -1655,7 +1675,8 @@
       (is (= (-> {:players [{:deck    (repeat 7 copper)
                              :hand    [treasury-1 treasury-2]
                              :actions 1
-                             :coins   0}]}
+                             :coins   0
+                             :phase   :action}]}
                  (play 0 :treasury)
                  (play 0 :treasury)
                  (clean-up {:player-no 0})
@@ -1669,18 +1690,44 @@
       (is (= (-> {:players [{:deck    (repeat 7 copper)
                              :hand    [treasury-1 throne-room]
                              :actions 1
-                             :coins   0}]}
+                             :coins   0
+                             :phase   :action}]}
                  (play 0 :throne-room)
                  (choose :treasury)
                  (clean-up {:player-no 0})
-                 (choose :treasury))
+                 (choose {:area :play-area :card-name :treasury}))
              {:players [{:hand    [treasury-1 copper copper copper copper]
                          :deck    [copper]
                          :discard [copper copper throne-room]
                          :actions 0
                          :coins   0
                          :buys    0
-                         :phase   :out-of-turn}]})))))
+                         :phase   :out-of-turn}]}))
+      (let [improve (assoc improve :id 4)
+            gold    (assoc gold :id 5)]
+        (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                    :players [{:hand    [treasury-1 treasury-2 improve]
+                               :deck    (repeat 7 copper)
+                               :actions 1
+                               :coins   0
+                               :phase   :action}]}
+                   (play 0 :treasury)
+                   (play 0 :treasury)
+                   (play 0 :improve)
+                   (clean-up {:player-no 0})
+                   (choose {:area :play-area :card-name :improve})
+                   (choose :treasury)                       ; improve Treasury-1 => Gold
+                   (choose :gold)
+                   (choose {:area :play-area :card-name :treasury})) ; topdeck Treasury-2
+               {:supply  [{:card gold :pile-size 29}]
+                :players [{:hand    [treasury-2 copper copper copper copper]
+                           :deck    [copper]
+                           :discard [gold copper copper improve]
+                           :actions 0
+                           :coins   0
+                           :buys    0
+                           :phase   :out-of-turn}]
+                :trash   [treasury-1]}))))))
 
 (deftest warehouse-test
   (testing "Warehouse"

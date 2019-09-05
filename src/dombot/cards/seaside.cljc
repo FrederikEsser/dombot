@@ -493,30 +493,23 @@
                    :cost    4
                    :effects [[::treasure-map-trash]]})
 
-(defn treasury-can-topdeck? [game player-no]
+(defn bought-no-victory-cards? [game player-no]
   (let [bought-victory-cards (->> (get-in game [:players player-no :gained-cards])
                                   (filter :bought)
                                   (filter (comp :victory (partial ut/get-types game))))]
     (empty? bought-victory-cards)))
 
-(defn treasury-clean-up [game {:keys [player-no card-id]}]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
-    (cond-> game
-            card (ut/update-in-vec [:players player-no :play-area] {:id card-id}
-                                   assoc :at-clean-up [[:topdeck-this-from-play-area]]))))
+(effects/register {::bought-no-victory-cards? bought-no-victory-cards?})
 
-(effects/register {::treasury-can-topdeck? treasury-can-topdeck?
-                   ::treasury-clean-up     treasury-clean-up})
-
-(def treasury {:name          :treasury
-               :set           :seaside
-               :types         #{:action}
-               :cost          5
-               :effects       [[:draw 1]
-                               [:give-actions 1]
-                               [:give-coins 1]
-                               [::treasury-clean-up]]
-               :clean-up-pred ::treasury-can-topdeck?})
+(def treasury {:name              :treasury
+               :set               :seaside
+               :types             #{:action}
+               :cost              5
+               :effects           [[:draw 1]
+                                   [:give-actions 1]
+                                   [:give-coins 1]]
+               :trigger-condition ::bought-no-victory-cards?
+               :at-clean-up       [[:topdeck-from-play-area {:card-name :treasury}]]})
 
 (def warehouse {:name    :warehouse
                 :set     :seaside

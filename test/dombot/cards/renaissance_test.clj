@@ -48,7 +48,7 @@
               :trash   [acting-troupe]})))))
 
 (deftest border-guard-test
-  (let [border-guard (assoc border-guard :id 1)]
+  (let [border-guard (assoc border-guard :id 0)]
     (testing "Border Guard"
       (is (= (-> {:players [{:hand    [border-guard]
                              :deck    [lackeys gold copper]
@@ -60,14 +60,14 @@
                               :actions   1}]
               :effect-stack [{:text      "Put one of the revealed cards into your hand."
                               :player-no 0
-                              :card-id   1
+                              :card-id   0
                               :choice    ::renaissance/border-guard-take-revealed
                               :source    :revealed
                               :options   [:lackeys :gold]
                               :min       1
                               :max       1}
                              {:player-no 0
-                              :card-id   1
+                              :card-id   0
                               :effect    [:discard-all-revealed]}]}))
       (is (= (-> {:players [{:hand    [border-guard]
                              :deck    [lackeys gold copper]
@@ -101,7 +101,7 @@
                               :min       1
                               :max       1}
                              {:player-no 0
-                              :card-id   1
+                              :card-id   0
                               :effect    [:discard-all-revealed]}]}))
       (ut/reset-ids!)
       (is (= (-> {:artifacts {:horn    horn
@@ -127,7 +127,8 @@
                               :lantern lantern}
                   :players   [{:hand    [border-guard]
                                :deck    [lackeys lackeys copper]
-                               :actions 1}]}
+                               :actions 1
+                               :phase   :action}]}
                  (play 0 :border-guard)
                  (choose :lackeys)
                  (choose :horn)
@@ -135,19 +136,22 @@
              {:artifacts    {:horn    (assoc horn :owner 0)
                              :lantern lantern}
               :players      [{:hand           [lackeys]
-                              :play-area      [(assoc border-guard :at-clean-up [[:topdeck-this-from-play-area]])]
+                              :play-area      [border-guard]
                               :deck           [copper]
                               :discard        [lackeys]
                               :actions        1
+                              :phase          :clean-up
                               :revealed-cards {:hand    1
                                                :discard 1}
                               :triggers       [(get-project-trigger horn)]}]
-              :effect-stack [{:text      "You may activate cards, that do something when you discard them from play."
-                              :player-no 0
-                              :choice    :at-clean-up-choice
-                              :source    :play-area
-                              :options   [:border-guard]
+              :effect-stack [{:player-no 0
+                              :text      "You may activate cards, that do something when you discard them from play."
+                              :choice    [:simultaneous-effects-choice {:triggers [(get-project-trigger horn)]}]
+                              :source    :mixed
+                              :options   [{:area :artifacts :card-name :horn}]
                               :max       1}
+                             {:player-no 0
+                              :effect    [:sync-repeated-play]}
                              {:player-no 0
                               :effect    [:do-clean-up {:player-no 0}]}
                              {:player-no 0
@@ -161,7 +165,8 @@
                               :lantern lantern}
                   :players   [{:hand    [border-guard]
                                :deck    (concat [lackeys lackeys] (repeat 7 copper))
-                               :actions 1}]}
+                               :actions 1
+                               :phase   :action}]}
                  (play 0 :border-guard)
                  (choose :lackeys)
                  (choose :horn)
@@ -183,12 +188,13 @@
                   :players   [{:hand      [border-guard]
                                :play-area [border-guard]
                                :deck      (concat [lackeys lackeys] (repeat 7 copper))
-                               :actions   1}]}
+                               :actions   1
+                               :phase     :action}]}
                  (play 0 :border-guard)
                  (choose :lackeys)
                  (choose :horn)
                  (clean-up {:player-no 0})
-                 (choose :border-guard))
+                 (choose {:area :artifacts :card-name :horn}))
              {:artifacts {:horn    (assoc horn :owner 0)
                           :lantern lantern}
               :players   [{:hand     [border-guard copper copper copper copper]
@@ -300,7 +306,34 @@
                        :coins    0
                        :buys     0
                        :phase    :out-of-turn
-                       :triggers [(get-project-trigger horn)]}]})))
+                       :triggers [(get-project-trigger horn)]}]}))
+  (let [improve (assoc improve :id 1)]
+    (is (= (-> {:artifacts {:horn (assoc horn :owner 0)}
+                :supply    [{:card improve :pile-size 9}]
+                :players   [{:hand      [improve]
+                             :play-area [border-guard border-guard]
+                             :deck      (repeat 5 copper)
+                             :actions   1
+                             :coins     0
+                             :phase     :action
+                             :triggers  [(get-project-trigger horn)]}]}
+               (play 0 :improve)
+               (clean-up {:player-no 0})
+               (choose {:area :play-area :card-name :improve})
+               (choose :border-guard)                       ; improve Border Guard => Improve
+               (choose :improve)
+               (choose {:area :artifacts :card-name :horn})) ; topdeck Border Guard
+           {:artifacts {:horn (assoc horn :owner 0)}
+            :supply    [{:card improve :pile-size 8}]
+            :players   [{:hand     [border-guard copper copper copper copper]
+                         :deck     [copper]
+                         :discard  [improve improve]
+                         :actions  0
+                         :coins    0
+                         :buys     0
+                         :phase    :out-of-turn
+                         :triggers [(get-project-trigger horn)]}]
+            :trash     [border-guard]}))))
 
 (deftest cargo-ship-test
   (let [cargo-ship     (assoc cargo-ship :id 1)
@@ -512,11 +545,12 @@
                   :players [{:hand    [cargo-ship improve]
                              :deck    (repeat 5 copper)
                              :actions 2
-                             :coins   0}]}
+                             :coins   0
+                             :phase   :action}]}
                  (play 0 :cargo-ship)
                  (play 0 :improve)
                  (clean-up {:player-no 0})
-                 (choose :improve)
+                 (choose {:area :play-area :card-name :improve})
                  (choose :cargo-ship)                       ; improve Cargo Ship
                  (choose :inventor)                         ; gain Inventor
                  (choose :inventor))                        ; put Inventor on vanished Cargo Ship
@@ -527,21 +561,51 @@
                          :coins    0
                          :buys     0
                          :phase    :out-of-turn
-                         :triggers [(merge set-aside=>hand-trigger {:id        2
+                         :triggers [(merge set-aside=>hand-trigger {:id        3
                                                                     :card-id   1
                                                                     :name      :cargo-ship
                                                                     :set-aside [inventor]})]}]
               :trash   [cargo-ship]}))
+      (ut/reset-ids!)
       (is (= (-> {:supply  [{:card inventor :pile-size 10}]
                   :players [{:hand    [throne-room cargo-ship improve]
                              :deck    (repeat 5 copper)
                              :actions 2
-                             :coins   0}]}
+                             :coins   0
+                             :phase   :action}]}
+                 (play 0 :throne-room)
+                 (choose :cargo-ship)
+                 (play 0 :improve)
+                 (clean-up {:player-no 0})
+                 (choose {:area :play-area :card-name :improve})
+                 (choose :cargo-ship)                       ; improve Cargo Ship
+                 (choose :inventor)                         ; gain Inventor
+                 (choose :inventor))                        ; put Inventor on vanished Cargo Ship
+             {:supply  [{:card inventor :pile-size 9}]
+              :players [{:hand          [copper copper copper copper copper]
+                         :discard       [throne-room improve]
+                         :actions       0
+                         :coins         0
+                         :buys          0
+                         :phase         :out-of-turn
+                         :repeated-play [{:source 8 :target 1}]
+                         :triggers      [(merge set-aside=>hand-trigger {:id        4
+                                                                         :card-id   1
+                                                                         :name      :cargo-ship
+                                                                         :set-aside [inventor]})]}]
+              :trash   [cargo-ship]}))
+      (ut/reset-ids!)
+      (is (= (-> {:supply  [{:card inventor :pile-size 10}]
+                  :players [{:hand    [throne-room cargo-ship improve]
+                             :deck    (repeat 5 copper)
+                             :actions 2
+                             :coins   0
+                             :phase   :action}]}
                  (play 0 :throne-room)
                  (choose :cargo-ship)
                  (play 0 :improve)
                  (end-turn 0)
-                 (choose :improve)
+                 (choose {:area :play-area :card-name :improve})
                  (choose :cargo-ship)                       ; improve Cargo Ship
                  (choose :inventor)                         ; gain Inventor
                  (choose :inventor))                        ; put Inventor on vanished Cargo Ship
@@ -927,23 +991,30 @@
                              :actions 1
                              :coins   0}]}
                  (play 0 :improve))
-             {:players [{:play-area [(assoc improve :at-clean-up [[::renaissance/improve-give-choice]])]
+             {:players [{:play-area [improve]
                          :actions   0
-                         :coins     2}]}))
+                         :coins     2
+                         :triggers  [(get-trigger improve)]}]}))
+      (ut/reset-ids!)
       (is (= (-> {:players [{:hand    [improve]
                              :actions 1
-                             :coins   0}]}
+                             :coins   0
+                             :phase   :action}]}
                  (play 0 :improve)
                  (clean-up {:player-no 0}))
-             {:players      [{:play-area [(assoc improve :at-clean-up [[::renaissance/improve-give-choice]])]
+             {:players      [{:play-area [improve]
                               :actions   0
-                              :coins     2}]
-              :effect-stack [{:text      "You may activate cards, that do something when you discard them from play."
-                              :player-no 0
-                              :choice    :at-clean-up-choice
-                              :source    :play-area
-                              :options   [:improve]
+                              :coins     2
+                              :phase     :clean-up
+                              :triggers  [(get-trigger improve)]}]
+              :effect-stack [{:player-no 0
+                              :text      "You may activate cards, that do something when you discard them from play."
+                              :choice    [:simultaneous-effects-choice {:triggers [(get-trigger improve)]}]
+                              :source    :mixed
+                              :options   [{:area :play-area :card-name :improve}]
                               :max       1}
+                             {:player-no 0
+                              :effect    [:sync-repeated-play]}
                              {:player-no 0
                               :effect    [:do-clean-up {:player-no 0}]}
                              {:player-no 0
@@ -952,20 +1023,30 @@
                               :effect    [:remove-triggers {:event :at-draw-hand}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
-      (is (= (-> {:players [{:play-area [(assoc improve :at-clean-up [[::renaissance/improve-give-choice]])
-                                         lackeys copper]}]}
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand      [improve]
+                             :play-area [lackeys copper]
+                             :actions   1
+                             :coins     0
+                             :phase     :action}]}
+                 (play 0 :improve)
                  (clean-up {:player-no 0})
-                 (choose :improve))
-             {:players      [{:play-area [improve lackeys copper]}]
+                 (choose {:area :play-area :card-name :improve}))
+             {:players      [{:play-area [lackeys copper improve]
+                              :actions   0
+                              :coins     2
+                              :phase     :clean-up
+                              :triggers  [(get-trigger improve)]}]
               :effect-stack [{:text      "You may trash an Action card you would discard this turn to gain a card costing exactly $1 more than it."
                               :player-no 0
                               :choice    ::renaissance/improve-trash
                               :source    :play-area
-                              :options   [:improve :lackeys]
+                              :options   [:lackeys :improve]
                               :max       1}
                              {:player-no 0
-                              :card-id   1
-                              :effect    [:at-clean-up]}
+                              :effect    [:remove-trigger {:trigger-id 1}]}
+                             {:player-no 0
+                              :effect    [:sync-repeated-play]}
                              {:player-no 0
                               :effect    [:do-clean-up {:player-no 0}]}
                              {:player-no 0
@@ -974,16 +1055,39 @@
                               :effect    [:remove-triggers {:event :at-draw-hand}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
-      (is (= (-> {:players [{:play-area [research
-                                         (assoc improve :at-clean-up [[::renaissance/improve-give-choice]])
-                                         copper]
+      (is (= (-> {:players [{:hand      [improve]
+                             :play-area [lackeys copper]
+                             :deck      (repeat 5 copper)
+                             :actions   1
+                             :coins     0
+                             :phase     :action}]}
+                 (play 0 :improve)
+                 (clean-up {:player-no 0})
+                 (choose nil))
+             {:players [{:hand    (repeat 5 copper)
+                         :discard [lackeys copper improve]
+                         :actions 0
+                         :coins   0
+                         :buys    0
+                         :phase   :out-of-turn}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand      [improve]
+                             :play-area [research copper]
+                             :actions   1
+                             :coins     0
+                             :phase     :action
                              :triggers  [(merge set-aside=>hand-trigger {:card-id   2
                                                                          :set-aside [silver silver]})]}]}
+                 (play 0 :improve)
                  (clean-up {:player-no 0})
-                 (choose :improve))
-             {:players      [{:play-area [research improve copper]
+                 (choose {:area :play-area :card-name :improve}))
+             {:players      [{:play-area [research copper improve]
+                              :actions   0
+                              :coins     2
+                              :phase     :clean-up
                               :triggers  [(merge set-aside=>hand-trigger {:card-id   2
-                                                                          :set-aside [silver silver]})]}]
+                                                                          :set-aside [silver silver]})
+                                          (get-trigger improve)]}]
               :effect-stack [{:text      "You may trash an Action card you would discard this turn to gain a card costing exactly $1 more than it."
                               :player-no 0
                               :choice    ::renaissance/improve-trash
@@ -991,8 +1095,69 @@
                               :options   [:improve]
                               :max       1}
                              {:player-no 0
-                              :card-id   1
-                              :effect    [:at-clean-up]}
+                              :effect    [:remove-trigger {:trigger-id 1}]}
+                             {:player-no 0
+                              :effect    [:sync-repeated-play]}
+                             {:player-no 0
+                              :effect    [:do-clean-up {:player-no 0}]}
+                             {:player-no 0
+                              :effect    [:draw 5]}
+                             {:player-no 0
+                              :effect    [:remove-triggers {:event :at-draw-hand}]}
+                             {:player-no 0
+                              :effect    [:check-game-ended]}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:supply  [{:card lackeys :pile-size 9}
+                            {:card improve :pile-size 9}]
+                  :players [{:hand      [improve]
+                             :play-area [lackeys copper]
+                             :deck      (repeat 5 copper)
+                             :actions   1
+                             :coins     0
+                             :phase     :action}]}
+                 (play 0 :improve)
+                 (clean-up {:player-no 0})
+                 (choose {:area :play-area :card-name :improve})
+                 (choose nil))
+             {:supply  [{:card lackeys :pile-size 9}
+                        {:card improve :pile-size 9}]
+              :players [{:hand    (repeat 5 copper)
+                         :discard [lackeys copper improve]
+                         :actions 0
+                         :coins   0
+                         :buys    0
+                         :phase   :out-of-turn}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:supply  [{:card lackeys :pile-size 9}
+                            {:card improve :pile-size 9}]
+                  :players [{:hand      [improve]
+                             :play-area [lackeys copper]
+                             :actions   1
+                             :coins     0
+                             :phase     :action}]}
+                 (play 0 :improve)
+                 (clean-up {:player-no 0})
+                 (choose {:area :play-area :card-name :improve})
+                 (choose :lackeys))
+             {:supply       [{:card lackeys :pile-size 9}
+                             {:card improve :pile-size 9}]
+              :players      [{:play-area [copper improve]
+                              :actions   0
+                              :coins     2
+                              :phase     :clean-up
+                              :triggers  [(get-trigger improve)]}]
+              :trash        [lackeys]
+              :effect-stack [{:text      "Gain a card costing exactly $3."
+                              :player-no 0
+                              :choice    :gain
+                              :source    :supply
+                              :options   [:improve]
+                              :min       1
+                              :max       1}
+                             {:player-no 0
+                              :effect    [:remove-trigger {:trigger-id 1}]}
+                             {:player-no 0
+                              :effect    [:sync-repeated-play]}
                              {:player-no 0
                               :effect    [:do-clean-up {:player-no 0}]}
                              {:player-no 0
@@ -1003,33 +1168,64 @@
                               :effect    [:check-game-ended]}]}))
       (is (= (-> {:supply  [{:card lackeys :pile-size 9}
                             {:card improve :pile-size 9}]
-                  :players [{:play-area [(assoc improve :at-clean-up [[::renaissance/improve-give-choice]])
-                                         lackeys copper]}]}
+                  :players [{:hand      [improve]
+                             :play-area [lackeys copper]
+                             :deck      (repeat 5 copper)
+                             :actions   1
+                             :coins     0
+                             :phase     :action}]}
+                 (play 0 :improve)
                  (clean-up {:player-no 0})
-                 (choose :improve)
-                 (choose :lackeys))
-             {:supply       [{:card lackeys :pile-size 9}
-                             {:card improve :pile-size 9}]
-              :players      [{:play-area [improve copper]}]
-              :trash        [lackeys]
-              :effect-stack [{:text      "Gain a card costing exactly $3."
-                              :player-no 0
-                              :choice    :gain
-                              :source    :supply
-                              :options   [:improve]
-                              :min       1
-                              :max       1}
-                             {:player-no 0
-                              :card-id   1
-                              :effect    [:at-clean-up]}
-                             {:player-no 0
-                              :effect    [:do-clean-up {:player-no 0}]}
-                             {:player-no 0
-                              :effect    [:draw 5]}
-                             {:player-no 0
-                              :effect    [:remove-triggers {:event :at-draw-hand}]}
-                             {:player-no 0
-                              :effect    [:check-game-ended]}]})))))
+                 (choose {:area :play-area :card-name :improve})
+                 (choose :lackeys)
+                 (choose :improve))
+             {:supply  [{:card lackeys :pile-size 9}
+                        {:card improve :pile-size 8}]
+              :players [{:hand    (repeat 5 copper)
+                         :discard [improve copper improve]
+                         :actions 0
+                         :coins   0
+                         :buys    0
+                         :phase   :out-of-turn}]
+              :trash   [lackeys]}))
+      (let [throne-room (assoc throne-room :id 3)
+            duchy       (assoc duchy :id 4)]
+        (ut/reset-ids!)
+        (is (= (-> {:players [{:hand    [throne-room improve]
+                               :actions 1
+                               :coins   0}]}
+                   (play 0 :throne-room)
+                   (choose :improve))
+               {:players [{:play-area [throne-room improve]
+                           :actions   0
+                           :coins     4
+                           :triggers  [(get-trigger improve)
+                                       (assoc (get-trigger improve) :id 2)]}]}))
+        #_(is (= (-> {:supply  [{:card throne-room :pile-size 9}
+                                {:card duchy :pile-size 8}]
+                      :players [{:hand    [throne-room improve]
+                                 :deck    (repeat 5 copper)
+                                 :actions 1
+                                 :coins   0
+                                 :phase   :action}]}
+                     (play 0 :throne-room)
+                     (choose :improve)
+                     (clean-up {:player-no 0})
+                     (choose {:area :play-area :card-name :improve})
+                     (choose :improve)                      ; improve Improve => Throne Room
+                     #_(choose :throne-room)
+                     #_(choose {:area :play-area :card-name :improve})
+                     #_(choose :throne-room)                ; improve Throne Room => Duchy
+                     #_(choose :duchy))
+                 {:supply  [{:card throne-room :pile-size 8}
+                            {:card duchy :pile-size 7}]
+                  :players [{:hand    (repeat 5 copper)
+                             :discard [throne-room duchy]
+                             :actions 0
+                             :coins   0
+                             :buys    0
+                             :phase   :out-of-turn}]
+                  :trash   [improve throne-room]}))))))
 
 (deftest inventor-test
   (let [silver (assoc silver :id 1)
@@ -3083,7 +3279,7 @@
                               :phase    :action
                               :triggers [(get-project-trigger crop-rotation)
                                          (get-project-trigger silos)]}]
-            :effect-stack   [{:text      "Two things happen simultaneous. Select which one happens next."
+            :effect-stack   [{:text      "Two things happen at the start of your turn. Select which one happens next."
                               :player-no 0
                               :choice    [:simultaneous-effects-choice {:triggers [(get-project-trigger crop-rotation)
                                                                                    (get-project-trigger silos)]}]
@@ -3175,7 +3371,7 @@
                                 :triggers  [(get-trigger amulet)
                                             (get-project-trigger silos)]}]
               :effect-stack   [{:player-no 0
-                                :text      "Two things happen simultaneous. Select which one happens next."
+                                :text      "Two things happen at the start of your turn. Select which one happens next."
                                 :choice    [:simultaneous-effects-choice {:triggers [(get-trigger amulet)
                                                                                      (get-project-trigger silos)]}]
                                 :source    :mixed
@@ -3203,7 +3399,7 @@
                                             (merge (get-trigger lost-in-the-woods)
                                                    {:duration :lost-in-the-woods})]}]
               :effect-stack   [{:player-no 0
-                                :text      "Two things happen simultaneous. Select which one happens next."
+                                :text      "Two things happen at the start of your turn. Select which one happens next."
                                 :choice    [:simultaneous-effects-choice {:triggers [(get-trigger amulet)
                                                                                      (merge (get-trigger lost-in-the-woods)
                                                                                             {:duration :lost-in-the-woods})]}]
@@ -3240,7 +3436,7 @@
                                              :effects  [[:return-boon {:boon-name :the-sea's-gift}]
                                                         [:receive-boon {:boon sea-gift}]]}]}]
               :effect-stack   [{:player-no 0
-                                :text      "Two things happen simultaneous. Select which one happens next."
+                                :text      "Two things happen at the start of your turn. Select which one happens next."
                                 :choice    [:simultaneous-effects-choice {:triggers [(get-trigger amulet)
                                                                                      {:event    :at-start-turn
                                                                                       :name     :the-sea's-gift
@@ -3271,7 +3467,7 @@
                                 :triggers  [(get-trigger caravan)
                                             (get-trigger captain)]}]
               :effect-stack   [{:player-no 0
-                                :text      "Two things happen simultaneous. Select which one happens next."
+                                :text      "Two things happen at the start of your turn. Select which one happens next."
                                 :choice    [:simultaneous-effects-choice {:triggers [(get-trigger caravan)
                                                                                      (get-trigger captain)]}]
                                 :source    :mixed

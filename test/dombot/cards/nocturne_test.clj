@@ -56,12 +56,14 @@
                          :coins    1
                          :boons    [field-gift]
                          :triggers [{:id       1
+                                     :name     :the-field's-gift
                                      :event    :at-clean-up
                                      :duration :once
                                      :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]}))
       (is (= (-> {:boons   {:deck [field-gift]}
                   :players [{:actions 0
-                             :coins   0}]}
+                             :coins   0
+                             :phase   :buy}]}
                  (receive-boon {:player-no 0})
                  (clean-up {:player-no 0}))
              {:boons   {:discard [field-gift]}
@@ -94,12 +96,14 @@
                          :buys     2
                          :boons    [forest-gift]
                          :triggers [{:id       1
+                                     :name     :the-forest's-gift
                                      :event    :at-clean-up
                                      :duration :once
                                      :effects  [[:return-boon {:boon-name :the-forest's-gift}]]}]}]}))
       (is (= (-> {:boons   {:deck [forest-gift]}
                   :players [{:coins 0
-                             :buys  1}]}
+                             :buys  1
+                             :phase :buy}]}
                  (receive-boon {:player-no 0})
                  (clean-up {:player-no 0}))
              {:boons   {:discard [forest-gift]}
@@ -142,11 +146,13 @@
                                      :duration :once
                                      :effects  [[:draw {:arg 1 :player-no 0}]]}
                                     {:id       2
+                                     :name     :the-river's-gift
                                      :event    :at-clean-up
                                      :duration :once
                                      :effects  [[:return-boon {:boon-name :the-river's-gift}]]}]}]}))
       (is (= (-> {:boons   {:deck [river-gift]}
-                  :players [{:deck (repeat 7 copper)}
+                  :players [{:deck  (repeat 7 copper)
+                             :phase :buy}
                             {:hand (repeat 5 copper)}]}
                  (receive-boon {:player-no 0})
                  (end-turn 0))
@@ -845,6 +851,7 @@
                          :buys     2
                          :boons    [forest-gift]
                          :triggers [{:id       1
+                                     :name     :the-forest's-gift
                                      :event    :at-clean-up
                                      :duration :once
                                      :effects  [[:return-boon {:boon-name :the-forest's-gift}]]}]}]}))
@@ -883,6 +890,7 @@
                                 :phase    :action
                                 :boons    [forest-gift]
                                 :triggers [{:id       2
+                                            :name     :the-forest's-gift
                                             :event    :at-clean-up
                                             :duration :once
                                             :effects  [[:return-boon {:boon-name :the-forest's-gift}]]}]}]})))))
@@ -1965,6 +1973,7 @@
                               :triggers  [(merge (get-trigger lost-in-the-woods)
                                                  {:duration :lost-in-the-woods})
                                           {:id       2
+                                           :name     :the-field's-gift
                                            :event    :at-clean-up
                                            :duration :once
                                            :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]
@@ -2002,6 +2011,7 @@
                            :triggers  [(merge (get-trigger lost-in-the-woods)
                                               {:duration :lost-in-the-woods})
                                        {:id       2
+                                        :name     :the-field's-gift
                                         :event    :at-clean-up
                                         :duration :once
                                         :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]}))
@@ -2821,6 +2831,7 @@
                          :buys      2
                          :boons     [field-gift]
                          :triggers  [{:id       1
+                                      :name     :the-field's-gift
                                       :event    :at-clean-up
                                       :duration :once
                                       :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}
@@ -2830,7 +2841,8 @@
                              :deck    (repeat 7 copper)
                              :actions 1
                              :coins   0
-                             :buys    1}
+                             :buys    1
+                             :phase   :action}
                             {:hand [copper copper copper copper copper]
                              :deck [estate estate]}]}
                  (play 0 :sacred-grove)

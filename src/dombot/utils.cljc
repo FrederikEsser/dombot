@@ -51,7 +51,7 @@
     2 "two"
     3 "three"
     4 "four"
-    :default n))
+    (str n)))
 
 (defn redupeat [val n f & args]
   (loop [acc val n n]
@@ -137,7 +137,7 @@
 (defn- minus-cost [cost reduction]
   (if (< cost reduction) 0 (- cost reduction)))
 
-(defn- capitalism-get-types [{:keys [name types effects] :as card}]
+(defn- capitalism-get-types [{:keys [name types effects trigger] :as card}]
   (if (and
         (:action types)
         (or (some (fn [[effect {:keys [text options]}]]
@@ -146,7 +146,7 @@
                         (some (fn [{:keys [text]}]
                                 (and text (re-find #"\+\$" text)))
                               options)))
-                  effects)
+                  (concat effects (:effects trigger)))
             (contains? #{:merchant
                          :baron :ironworks :courtier
                          :pirate-ship :salvager

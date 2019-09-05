@@ -864,11 +864,14 @@
               :trash   [peddler]}))
       (let [improve (assoc improve :id 0)]
         (is (= (-> {:supply  [{:card peddler :pile-size 9}]
-                    :players [{:play-area [expand
-                                           (assoc improve :at-clean-up [[::renaissance/improve-give-choice]])]
-                               :phase     :buy}]}
+                    :players [{:hand      [improve]
+                               :play-area [expand]
+                               :actions   1
+                               :coins     0
+                               :phase     :action}]}
+                   (play 0 :improve)
                    (clean-up {:player-no 0})
-                   (choose :improve)
+                   (choose {:area :play-area :card-name :improve})
                    (choose :expand)
                    (choose :peddler))
                {:supply  [{:card peddler :pile-size 8}]

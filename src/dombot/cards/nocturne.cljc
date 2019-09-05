@@ -535,7 +535,8 @@
           (push-effect-stack {:player-no player-no
                               :effects   (concat effects
                                                  (when (and has-boon? keep-until-clean-up?)
-                                                   [[:add-trigger {:trigger {:event    :at-clean-up
+                                                   [[:add-trigger {:trigger {:name     name
+                                                                             :event    :at-clean-up
                                                                              :duration :once
                                                                              :effects  [[:return-boon {:boon-name name}]]}}]]))})
           check-stack))))
@@ -715,7 +716,7 @@
               :cost    5
               :trigger {:event    :at-start-turn
                         :duration :once
-                        :mode     :manual
+                        :mode     :complex
                         :effects  [[:give-choice {:text    "Gain a card to your hand costing up to $4."
                                                   :choice  :gain-to-hand
                                                   :options [:supply {:max-cost 4}]
