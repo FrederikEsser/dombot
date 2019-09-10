@@ -79,6 +79,27 @@
                     :reacts-to :attack
                     :reaction  [[::caravan-guard-play]]})
 
+(def dungeon {:name    :dungeon
+              :set     :adventures
+              :types   #{:action :duration}
+              :cost    3
+              :effects [[:give-actions 1]
+                        [:draw 2]
+                        [:give-choice {:text    "Discard 2 cards."
+                                       :choice  :discard-from-hand
+                                       :options [:player :hand]
+                                       :min     2
+                                       :max     2}]]
+              :trigger {:event    :at-start-turn
+                        :duration :once
+                        :mode     :manual
+                        :effects  [[:draw 2]
+                                   [:give-choice {:text    "Discard 2 cards."
+                                                  :choice  :discard-from-hand
+                                                  :options [:player :hand]
+                                                  :min     2
+                                                  :max     2}]]}})
+
 (def hireling {:name    :hireling
                :set     :adventures
                :types   #{:action :duration}
@@ -247,6 +268,7 @@
 (def kingdom-cards [amulet
                     artificer
                     caravan-guard
+                    dungeon
                     hireling
                     lost-city
                     magpie

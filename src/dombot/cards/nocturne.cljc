@@ -774,8 +774,6 @@
                      :min       1
                      :max       1}))
 
-
-
 (def crypt-trigger {:event    :at-start-turn
                     :duration :until-empty
                     :mode     :manual

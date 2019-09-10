@@ -276,6 +276,64 @@
                                 :buys      1
                                 :phase     :action}]})))))
 
+(deftest dungeon-test
+  (let [dungeon (assoc dungeon :id 0)]
+    (testing "Dungeon"
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand    [dungeon estate copper copper copper]
+                             :deck    [estate copper estate copper]
+                             :actions 1}]}
+                 (play 0 :dungeon)
+                 (choose [:estate :estate]))
+             {:players [{:hand      [copper copper copper copper]
+                         :play-area [dungeon]
+                         :deck      [estate copper]
+                         :discard   [estate estate]
+                         :actions   1
+                         :triggers  [(get-trigger dungeon)]}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand    [dungeon estate copper copper copper]
+                             :deck    [estate]
+                             :actions 1}]}
+                 (play 0 :dungeon)
+                 (choose [:estate :estate]))
+             {:players [{:hand      [copper copper copper]
+                         :play-area [dungeon]
+                         :discard   [estate estate]
+                         :actions   1
+                         :triggers  [(get-trigger dungeon)]}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand    [dungeon copper]
+                             :actions 1}]}
+                 (play 0 :dungeon)
+                 (choose :copper))
+             {:players [{:play-area [dungeon]
+                         :discard   [copper]
+                         :actions   1
+                         :triggers  [(get-trigger dungeon)]}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand    [dungeon]
+                             :actions 1}]}
+                 (play 0 :dungeon))
+             {:players [{:play-area [dungeon]
+                         :actions   1
+                         :triggers  [(get-trigger dungeon)]}]}))
+      (is (= (-> {:players [{:play-area [dungeon]
+                             :deck      [estate estate copper copper copper copper copper]
+                             :actions   1
+                             :phase     :buy
+                             :triggers  [(get-trigger dungeon)]}]}
+                 (end-turn 0)
+                 (choose [:estate :estate]))
+             {:current-player 0
+              :players        [{:hand      [copper copper copper copper copper]
+                                :play-area [dungeon]
+                                :discard   [estate estate]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]})))))
+
 (deftest hireling-test
   (let [hireling (assoc hireling :id 0)]
     (testing "Hireling"

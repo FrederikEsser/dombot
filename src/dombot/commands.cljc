@@ -8,7 +8,7 @@
 ; TODOs:
 
 ; Trigger refac:
-; Check card effects at clean up at everty iteration. Travellers need trigger-conditions
+; Check card effects at clean up at every iteration. Travellers need trigger-conditions
 ; fix Throne Room / Improve
 ; fix Captain / Improve
 ; show set-aside cards where their carrier has disappeared (Cargo Ship / Improve)
