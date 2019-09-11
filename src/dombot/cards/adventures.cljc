@@ -1,6 +1,6 @@
 (ns dombot.cards.adventures
   (:require [dombot.operations :refer [push-effect-stack give-choice move-card]]
-            [dombot.cards.common :refer []]
+            [dombot.cards.common :refer [add-trigger set-aside=>hand-trigger]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -99,6 +99,37 @@
                                                   :options [:player :hand]
                                                   :min     2
                                                   :max     2}]]}})
+
+(defn- gear-set-aside [game {:keys [player-no card-id]}]
+  (let [set-aside (get-in game [:players player-no :gear-set-aside])]
+    (-> game
+        (update-in [:players player-no] dissoc :gear-set-aside)
+        (add-trigger {:player-no player-no
+                      :card-id   card-id
+                      :trigger   (merge set-aside=>hand-trigger {:set-aside set-aside})}))))
+
+(defn gear-choose-cards [game {:keys [player-no card-id card-names]}]
+  (cond-> game
+          (not-empty card-names) (push-effect-stack {:player-no player-no
+                                                     :card-id   card-id
+                                                     :effects   [[:move-cards {:card-names card-names
+                                                                               :from       :hand
+                                                                               :to         :gear-set-aside}]
+                                                                 [::gear-set-aside]]})))
+
+(effects/register {::gear-set-aside    gear-set-aside
+                   ::gear-choose-cards gear-choose-cards})
+
+
+(def gear {:name    :gear
+           :set     :adventures
+           :types   #{:action :duration}
+           :cost    3
+           :effects [[:draw 2]
+                     [:give-choice {:text    "Set aside up to 2 cards from your hand."
+                                    :choice  ::gear-choose-cards
+                                    :options [:player :hand]
+                                    :max     2}]]})
 
 (def hireling {:name    :hireling
                :set     :adventures
@@ -269,6 +300,7 @@
                     artificer
                     caravan-guard
                     dungeon
+                    gear
                     hireling
                     lost-city
                     magpie

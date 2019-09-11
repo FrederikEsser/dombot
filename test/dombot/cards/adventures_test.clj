@@ -334,6 +334,64 @@
                                 :buys      1
                                 :phase     :action}]})))))
 
+(deftest gear-test
+  (let [gear (assoc gear :id 0)]
+    (testing "Dungeon"
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand    [gear estate copper copper copper]
+                             :deck    [estate copper estate copper]
+                             :actions 1}]}
+                 (play 0 :gear)
+                 (choose [:estate :estate]))
+             {:players [{:hand      [copper copper copper copper]
+                         :play-area [gear]
+                         :deck      [estate copper]
+                         :actions   0
+                         :triggers  [(merge set-aside=>hand-trigger
+                                            {:id        1
+                                             :card-id   0
+                                             :name      :gear
+                                             :set-aside [estate estate]})]}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand    [gear estate copper copper copper]
+                             :deck    [estate copper estate copper]
+                             :actions 1}]}
+                 (play 0 :gear)
+                 (choose :copper))
+             {:players [{:hand      [estate copper copper estate copper]
+                         :play-area [gear]
+                         :deck      [estate copper]
+                         :actions   0
+                         :triggers  [(merge set-aside=>hand-trigger
+                                            {:id        1
+                                             :card-id   0
+                                             :name      :gear
+                                             :set-aside [copper]})]}]}))
+      (is (= (-> {:players [{:hand    [gear estate copper copper copper]
+                             :deck    [estate copper estate copper]
+                             :actions 1}]}
+                 (play 0 :gear)
+                 (choose nil))
+             {:players [{:hand      [estate copper copper copper estate copper]
+                         :play-area [gear]
+                         :deck      [estate copper]
+                         :actions   0}]}))
+      (is (= (-> {:players [{:hand    [gear estate copper copper copper]
+                             :deck    [estate copper estate copper]
+                             :actions 1
+                             :phase   :action}]}
+                 (play 0 :gear)
+                 (choose [:estate :estate])
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand      [estate copper copper copper copper estate estate]
+                                :play-area [gear]
+                                :deck      [copper]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]})))))
+
 (deftest hireling-test
   (let [hireling (assoc hireling :id 0)]
     (testing "Hireling"
