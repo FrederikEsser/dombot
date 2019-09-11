@@ -268,6 +268,21 @@
                                                             {:card hero :pile-size 5}
                                                             {:card champion :pile-size 5}]}]]})
 
+(defn port-12 [game _]
+  (let [{:keys [idx]} (ut/get-pile-idx game :port)]
+    (assoc-in game [:supply idx :pile-size] 12)))
+
+(effects/register {::port-12 port-12})
+
+(def port {:name    :port
+           :set     :adventures
+           :types   #{:action}
+           :cost    4
+           :effects [[:draw 1]
+                     [:give-actions 2]]
+           :on-buy  [[:gain {:card-name :port}]]
+           :setup   [[::port-12]]})
+
 (defn- raze-trash-from-area [game {:keys [player-no choice]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no (:area choice)] {:name (:card-name choice)})
         cost (ut/get-cost game card)]
@@ -305,4 +320,5 @@
                     lost-city
                     magpie
                     page
+                    port
                     raze])

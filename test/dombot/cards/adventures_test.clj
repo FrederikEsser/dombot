@@ -793,6 +793,26 @@
                          :unaffected [{:card-id 0}]
                          :triggers   [(get-trigger champion)]}]})))))
 
+(deftest port-test
+  (let [port (assoc port :id 0)]
+    (testing "Port"
+      (is (= (-> {:players [{:hand    [port]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :port))
+             {:players [{:hand      [copper]
+                         :play-area [port]
+                         :deck      [copper]
+                         :actions   2}]}))
+      (is (= (-> {:supply  [{:card port :pile-size 12}]
+                  :players [{:coins 4
+                             :buys  1}]}
+                 (buy-card 0 :port))
+             {:supply  [{:card port :pile-size 10}]
+              :players [{:discard [port port]
+                         :coins   0
+                         :buys    0}]})))))
+
 (deftest raze-test
   (let [raze (assoc raze :id 0)]
     (testing "Raze"
