@@ -898,3 +898,29 @@
                          :deck      [gold]
                          :actions   1}]
               :trash   [copper]})))))
+
+(deftest treasure-trove-test
+  (let [treasure-trove (assoc treasure-trove :id 0)
+        copper         (assoc copper :id 1)
+        gold           (assoc gold :id 2)]
+    (testing "Treasure Trove"
+      (is (= (-> {:supply  [{:card copper :pile-size 46}
+                            {:card gold :pile-size 30}]
+                  :players [{:hand  [treasure-trove]
+                             :coins 0}]}
+                 (play 0 :treasure-trove))
+             {:supply  [{:card copper :pile-size 45}
+                        {:card gold :pile-size 29}]
+              :players [{:play-area [treasure-trove]
+                         :discard   [gold copper]
+                         :coins     2}]}))
+      (is (= (-> {:supply  [{:card copper :pile-size 16}
+                            {:card gold :pile-size 0}]
+                  :players [{:hand  [treasure-trove]
+                             :coins 0}]}
+                 (play 0 :treasure-trove))
+             {:supply  [{:card copper :pile-size 15}
+                        {:card gold :pile-size 0}]
+              :players [{:play-area [treasure-trove]
+                         :discard   [copper]
+                         :coins     2}]})))))

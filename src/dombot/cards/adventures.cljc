@@ -311,6 +311,14 @@
                                     :min     1
                                     :max     1}]]})
 
+(def treasure-trove {:name       :treasure-trove
+                     :set        :adventures
+                     :types      #{:treasure}
+                     :cost       5
+                     :coin-value 2
+                     :effects    [[:gain {:card-name :gold}]
+                                  [:gain {:card-name :copper}]]})
+
 (def kingdom-cards [amulet
                     artificer
                     caravan-guard
@@ -321,4 +329,5 @@
                     magpie
                     page
                     port
-                    raze])
+                    raze
+                    treasure-trove])
