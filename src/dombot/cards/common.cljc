@@ -315,18 +315,17 @@
 
 (effects/register {:trash-this trash-this})
 
-(defn trash-from-play-area [game {:keys [player-no card-name trash-card-id type] :as args}]
-  (let [card-names (and type
-                        (->> (get-in game [:players player-no :play-area])
-                             (filter (comp type (partial ut/get-types game)))
-                             (map :name)))]
+(defn trash-from-play-area [game {:keys [player-no card-name card-names trash-card-id type]}]
+  (let [card-names (cond type (->> (get-in game [:players player-no :play-area])
+                                   (filter (comp type (partial ut/get-types game)))
+                                   (map :name))
+                         card-name [card-name]
+                         card-names card-names)]
     (cond-> game
             trash-card-id (move-card {:player-no    player-no
                                       :move-card-id trash-card-id
                                       :from         :play-area
                                       :to           :trash})
-            card-name (move-card (merge args {:from :play-area
-                                              :to   :trash}))
             card-names (move-cards {:player-no  player-no
                                     :card-names card-names
                                     :from       :play-area

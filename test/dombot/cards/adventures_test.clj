@@ -924,3 +924,61 @@
               :players [{:play-area [treasure-trove]
                          :discard   [copper]
                          :coins     2}]})))))
+
+(deftest bonfire-test
+  (testing "Bonfire"
+    (is (= (-> {:events  {:bonfire bonfire}
+                :players [{:hand      [estate]
+                           :play-area [copper copper copper]
+                           :coins     3
+                           :buys      1}]}
+               (buy-event 0 :bonfire))
+           {:events       {:bonfire bonfire}
+            :players      [{:hand      [estate]
+                            :play-area [copper copper copper]
+                            :coins     0
+                            :buys      0}]
+            :effect-stack [{:text      "Trash up to 2 cards you have in play."
+                            :player-no 0
+                            :choice    :trash-from-play-area
+                            :source    :play-area
+                            :options   [:copper :copper :copper]
+                            :max       2}]}))
+    (is (= (-> {:events  {:bonfire bonfire}
+                :players [{:hand      [estate]
+                           :play-area [copper copper copper]
+                           :coins     3
+                           :buys      1}]}
+               (buy-event 0 :bonfire)
+               (choose nil))
+           {:events  {:bonfire bonfire}
+            :players [{:hand      [estate]
+                       :play-area [copper copper copper]
+                       :coins     0
+                       :buys      0}]}))
+    (is (= (-> {:events  {:bonfire bonfire}
+                :players [{:hand      [estate]
+                           :play-area [copper copper copper]
+                           :coins     3
+                           :buys      1}]}
+               (buy-event 0 :bonfire)
+               (choose :copper))
+           {:events  {:bonfire bonfire}
+            :players [{:hand      [estate]
+                       :play-area [copper copper]
+                       :coins     0
+                       :buys      0}]
+            :trash   [copper]}))
+    (is (= (-> {:events  {:bonfire bonfire}
+                :players [{:hand      [estate]
+                           :play-area [copper copper copper]
+                           :coins     3
+                           :buys      1}]}
+               (buy-event 0 :bonfire)
+               (choose [:copper :copper]))
+           {:events  {:bonfire bonfire}
+            :players [{:hand      [estate]
+                       :play-area [copper]
+                       :coins     0
+                       :buys      0}]
+            :trash   [copper copper]}))))

@@ -331,3 +331,14 @@
                     port
                     raze
                     treasure-trove])
+
+(def bonfire {:name   :bonfire
+              :set    :adventures
+              :type   :event
+              :cost   3
+              :on-buy [[:give-choice {:text    "Trash up to 2 cards you have in play."
+                                      :choice  :trash-from-play-area
+                                      :options [:player :play-area]
+                                      :max     2}]]})
+
+(def events [bonfire])

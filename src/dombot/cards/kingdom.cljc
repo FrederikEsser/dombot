@@ -51,11 +51,12 @@
               (let [pile-size (if (:victory types) victory-pile-size 10)]
                 {:card card :pile-size pile-size})))))
 
-(def event-landmark-project-list (concat
-                                   renaissance/projects))
+(def landscapes (concat
+                  adventures/events
+                  renaissance/projects))
 
-(defn random-elps [[set number]]
-  (->> event-landmark-project-list
+(defn random-landscape [[set number]]
+  (->> landscapes
        (filter (comp #{set} :set))
        shuffle
        (take number)))
@@ -97,21 +98,26 @@
                             4 12)
         starting-player   (rand-int number-of-players)
         kingdom           (random-kingdom sets #{})
-        elps              (->> kingdom
+        landscape         (->> kingdom
                                (take 10)
                                (drop 2)
                                (split-at 4)
                                (keep (fn [cards]
                                        (->> cards
-                                            (keep (comp #{:renaissance} :set))
+                                            (keep (comp #{:adventures :renaissance} :set))
                                             first)))
                                frequencies
-                               (mapcat random-elps)
+                               (mapcat random-landscape)
                                (sort-by (juxt :cost :name)))
-        projects          (->> elps
+        events            (->> landscape
+                               (filter (comp #{:event} :type))
+                               (map (fn [{:keys [name] :as event}]
+                                      [name event]))
+                               (into {}))
+        projects          (->> landscape
                                (filter (comp #{:project} :type))
-                               (map (fn [{:keys [name] :as elp}]
-                                      [name elp]))
+                               (map (fn [{:keys [name] :as project}]
+                                      [name project]))
                                (into {}))
         heirlooms         (->> kingdom
                                (keep :heirloom))]
@@ -126,6 +132,8 @@
              :track-played-actions? true
              :current-player        starting-player
              :starting-player       starting-player}
+            (when (not-empty events)
+              {:events events})
             (when (not-empty projects)
               {:projects projects})) game
           (-> (reduce (partial prepare-cards heirlooms) game (range number-of-players))

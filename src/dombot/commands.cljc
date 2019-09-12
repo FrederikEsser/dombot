@@ -102,6 +102,12 @@
                                             (op/buy-card current-player card-name)))
     (view)))
 
+(defn buy-event [event-name]
+  (let [{:keys [current-player] :as game} (get-game)]
+    (swap! game-state update :game conj (-> game
+                                            (op/buy-event current-player event-name)))
+    (view)))
+
 (defn buy-project [project-name]
   (let [{:keys [current-player] :as game} (get-game)]
     (swap! game-state update :game conj (-> game

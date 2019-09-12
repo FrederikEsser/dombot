@@ -63,6 +63,23 @@
                         :number-of-cards number-of-cards}
                        (choice-interaction name :extra-cards choice)))))))
 
+(defn view-events [{events                     :events
+                    {:keys [coins buys phase]} :player
+                    choice                     :choice}]
+  (->> events
+       vals
+       (map (fn [{:keys [name type cost]}]
+              (merge {:name    name
+                      :name-ui (ut/format-name name)
+                      :type    type
+                      :cost    cost}
+                     (when (and (#{:action :pay :buy} phase)
+                                (not choice)
+                                buys (pos? buys)
+                                coins (<= cost coins))
+                       {:interaction :buyable})
+                     (choice-interaction name :events choice))))))
+
 (defn view-projects [{projects                             :projects
                       {:keys [coins buys player-no phase]} :player
                       choice                               :choice
@@ -359,7 +376,7 @@
                                      (<= 3 potential-coins)) "You can buy a card."
                                 (some (comp :night (partial ut/get-types game)) hand) "You can play Night cards.")}))
 
-(defn view-game [{:keys [supply extra-cards artifacts projects druid-boons boons hexes
+(defn view-game [{:keys [supply extra-cards artifacts events projects druid-boons boons hexes
                          trade-route-mat players effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
@@ -386,6 +403,9 @@
                                                           :choice choice}))})
            (when trade-route-mat
              {:trade-route-mat trade-route-mat})
+           (when events
+             {:events (view-events (merge game {:player (assoc player :player-no current-player)
+                                                :choice choice}))})
            (when projects
              {:projects (view-projects (merge game {:player (assoc player :player-no current-player)
                                                     :choice choice}))})

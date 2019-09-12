@@ -489,9 +489,9 @@
 (defn buy-project [{:keys [effect-stack] :as game} player-no project-name]
   (let [{:keys [buys coins phase]} (get-in game [:players player-no])
         {:keys [cost trigger on-buy participants] :as project} (get-in game [:projects project-name])]
-    (assert (empty? effect-stack) "You can't buy cards when you have a choice to make.")
+    (assert (empty? effect-stack) "You can't buy projects when you have a choice to make.")
     (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
-    (assert project (str "Buy error: The project " (ut/format-name project-name) " isn't in the game."))
+    (assert project (str "Buy error: The Project " (ut/format-name project-name) " isn't in the game."))
     (assert (and coins cost (>= coins cost)) (str "Buy error: " (ut/format-name project-name) " costs " cost " and you only have " coins " coins."))
     (assert (not-any? (comp #{player-no} :player-no) participants) (str "Buy error: You already participate in the project " (ut/format-name project-name) "."))
     (when phase
@@ -506,6 +506,23 @@
                                                  [[:add-trigger {:trigger (merge {:name     project-name
                                                                                   :duration :game}
                                                                                  trigger)}]])
+                                               on-buy)})
+        check-stack)))
+
+(defn buy-event [{:keys [effect-stack] :as game} player-no event-name]
+  (let [{:keys [buys coins phase]} (get-in game [:players player-no])
+        {:keys [cost on-buy] :as event} (get-in game [:events event-name])]
+    (assert (empty? effect-stack) "You can't buy events when you have a choice to make.")
+    (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
+    (assert event (str "Buy error: The Event " (ut/format-name event-name) " isn't in the game."))
+    (assert (and coins cost (>= coins cost)) (str "Buy error: " (ut/format-name event-name) " costs " cost " and you only have " coins " coins."))
+    (when phase
+      (assert (#{:action :pay :buy} phase) (str "You can't buy events when you're in the " (ut/format-name phase) " phase.")))
+    (-> game
+        (update-in [:players player-no :coins] - cost)
+        (update-in [:players player-no :buys] - 1)
+        (push-effect-stack {:player-no player-no
+                            :effects   (concat [[:set-phase {:phase :buy}]]
                                                on-buy)})
         check-stack)))
 

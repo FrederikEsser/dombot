@@ -47,6 +47,7 @@
                               (:victory types) "#9FD688"
                               (:curse types) "#B890D7"
                               (:artifact types) "#F9CD88"
+                              (:event types) "#C6C8C5"
                               (:project types) "#FCA19A"
                               (:boon types) "#F6E359"
                               (:hex types) "#9677B3"
@@ -62,6 +63,7 @@
                               (:action types) "#DED7C4"
                               (:night types) "#413B3B"
                               (:artifact types) "#B4763B"
+                              (:event types) "#97998E"
                               (:project types) "#EF8984"
                               (:boon types) "#AD9727"
                               (:hex types) "#5A487A"
@@ -103,6 +105,18 @@
                 (when set-aside (str " (" (string/join ", " set-aside) ")"))
                 (when number-of-cards (str " x" number-of-cards)))]]))
      card)))
+
+(defn view-event
+  [{:keys [name name-ui type cost interaction]}]
+  (let [disabled (nil? interaction)]
+    [:div
+     [:button {:style    (button-style disabled #{type} 1)
+               :disabled disabled
+               :on-click (when interaction
+                           (fn [] (case interaction
+                                    :buyable (swap! state assoc :game (cmd/buy-event name)))))}
+      (str name-ui
+           (when cost (str " ($" cost ")")))]]))
 
 (defn view-project
   [{:keys [name name-ui choice-value type cost interaction participants]}]
@@ -253,14 +267,18 @@
                                  :border-width     2}}
                 "Druid Boons"]
           (mapk #(view-boon % {:orientation :horizontal}) (get-in @state [:game :druid-boons]))])
-       (let [{:keys [projects boons hexes]} (:game @state)]
-         (when (or projects boons hexes)
+       (let [{:keys [events projects boons hexes]} (:game @state)]
+         (when (or events projects boons hexes)
            [:div "Landscape"
             [:table
              [:tbody
-              [:tr (->> projects
-                        (map view-project)
-                        (mapk (fn [project] [:td project])))
+              [:tr
+               (->> events
+                    (map view-event)
+                    (mapk (fn [event] [:td event])))
+               (->> projects
+                    (map view-project)
+                    (mapk (fn [project] [:td project])))
                (when boons
                  (let [{:keys [number-of-cards boon-discard top-boon]} boons]
                    (if (or boons-unfolded? (nil? top-boon))
