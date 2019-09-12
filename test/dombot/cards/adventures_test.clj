@@ -983,6 +983,87 @@
                        :buys      0}]
             :trash   [copper copper]}))))
 
+(deftest quest-test
+  (let [gold (assoc gold :id 1)]
+    (testing "Trade"
+      (is (= (-> {:events  {:quest quest}
+                  :supply  [{:card gold :pile-size 30}]
+                  :players [{:hand  (repeat 5 copper)
+                             :coins 0
+                             :buys  1}]}
+                 (buy-event 0 :quest)
+                 (choose :attack))
+             {:events  {:quest quest}
+              :supply  [{:card gold :pile-size 30}]
+              :players [{:hand  (repeat 5 copper)
+                         :coins 0
+                         :buys  0}]}))
+      (is (= (-> {:events  {:quest quest}
+                  :supply  [{:card gold :pile-size 30}]
+                  :players [{:hand  [warrior]
+                             :coins 0
+                             :buys  1}]}
+                 (buy-event 0 :quest)
+                 (choose :attack)
+                 (choose :warrior))
+             {:events  {:quest quest}
+              :supply  [{:card gold :pile-size 29}]
+              :players [{:discard [warrior gold]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:events  {:quest quest}
+                  :supply  [{:card gold :pile-size 30}]
+                  :players [{:hand  [curse]
+                             :coins 0
+                             :buys  1}]}
+                 (buy-event 0 :quest)
+                 (choose :curses)
+                 (choose :curse))
+             {:events  {:quest quest}
+              :supply  [{:card gold :pile-size 30}]
+              :players [{:discard [curse]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:events  {:quest quest}
+                  :supply  [{:card gold :pile-size 30}]
+                  :players [{:hand  [curse curse]
+                             :coins 0
+                             :buys  1}]}
+                 (buy-event 0 :quest)
+                 (choose :curses)
+                 (choose [:curse :curse]))
+             {:events  {:quest quest}
+              :supply  [{:card gold :pile-size 29}]
+              :players [{:discard [curse curse gold]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:events  {:quest quest}
+                  :supply  [{:card gold :pile-size 30}]
+                  :players [{:hand  (repeat 5 copper)
+                             :coins 0
+                             :buys  1}]}
+                 (buy-event 0 :quest)
+                 (choose :six-cards)
+                 (choose (repeat 5 :copper)))
+             {:events  {:quest quest}
+              :supply  [{:card gold :pile-size 30}]
+              :players [{:discard (repeat 5 copper)
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:events  {:quest quest}
+                  :supply  [{:card gold :pile-size 30}]
+                  :players [{:hand  (repeat 6 copper)
+                             :coins 0
+                             :buys  1}]}
+                 (buy-event 0 :quest)
+                 (choose :six-cards)
+                 (choose (repeat 6 :copper)))
+             {:events  {:quest quest}
+              :supply  [{:card gold :pile-size 29}]
+              :players [{:discard [copper copper copper copper copper copper gold]
+                         :coins   0
+                         :buys    0}]})))))
+
 (deftest trade-test
   (let [silver (assoc silver :id 1)]
     (testing "Trade"

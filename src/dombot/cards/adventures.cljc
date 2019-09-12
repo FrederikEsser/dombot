@@ -341,6 +341,54 @@
                                       :options [:player :play-area]
                                       :max     2}]]})
 
+(defn- quest-discard [game {:keys [player-no card-name card-names required-cards]}]
+  (let [card-names      (if card-name
+                          [card-name]
+                          card-names)
+        number-of-cards (count card-names)]
+    (cond-> game
+            (pos? number-of-cards) (push-effect-stack {:player-no player-no
+                                                       :effects   (concat [[:discard-from-hand {:card-names card-names}]]
+                                                                          (when (= number-of-cards required-cards)
+                                                                            [[:gain {:card-name :gold}]]))}))))
+
+(defn- quest-choice [game {:keys [player-no choice]}]
+  (case choice
+    :attack (give-choice game {:player-no player-no
+                               :text      "Discard an Attack."
+                               :choice    [::quest-discard {:required-cards 1}]
+                               :options   [:player :hand {:type :attack}]
+                               :min       1
+                               :max       1})
+    :curses (give-choice game {:player-no player-no
+                               :text      "Discard two Curses."
+                               :choice    [::quest-discard {:required-cards 2}]
+                               :options   [:player :hand {:name :curse}]
+                               :min       2
+                               :max       2})
+    :six-cards (give-choice game {:player-no player-no
+                                  :text      "Discard six cards."
+                                  :choice    [::quest-discard {:required-cards 6}]
+                                  :options   [:player :hand]
+                                  :min       6
+                                  :max       6})))
+
+(effects/register {::quest-discard quest-discard
+                   ::quest-choice  quest-choice})
+
+(def quest {:name   :quest
+            :set    :adventures
+            :type   :event
+            :cost   0
+            :on-buy [[:give-choice {:text    "You may discard to gain a Gold."
+                                    :choice  ::quest-choice
+                                    :options [:special
+                                              {:option :attack :text "Discard an Attack"}
+                                              {:option :curses :text "Discard two Curses"}
+                                              {:option :six-cards :text "Discard six cards"}]
+                                    :min     1
+                                    :max     1}]]})
+
 (defn- trade-trash [game {:keys [player-no card-name card-names]}]
   (let [card-names      (if card-name
                           [card-name]
@@ -374,5 +422,6 @@
                                [:add-trigger {:trigger travelling-fair-trigger}]]})
 
 (def events [bonfire
+             quest
              trade
              travelling-fair])
