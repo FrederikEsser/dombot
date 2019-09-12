@@ -983,6 +983,74 @@
                        :buys      0}]
             :trash   [copper copper]}))))
 
+(deftest trade-test
+  (let [silver (assoc silver :id 1)]
+    (testing "Trade"
+      (is (= (-> {:events  {:trade trade}
+                  :supply  [{:card silver :pile-size 40}]
+                  :players [{:hand  [copper estate]
+                             :coins 5
+                             :buys  1}]}
+                 (buy-event 0 :trade)
+                 (choose nil))
+             {:events  {:trade trade}
+              :supply  [{:card silver :pile-size 40}]
+              :players [{:hand  [copper estate]
+                         :coins 0
+                         :buys  0}]}))
+      (is (= (-> {:events  {:trade trade}
+                  :supply  [{:card silver :pile-size 40}]
+                  :players [{:hand  [copper estate]
+                             :coins 5
+                             :buys  1}]}
+                 (buy-event 0 :trade)
+                 (choose :estate))
+             {:events  {:trade trade}
+              :supply  [{:card silver :pile-size 39}]
+              :players [{:hand    [copper]
+                         :discard [silver]
+                         :coins   0
+                         :buys    0}]
+              :trash   [estate]}))
+      (is (= (-> {:events  {:trade trade}
+                  :supply  [{:card silver :pile-size 40}]
+                  :players [{:hand  [copper estate]
+                             :coins 5
+                             :buys  1}]}
+                 (buy-event 0 :trade)
+                 (choose [:estate :copper]))
+             {:events  {:trade trade}
+              :supply  [{:card silver :pile-size 38}]
+              :players [{:discard [silver silver]
+                         :coins   0
+                         :buys    0}]
+              :trash   [estate copper]}))
+      (is (= (-> {:events  {:trade trade}
+                  :supply  [{:card silver :pile-size 40}]
+                  :players [{:hand  [estate]
+                             :coins 5
+                             :buys  1}]}
+                 (buy-event 0 :trade)
+                 (choose nil))
+             {:events  {:trade trade}
+              :supply  [{:card silver :pile-size 40}]
+              :players [{:hand  [estate]
+                         :coins 0
+                         :buys  0}]}))
+      (is (= (-> {:events  {:trade trade}
+                  :supply  [{:card silver :pile-size 40}]
+                  :players [{:hand  [estate]
+                             :coins 5
+                             :buys  1}]}
+                 (buy-event 0 :trade)
+                 (choose :estate))
+             {:events  {:trade trade}
+              :supply  [{:card silver :pile-size 39}]
+              :players [{:discard [silver]
+                         :coins   0
+                         :buys    0}]
+              :trash   [estate]})))))
+
 (deftest travelling-fair-test
   (let [silver (assoc silver :id 1)]
     (testing "Travelling Fair"

@@ -341,6 +341,27 @@
                                       :options [:player :play-area]
                                       :max     2}]]})
 
+(defn- trade-trash [game {:keys [player-no card-name card-names]}]
+  (let [card-names      (if card-name
+                          [card-name]
+                          card-names)
+        number-of-cards (count card-names)]
+    (cond-> game
+            (pos? number-of-cards) (push-effect-stack {:player-no player-no
+                                                       :effects   (concat [[:trash-from-hand {:card-names card-names}]]
+                                                                          (repeat number-of-cards [:gain {:card-name :silver}]))}))))
+
+(effects/register {::trade-trash trade-trash})
+
+(def trade {:name   :trade
+            :set    :adventures
+            :type   :event
+            :cost   5
+            :on-buy [[:give-choice {:text    "Trash up to 2 cards from your hand."
+                                    :choice  ::trade-trash
+                                    :options [:player :hand]
+                                    :max     2}]]})
+
 (def travelling-fair-trigger {:event    :on-gain
                               :duration :turn
                               :effects  [[:topdeck-gained-choice]]})
@@ -353,4 +374,5 @@
                                [:add-trigger {:trigger travelling-fair-trigger}]]})
 
 (def events [bonfire
+             trade
              travelling-fair])
