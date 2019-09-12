@@ -982,3 +982,44 @@
                        :coins     0
                        :buys      0}]
             :trash   [copper copper]}))))
+
+(deftest travelling-fair-test
+  (let [silver (assoc silver :id 1)]
+    (testing "Travelling Fair"
+      (ut/reset-ids!)
+      (is (= (-> {:events  {:travelling-fair travelling-fair}
+                  :players [{:coins 5
+                             :buys  1}]}
+                 (buy-event 0 :travelling-fair))
+             {:events  {:travelling-fair travelling-fair}
+              :players [{:coins    3
+                         :buys     2
+                         :triggers [(assoc travelling-fair-trigger :id 1)]}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:events  {:travelling-fair travelling-fair}
+                  :supply  [{:card silver :pile-size 40}]
+                  :players [{:coins 5
+                             :buys  1}]}
+                 (buy-event 0 :travelling-fair)
+                 (buy-card 0 :silver)
+                 (choose nil))
+             {:events  {:travelling-fair travelling-fair}
+              :supply  [{:card silver :pile-size 39}]
+              :players [{:discard  [silver]
+                         :coins    0
+                         :buys     1
+                         :triggers [(assoc travelling-fair-trigger :id 1)]}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:events  {:travelling-fair travelling-fair}
+                  :supply  [{:card silver :pile-size 40}]
+                  :players [{:coins 5
+                             :buys  1}]}
+                 (buy-event 0 :travelling-fair)
+                 (buy-card 0 :silver)
+                 (choose :silver))
+             {:events  {:travelling-fair travelling-fair}
+              :supply  [{:card silver :pile-size 39}]
+              :players [{:deck     [silver]
+                         :coins    0
+                         :buys     1
+                         :triggers [(assoc travelling-fair-trigger :id 1)]}]})))))

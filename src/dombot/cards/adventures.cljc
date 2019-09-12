@@ -341,4 +341,16 @@
                                       :options [:player :play-area]
                                       :max     2}]]})
 
-(def events [bonfire])
+(def travelling-fair-trigger {:event    :on-gain
+                              :duration :turn
+                              :effects  [[:topdeck-gained-choice]]})
+
+(def travelling-fair {:name   :travelling-fair
+                      :set    :adventures
+                      :type   :event
+                      :cost   2
+                      :on-buy [[:give-buys 2]
+                               [:add-trigger {:trigger travelling-fair-trigger}]]})
+
+(def events [bonfire
+             travelling-fair])
