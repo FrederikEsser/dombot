@@ -136,6 +136,11 @@
                                         :effects phase-change-effects})))))
         triggers      (->> (get-in game [:players player-no :triggers])
                            (filter (comp #{phase-change} :event))
+                           (filter (fn [{:keys [condition]}]
+                                     (if condition
+                                       (let [condition-fn (effects/get-effect condition)]
+                                         (condition-fn game player-no))
+                                       true)))
                            (concat card-triggers))]
     (assert (every? :name triggers) (str "Trigger error. All triggers need a name. \n" (->> triggers
                                                                                             (remove :name)

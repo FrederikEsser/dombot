@@ -21,13 +21,19 @@
             card (topdeck-from-play-area {:player-no player-no
                                           :card-name :border-guard}))))
 
-(effects/register {::horn-at-clean-up horn-at-clean-up})
+(defn- border-guard-in-play? [game player-no]
+  (->> (get-in game [:players player-no :play-area])
+       (some (comp #{:border-guard} :name))))
+
+(effects/register {::border-guard-in-play? border-guard-in-play?
+                   ::horn-at-clean-up      horn-at-clean-up})
 
 (def horn {:name    :horn
            :type    :artifact
-           :trigger {:event   :at-clean-up
-                     :mode    :optional
-                     :effects [[::horn-at-clean-up]]}})
+           :trigger {:event     :at-clean-up
+                     :mode      :optional
+                     :condition ::border-guard-in-play?
+                     :effects   [[::horn-at-clean-up]]}})
 
 (def lantern {:name :lantern
               :type :artifact})
