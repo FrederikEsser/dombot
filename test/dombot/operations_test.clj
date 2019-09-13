@@ -417,7 +417,8 @@
                            :play-area       [{:name :silver}]
                            :deck            (repeat 5 {:name :copper})
                            :discard         [{:name :cellar}]
-                           :number-of-turns 8}]}
+                           :number-of-turns 8
+                           :phase           :action}]}
                (clean-up {:player-no 0})
                check-stack)
            {:players [{:hand            (repeat 5 {:name :copper})
@@ -431,7 +432,8 @@
                            :play-area       [{:name :copper}]
                            :deck            [{:name :copper}]
                            :discard         [{:name :copper}]
-                           :number-of-turns 8}]}
+                           :number-of-turns 8
+                           :phase           :action}]}
                (clean-up {:player-no 0})
                check-stack)
            {:players [{:hand            (repeat 4 {:name :copper})
@@ -444,7 +446,8 @@
                            :play-area       [{:name :copper}]
                            :deck            (repeat 3 {:name :silver})
                            :discard         [{:name :copper}]
-                           :number-of-turns 8}]}
+                           :number-of-turns 8
+                           :phase           :action}]}
                (clean-up {:player-no 0})
                check-stack)
            {:players [{:hand            (concat (repeat 3 {:name :silver}) (repeat 2 {:name :copper}))
@@ -455,6 +458,7 @@
                        :number-of-turns 9
                        :phase           :out-of-turn}]}))
     (is (= (-> {:players [{:number-of-turns 8
+                           :phase           :action
                            :triggers        [{:duration :turn}]}]}
                (clean-up {:player-no 0})
                check-stack)
@@ -464,7 +468,8 @@
                        :number-of-turns 9
                        :phase           :out-of-turn}]}))
     (is (= (-> {:cost-reductions [{:reduction 1}]
-                :players         [{:number-of-turns 8}]}
+                :players         [{:phase           :action
+                                   :number-of-turns 8}]}
                (clean-up {:player-no 0})
                check-stack)
            {:players [{:actions         0

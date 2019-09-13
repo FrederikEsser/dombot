@@ -177,7 +177,8 @@
 
 (defn- receive-river-gift [{:keys [current-player] :as game} {:keys [player-no]}]
   (add-trigger game {:player-no (or current-player 0)
-                     :trigger   {:event    :at-draw-hand
+                     :trigger   {:name     :the-river's-gift
+                                 :event    :at-draw-hand
                                  :duration :once
                                  :effects  [[:draw {:arg       1
                                                     :player-no player-no}]]}}))
@@ -905,7 +906,8 @@
                                                                  :from      :discard
                                                                  :to        :set-aside}]
                                                     [:add-trigger {:player-no (or current-player 0)
-                                                                   :trigger   {:event    :at-draw-hand
+                                                                   :trigger   {:name     :faithful-hound
+                                                                               :event    :at-draw-hand
                                                                                :duration :once
                                                                                :effects  [[:move-card {:player-no player-no
                                                                                                        :card-name :faithful-hound

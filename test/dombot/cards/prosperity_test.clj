@@ -229,7 +229,8 @@
                                  :buys      1}]
               :unbuyable-cards #{:gold}})))
     (is (= (-> {:players         [{:play-area [contraband gold]
-                                   :deck      (repeat 5 copper)}]
+                                   :deck      (repeat 5 copper)
+                                   :phase     :action}]
                 :unbuyable-cards #{:gold}}
                (clean-up {:player-no 0}))
            {:players [{:hand    (repeat 5 copper)

@@ -702,7 +702,8 @@
                        :play-area [merchant merchant silver]
                        :actions   1
                        :coins     4}]}))
-    (is (= (-> {:players [{:triggers [merchant-trigger]}]}
+    (is (= (-> {:players [{:phase    :action
+                           :triggers [merchant-trigger]}]}
                (clean-up {:player-no 0}))
            {:players [{:actions 0
                        :coins   0

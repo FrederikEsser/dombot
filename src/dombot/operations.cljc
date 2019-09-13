@@ -169,7 +169,8 @@
             phase-change (cond (#{:action} next-phase) :at-start-turn
                                (#{:pay} next-phase) :at-start-buy
                                (#{:buy} current-phase) :at-end-buy
-                               (#{:clean-up} next-phase) :at-clean-up)]
+                               (#{:clean-up} next-phase) :at-clean-up
+                               (#{:clean-up} current-phase) :at-draw-hand)]
         (-> game
             (assoc-in [:players player-no :phase] next-phase)
             (push-effect-stack {:player-no player-no
@@ -977,8 +978,7 @@
                                 (ut/dissoc-if-empty :play-area)
                                 (assoc :actions 0
                                        :coins 0
-                                       :buys 0
-                                       :phase :out-of-turn)
+                                       :buys 0)
                                 (update :triggers (partial remove (comp #{:once-turn :turn} :duration)))
                                 (ut/dissoc-if-empty :triggers)
                                 (cond-> (and number-of-turns
@@ -999,42 +999,19 @@
                                           :effects   (concat at-clean-up
                                                              [[:at-clean-up]])}))))
 
-(defn at-clean-up [game {:keys [player-no]}]
-  (-> game
-      (as-> game
-            (let [card-names (->> (get-in game [:players player-no :play-area])
-                                  (filter (fn [{:keys [at-clean-up clean-up-pred]}]
-                                            (let [pred-fn (if clean-up-pred
-                                                            (effects/get-effect clean-up-pred)
-                                                            (constantly true))]
-                                              (and at-clean-up
-                                                   (pred-fn game player-no)))))
-                                  (map :name)
-                                  set)]
-              (give-choice game {:player-no player-no
-                                 :text      "You may activate cards, that do something when you discard them from play."
-                                 :choice    :at-clean-up-choice
-                                 :options   [:player :play-area {:names card-names}]
-                                 :max       1})))))
-
-(effects/register {:at-clean-up-choice at-clean-up-choice
-                   :at-clean-up        at-clean-up})
+(effects/register {:at-clean-up-choice at-clean-up-choice})
 
 (defn clean-up [game {:keys [player-no number-of-cards]
                       :or   {number-of-cards 5}
                       :as   args}]
-  (let [at-draw-hand-triggers (->> (get-in game [:players player-no :triggers])
-                                   (filter (comp #{:at-draw-hand} :event))
-                                   (mapcat :effects))]
-    (-> game
-        (push-effect-stack (merge args
-                                  {:effects (concat [[:set-phase {:phase :clean-up}]
-                                                     [:do-clean-up args]
-                                                     [:draw number-of-cards]]
-                                                    at-draw-hand-triggers
-                                                    [[:remove-triggers {:event :at-draw-hand}]
-                                                     [:check-game-ended]])}))
-        check-stack)))
+  (-> game
+      (push-effect-stack (merge args
+                                {:effects [[:set-phase {:phase :clean-up}]
+                                           [:do-clean-up args]
+                                           [:draw number-of-cards]
+                                           [:set-phase {:phase :out-of-turn}]
+                                           [:check-game-ended]]}))
+      check-stack))
 
 (effects/register {:do-clean-up do-clean-up
                    :clean-up    clean-up})

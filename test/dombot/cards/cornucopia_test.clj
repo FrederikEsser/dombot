@@ -295,7 +295,8 @@
                          :discard [copper copper]}]}))
       (is (= (-> {:players [{:hand    [militia]
                              :actions 1
-                             :coins   0}
+                             :coins   0
+                             :phase   :action}
                             {:hand  [horse-traders copper copper copper copper]
                              :deck  [silver silver]
                              :phase :out-of-turn}]}

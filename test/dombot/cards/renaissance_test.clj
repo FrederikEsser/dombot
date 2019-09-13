@@ -157,7 +157,7 @@
                              {:player-no 0
                               :effect    [:draw 5]}
                              {:player-no 0
-                              :effect    [:remove-triggers {:event :at-draw-hand}]}
+                              :effect    [:set-phase {:phase :out-of-turn}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
       (ut/reset-ids!)
@@ -298,7 +298,8 @@
                                         :discard 1}}]}))
   (is (= (-> {:artifacts {:horn    (assoc horn :owner 0)
                           :lantern lantern}
-              :players   [{:triggers [(get-project-trigger horn)]}]}
+              :players   [{:phase    :buy
+                           :triggers [(get-project-trigger horn)]}]}
              (clean-up {:player-no 0}))
          {:artifacts {:horn    (assoc horn :owner 0)
                       :lantern lantern}
@@ -364,8 +365,7 @@
                                 :discard [cargo-ship]
                                 :actions 1
                                 :coins   0
-                                :buys    1
-                                :phase   :action}]}))
+                                :buys    1}]}))
       (ut/reset-ids!)
       (is (= (-> {:supply  [{:card gold :pile-size 30}]
                   :players [{:hand    [cargo-ship]
@@ -636,7 +636,8 @@
     (is (= (-> {:players [{:hand    [cargo-ship throne-room]
                            :deck    (repeat 5 copper)
                            :actions 1
-                           :coins   0}]}
+                           :coins   0
+                           :phase   :action}]}
                (play 0 :throne-room)
                (choose :cargo-ship)
                (end-turn 0))
@@ -712,7 +713,8 @@
                 :players [{:hand    [cargo-ship throne-room]
                            :deck    (repeat 5 copper)
                            :actions 1
-                           :coins   0}]}
+                           :coins   0
+                           :phase   :action}]}
                (play 0 :throne-room)
                (choose :cargo-ship)
                (gain {:player-no 0 :card-name :gold})
@@ -931,6 +933,7 @@
                            :triggers  [(get-project-trigger flag)]}]
               :trash     [flag-bearer]}))
       (is (= (-> {:players [{:deck     (repeat 7 copper)
+                             :phase    :buy
                              :triggers [(get-project-trigger flag)]}]}
                  (clean-up {:player-no 0}))
              {:players [{:hand     (repeat 6 copper)
@@ -1020,7 +1023,7 @@
                              {:player-no 0
                               :effect    [:draw 5]}
                              {:player-no 0
-                              :effect    [:remove-triggers {:event :at-draw-hand}]}
+                              :effect    [:set-phase {:phase :out-of-turn}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
       (ut/reset-ids!)
@@ -1052,7 +1055,7 @@
                              {:player-no 0
                               :effect    [:draw 5]}
                              {:player-no 0
-                              :effect    [:remove-triggers {:event :at-draw-hand}]}
+                              :effect    [:set-phase {:phase :out-of-turn}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
       (is (= (-> {:players [{:hand      [improve]
@@ -1103,7 +1106,7 @@
                              {:player-no 0
                               :effect    [:draw 5]}
                              {:player-no 0
-                              :effect    [:remove-triggers {:event :at-draw-hand}]}
+                              :effect    [:set-phase {:phase :out-of-turn}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
       (ut/reset-ids!)
@@ -1163,7 +1166,7 @@
                              {:player-no 0
                               :effect    [:draw 5]}
                              {:player-no 0
-                              :effect    [:remove-triggers {:event :at-draw-hand}]}
+                              :effect    [:set-phase {:phase :out-of-turn}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
       (is (= (-> {:supply  [{:card lackeys :pile-size 9}
@@ -1605,7 +1608,8 @@
               :trash   [estate]}))
       (is (= (-> {:players [{:hand    [research estate copper copper]
                              :deck    [silver silver copper]
-                             :actions 1}]}
+                             :actions 1
+                             :phase   :action}]}
                  (play 0 :research)
                  (choose :estate)
                  (end-turn 0))
@@ -1619,7 +1623,8 @@
               :trash          [estate]}))
       (is (= (-> {:players [{:hand    [research estate silver copper throne-room]
                              :deck    [silver silver gold estate copper copper]
-                             :actions 1}]}
+                             :actions 1
+                             :phase   :action}]}
                  (play 0 :throne-room)
                  (choose :research)
                  (choose :estate)
@@ -1764,7 +1769,8 @@
                   :players               [{:hand    [merchant-ship scepter]
                                            :deck    (repeat 5 copper)
                                            :actions 1
-                                           :coins   2}]}
+                                           :coins   2
+                                           :phase   :action}]}
                  (play 0 :merchant-ship)
                  (play 0 :scepter)
                  (choose :replay-action)
@@ -1781,7 +1787,8 @@
       (is (= (-> {:track-played-actions? true
                   :players               [{:hand    [research scepter estate copper copper]
                                            :deck    (repeat 7 copper)
-                                           :actions 1}]}
+                                           :actions 1
+                                           :phase   :action}]}
                  (play 0 :research)
                  (choose :estate)
                  (play 0 :scepter)
@@ -1802,7 +1809,8 @@
       (is (= (-> {:track-played-actions? true
                   :players               [{:hand    [research scepter estate copper copper]
                                            :deck    (repeat 7 copper)
-                                           :actions 1}]}
+                                           :actions 1
+                                           :phase   :action}]}
                  (play 0 :research)
                  (choose :copper)
                  (play 0 :scepter)
@@ -1823,7 +1831,8 @@
       (is (= (-> {:track-played-actions? true
                   :players               [{:hand    [research scepter estate copper copper]
                                            :deck    (repeat 7 copper)
-                                           :actions 1}]}
+                                           :actions 1
+                                           :phase   :action}]}
                  (play 0 :research)
                  (choose :copper)
                  (play 0 :scepter)
@@ -2207,7 +2216,8 @@
                          :coins     3
                          :triggers  [(get-project-trigger key)]}]}))
     (is (= (-> {:artifacts {:key (assoc key :owner 0)}
-                :players   [{:triggers [(get-project-trigger key)]}]}
+                :players   [{:phase    :buy
+                             :triggers [(get-project-trigger key)]}]}
                (end-turn 0))
            {:current-player 0
             :artifacts      {:key (assoc key :owner 0)}
@@ -2220,6 +2230,7 @@
       (is (= (-> {:players [{:hand     [merchant-ship]
                              :actions  1
                              :coins    0
+                             :phase    :action
                              :triggers [(get-project-trigger key)]}]}
                  (play 0 :merchant-ship)
                  (end-turn 0))
@@ -2753,7 +2764,8 @@
 (deftest fleet-test
   (testing "Fleet"
     (is (= (-> {:supply  [{:card province :pile-size 0}]
-                :players [{:triggers [(get-project-trigger fleet)]}]}
+                :players [{:phase    :buy
+                           :triggers [(get-project-trigger fleet)]}]}
                (end-turn 0))
            {:supply         [{:card province :pile-size 0}]
             :current-player 0
@@ -2763,7 +2775,8 @@
                               :buys    1
                               :phase   :action}]}))
     (is (= (-> {:supply  [{:card province :pile-size 0}]
-                :players [{:triggers [(get-project-trigger fleet)]}
+                :players [{:phase    :buy
+                           :triggers [(get-project-trigger fleet)]}
                           {:phase    :out-of-turn
                            :triggers [(get-project-trigger fleet)]}]}
                (end-turn 0))
@@ -2780,8 +2793,9 @@
                               :buys    1
                               :phase   :action}]}))
     (is (= (-> {:supply  [{:card province :pile-size 0}]
-                :players [{:triggers [(get-project-trigger fleet)]}
-                          {}]}
+                :players [{:phase    :buy
+                           :triggers [(get-project-trigger fleet)]}
+                          {:phase :out-of-turn}]}
                (end-turn 0))
            {:supply         [{:card province :pile-size 0}]
             :current-player 0

@@ -50,6 +50,7 @@
                          :actions   0
                          :triggers  [(get-trigger amulet)]}]}))
       (is (= (-> {:players [{:play-area [amulet]
+                             :phase     :buy
                              :triggers  [(get-trigger amulet)]}]}
                  (end-turn 0)
                  (choose :coin))
@@ -61,6 +62,7 @@
                                 :phase     :action}]}))
       (is (= (-> {:players [{:play-area [amulet]
                              :deck      (repeat 5 copper)
+                             :phase     :buy
                              :triggers  [(get-trigger amulet)]}]}
                  (end-turn 0)
                  (choose :trash)
@@ -75,6 +77,7 @@
               :trash          [copper]}))
       (is (= (-> {:supply  [{:card silver :pile-size 40}]
                   :players [{:play-area [amulet]
+                             :phase     :buy
                              :triggers  [(get-trigger amulet)]}]}
                  (end-turn 0)
                  (choose :silver))
@@ -186,6 +189,7 @@
                          :actions   1
                          :triggers  [(get-trigger caravan-guard)]}]}))
       (is (= (-> {:players [{:play-area [caravan-guard]
+                             :phase     :buy
                              :triggers  [(get-trigger caravan-guard)]}]}
                  (end-turn 0))
              {:current-player 0
@@ -252,7 +256,8 @@
                                        (assoc (get-trigger caravan-guard-1) :id 2)]}]})))
       (is (= (-> {:players [{:hand    [militia]
                              :actions 1
-                             :coins   0}
+                             :coins   0
+                             :phase   :action}
                             {:hand    [caravan-guard copper copper copper copper]
                              :deck    [copper copper]
                              :actions 0
@@ -404,6 +409,7 @@
                          :triggers  [(get-trigger hireling)]}]}))
       (is (= (-> {:players [{:play-area [hireling]
                              :deck      (repeat 7 copper)
+                             :phase     :buy
                              :triggers  [(get-trigger hireling)]}]}
                  (end-turn 0))
              {:current-player 0
@@ -537,7 +543,7 @@
                              {:player-no 0
                               :effect    [:draw 5]}
                              {:player-no 0
-                              :effect    [:remove-triggers {:event :at-draw-hand}]}
+                              :effect    [:set-phase {:phase :out-of-turn}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
       (is (= (-> {:players [{:hand    [page]
@@ -762,7 +768,6 @@
                                 :actions    1
                                 :coins      0
                                 :buys       1
-                                :phase      :action
                                 :unaffected [{:card-id 0}]
                                 :triggers   [(get-trigger champion)]}]}))
       (is (= (-> {:players [{:hand       [page]
@@ -1063,6 +1068,46 @@
               :players [{:discard [copper copper copper copper copper copper gold]
                          :coins   0
                          :buys    0}]})))))
+
+(deftest save-test
+  (testing "Save"
+    (ut/reset-ids!)
+    (is (= (-> {:events  {:save save}
+                :players [{:hand  [copper]
+                           :coins 1
+                           :buys  1}]}
+               (buy-event 0 :save)
+               (choose :copper))
+           {:events  {:save save}
+            :players [{:hand          []
+                       :coins         0
+                       :buys          1
+                       :bought-events #{:save}
+                       :triggers      [(assoc save-trigger :id 1
+                                                           :set-aside [copper])]}]}))
+    (is (thrown-with-msg? AssertionError #"Buy error: Event Save can only be bought once per turn."
+                          (-> {:events  {:save save}
+                               :players [{:hand  [copper copper]
+                                          :coins 2
+                                          :buys  1}]}
+                              (buy-event 0 :save)
+                              (choose :copper)
+                              (buy-event 0 :save))))
+    (is (= (-> {:events  {:save save}
+                :players [{:hand  [copper]
+                           :deck  (repeat 5 copper)
+                           :coins 1
+                           :buys  1
+                           :phase :buy}]}
+               (buy-event 0 :save)
+               (choose :copper)
+               (clean-up {:player-no 0}))
+           {:events  {:save save}
+            :players [{:hand    (repeat 6 copper)
+                       :actions 0
+                       :coins   0
+                       :buys    0
+                       :phase   :out-of-turn}]}))))
 
 (deftest trade-test
   (let [silver (assoc silver :id 1)]

@@ -263,6 +263,7 @@
                                                       :to            :hand}]}]}))
       (is (= (-> {:players [{:play-area       [copper copper copper copper copper]
                              :discard         [stash]
+                             :phase           :buy
                              :number-of-turns 1}
                             {:play-area       [(assoc caravan :at-start-turn [[[:draw 1]]])]
                              :discard         [stash copper]
@@ -273,7 +274,7 @@
                               :actions         0
                               :coins           0
                               :buys            0
-                              :phase           :out-of-turn
+                              :phase           :clean-up
                               :number-of-turns 2}
                              {:play-area       [(assoc caravan :at-start-turn [[[:draw 1]]])]
                               :discard         [stash copper]
@@ -311,7 +312,7 @@
                                                       :from-position :top
                                                       :to            :hand}]}
                              {:player-no 0
-                              :effect    [:remove-triggers {:event :at-draw-hand}]}
+                              :effect    [:set-phase {:phase :out-of-turn}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}
                              {:player-no 1

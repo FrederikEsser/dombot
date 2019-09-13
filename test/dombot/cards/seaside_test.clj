@@ -146,11 +146,11 @@
                          :actions   0
                          :coins     0
                          :buys      0
-                         :phase     :out-of-turn
                          :triggers  [(get-trigger caravan-1)]}]}))
       (is (= (-> {:players [{:hand    [caravan-1 estate estate estate copper]
                              :deck    [copper copper copper copper copper copper silver]
-                             :actions 1}]}
+                             :actions 1
+                             :phase   :action}]}
                  (play 0 :caravan)
                  (end-turn 0))
              {:current-player 0
@@ -174,12 +174,12 @@
                          :actions   0
                          :coins     0
                          :buys      0
-                         :phase     :out-of-turn
                          :triggers  [(get-trigger caravan-1)
                                      (assoc (get-trigger caravan-2) :id 2)]}]}))
       (is (= (-> {:players [{:hand    [caravan-1 caravan-2 copper copper copper]
                              :deck    [copper copper estate estate copper copper silver]
-                             :actions 1}]}
+                             :actions 1
+                             :phase   :action}]}
                  (play 0 :caravan)
                  (play 0 :caravan)
                  (end-turn 0))
@@ -204,13 +204,13 @@
                          :actions       0
                          :coins         0
                          :buys          0
-                         :phase         :out-of-turn
                          :triggers      [(get-trigger caravan-1)
                                          (assoc (get-trigger caravan-1) :id 2)]
                          :repeated-play [{:source 3 :target 1}]}]}))
       (is (= (-> {:players [{:hand    [caravan-1 throne-room copper copper copper]
                              :deck    [copper copper estate estate copper copper silver]
-                             :actions 1}]}
+                             :actions 1
+                             :phase   :action}]}
                  (play 0 :throne-room)
                  (choose :caravan)
                  (end-turn 0))
@@ -438,7 +438,8 @@
                          :triggers  [(get-trigger fishing-village)]}]}))
       (is (= (-> {:players [{:hand    [fishing-village]
                              :actions 1
-                             :coins   0}]}
+                             :coins   0
+                             :phase   :action}]}
                  (play 0 :fishing-village)
                  (end-turn 0))
              {:current-player 0
@@ -546,7 +547,8 @@
                                              :set-aside [copper]})]}]}))
       (is (= (-> {:players [{:hand    [haven estate]
                              :deck    [copper copper]
-                             :actions 1}]}
+                             :actions 1
+                             :phase   :action}]}
                  (play 0 :haven)
                  (choose :copper)
                  (end-turn 0))
@@ -587,7 +589,8 @@
                                           :target 1}]}]}))
       (is (= (-> {:players [{:hand    [throne-room haven estate]
                              :deck    [copper copper]
-                             :actions 1}]}
+                             :actions 1
+                             :phase   :action}]}
                  (play 0 :throne-room)
                  (choose :haven)
                  (choose :copper)
@@ -667,7 +670,6 @@
                                 :actions    0
                                 :coins      0
                                 :buys       0
-                                :phase      :out-of-turn
                                 :unaffected [{:card-id 1}]
                                 :triggers   [(get-trigger lighthouse-1)]}
                                {:actions 1
@@ -707,15 +709,13 @@
                                   :actions    0
                                   :coins      0
                                   :buys       0
-                                  :phase      :out-of-turn
                                   :unaffected [{:card-id 1}]
                                   :triggers   [(get-trigger lighthouse-1)]}
                                  {:hand    [witch]
                                   :discard [curse]
                                   :actions 0
                                   :coins   0
-                                  :buys    0
-                                  :phase   :out-of-turn}
+                                  :buys    0}
                                  {:hand      [curse]
                                   :play-area [witch]
                                   :actions   0
@@ -723,7 +723,8 @@
                                   :buys      1}]})))
       (is (= (-> {:players [{:hand    [lighthouse-1]
                              :actions 1
-                             :coins   0}]}
+                             :coins   0
+                             :phase   :action}]}
                  (play 0 :lighthouse)
                  (end-turn 0))
              {:current-player 0
@@ -734,7 +735,8 @@
                                 :phase     :action}]}))
       (is (= (-> {:players [{:hand    [lighthouse-1 lighthouse-2]
                              :actions 1
-                             :coins   0}]}
+                             :coins   0
+                             :phase   :action}]}
                  (play 0 :lighthouse)
                  (play 0 :lighthouse)
                  (end-turn 0))
@@ -821,7 +823,8 @@
                          :triggers  [(get-trigger merchant-ship)]}]}))
       (is (= (-> {:players [{:hand    [merchant-ship]
                              :actions 1
-                             :coins   0}]}
+                             :coins   0
+                             :phase   :action}]}
                  (play 0 :merchant-ship)
                  (end-turn 0))
              {:current-player 0
@@ -977,6 +980,7 @@
       (is (= (-> {:players [{:hand            [outpost]
                              :deck            (repeat 5 copper)
                              :actions         1
+                             :phase           :action
                              :number-of-turns 1}
                             {}]}
                  (play 0 :outpost)
@@ -995,6 +999,7 @@
       (is (= (-> {:players [{:hand                     [outpost]
                              :deck                     (repeat 5 copper)
                              :actions                  1
+                             :phase                    :action
                              :previous-turn-was-yours? true
                              :number-of-turns          1}
                             {}]}
@@ -1256,7 +1261,8 @@
                   :current-player      0
                   :supply              [{:card gold :pile-size 30}]
                   :players             [{:coins 6
-                                         :buys  1}
+                                         :buys  1
+                                         :phase :action}
                                         {:hand         [smugglers]
                                          :gained-cards [{:name  :silver
                                                          :types #{:treasure}
@@ -1418,7 +1424,8 @@
                          :actions   0}]}))
       (is (= (-> {:players [{:hand    [tactician estate]
                              :deck    (repeat 10 copper)
-                             :actions 1}]}
+                             :actions 1
+                             :phase   :action}]}
                  (play 0 :tactician)
                  (end-turn 0))
              {:current-player 0
@@ -1431,7 +1438,8 @@
                                 :phase     :action}]}))
       (is (= (-> {:players [{:hand    [tactician]
                              :deck    (repeat 10 copper)
-                             :actions 1}]}
+                             :actions 1
+                             :phase   :action}]}
                  (play 0 :tactician)
                  (end-turn 0))
              {:current-player 0
@@ -1458,7 +1466,8 @@
                                           :target 1}]}]}))
       (is (= (-> {:players [{:hand    [throne-room tactician estate]
                              :deck    (repeat 10 copper)
-                             :actions 1}]}
+                             :actions 1
+                             :phase   :action}]}
                  (play 0 :throne-room)
                  (choose :tactician)
                  (end-turn 0))
@@ -1588,7 +1597,7 @@
                              {:player-no 0
                               :effect    [:draw 5]}
                              {:player-no 0
-                              :effect    [:remove-triggers {:event :at-draw-hand}]}
+                              :effect    [:set-phase {:phase :out-of-turn}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
       (is (= (-> {:players [{:deck         (repeat 7 copper)
@@ -1669,7 +1678,7 @@
                              {:player-no 0
                               :effect    [:draw 5]}
                              {:player-no 0
-                              :effect    [:remove-triggers {:event :at-draw-hand}]}
+                              :effect    [:set-phase {:phase :out-of-turn}]}
                              {:player-no 0
                               :effect    [:check-game-ended]}]}))
       (is (= (-> {:players [{:deck    (repeat 7 copper)
@@ -1791,7 +1800,8 @@
       (is (= (-> {:players [{:hand    [wharf estate estate estate copper]
                              :deck    [copper copper copper copper copper copper silver silver silver]
                              :actions 1
-                             :buys    1}]}
+                             :buys    1
+                             :phase   :action}]}
                  (play 0 :wharf)
                  (end-turn 0))
              {:current-player 0

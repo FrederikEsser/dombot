@@ -142,6 +142,7 @@
              {:boons   {}
               :players [{:boons    [river-gift]
                          :triggers [{:id       1
+                                     :name     :the-river's-gift
                                      :event    :at-draw-hand
                                      :duration :once
                                      :effects  [[:draw {:arg 1 :player-no 0}]]}
@@ -823,7 +824,8 @@
                                                 [:receive-boon {:boon sea-gift}]]}]}]}))
       (is (= (-> {:boons   {:deck [sea-gift]}
                   :supply  [{:card blessed-village :pile-size 10}]
-                  :players [{:deck (repeat 7 copper)}]}
+                  :players [{:deck  (repeat 7 copper)
+                             :phase :action}]}
                  (gain {:player-no 0 :card-name :blessed-village})
                  (choose :at-start-turn)
                  (end-turn 0))
@@ -875,7 +877,8 @@
       (ut/reset-ids!)
       (is (= (-> {:boons   {:deck [forest-gift]}
                   :supply  [{:card blessed-village :pile-size 10}]
-                  :players [{:deck (repeat 5 copper)}]}
+                  :players [{:deck  (repeat 5 copper)
+                             :phase :action}]}
                  (gain {:player-no 0 :card-name :blessed-village})
                  (choose :at-start-turn)
                  (end-turn 0))
@@ -1310,7 +1313,8 @@
     (testing "Cobbler"
       (ut/reset-ids!)
       (is (= (-> {:supply  (base/supply 2 8)
-                  :players [{:hand [cobbler]}]}
+                  :players [{:hand  [cobbler]
+                             :phase :night}]}
                  (play 0 :cobbler)
                  (end-turn 0))
              {:supply         (base/supply 2 8)
@@ -1337,7 +1341,8 @@
         (ut/reset-ids!)
         (is (= (-> {:supply  [{:card blessed-village :pile-size 10}]
                     :boons   {:deck [sea-gift]}
-                    :players [{:hand [cobbler]}]}
+                    :players [{:hand  [cobbler]
+                               :phase :night}]}
                    (play 0 :cobbler)
                    (end-turn 0)
                    (choose :blessed-village)
@@ -1454,6 +1459,7 @@
                                              :set-aside [copper silver gold]})]}]}))
       (is (= (-> {:players [{:play-area [crypt]
                              :deck      (repeat 6 copper)
+                             :phase     :night
                              :triggers  [(merge crypt-trigger
                                                 {:card-id   0
                                                  :name      :crypt
@@ -1474,6 +1480,7 @@
                                                     :set-aside [copper silver]})]}]}))
       (is (= (-> {:players [{:play-area [crypt]
                              :deck      (repeat 6 copper)
+                             :phase     :night
                              :triggers  [(merge crypt-trigger
                                                 {:card-id   0
                                                  :name      :crypt
@@ -1494,6 +1501,7 @@
                                                     :set-aside [silver]})]}]}))
       (is (= (-> {:players [{:play-area [crypt]
                              :deck      (repeat 6 copper)
+                             :phase     :night
                              :triggers  [(merge crypt-trigger
                                                 {:card-id   0
                                                  :name      :crypt
@@ -1511,6 +1519,7 @@
       (is (= (-> {:mode    :swift
                   :players [{:play-area [crypt]
                              :deck      (repeat 6 copper)
+                             :phase     :night
                              :triggers  [(merge crypt-trigger
                                                 {:card-id   0
                                                  :name      :crypt
@@ -1558,8 +1567,9 @@
 (deftest den-of-sin-test
   (let [den-of-sin (assoc den-of-sin :id 0)]
     (testing "Den of Sin"
-      (is (= (-> {:players [{:hand [den-of-sin]
-                             :deck [copper copper copper copper copper copper silver silver]}]}
+      (is (= (-> {:players [{:hand  [den-of-sin]
+                             :deck  [copper copper copper copper copper copper silver silver]
+                             :phase :night}]}
                  (play 0 :den-of-sin)
                  (end-turn 0))
              {:current-player 0
@@ -1773,8 +1783,7 @@
                                 :discard [copper copper faithful-hound]
                                 :actions 1
                                 :coins   0
-                                :buys    1
-                                :phase   :action}]}))
+                                :buys    1}]}))
       (is (= (-> {:players [{:hand    [faithful-hound]
                              :deck    (repeat 7 copper)
                              :actions 1}]}
@@ -1785,8 +1794,7 @@
                                 :discard [faithful-hound]
                                 :actions 1
                                 :coins   0
-                                :buys    1
-                                :phase   :action}]}))
+                                :buys    1}]}))
       (let [silver (assoc silver :id 1)]
         (is (= (-> {:supply  [{:card silver :pile-size 40}]
                     :players [{:hand    [trusty-steed]
@@ -1848,6 +1856,7 @@
                          :set-aside [faithful-hound]
                          :discard   [estate]
                          :triggers  [{:id       1
+                                      :name     :faithful-hound
                                       :event    :at-draw-hand
                                       :duration :once
                                       :effects  [[:move-card {:player-no 0
@@ -1856,7 +1865,10 @@
                                                               :to        :hand}]]}]}]}))
       (is (= (-> {:players [{:set-aside [faithful-hound]
                              :deck      (repeat 7 copper)
-                             :triggers  [{:event    :at-draw-hand
+                             :phase     :buy
+                             :triggers  [{:id       1
+                                          :name     :faithful-hound
+                                          :event    :at-draw-hand
                                           :duration :once
                                           :effects  [[:move-card {:player-no 0
                                                                   :card-name :faithful-hound
@@ -1871,7 +1883,8 @@
                          :phase   :out-of-turn}]}))
       (is (= (-> {:players [{:hand    [militia]
                              :actions 1
-                             :coins   0}
+                             :coins   0
+                             :phase   :action}
                             {:hand [copper copper copper copper faithful-hound]}]}
                  (play 0 :militia)
                  (choose [:copper :faithful-hound])
@@ -2018,6 +2031,7 @@
       (testing "Lost in the Woods"
         (is (= (-> {:boons   {:deck [sea-gift]}
                     :players [{:deck     (repeat 7 copper)
+                               :phase    :buy
                                :triggers [(merge (get-trigger lost-in-the-woods)
                                                  {:duration :lost-in-the-woods})]}]}
                    (end-turn 0)
@@ -2034,6 +2048,7 @@
                                                     {:duration :lost-in-the-woods})]}]}))
         (is (= (-> {:boons   {:deck [sea-gift]}
                     :players [{:deck     (repeat 7 copper)
+                               :phase    :buy
                                :triggers [(merge (get-trigger lost-in-the-woods)
                                                  {:duration :lost-in-the-woods})]}]}
                    (end-turn 0)
@@ -2097,6 +2112,7 @@
                          :discard        [estate copper]
                          :revealed-cards {:discard 2}}]}))
       (is (= (-> {:players [{:play-area [ghost]
+                             :phase     :night
                              :triggers  [(merge ghost-trigger
                                                 {:card-id   0
                                                  :name      :ghost
@@ -2110,8 +2126,9 @@
                                 :phase     :action}]}))
       (let [fishing-village (assoc fishing-village :id 1)]
         (ut/reset-ids!)
-        (is (= (-> {:players [{:hand [ghost]
-                               :deck [fishing-village]}]}
+        (is (= (-> {:players [{:hand  [ghost]
+                               :deck  [fishing-village]
+                               :phase :night}]}
                    (play 0 :ghost)
                    (end-turn 0))
                {:current-player 0
@@ -2124,8 +2141,9 @@
                                                   (assoc (get-trigger fishing-village) :id 3)]
                                   :repeated-play [{:source 0
                                                    :target 1}]}]}))
-        (is (= (-> {:players [{:hand [ghost]
-                               :deck [fishing-village]}]}
+        (is (= (-> {:players [{:hand  [ghost]
+                               :deck  [fishing-village]
+                               :phase :night}]}
                    (play 0 :ghost)
                    (end-turn 0)
                    (end-turn 0))
@@ -2167,8 +2185,9 @@
              {:players [{:play-area [ghost-town]
                          :phase     :night
                          :triggers  [(get-trigger ghost-town)]}]}))
-      (is (= (-> {:players [{:hand [ghost-town]
-                             :deck [copper copper copper copper copper copper silver]}]}
+      (is (= (-> {:players [{:hand  [ghost-town]
+                             :deck  [copper copper copper copper copper copper silver]
+                             :phase :night}]}
                  (play 0 :ghost-town)
                  (end-turn 0))
              {:current-player 0
@@ -2208,7 +2227,8 @@
                           {:play-area  [guardian]
                            :unaffected [{:card-id 0}]
                            :triggers   [(get-trigger guardian)]}]})))
-      (is (= (-> {:players [{:hand [guardian]}]}
+      (is (= (-> {:players [{:hand  [guardian]
+                             :phase :night}]}
                  (play 0 :guardian)
                  (end-turn 0))
              {:current-player 0
@@ -2450,8 +2470,7 @@
            {:players [{:hand    [necromancer]
                        :actions 0
                        :coins   0
-                       :buys    0
-                       :phase   :out-of-turn}]
+                       :buys    0}]
             :trash   [zombie-apprentice]}))
     (let [zombie-apprentice (assoc zombie-apprentice :id 1)]
       (is (= (-> {:players [{:hand    [lurker]
@@ -2914,7 +2933,8 @@
                          :triggers  [(get-trigger raider)]}
                         {:hand           (repeat 5 copper)
                          :revealed-cards {:hand 5}}]}))
-      (is (= (-> {:players [{:hand [raider]}]}
+      (is (= (-> {:players [{:hand  [raider]
+                             :phase :action}]}
                  (play 0 :raider)
                  (end-turn 0))
              {:current-player 0
@@ -2974,7 +2994,8 @@
                                              :name    :secret-cave})]}]}))
       (is (= (-> {:players [{:hand    [secret-cave estate estate]
                              :deck    (repeat 7 copper)
-                             :actions 1}]}
+                             :actions 1
+                             :phase   :action}]}
                  (play 0 :secret-cave)
                  (choose [:estate :estate :copper])
                  (end-turn 0))
