@@ -389,6 +389,32 @@
                                     :min     1
                                     :max     1}]]})
 
+(def save-trigger {:name     :save
+                   :event    :at-draw-hand
+                   :duration :once
+                   :effects  [[:put-set-aside-into-hand]]})
+
+(defn- save-set-aside [game {:keys [player-no card-name]}]
+  (let [{:keys [card idx]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
+    (-> game
+        (update-in [:players player-no :hand] ut/vec-remove idx)
+        (add-trigger {:player-no player-no
+                      :trigger   (assoc save-trigger :set-aside [card])}))))
+
+(effects/register {::save-set-aside save-set-aside})
+
+(def save {:name          :save
+           :set           :adventures
+           :type          :event
+           :cost          1
+           :once-per-turn true
+           :on-buy        [[:give-buys 1]
+                           [:give-choice {:text    "Set aside a card from your hand, and put it into your hand at end of turn."
+                                          :choice  ::save-set-aside
+                                          :options [:player :hand]
+                                          :min     1
+                                          :max     1}]]})
+
 (defn- trade-trash [game {:keys [player-no card-name card-names]}]
   (let [card-names      (if card-name
                           [card-name]
@@ -423,5 +449,6 @@
 
 (def events [bonfire
              quest
+             save
              trade
              travelling-fair])

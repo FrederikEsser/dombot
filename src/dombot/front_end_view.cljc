@@ -63,9 +63,9 @@
                         :number-of-cards number-of-cards}
                        (choice-interaction name :extra-cards choice)))))))
 
-(defn view-events [{events                     :events
-                    {:keys [coins buys phase]} :player
-                    choice                     :choice}]
+(defn view-events [{events                                   :events
+                    {:keys [coins buys phase bought-events]} :player
+                    choice                                   :choice}]
   (->> events
        vals
        (map (fn [{:keys [name type cost]}]
@@ -76,9 +76,9 @@
                      (when (and (#{:action :pay :buy} phase)
                                 (not choice)
                                 buys (pos? buys)
-                                coins (<= cost coins))
-                       {:interaction :buyable})
-                     (choice-interaction name :events choice))))))
+                                coins (<= cost coins)
+                                (not (contains? bought-events name)))
+                       {:interaction :buyable}))))))
 
 (defn view-projects [{projects                             :projects
                       {:keys [coins buys player-no phase]} :player

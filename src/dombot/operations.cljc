@@ -516,17 +516,20 @@
         check-stack)))
 
 (defn buy-event [{:keys [effect-stack] :as game} player-no event-name]
-  (let [{:keys [buys coins phase]} (get-in game [:players player-no])
-        {:keys [cost on-buy] :as event} (get-in game [:events event-name])]
+  (let [{:keys [buys coins phase bought-events]} (get-in game [:players player-no])
+        {:keys [cost on-buy once-per-turn] :as event} (get-in game [:events event-name])]
     (assert (empty? effect-stack) "You can't buy events when you have a choice to make.")
     (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
     (assert event (str "Buy error: The Event " (ut/format-name event-name) " isn't in the game."))
+    (when once-per-turn
+      (assert (not (contains? bought-events event-name)) (str "Buy error: Event " (ut/format-name event-name) " can only be bought once per turn.")))
     (assert (and coins cost (>= coins cost)) (str "Buy error: " (ut/format-name event-name) " costs " cost " and you only have " coins " coins."))
     (when phase
       (assert (#{:action :pay :buy} phase) (str "You can't buy events when you're in the " (ut/format-name phase) " phase.")))
     (-> game
         (update-in [:players player-no :coins] - cost)
         (update-in [:players player-no :buys] - 1)
+        (cond-> once-per-turn (update-in [:players player-no :bought-events] (comp set #(conj % event-name))))
         (push-effect-stack {:player-no player-no
                             :effects   (concat [[:set-phase {:phase :buy}]]
                                                on-buy)})
@@ -978,7 +981,8 @@
                             (-> player
                                 (cond-> (not-empty used-cards) (update :discard concat used-cards))
                                 (dissoc :hand
-                                        :actions-played)
+                                        :actions-played
+                                        :bought-events)
                                 (update :play-area (partial filter (partial ut/stay-in-play game player-no)))
                                 (ut/dissoc-if-empty :play-area)
                                 (assoc :actions 0
