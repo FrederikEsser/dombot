@@ -394,6 +394,26 @@
                     raze
                     treasure-trove])
 
+(defn- alms-petition [game {:keys [player-no]}]
+  (let [no-treasures-in-play? (->> (get-in game [:players player-no :play-area])
+                                   (not-any? (comp :treasure (partial ut/get-types game))))]
+    (cond-> game
+            no-treasures-in-play? (give-choice {:player-no player-no
+                                                :text      "Gain a card costing up to $4."
+                                                :choice    :gain
+                                                :options   [:supply {:max-cost 4}]
+                                                :min       1
+                                                :max       1}))))
+
+(effects/register {::alms-petition alms-petition})
+
+(def alms {:name          :alms
+           :set           :adventures
+           :type          :event
+           :cost          0
+           :once-per-turn true
+           :on-buy        [[::alms-petition]]})
+
 (def bonfire {:name   :bonfire
               :set    :adventures
               :type   :event
@@ -543,7 +563,8 @@
                       :on-buy [[:give-buys 2]
                                [:add-trigger {:trigger travelling-fair-trigger}]]})
 
-(def events [bonfire
+(def events [alms
+             bonfire
              pilgrimage
              quest
              save

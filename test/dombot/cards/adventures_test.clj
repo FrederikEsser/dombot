@@ -1024,6 +1024,43 @@
                          :discard   [copper]
                          :coins     2}]})))))
 
+(deftest alms-test
+  (let [silver (assoc silver :id 1)]
+    (testing "Alms"
+      (ut/reset-ids!)
+      (is (= (-> {:events  {:alms alms}
+                  :supply  [{:card silver :pile-size 40}]
+                  :players [{:coins 0
+                             :buys  1}]}
+                 (buy-event 0 :alms)
+                 (choose :silver))
+             {:events  {:alms alms}
+              :supply  [{:card silver :pile-size 39}]
+              :players [{:discard       [silver]
+                         :coins         0
+                         :buys          0
+                         :bought-events #{:alms}}]}))
+      (is (= (-> {:events  {:alms alms}
+                  :supply  [{:card silver :pile-size 40}]
+                  :players [{:play-area [copper]
+                             :coins     0
+                             :buys      1}]}
+                 (buy-event 0 :alms))
+             {:events  {:alms alms}
+              :supply  [{:card silver :pile-size 40}]
+              :players [{:play-area     [copper]
+                         :coins         0
+                         :buys          0
+                         :bought-events #{:alms}}]}))
+      (is (thrown-with-msg? AssertionError #"Buy error: Event Alms can only be bought once per turn."
+                            (-> {:events  {:alms alms}
+                                 :supply  [{:card silver :pile-size 40}]
+                                 :players [{:coins 0
+                                            :buys  2}]}
+                                (buy-event 0 :alms)
+                                (choose :silver)
+                                (buy-event 0 :alms)))))))
+
 (deftest bonfire-test
   (testing "Bonfire"
     (is (= (-> {:events  {:bonfire bonfire}
