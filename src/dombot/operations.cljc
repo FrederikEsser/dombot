@@ -496,12 +496,12 @@
   (let [{:keys [buys coins phase]} (get-in game [:players player-no])
         {:keys [cost trigger on-buy participants] :as project} (get-in game [:projects project-name])]
     (assert (empty? effect-stack) "You can't buy projects when you have a choice to make.")
-    (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
-    (assert project (str "Buy error: The Project " (ut/format-name project-name) " isn't in the game."))
-    (assert (and coins cost (>= coins cost)) (str "Buy error: " (ut/format-name project-name) " costs " cost " and you only have " coins " coins."))
-    (assert (not-any? (comp #{player-no} :player-no) participants) (str "Buy error: You already participate in the project " (ut/format-name project-name) "."))
     (when phase
       (assert (#{:action :pay :buy} phase) (str "You can't buy projects when you're in the " (ut/format-name phase) " phase.")))
+    (assert project (str "Buy error: The Project " (ut/format-name project-name) " isn't in the game."))
+    (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
+    (assert (and coins cost (>= coins cost)) (str "Buy error: " (ut/format-name project-name) " costs " cost " and you only have " coins " coins."))
+    (assert (not-any? (comp #{player-no} :player-no) participants) (str "Buy error: You already participate in the project " (ut/format-name project-name) "."))
     (-> game
         (update-in [:players player-no :coins] - cost)
         (update-in [:players player-no :buys] - 1)
@@ -519,13 +519,13 @@
   (let [{:keys [buys coins phase bought-events]} (get-in game [:players player-no])
         {:keys [cost on-buy once-per-turn] :as event} (get-in game [:events event-name])]
     (assert (empty? effect-stack) "You can't buy events when you have a choice to make.")
-    (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
-    (assert event (str "Buy error: The Event " (ut/format-name event-name) " isn't in the game."))
-    (when once-per-turn
-      (assert (not (contains? bought-events event-name)) (str "Buy error: Event " (ut/format-name event-name) " can only be bought once per turn.")))
-    (assert (and coins cost (>= coins cost)) (str "Buy error: " (ut/format-name event-name) " costs " cost " and you only have " coins " coins."))
     (when phase
       (assert (#{:action :pay :buy} phase) (str "You can't buy events when you're in the " (ut/format-name phase) " phase.")))
+    (assert event (str "Buy error: The Event " (ut/format-name event-name) " isn't in the game."))
+    (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
+    (assert (and coins cost (>= coins cost)) (str "Buy error: " (ut/format-name event-name) " costs " cost " and you only have " coins " coins."))
+    (when once-per-turn
+      (assert (not (contains? bought-events event-name)) (str "Buy error: Event " (ut/format-name event-name) " can only be bought once per turn.")))
     (-> game
         (update-in [:players player-no :coins] - cost)
         (update-in [:players player-no :buys] - 1)

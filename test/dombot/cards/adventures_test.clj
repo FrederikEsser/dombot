@@ -866,6 +866,26 @@
                          :unaffected [{:card-id 0}]
                          :triggers   [(get-trigger champion)]}]})))))
 
+(deftest port-test
+  (let [port (assoc port :id 0)]
+    (testing "Port"
+      (is (= (-> {:players [{:hand    [port]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :port))
+             {:players [{:hand      [copper]
+                         :play-area [port]
+                         :deck      [copper]
+                         :actions   2}]}))
+      (is (= (-> {:supply  [{:card port :pile-size 12}]
+                  :players [{:coins 4
+                             :buys  1}]}
+                 (buy-card 0 :port))
+             {:supply  [{:card port :pile-size 10}]
+              :players [{:discard [port port]
+                         :coins   0
+                         :buys    0}]})))))
+
 (deftest ranger-test
   (let [ranger (assoc ranger :id 0)]
     (testing "Ranger"
@@ -891,26 +911,6 @@
                          :actions       0
                          :buys          2
                          :journey-token :face-up}]})))))
-
-(deftest port-test
-  (let [port (assoc port :id 0)]
-    (testing "Port"
-      (is (= (-> {:players [{:hand    [port]
-                             :deck    [copper copper]
-                             :actions 1}]}
-                 (play 0 :port))
-             {:players [{:hand      [copper]
-                         :play-area [port]
-                         :deck      [copper]
-                         :actions   2}]}))
-      (is (= (-> {:supply  [{:card port :pile-size 12}]
-                  :players [{:coins 4
-                             :buys  1}]}
-                 (buy-card 0 :port))
-             {:supply  [{:card port :pile-size 10}]
-              :players [{:discard [port port]
-                         :coins   0
-                         :buys    0}]})))))
 
 (deftest raze-test
   (let [raze (assoc raze :id 0)]
@@ -1081,6 +1081,121 @@
                        :coins     0
                        :buys      0}]
             :trash   [copper copper]}))))
+
+(deftest pilgrimage-test
+  (let [gold   (assoc gold :id 1)
+        copper (assoc copper :id 2)
+        ranger (assoc ranger :id 3)]
+    (testing "Pilgrimage"
+      (is (= (-> {:events  {:pilgrimage pilgrimage}
+                  :players [{:coins         4
+                             :buys          1
+                             :journey-token :face-up}]}
+                 (buy-event 0 :pilgrimage))
+             {:events  {:pilgrimage pilgrimage}
+              :players [{:coins         0
+                         :buys          0
+                         :bought-events #{:pilgrimage}
+                         :journey-token :face-down}]}))
+      (is (= (-> {:events  {:pilgrimage pilgrimage}
+                  :players [{:coins         4
+                             :buys          1
+                             :journey-token :face-down}]}
+                 (buy-event 0 :pilgrimage))
+             {:events  {:pilgrimage pilgrimage}
+              :players [{:coins         0
+                         :buys          0
+                         :bought-events #{:pilgrimage}
+                         :journey-token :face-up}]}))
+      (is (= (-> {:events  {:pilgrimage pilgrimage}
+                  :supply  [{:card gold :pile-size 29}]
+                  :players [{:play-area     [gold]
+                             :coins         4
+                             :buys          1
+                             :journey-token :face-down}]}
+                 (buy-event 0 :pilgrimage)
+                 (choose nil))
+             {:events  {:pilgrimage pilgrimage}
+              :supply  [{:card gold :pile-size 29}]
+              :players [{:play-area     [gold]
+                         :coins         0
+                         :buys          0
+                         :bought-events #{:pilgrimage}
+                         :journey-token :face-up}]}))
+      (is (= (-> {:events  {:pilgrimage pilgrimage}
+                  :supply  [{:card gold :pile-size 29}]
+                  :players [{:play-area     [gold]
+                             :coins         4
+                             :buys          1
+                             :journey-token :face-down}]}
+                 (buy-event 0 :pilgrimage)
+                 (choose :gold))
+             {:events  {:pilgrimage pilgrimage}
+              :supply  [{:card gold :pile-size 28}]
+              :players [{:play-area     [gold]
+                         :discard       [gold]
+                         :coins         0
+                         :buys          0
+                         :bought-events #{:pilgrimage}
+                         :journey-token :face-up}]}))
+      (is (= (-> {:events  {:pilgrimage pilgrimage}
+                  :supply  [{:card gold :pile-size 28}
+                            {:card ranger :pile-size 9}]
+                  :players [{:play-area     [gold gold ranger copper]
+                             :coins         7
+                             :buys          2
+                             :journey-token :face-down}]}
+                 (buy-event 0 :pilgrimage)
+                 (choose [:gold :ranger]))
+             {:events  {:pilgrimage pilgrimage}
+              :supply  [{:card gold :pile-size 27}
+                        {:card ranger :pile-size 8}]
+              :players [{:play-area     [gold gold ranger copper]
+                         :discard       [gold ranger]
+                         :coins         3
+                         :buys          1
+                         :bought-events #{:pilgrimage}
+                         :journey-token :face-up}]}))
+      (is (= (-> {:events  {:pilgrimage pilgrimage}
+                  :supply  [{:card copper :pile-size 46}
+                            {:card gold :pile-size 28}
+                            {:card ranger :pile-size 9}]
+                  :players [{:play-area     [gold gold ranger copper]
+                             :coins         7
+                             :buys          2
+                             :journey-token :face-down}]}
+                 (buy-event 0 :pilgrimage)
+                 (choose [:gold :ranger :copper]))
+             {:events  {:pilgrimage pilgrimage}
+              :supply  [{:card copper :pile-size 45}
+                        {:card gold :pile-size 27}
+                        {:card ranger :pile-size 8}]
+              :players [{:play-area     [gold gold ranger copper]
+                         :discard       [gold ranger copper]
+                         :coins         3
+                         :buys          1
+                         :bought-events #{:pilgrimage}
+                         :journey-token :face-up}]}))
+      (is (thrown-with-msg? AssertionError #"Pilgrimage error: All choices must be different: Gold, Ranger, Gold"
+                            (-> {:events  {:pilgrimage pilgrimage}
+                                 :supply  [{:card gold :pile-size 28}
+                                           {:card ranger :pile-size 9}]
+                                 :players [{:play-area     [gold gold ranger copper]
+                                            :coins         7
+                                            :buys          2
+                                            :journey-token :face-down}]}
+                                (buy-event 0 :pilgrimage)
+                                (choose [:gold :ranger :gold]))))
+      (is (thrown-with-msg? AssertionError #"Buy error: Event Pilgrimage can only be bought once per turn."
+                            (-> {:events  {:pilgrimage pilgrimage}
+                                 :supply  [{:card gold :pile-size 28}
+                                           {:card ranger :pile-size 9}]
+                                 :players [{:play-area     [gold gold ranger silver]
+                                            :coins         8
+                                            :buys          2
+                                            :journey-token :face-up}]}
+                                (buy-event 0 :pilgrimage)
+                                (buy-event 0 :pilgrimage)))))))
 
 (deftest quest-test
   (let [gold (assoc gold :id 1)]

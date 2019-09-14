@@ -86,7 +86,9 @@
                              number-of-cards)
            disabled        (or (nil? interaction)
                                (and (= :choosable interaction)
-                                    (= (count selection) max)))]
+                                    (= (count selection) max))
+                               (and (= :unique-choosable interaction)
+                                    (some #{name choice-value} selection)))]
        (when-not (and (= :choosable interaction)
                       (= 0 number-of-cards))
          [:div
@@ -96,6 +98,7 @@
                                 (fn [] (case interaction
                                          :playable (swap! state assoc :game (cmd/play name))
                                          :choosable (select! (or choice-value name))
+                                         :unique-choosable (select! (or choice-value name))
                                          :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name)))
                                          :buyable (swap! state assoc :game (cmd/buy name)))))}
            (str (when tokens (str (->> tokens (map ut/format-token) (string/join " ")) " "))

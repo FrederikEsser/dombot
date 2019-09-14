@@ -83,9 +83,9 @@
       (update-in [:players player-no :discard] concat (map ut/give-id! heirlooms))
       (op/draw {:player-no player-no :arg 5})))
 
-(defn setup-game [{:keys [supply] :as game}]
-  (let [setup-effects (->> supply
-                           (mapcat (comp :setup :card)))]
+(defn setup-game [{:keys [supply events] :as game}]
+  (let [setup-effects (concat (mapcat (comp :setup :card) supply)
+                              (mapcat (comp :setup second) events))]
     (-> game
         (op/push-effect-stack {:effects setup-effects})
         op/check-stack)))

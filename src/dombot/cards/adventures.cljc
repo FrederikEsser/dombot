@@ -2,7 +2,8 @@
   (:require [dombot.operations :refer [push-effect-stack give-choice move-card draw affect-all-players]]
             [dombot.cards.common :refer [add-trigger set-aside=>hand-trigger]]
             [dombot.utils :as ut]
-            [dombot.effects :as effects]))
+            [dombot.effects :as effects]
+            [clojure.string :as string]))
 
 (defn- setup-journey-token [game {:keys [player-no]}]
   (assoc-in game [:players player-no :journey-token] :face-up))
@@ -402,6 +403,40 @@
                                       :options [:player :play-area]
                                       :max     2}]]})
 
+(defn- pilgrimage-gain [game {:keys [player-no card-name card-names]}]
+  (let [card-names (if card-name [card-name] card-names)]
+    (assert (or (< (count card-names) 2)
+                (apply distinct? card-names)) (str "Pilgrimage error: All choices must be different: " (->> card-names
+                                                                                                            (map ut/format-name)
+                                                                                                            (string/join ", "))))
+    (cond-> game
+            (not-empty card-names) (push-effect-stack {:player-no player-no
+                                                       :effects   (->> card-names
+                                                                       (map (fn [card-name]
+                                                                              [:gain {:card-name card-name}])))}))))
+
+(defn- pilgrimage-journey [game {:keys [player-no]}]
+  (let [journey-token (get-in game [:players player-no :journey-token])]
+    (cond-> game
+            (= :face-up journey-token) (give-choice {:player-no player-no
+                                                     :text      "Choose up to 3 differently named cards you have in play and gain a copy of each."
+                                                     :choice    ::pilgrimage-gain
+                                                     :options   [:player :play-area]
+                                                     :unique?   true
+                                                     :max       3}))))
+
+(effects/register {::pilgrimage-gain    pilgrimage-gain
+                   ::pilgrimage-journey pilgrimage-journey})
+
+(def pilgrimage {:name          :pilgrimage
+                 :set           :adventures
+                 :type          :event
+                 :cost          4
+                 :once-per-turn true
+                 :on-buy        [[::turn-journey-token]
+                                 [::pilgrimage-journey]]
+                 :setup         [[::setup-journey-tokens]]})
+
 (defn- quest-discard [game {:keys [player-no card-name card-names required-cards]}]
   (let [card-names      (if card-name
                           [card-name]
@@ -509,6 +544,7 @@
                                [:add-trigger {:trigger travelling-fair-trigger}]]})
 
 (def events [bonfire
+             pilgrimage
              quest
              save
              trade

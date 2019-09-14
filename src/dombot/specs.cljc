@@ -14,7 +14,7 @@
 
 (s/def ::number-of-cards nat-int?)
 
-(s/def ::interaction #{:buyable :playable :choosable :quick-choosable :spendable})
+(s/def ::interaction #{:buyable :playable :choosable :quick-choosable :unique-choosable :spendable})
 
 (s/def ::area #{:hand :play-area :projects :artifacts :boons})
 
