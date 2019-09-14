@@ -137,7 +137,7 @@
 (defn- minus-cost [cost reduction]
   (if (< cost reduction) 0 (- cost reduction)))
 
-(defn- capitalism-get-types [{:keys [name types effects trigger] :as card}]
+(defn capitalism-get-types [{:keys [name types effects trigger] :as card}]
   (if (and
         (:action types)
         (or (some (fn [[effect {:keys [text options]}]]
@@ -151,7 +151,8 @@
                          :baron :ironworks :courtier
                          :pirate-ship :salvager
                          :trade-route :city
-                         :harvest :tournament :trusty-steed} name)))
+                         :harvest :tournament :trusty-steed
+                         :giant :miser :teacher} name)))
     (conj types :treasure)
     types))
 

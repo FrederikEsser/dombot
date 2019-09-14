@@ -144,6 +144,35 @@
                                     :options [:player :hand]
                                     :max     2}]]})
 
+(defn- giant-trample [game {:keys [player-no]}]
+  (let [{:keys [name] :as card} (last (get-in game [:players player-no :revealed]))
+        cost (ut/get-cost game card)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (if (and card (<= 3 cost 6))
+                                          [[:trash-from-revealed {:card-name name}]]
+                                          [[:discard-all-revealed]
+                                           [:gain {:card-name :curse}]])})))
+
+(defn- giant-journey [game {:keys [player-no]}]
+  (let [journey-token (get-in game [:players player-no :journey-token])]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (if (= :face-down journey-token)
+                                          [[:give-coins 1]]
+                                          [[:give-coins 5]
+                                           [:attack {:effects [[:reveal-from-deck 1]
+                                                               [::giant-trample]]}]])})))
+
+(effects/register {::giant-trample giant-trample
+                   ::giant-journey giant-journey})
+
+(def giant {:name    :giant
+            :set     :adventures
+            :types   #{:action :attack}
+            :cost    5
+            :effects [[::turn-journey-token]
+                      [::giant-journey]]
+            :setup   [[::setup-journey-tokens]]})
+
 (def hireling {:name    :hireling
                :set     :adventures
                :types   #{:action :duration}
@@ -354,6 +383,7 @@
                     caravan-guard
                     dungeon
                     gear
+                    giant
                     hireling
                     lost-city
                     magpie

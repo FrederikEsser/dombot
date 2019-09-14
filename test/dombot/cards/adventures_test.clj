@@ -397,6 +397,74 @@
                                 :buys      1
                                 :phase     :action}]})))))
 
+(deftest giant-test
+  (let [giant (assoc giant :id 0)
+        curse (assoc curse :id 1)]
+    (testing "Giant"
+      (is (= (-> {:players [{:hand          [giant]
+                             :actions       1
+                             :coins         0
+                             :journey-token :face-up}]}
+                 (play 0 :giant))
+             {:players [{:play-area     [giant]
+                         :actions       0
+                         :coins         1
+                         :journey-token :face-down}]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:hand          [giant]
+                             :actions       1
+                             :coins         0
+                             :journey-token :face-down}
+                            {:deck [estate]}]}
+                 (play 0 :giant))
+             {:supply  [{:card curse :pile-size 9}]
+              :players [{:play-area     [giant]
+                         :actions       0
+                         :coins         5
+                         :journey-token :face-up}
+                        {:discard [estate curse]}]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:hand          [giant]
+                             :actions       1
+                             :coins         0
+                             :journey-token :face-down}
+                            {:deck [silver]}]}
+                 (play 0 :giant))
+             {:supply  [{:card curse :pile-size 10}]
+              :players [{:play-area     [giant]
+                         :actions       0
+                         :coins         5
+                         :journey-token :face-up}
+                        {}]
+              :trash   [silver]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:hand          [giant]
+                             :actions       1
+                             :coins         0
+                             :journey-token :face-down}
+                            {:deck [gold]}]}
+                 (play 0 :giant))
+             {:supply  [{:card curse :pile-size 10}]
+              :players [{:play-area     [giant]
+                         :actions       0
+                         :coins         5
+                         :journey-token :face-up}
+                        {}]
+              :trash   [gold]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:hand          [giant]
+                             :actions       1
+                             :coins         0
+                             :journey-token :face-down}
+                            {:deck [province]}]}
+                 (play 0 :giant))
+             {:supply  [{:card curse :pile-size 9}]
+              :players [{:play-area     [giant]
+                         :actions       0
+                         :coins         5
+                         :journey-token :face-up}
+                        {:discard [province curse]}]})))))
+
 (deftest hireling-test
   (let [hireling (assoc hireling :id 0)]
     (testing "Hireling"
