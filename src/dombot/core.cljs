@@ -316,7 +316,7 @@
                                                 actions coins buys set-aside
                                                 coffers villagers artifacts states
                                                 island-mat native-village-mat pirate-ship-coins
-                                                boons
+                                                boons journey-token
                                                 vp-tokens active? victory-points winner?]
                            {:keys [text
                                    options
@@ -327,8 +327,18 @@
                                    optional?]} :choice}]
                        [:tr
                         [:td
-                         (when active? [:div "Active"])
-                         [:div name-ui]]
+                         (when active?
+                           [:div "Active"])
+                         [:div name-ui]
+                         (when journey-token
+                           [:div [:img {:src   (if (= :face-up journey-token)
+                                                 "journey_token.png"
+                                                 "face_down_token.png")
+                                        :alt   (if (= :face-up journey-token)
+                                                 "Journey token: Face up"
+                                                 "Journey token: Face down")
+                                        :width 20
+                                        :align :top}]])]
                         [:td (if (:number-of-cards hand)
                                (view-pile hand max)
                                (mapk (partial view-card max) hand))]

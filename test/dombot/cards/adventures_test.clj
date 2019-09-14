@@ -798,6 +798,32 @@
                          :unaffected [{:card-id 0}]
                          :triggers   [(get-trigger champion)]}]})))))
 
+(deftest ranger-test
+  (let [ranger (assoc ranger :id 0)]
+    (testing "Ranger"
+      (is (= (-> {:players [{:hand          [ranger]
+                             :deck          (repeat 5 copper)
+                             :actions       1
+                             :buys          1
+                             :journey-token :face-up}]}
+                 (play 0 :ranger))
+             {:players [{:play-area     [ranger]
+                         :deck          (repeat 5 copper)
+                         :actions       0
+                         :buys          2
+                         :journey-token :face-down}]}))
+      (is (= (-> {:players [{:hand          [ranger]
+                             :deck          (repeat 5 copper)
+                             :actions       1
+                             :buys          1
+                             :journey-token :face-down}]}
+                 (play 0 :ranger))
+             {:players [{:hand          (repeat 5 copper)
+                         :play-area     [ranger]
+                         :actions       0
+                         :buys          2
+                         :journey-token :face-up}]})))))
+
 (deftest port-test
   (let [port (assoc port :id 0)]
     (testing "Port"

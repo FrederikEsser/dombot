@@ -130,6 +130,8 @@
 (s/def ::resource (s/keys :req-un [::number]
                           :opt-un [::interaction]))
 
+(s/def ::journey-token #{:face-up :face-down})
+
 (s/def ::coffers ::resource)
 
 (s/def ::villagers ::resource)
@@ -189,6 +191,7 @@
                                  ::native-village-mat
                                  ::pirate-ship-coins
                                  ::vp-tokens
+                                 ::journey-token
                                  ::coffers
                                  ::villagers
                                  ;::boons ; todo: spec for player boons

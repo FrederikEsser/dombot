@@ -1,8 +1,21 @@
 (ns dombot.cards.adventures
-  (:require [dombot.operations :refer [push-effect-stack give-choice move-card]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice move-card draw affect-all-players]]
             [dombot.cards.common :refer [add-trigger set-aside=>hand-trigger]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
+
+(defn- setup-journey-token [game {:keys [player-no]}]
+  (assoc-in game [:players player-no :journey-token] :face-up))
+
+(defn- setup-journey-tokens [game args]
+  (affect-all-players game {:effects [[::setup-journey-token]]}))
+
+(defn- turn-journey-token [game {:keys [player-no]}]
+  (update-in game [:players player-no :journey-token] #(if (= :face-up %) :face-down :face-up)))
+
+(effects/register {::setup-journey-token  setup-journey-token
+                   ::setup-journey-tokens setup-journey-tokens
+                   ::turn-journey-token   turn-journey-token})
 
 (defn- amulet-choices [game {:keys [player-no choice]}]
   (push-effect-stack game {:player-no player-no
@@ -283,6 +296,23 @@
            :on-buy  [[:gain {:card-name :port}]]
            :setup   [[::port-12]]})
 
+(defn- ranger-journey [game {:keys [player-no]}]
+  (let [journey-token (get-in game [:players player-no :journey-token])]
+    (cond-> game
+            (= :face-up journey-token) (draw {:player-no player-no
+                                              :arg       5}))))
+
+(effects/register {::ranger-journey ranger-journey})
+
+(def ranger {:name    :ranger
+             :set     :adventures
+             :types   #{:action}
+             :cost    4
+             :effects [[:give-buys 1]
+                       [::turn-journey-token]
+                       [::ranger-journey]]
+             :setup   [[::setup-journey-tokens]]})
+
 (defn- raze-trash-from-area [game {:keys [player-no choice]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no (:area choice)] {:name (:card-name choice)})
         cost (ut/get-cost game card)]
@@ -329,6 +359,7 @@
                     magpie
                     page
                     port
+                    ranger
                     raze
                     treasure-trove])
 

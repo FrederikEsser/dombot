@@ -271,6 +271,7 @@
                             native-village-mat
                             pirate-ship-coins
                             vp-tokens
+                            journey-token
                             coffers
                             villagers
                             boons
@@ -303,6 +304,8 @@
            {:pirate-ship-coins pirate-ship-coins})
          (when vp-tokens
            {:vp-tokens vp-tokens})
+         (when journey-token
+           {:journey-token journey-token})
          (when (and coffers (pos? coffers))
            {:coffers (merge {:number coffers}
                             (when (and (not choice)
