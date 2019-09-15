@@ -1119,6 +1119,39 @@
                        :buys      0}]
             :trash   [copper copper]}))))
 
+(deftest expedition-test
+  (testing "Expedition"
+    (ut/reset-ids!)
+    (is (= (-> {:events  {:expedition expedition}
+                :players [{:deck  (repeat 8 copper)
+                           :coins 3
+                           :buys  1
+                           :phase :buy}]}
+               (buy-event 0 :expedition)
+               (clean-up {:player-no 0}))
+           {:events  {:expedition expedition}
+            :players [{:hand    (repeat 7 copper)
+                       :deck    [copper]
+                       :actions 0
+                       :coins   0
+                       :buys    0
+                       :phase   :out-of-turn}]}))
+    (is (= (-> {:events  {:expedition expedition}
+                :players [{:deck  (repeat 10 copper)
+                           :coins 6
+                           :buys  2
+                           :phase :buy}]}
+               (buy-event 0 :expedition)
+               (buy-event 0 :expedition)
+               (clean-up {:player-no 0}))
+           {:events  {:expedition expedition}
+            :players [{:hand    (repeat 9 copper)
+                       :deck    [copper]
+                       :actions 0
+                       :coins   0
+                       :buys    0
+                       :phase   :out-of-turn}]}))))
+
 (deftest pilgrimage-test
   (let [gold   (assoc gold :id 1)
         copper (assoc copper :id 2)

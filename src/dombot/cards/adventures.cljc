@@ -423,6 +423,17 @@
                                       :options [:player :play-area]
                                       :max     2}]]})
 
+(def expedition-trigger {:name     :expedition
+                         :event    :at-draw-hand
+                         :duration :once
+                         :effects  [[:draw 2]]})
+
+(def expedition {:name   :expedition
+                 :set    :adventures
+                 :type   :event
+                 :cost   3
+                 :on-buy [[:add-trigger {:trigger expedition-trigger}]]})
+
 (defn- pilgrimage-gain [game {:keys [player-no card-name card-names]}]
   (let [card-names (if card-name [card-name] card-names)]
     (assert (or (< (count card-names) 2)
@@ -565,6 +576,7 @@
 
 (def events [alms
              bonfire
+             expedition
              pilgrimage
              quest
              save
