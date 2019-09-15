@@ -542,6 +542,19 @@
                                           :min     1
                                           :max     1}]]})
 
+(def scouting-party {:name   :scouting-party
+                     :set    :adventures
+                     :type   :event
+                     :cost   2
+                     :on-buy [[:give-buys 1]
+                              [:look-at 5]
+                              [:give-choice {:text    "Discard 3 of the top 5 cards of your deck."
+                                             :choice  :discard-from-look-at
+                                             :options [:player :look-at]
+                                             :min     3
+                                             :max     3}]
+                              [:topdeck-all-look-at]]})
+
 (defn- trade-trash [game {:keys [player-no card-name card-names]}]
   (let [card-names      (if card-name
                           [card-name]
@@ -580,5 +593,6 @@
              pilgrimage
              quest
              save
+             scouting-party
              trade
              travelling-fair])

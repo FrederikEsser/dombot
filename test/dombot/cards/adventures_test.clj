@@ -1388,6 +1388,42 @@
                        :buys    0
                        :phase   :out-of-turn}]}))))
 
+(deftest scouting-party-test
+  (testing "Scouting Party"
+    (ut/reset-ids!)
+    (is (= (-> {:events  {:scouting-party scouting-party}
+                :players [{:deck  (repeat 7 copper)
+                           :coins 5
+                           :buys  1}]}
+               (buy-event 0 :scouting-party)
+               (choose [:copper :copper :copper]))
+           {:events  {:scouting-party scouting-party}
+            :players [{:deck    (repeat 4 copper)
+                       :discard [copper copper copper]
+                       :coins   3
+                       :buys    1}]}))
+    (is (= (-> {:events  {:scouting-party scouting-party}
+                :players [{:deck  (repeat 4 copper)
+                           :coins 5
+                           :buys  1}]}
+               (buy-event 0 :scouting-party)
+               (choose [:copper :copper :copper]))
+           {:events  {:scouting-party scouting-party}
+            :players [{:deck    [copper]
+                       :discard [copper copper copper]
+                       :coins   3
+                       :buys    1}]}))
+    (is (= (-> {:events  {:scouting-party scouting-party}
+                :players [{:deck  [copper copper]
+                           :coins 5
+                           :buys  1}]}
+               (buy-event 0 :scouting-party)
+               (choose [:copper :copper]))
+           {:events  {:scouting-party scouting-party}
+            :players [{:discard [copper copper]
+                       :coins   3
+                       :buys    1}]}))))
+
 (deftest trade-test
   (let [silver (assoc silver :id 1)]
     (testing "Trade"
