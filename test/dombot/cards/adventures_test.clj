@@ -571,6 +571,47 @@
                          :revealed-cards {:deck 1}
                          :actions        1}]})))))
 
+(deftest miser-test
+  (let [miser (assoc miser :id 0)]
+    (testing "Miser"
+      (is (= (-> {:players [{:hand    [miser copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :miser)
+                 (choose :copper))
+             {:players [{:play-area  [miser]
+                         :tavern-mat [copper]
+                         :actions    0
+                         :coins      0}]}))
+      (is (= (-> {:players [{:hand    [miser]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :miser)
+                 (choose :coins))
+             {:players [{:play-area [miser]
+                         :actions   0
+                         :coins     0}]}))
+      (is (= (-> {:players [{:hand       [miser]
+                             :tavern-mat [copper]
+                             :actions    1
+                             :coins      0}]}
+                 (play 0 :miser)
+                 (choose :coins))
+             {:players [{:play-area  [miser]
+                         :tavern-mat [copper]
+                         :actions    0
+                         :coins      1}]}))
+      (is (= (-> {:players [{:hand       [miser]
+                             :tavern-mat (repeat 7 copper)
+                             :actions    1
+                             :coins      0}]}
+                 (play 0 :miser)
+                 (choose :coins))
+             {:players [{:play-area  [miser]
+                         :tavern-mat (repeat 7 copper)
+                         :actions    0
+                         :coins      7}]})))))
+
 (deftest page-test
   (let [page            (assoc page :id 0)
         treasure-hunter (assoc treasure-hunter :id 1)]

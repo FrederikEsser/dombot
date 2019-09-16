@@ -270,6 +270,7 @@
                             set-aside
                             island-mat
                             native-village-mat
+                            tavern-mat
                             pirate-ship-coins
                             vp-tokens
                             journey-token
@@ -301,6 +302,8 @@
            {:native-village-mat (if (or active-player? choice)
                                   (view-area :native-village-mat data)
                                   {:number-of-cards (count native-village-mat)})})
+         (when (not-empty tavern-mat)
+           {:tavern-mat (view-area :tavern-mat data)})
          (when pirate-ship-coins
            {:pirate-ship-coins pirate-ship-coins})
          (when vp-tokens

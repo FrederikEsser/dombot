@@ -930,8 +930,8 @@
 
 (effects/register {:play-treasures play-treasures})
 
-(defn- all-cards [{:keys [deck discard hand play-area island-mat native-village-mat triggers]}]
-  (let [cards           (concat deck discard hand play-area island-mat native-village-mat)
+(defn- all-cards [{:keys [deck discard hand play-area island-mat native-village-mat tavern-mat triggers]}]
+  (let [cards           (concat deck discard hand play-area island-mat native-village-mat tavern-mat)
         set-aside-cards (mapcat :set-aside triggers)]
     (concat cards set-aside-cards)))
 

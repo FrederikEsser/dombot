@@ -1,6 +1,6 @@
 (ns dombot.cards.adventures
   (:require [dombot.operations :refer [push-effect-stack give-choice move-card draw affect-all-players]]
-            [dombot.cards.common :refer [add-trigger set-aside=>hand-trigger]]
+            [dombot.cards.common :refer [add-trigger set-aside=>hand-trigger give-coins]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]
             [clojure.string :as string]))
@@ -17,6 +17,22 @@
 (effects/register {::setup-journey-token  setup-journey-token
                    ::setup-journey-tokens setup-journey-tokens
                    ::turn-journey-token   turn-journey-token})
+
+(defn- traveller-exchange [{:keys [supply extra-cards] :as game} {:keys [player-no from-card to-card]}]
+  (let [pile-location (cond (some (comp #{from-card} :name :card) supply) :supply
+                            (some (comp #{from-card} :name :card) extra-cards) :extra-cards)
+        {:keys [pile-size]} (ut/get-pile-idx game :extra-cards to-card)]
+    (cond-> game
+            (and pile-size
+                 (pos? pile-size)) (push-effect-stack {:player-no player-no
+                                                       :effects   [[:move-card {:card-name from-card
+                                                                                :from      :play-area
+                                                                                :to        pile-location}]
+                                                                   [:move-card {:card-name to-card
+                                                                                :from      :extra-cards
+                                                                                :to        :discard}]]}))))
+
+(effects/register {::traveller-exchange traveller-exchange})
 
 (defn- amulet-choices [game {:keys [player-no choice]}]
   (push-effect-stack game {:player-no player-no
@@ -212,21 +228,39 @@
                        [::magpie-check-revealed]
                        [:topdeck-all-revealed]]})
 
-(defn- traveller-exchange [{:keys [supply extra-cards] :as game} {:keys [player-no from-card to-card]}]
-  (let [pile-location (cond (some (comp #{from-card} :name :card) supply) :supply
-                            (some (comp #{from-card} :name :card) extra-cards) :extra-cards)
-        {:keys [pile-size]} (ut/get-pile-idx game :extra-cards to-card)]
-    (cond-> game
-            (and pile-size
-                 (pos? pile-size)) (push-effect-stack {:player-no player-no
-                                                       :effects   [[:move-card {:card-name from-card
-                                                                                :from      :play-area
-                                                                                :to        pile-location}]
-                                                                   [:move-card {:card-name to-card
-                                                                                :from      :extra-cards
-                                                                                :to        :discard}]]}))))
+(defn- miser-choice [game {:keys [player-no choice]}]
+  (case choice
+    :copper (move-card game {:player-no player-no
+                             :card-name :copper
+                             :from      :hand
+                             :to        :tavern-mat})
+    :coins (let [coppers-on-tavern (->> (get-in game [:players player-no :tavern-mat])
+                                        (filter (comp #{:copper} :name))
+                                        count)]
+             (give-coins game {:player-no player-no
+                               :arg       coppers-on-tavern}))))
 
-(effects/register {::traveller-exchange traveller-exchange})
+(defn- miser-give-choice [game {:keys [player-no]}]
+  (let [coppers-on-tavern (->> (get-in game [:players player-no :tavern-mat])
+                               (filter (comp #{:copper} :name))
+                               count)]
+    (give-choice game {:player-no player-no
+                       :text      "Choose one: "
+                       :choice    ::miser-choice
+                       :options   [:special
+                                   {:option :copper :text "Put a Copper from your hand onto your Tavern mat."}
+                                   {:option :coins :text (str "+$" coppers-on-tavern)}]
+                       :min       1
+                       :max       1})))
+
+(effects/register {::miser-choice      miser-choice
+                   ::miser-give-choice miser-give-choice})
+
+(def miser {:name    :miser
+            :set     :adventures
+            :types   #{:action}
+            :cost    4
+            :effects [[::miser-give-choice]]})
 
 (def champion {:name    :champion
                :set     :adventures
@@ -388,6 +422,7 @@
                     hireling
                     lost-city
                     magpie
+                    miser
                     page
                     port
                     ranger

@@ -121,6 +121,8 @@
 (s/def ::native-village-mat (s/or :shown ::cards
                                   :hidden ::pile))
 
+(s/def ::tavern-mat ::cards)
+
 (s/def ::pirate-ship-coins nat-int?)
 
 (s/def ::vp-tokens nat-int?)
@@ -191,6 +193,7 @@
                                  ::native-village-mat
                                  ::pirate-ship-coins
                                  ::vp-tokens
+                                 ::tavern-mat
                                  ::journey-token
                                  ::coffers
                                  ::villagers

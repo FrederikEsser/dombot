@@ -319,7 +319,7 @@
                                                 actions coins buys set-aside
                                                 coffers villagers artifacts states
                                                 island-mat native-village-mat pirate-ship-coins
-                                                boons journey-token
+                                                boons tavern-mat journey-token
                                                 vp-tokens active? victory-points winner?]
                            {:keys [text
                                    options
@@ -453,6 +453,10 @@
                           [:td
                            [:div "Set aside"]
                            [:div (mapk (partial view-card max) set-aside)]])
+                        (when tavern-mat
+                          [:td
+                           [:div "Tavern"]
+                           [:div (mapk (partial view-card max) tavern-mat)]])
                         (when island-mat
                           [:td
                            [:div "Island"]
