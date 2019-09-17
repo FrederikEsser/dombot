@@ -281,6 +281,19 @@
                                 :buys      1
                                 :phase     :action}]})))))
 
+(deftest distant-lands-test
+  (let [distant-lands (assoc distant-lands :id 0)]
+    (testing "Distant Lands"
+      (is (= (-> {:players [{:hand    [distant-lands]
+                             :actions 1}]}
+                 (play 0 :distant-lands))
+             {:players [{:tavern-mat [(assoc distant-lands :victory-points 4)]
+                         :actions    0}]}))
+      (is (= (calc-victory-points {:deck [distant-lands]})
+             0))
+      (is (= (calc-victory-points {:tavern-mat [(assoc distant-lands :victory-points 4)]})
+             4)))))
+
 (deftest dungeon-test
   (let [dungeon (assoc dungeon :id 0)]
     (testing "Dungeon"

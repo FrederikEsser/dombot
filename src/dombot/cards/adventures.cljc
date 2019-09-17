@@ -34,6 +34,14 @@
 
 (effects/register {::traveller-exchange traveller-exchange})
 
+(defn- put-this-on-tavern-mat [game {:keys [player-no card-id]}]
+  (move-card game {:player-no    player-no
+                   :move-card-id card-id
+                   :from         :play-area
+                   :to           :tavern-mat}))
+
+(effects/register {::put-this-on-tavern-mat put-this-on-tavern-mat})
+
 (defn- amulet-choices [game {:keys [player-no choice]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [(case choice
@@ -108,6 +116,19 @@
                                 :effects  [[:give-coins 1]]}
                     :reacts-to :attack
                     :reaction  [[::caravan-guard-play]]})
+
+(defn- distant-lands-victory-points [game {:keys [player-no card-id]}]
+  (ut/update-in-vec game [:players player-no :tavern-mat] {:id card-id}
+                    assoc :victory-points 4))
+
+(effects/register {::distant-lands-victory-points distant-lands-victory-points})
+
+(def distant-lands {:name    :distant-lands
+                    :set     :adventures
+                    :types   #{:action :reserve :victory}
+                    :cost    5
+                    :effects [[::put-this-on-tavern-mat]
+                              [::distant-lands-victory-points]]})
 
 (def dungeon {:name    :dungeon
               :set     :adventures
@@ -416,6 +437,7 @@
 (def kingdom-cards [amulet
                     artificer
                     caravan-guard
+                    distant-lands
                     dungeon
                     gear
                     giant
@@ -624,6 +646,7 @@
 
 (def events [alms
              bonfire
+             distant-lands
              expedition
              pilgrimage
              quest
