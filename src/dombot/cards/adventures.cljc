@@ -452,6 +452,21 @@
                                     :min     1
                                     :max     1}]]})
 
+(def swamp-hag-trigger {:event    :on-buy
+                        :duration :attack
+                        :effects  [[:gain {:card-name :curse}]]})
+
+(def swamp-hag {:name    :swamp-hag
+                :set     :adventures
+                :types   #{:action :attack :duration}
+                :cost    5
+                :effects [[:attack {:effects [[:add-trigger {:trigger swamp-hag-trigger}]]}]]
+                :trigger {:event    :at-start-turn
+                          :duration :once
+                          :mode     :auto
+                          :effects  [[:give-coins 3]
+                                     [:remove-enemy-triggers]]}})
+
 (def treasure-trove {:name       :treasure-trove
                      :set        :adventures
                      :types      #{:treasure}
@@ -476,6 +491,7 @@
                     port
                     ranger
                     raze
+                    swamp-hag
                     treasure-trove])
 
 (defn- alms-petition [game {:keys [player-no]}]

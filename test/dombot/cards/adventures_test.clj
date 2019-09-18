@@ -1118,6 +1118,70 @@
                          :actions   1}]
               :trash   [copper]})))))
 
+(deftest swamp-hag-test
+  (let [swamp-hag (assoc swamp-hag :id 0)]
+    (testing "Swamp Hag"
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand    [swamp-hag]
+                             :actions 1}]}
+                 (play 0 :swamp-hag))
+             {:players [{:play-area [swamp-hag]
+                         :actions   0
+                         :triggers  [(get-trigger swamp-hag)]}]}))
+      (is (= (-> {:players [{:play-area [swamp-hag]
+                             :phase     :buy
+                             :triggers  [(get-trigger swamp-hag)]}]}
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:play-area [swamp-hag]
+                                :actions   1
+                                :coins     3
+                                :buys      1
+                                :phase     :action}]}))
+      (let [silver (assoc silver :id 1)
+            curse  (assoc curse :id 2)]
+        (ut/reset-ids!)
+        (is (= (-> {:supply  [{:card silver :pile-size 46}
+                              {:card curse :pile-size 10}]
+                    :players [{:hand    [swamp-hag]
+                               :actions 1}
+                              {:hand [gold]}]}
+                   (play 0 :swamp-hag)
+                   (end-turn 0)
+                   (play 1 :gold)
+                   (buy-card 1 :silver))
+               {:current-player 1
+                :supply         [{:card silver :pile-size 45}
+                                 {:card curse :pile-size 9}]
+                :players        [{:play-area [swamp-hag]
+                                  :actions   0
+                                  :coins     0
+                                  :buys      0
+                                  :triggers  [(get-trigger swamp-hag)]}
+                                 {:play-area [gold]
+                                  :discard   [curse silver]
+                                  :actions   1
+                                  :coins     0
+                                  :buys      0
+                                  :triggers  [(assoc swamp-hag-trigger :id 2
+                                                                       :card-id 0)]}]}))
+        (is (= (-> {:players [{:hand    [swamp-hag]
+                               :actions 1
+                               :phase   :action}
+                              {}]}
+                   (play 0 :swamp-hag)
+                   (end-turn 0)
+                   (end-turn 1))
+               {:current-player 0
+                :players        [{:play-area [swamp-hag]
+                                  :actions   1
+                                  :coins     3
+                                  :buys      1
+                                  :phase     :action}
+                                 {:actions 0
+                                  :coins   0
+                                  :buys    0}]}))))))
+
 (deftest treasure-trove-test
   (let [treasure-trove (assoc treasure-trove :id 0)
         copper         (assoc copper :id 1)
