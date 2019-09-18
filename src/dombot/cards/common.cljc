@@ -1,5 +1,5 @@
 (ns dombot.cards.common
-  (:require [dombot.operations :refer [gain move-card move-cards draw give-choice push-effect-stack]]
+  (:require [dombot.operations :refer [gain move-card move-cards draw give-choice push-effect-stack affect-other-players]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -519,6 +519,12 @@
                                                                     {:name (:name card)}))])))
 
 (effects/register {:add-trigger add-trigger})
+
+(defn- remove-enemy-triggers [game {:keys [player-no card-id]}]
+  (affect-other-players game {:player-no player-no
+                              :effects   [[:remove-trigger {:card-id card-id}]]}))
+
+(effects/register {:remove-enemy-triggers remove-enemy-triggers})
 
 (defn add-cost-reduction [game {:keys [arg]}]
   (update game :cost-reductions concat [{:reduction arg}]))

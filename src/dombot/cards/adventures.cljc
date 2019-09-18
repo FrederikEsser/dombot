@@ -211,6 +211,32 @@
                       [::giant-journey]]
             :setup   [[::setup-journey-tokens]]})
 
+(defn- haunted-woods-topdeck-hand [game {:keys [player-no]}]
+  (let [cards-in-hand (count (get-in game [:players player-no :hand]))]
+    (give-choice game {:player-no player-no
+                       :text      "Put your hand onto your deck in any order."
+                       :choice    :topdeck-from-hand
+                       :options   [:player :hand]
+                       :min       cards-in-hand
+                       :max       cards-in-hand})))
+
+(effects/register {::haunted-woods-topdeck-hand haunted-woods-topdeck-hand})
+
+(def haunted-woods-trigger {:event    :on-buy
+                            :duration :attack
+                            :effects  [[::haunted-woods-topdeck-hand]]})
+
+(def haunted-woods {:name    :haunted-woods
+                    :set     :adventures
+                    :types   #{:action :attack :duration}
+                    :cost    5
+                    :effects [[:attack {:effects [[:add-trigger {:trigger haunted-woods-trigger}]]}]]
+                    :trigger {:event    :at-start-turn
+                              :duration :once
+                              :mode     :semi
+                              :effects  [[:draw 3]
+                                         [:remove-enemy-triggers]]}})
+
 (def hireling {:name    :hireling
                :set     :adventures
                :types   #{:action :duration}
@@ -441,6 +467,7 @@
                     dungeon
                     gear
                     giant
+                    haunted-woods
                     hireling
                     lost-city
                     magpie

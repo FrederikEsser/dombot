@@ -478,6 +478,72 @@
                          :journey-token :face-up}
                         {:discard [province curse]}]})))))
 
+(deftest haunted-woods-test
+  (let [haunted-woods (assoc haunted-woods :id 0)]
+    (testing "Haunted Woods"
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand    [haunted-woods]
+                             :actions 1}]}
+                 (play 0 :haunted-woods))
+             {:players [{:play-area [haunted-woods]
+                         :actions   0
+                         :triggers  [(get-trigger haunted-woods)]}]}))
+      (is (= (-> {:players [{:play-area [haunted-woods]
+                             :deck      (repeat 10 copper)
+                             :phase     :buy
+                             :triggers  [(get-trigger haunted-woods)]}]}
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand      (repeat 8 copper)
+                                :play-area [haunted-woods]
+                                :deck      [copper copper]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]}))
+      (let [silver (assoc silver :id 1)]
+        (ut/reset-ids!)
+        (is (= (-> {:supply  [{:card silver :pile-size 46}]
+                    :players [{:hand    [haunted-woods]
+                               :actions 1}
+                              {:hand [gold estate estate copper]}]}
+                   (play 0 :haunted-woods)
+                   (end-turn 0)
+                   (play 1 :gold)
+                   (buy-card 1 :silver)
+                   (choose [:copper :estate :estate]))
+               {:current-player 1
+                :supply         [{:card silver :pile-size 45}]
+                :players        [{:play-area [haunted-woods]
+                                  :actions   0
+                                  :coins     0
+                                  :buys      0
+                                  :triggers  [(get-trigger haunted-woods)]}
+                                 {:play-area [gold]
+                                  :deck      [estate estate copper]
+                                  :discard   [silver]
+                                  :actions   1
+                                  :coins     0
+                                  :buys      0
+                                  :triggers  [(assoc haunted-woods-trigger :id 2
+                                                                           :card-id 0)]}]}))
+        (is (= (-> {:players [{:hand    [haunted-woods]
+                               :actions 1
+                               :phase   :action}
+                              {}]}
+                   (play 0 :haunted-woods)
+                   (end-turn 0)
+                   (end-turn 1))
+               {:current-player 0
+                :players        [{:play-area [haunted-woods]
+                                  :actions   1
+                                  :coins     0
+                                  :buys      1
+                                  :phase     :action}
+                                 {:actions 0
+                                  :coins   0
+                                  :buys    0}]}))))))
+
 (deftest hireling-test
   (let [hireling (assoc hireling :id 0)]
     (testing "Hireling"

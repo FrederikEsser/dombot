@@ -240,13 +240,16 @@
         (update-in [:players player-no :villagers] dec)
         (update-in [:players player-no :actions] inc))))
 
-(defn remove-trigger [game {:keys [player-no trigger-id]}]
+(defn remove-trigger [game {:keys [player-no trigger-id card-id]}]
   (-> game
       (update-in [:players player-no :triggers] (partial remove (every-pred (ut/match {:id trigger-id})
                                                                             (comp #{:once :once-turn} :duration))))
       (update-in [:players player-no :triggers] (partial remove (every-pred (ut/match {:id trigger-id})
                                                                             (comp #{:until-empty} :duration)
                                                                             (comp empty? :set-aside))))
+      (cond->
+        card-id (update-in [:players player-no :triggers] (partial remove (every-pred (ut/match {:card-id card-id})
+                                                                                      (comp #{:attack} :duration)))))
       (update-in [:players player-no] ut/dissoc-if-empty :triggers)))
 
 (defn remove-triggers [game {:keys [player-no event]}]
@@ -448,8 +451,11 @@
                                    (mapcat :on-buy))
         while-in-play-effects (->> (get-in game [:players player-no :play-area])
                                    (mapcat (comp :on-buy :while-in-play))
-                                   (map (partial ut/add-effect-args {:card-name card-name})))]
-    (concat on-buy token-effects while-in-play-effects)))
+                                   (map (partial ut/add-effect-args {:card-name card-name})))
+        trigger-effects       (->> (get-in game [:players player-no :triggers])
+                                   (filter (comp #{:on-buy} :event))
+                                   (mapcat :effects))]
+    (concat on-buy token-effects while-in-play-effects trigger-effects)))
 
 (defn buy-card
   ([game {:keys [player-no card-name]}]
@@ -678,7 +684,7 @@
 (effects/register {:mark-unaffected  mark-unaffected
                    :clear-unaffected clear-unaffected})
 
-(defn affect-other-players [{:keys [players] :as game} {:keys [player-no effects attack all at-once]}]
+(defn affect-other-players [{:keys [players] :as game} {:keys [player-no card-id effects attack all at-once]}]
   (let [player-no  (or player-no 0)
         player-nos (cond-> (->> (range 1 (count players))
                                 (map (fn [n] (-> n (+ player-no) (mod (count players)))))
@@ -689,7 +695,8 @@
                             attack (map (partial ut/add-effect-args {:attacking-player-no player-no})))]
     (reduce (fn [game other-player-no]
               (push-effect-stack game {:player-no other-player-no
-                                       :effects   effects}))
+                                       :effects   (cond->> effects
+                                                           card-id (map (partial ut/add-effect-args {:card-id card-id})))}))
             game
             player-nos)))
 
