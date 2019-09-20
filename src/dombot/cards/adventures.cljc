@@ -40,7 +40,14 @@
                    :from         :play-area
                    :to           :tavern-mat}))
 
-(effects/register {::put-this-on-tavern-mat put-this-on-tavern-mat})
+(defn- call-reserve [game {:keys [player-no card-id]}]
+  (move-card game {:player-no    player-no
+                   :move-card-id card-id
+                   :from         :tavern-mat
+                   :to           :play-area}))
+
+(effects/register {:put-this-on-tavern-mat put-this-on-tavern-mat
+                   :call-reserve           call-reserve})
 
 (defn- amulet-choices [game {:keys [player-no choice]}]
   (push-effect-stack game {:player-no player-no
@@ -127,7 +134,7 @@
                     :set     :adventures
                     :types   #{:action :reserve :victory}
                     :cost    5
-                    :effects [[::put-this-on-tavern-mat]
+                    :effects [[:put-this-on-tavern-mat]
                               [::distant-lands-victory-points]]})
 
 (def dungeon {:name    :dungeon
@@ -424,6 +431,20 @@
                        [::ranger-journey]]
              :setup   [[::setup-journey-tokens]]})
 
+(def ratcatcher {:name    :ratcatcher
+                 :set     :adventures
+                 :types   #{:action :reserve}
+                 :cost    2
+                 :effects [[:draw 1]
+                           [:give-actions 1]
+                           [:put-this-on-tavern-mat]]
+                 :call    {:event   :at-start-turn
+                           :effects [[:give-choice {:text    "Trash a card from your hand."
+                                                    :choice  :trash-from-hand
+                                                    :options [:player :hand]
+                                                    :min     1
+                                                    :max     1}]]}})
+
 (defn- raze-trash-from-area [game {:keys [player-no choice]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no (:area choice)] {:name (:card-name choice)})
         cost (ut/get-cost game card)]
@@ -490,6 +511,7 @@
                     page
                     port
                     ranger
+                    ratcatcher
                     raze
                     swamp-hag
                     treasure-trove])
@@ -689,7 +711,6 @@
 
 (def events [alms
              bonfire
-             distant-lands
              expedition
              pilgrimage
              quest

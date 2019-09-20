@@ -1032,6 +1032,63 @@
                          :buys          2
                          :journey-token :face-up}]})))))
 
+(deftest ratcatcher-test
+  (let [ratcatcher (assoc ratcatcher :id 0)]
+    (testing "Ratcatcher"
+      (is (= (-> {:players [{:hand    [ratcatcher]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :ratcatcher))
+             {:players [{:hand       [copper]
+                         :deck       [copper]
+                         :tavern-mat [ratcatcher]
+                         :actions    1}]}))
+      (is (= (-> {:players [{:deck       [copper copper copper estate estate]
+                             :tavern-mat [ratcatcher]
+                             :phase      :action}]}
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand       [copper copper copper estate estate]
+                                :tavern-mat [ratcatcher]
+                                :actions    1
+                                :coins      0
+                                :buys       1
+                                :phase      :action}]
+              :effect-stack   [{:text      "One things happen at the start of your turn. Select which one happens next."
+                                :player-no 0
+                                :choice    [:simultaneous-effects-choice {:triggers [(get-call-trigger ratcatcher)]}]
+                                :source    :mixed
+                                :options   [{:area :tavern-mat :card-name :ratcatcher}]
+                                :max       1}
+                               {:player-no 0
+                                :effect    [:sync-repeated-play]}]}))
+      (is (= (-> {:players [{:deck       [copper copper copper estate estate]
+                             :tavern-mat [ratcatcher]
+                             :phase      :action}]}
+                 (end-turn 0)
+                 (choose nil))
+             {:current-player 0
+              :players        [{:hand       [copper copper copper estate estate]
+                                :tavern-mat [ratcatcher]
+                                :actions    1
+                                :coins      0
+                                :buys       1
+                                :phase      :action}]}))
+      (is (= (-> {:players [{:deck       [copper copper copper estate estate]
+                             :tavern-mat [ratcatcher]
+                             :phase      :action}]}
+                 (end-turn 0)
+                 (choose {:area :tavern-mat :card-name :ratcatcher})
+                 (choose :estate))
+             {:current-player 0
+              :players        [{:hand      [copper copper copper estate]
+                                :play-area [ratcatcher]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]
+              :trash          [estate]})))))
+
 (deftest raze-test
   (let [raze (assoc raze :id 0)]
     (testing "Raze"

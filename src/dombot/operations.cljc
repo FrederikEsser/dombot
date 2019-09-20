@@ -91,6 +91,7 @@
                                        :choice  [:simultaneous-effects-choice {:triggers manual-triggers}]
                                        :options [:mixed
                                                  [:player :play-area {:names trigger-names}]
+                                                 [:player :tavern-mat {:names trigger-names}]
                                                  [:player :boons {:names trigger-names}]
                                                  [:artifacts {:names trigger-names}]
                                                  [:projects {:names trigger-names}]]
@@ -120,28 +121,40 @@
 
 (effects/register {:sync-repeated-play sync-repeated-play})
 
+(defn get-call-trigger [{:keys [id name call]}]
+  (merge call
+         {:name    name
+          :card-id id
+          :mode    :optional
+          :effects (concat [[:call-reserve {:card-id id}]]
+                           (:effects call))}))
+
 (defn- get-phase-change-effects [game {:keys [player-no phase-change]}]
-  (let [card-triggers (->> (get-in game [:players player-no :play-area])
-                           (keep (fn [{:keys [id name trigger-condition] :as card}]
-                                   (let [condition-fn         (if trigger-condition
-                                                                (effects/get-effect trigger-condition)
-                                                                (constantly true))
-                                         phase-change-effects (get card phase-change)]
-                                     (when (and phase-change-effects
-                                                (condition-fn game player-no))
-                                       {:event   phase-change
-                                        :name    name
-                                        :card-id id
-                                        :mode    :optional
-                                        :effects phase-change-effects})))))
-        triggers      (->> (get-in game [:players player-no :triggers])
-                           (filter (comp #{phase-change} :event))
-                           (filter (fn [{:keys [condition]}]
-                                     (if condition
-                                       (let [condition-fn (effects/get-effect condition)]
-                                         (condition-fn game player-no))
-                                       true)))
-                           (concat card-triggers))]
+  (let [card-triggers    (->> (get-in game [:players player-no :play-area])
+                              (keep (fn [{:keys [id name trigger-condition] :as card}]
+                                      (let [condition-fn         (if trigger-condition
+                                                                   (effects/get-effect trigger-condition)
+                                                                   (constantly true))
+                                            phase-change-effects (get card phase-change)]
+                                        (when (and phase-change-effects
+                                                   (condition-fn game player-no))
+                                          {:event   phase-change
+                                           :name    name
+                                           :card-id id
+                                           :mode    :optional
+                                           :effects phase-change-effects})))))
+        reserve-triggers (->> (get-in game [:players player-no :tavern-mat])
+                              (filter (comp #{phase-change} :event :call))
+                              (map get-call-trigger))
+        triggers         (->> (get-in game [:players player-no :triggers])
+                              (filter (comp #{phase-change} :event))
+                              (filter (fn [{:keys [condition]}]
+                                        (if condition
+                                          (let [condition-fn (effects/get-effect condition)]
+                                            (condition-fn game player-no))
+                                          true)))
+                              (concat card-triggers
+                                      reserve-triggers))]
     (assert (every? :name triggers) (str "Trigger error. All triggers need a name. \n" (->> triggers
                                                                                             (remove :name)
                                                                                             (#?(:clj  clojure.pprint/pprint
