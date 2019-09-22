@@ -31,7 +31,8 @@
 (def horn {:name    :horn
            :type    :artifact
            :trigger {:event     :at-clean-up
-                     :mode      :optional
+                     :mode      :manual
+                     :optional? true
                      :condition ::border-guard-in-play?
                      :effects   [[::horn-at-clean-up]]}})
 
@@ -218,10 +219,11 @@
               :types   #{:action}
               :cost    3
               :effects [[:give-coins 2]]
-              :trigger {:event    :at-clean-up
-                        :duration :once-turn
-                        :mode     :optional
-                        :effects  [[::improve-give-choice]]}})
+              :trigger {:event     :at-clean-up
+                        :duration  :once-turn
+                        :mode      :manual
+                        :optional? true
+                        :effects   [[::improve-give-choice]]}})
 
 (def inventor {:name    :inventor
                :set     :renaissance

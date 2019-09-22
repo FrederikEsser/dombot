@@ -439,6 +439,7 @@
                            [:give-actions 1]
                            [:put-this-on-tavern-mat]]
                  :call    {:event   :at-start-turn
+                           :mode    :manual
                            :effects [[:give-choice {:text    "Trash a card from your hand."
                                                     :choice  :trash-from-hand
                                                     :options [:player :hand]

@@ -716,11 +716,12 @@
                               :phase     :clean-up}]
               :effect-stack [{:player-no 0
                               :text      "You may activate cards, that do something when you discard them from play."
-                              :choice    [:simultaneous-effects-choice {:triggers [{:event   :at-clean-up
-                                                                                    :name    :page
-                                                                                    :card-id 0
-                                                                                    :mode    :optional
-                                                                                    :effects (:at-clean-up page)}]}]
+                              :choice    [:simultaneous-effects-choice {:triggers [{:event     :at-clean-up
+                                                                                    :name      :page
+                                                                                    :card-id   0
+                                                                                    :mode      :manual
+                                                                                    :optional? true
+                                                                                    :effects   (:at-clean-up page)}]}]
                               :source    :mixed
                               :options   [{:area :play-area :card-name :page}]
                               :max       1}

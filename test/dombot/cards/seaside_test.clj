@@ -1582,11 +1582,12 @@
                               :phase        :clean-up}]
               :effect-stack [{:player-no 0
                               :text      "You may activate cards, that do something when you discard them from play."
-                              :choice    [:simultaneous-effects-choice {:triggers [{:event   :at-clean-up
-                                                                                    :name    :treasury
-                                                                                    :card-id 1
-                                                                                    :mode    :optional
-                                                                                    :effects (:at-clean-up treasury)}]}]
+                              :choice    [:simultaneous-effects-choice {:triggers [{:event     :at-clean-up
+                                                                                    :name      :treasury
+                                                                                    :card-id   1
+                                                                                    :mode      :manual
+                                                                                    :optional? true
+                                                                                    :effects   (:at-clean-up treasury)}]}]
                               :source    :mixed
                               :options   [{:area :play-area :card-name :treasury}]
                               :max       1}
@@ -1663,11 +1664,12 @@
                               :phase     :clean-up}]
               :effect-stack [{:player-no 0
                               :text      "You may activate cards, that do something when you discard them from play."
-                              :choice    [:simultaneous-effects-choice {:triggers [{:event   :at-clean-up
-                                                                                    :name    :treasury
-                                                                                    :card-id 2
-                                                                                    :mode    :optional
-                                                                                    :effects (:at-clean-up treasury)}]}]
+                              :choice    [:simultaneous-effects-choice {:triggers [{:event     :at-clean-up
+                                                                                    :name      :treasury
+                                                                                    :card-id   2
+                                                                                    :mode      :manual
+                                                                                    :optional? true
+                                                                                    :effects   (:at-clean-up treasury)}]}]
                               :source    :mixed
                               :options   [{:area :play-area :card-name :treasury}]
                               :max       1}

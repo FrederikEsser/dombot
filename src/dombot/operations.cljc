@@ -74,11 +74,11 @@
   (let [complex?        (some (comp #{:complex} :mode) triggers)
         auto-triggers   (filter (fn [{:keys [mode]}]
                                   (or (nil? mode) (#{:auto (when-not complex? :semi)} mode))) triggers)
-        manual-triggers (filter (comp #{(when complex? :semi) :manual :complex :optional} :mode) triggers)
+        manual-triggers (filter (comp #{(when complex? :semi) :manual :complex} :mode) triggers)
         trigger-names   (->> manual-triggers (map :name) set)]
     (concat (mapcat get-effects-from-trigger auto-triggers)
             (if (or (< 1 (count manual-triggers))
-                    (some (comp #{:optional} :mode) manual-triggers))
+                    (some :optional? manual-triggers))
               (let [phase-change (->> triggers first :event)
                     text         (case phase-change
                                    :at-clean-up "You may activate cards, that do something when you discard them from play."
@@ -96,7 +96,7 @@
                                                  [:artifacts {:names trigger-names}]
                                                  [:projects {:names trigger-names}]]
                                        :max     1}
-                                      (when (some (comp not #{:optional} :mode) manual-triggers)
+                                      (when (not-every? :optional? manual-triggers)
                                         {:min 1}))]])
               (mapcat get-effects-from-trigger manual-triggers)))))
 
@@ -125,7 +125,7 @@
   (merge call
          {:name    name
           :card-id id
-          :mode    :optional
+          :optional? true
           :effects (concat [[:call-reserve {:card-id id}]]
                            (:effects call))}))
 
@@ -141,7 +141,8 @@
                                           {:event   phase-change
                                            :name    name
                                            :card-id id
-                                           :mode    :optional
+                                           :mode      :manual
+                                           :optional? true
                                            :effects phase-change-effects})))))
         reserve-triggers (->> (get-in game [:players player-no :tavern-mat])
                               (filter (comp #{phase-change} :event :call))
