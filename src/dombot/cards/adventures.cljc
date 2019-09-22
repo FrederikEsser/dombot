@@ -501,6 +501,39 @@
                           :effects  [[:give-coins 3]
                                      [:remove-enemy-triggers]]}})
 
+(defn transmogrify-trash [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        cost (inc (ut/get-cost game card))]
+    (-> game
+        (push-effect-stack {:player-no player-no
+                            :effects   [[:trash-from-hand {:card-name card-name}]
+                                        [:give-choice {:text    (str "Gain a card to your hand costing up to $" cost ".")
+                                                       :choice  :gain-to-hand
+                                                       :options [:supply {:max-cost cost}]
+                                                       :min     1
+                                                       :max     1}]]}))))
+
+(defn transmogrify-give-choice [game args]
+  (push-effect-stack game (merge args
+                                 {:effects [[:give-choice {:text    "Trash a card from your hand."
+                                                           :choice  :transmogrify-trash
+                                                           :options [:player :hand]
+                                                           :min     1
+                                                           :max     1}]]})))
+
+(effects/register {::transmogrify-trash       transmogrify-trash
+                   ::transmogrify-give-choice transmogrify-give-choice})
+
+(def transmogrify {:name    :transmogrify
+                   :set     :adventures
+                   :types   #{:action :reserve}
+                   :cost    4
+                   :effects [[:give-actions 1]
+                             [:put-this-on-tavern-mat]]
+                   :call    {:event   :at-start-turn
+                             :mode    :manual
+                             :effects [[::transmogrify-give-choice]]}})
+
 (def treasure-trove {:name       :treasure-trove
                      :set        :adventures
                      :types      #{:treasure}
@@ -528,6 +561,7 @@
                     ratcatcher
                     raze
                     swamp-hag
+                    transmogrify
                     treasure-trove])
 
 (defn- alms-petition [game {:keys [player-no]}]
