@@ -218,6 +218,18 @@
                       [::giant-journey]]
             :setup   [[::setup-journey-tokens]]})
 
+(def guide {:name    :guide
+            :set     :adventures
+            :types   #{:action :reserve}
+            :cost    3
+            :effects [[:draw 1]
+                      [:give-actions 1]
+                      [:put-this-on-tavern-mat]]
+            :call    {:event   :at-start-turn
+                      :mode    :complex
+                      :effects [[:discard-all-hand]
+                                [:draw 5]]}})
+
 (defn- haunted-woods-topdeck-hand [game {:keys [player-no]}]
   (let [cards-in-hand (count (get-in game [:players player-no :hand]))]
     (give-choice game {:player-no player-no
@@ -504,6 +516,7 @@
                     dungeon
                     gear
                     giant
+                    guide
                     haunted-woods
                     hireling
                     lost-city

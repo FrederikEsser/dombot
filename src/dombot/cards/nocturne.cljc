@@ -1194,7 +1194,8 @@
                                                                  effects
                                                                  effects
                                                                  (when keep-until-clean-up?
-                                                                   [[:add-trigger {:trigger {:event    :at-clean-up
+                                                                   [[:add-trigger {:trigger {:name     name
+                                                                                             :event    :at-clean-up
                                                                                              :duration :once
                                                                                              :effects  [[:return-boon {:boon-name name}]]}}]]))})))))
 
