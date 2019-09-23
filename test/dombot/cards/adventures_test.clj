@@ -985,7 +985,17 @@
                         {:play-area  [champion]
                          :deck       [silver]
                          :unaffected [{:card-id 0}]
-                         :triggers   [(get-trigger champion)]}]})))))
+                         :triggers   [(get-trigger champion)]}]}))
+      (is (= (-> {:players [{:hand      [copper]
+                             :play-area [champion]
+                             :actions   1
+                             :coins     0
+                             :triggers  [(get-trigger champion)]}]}
+                 (play 0 :copper))
+             {:players [{:play-area [champion copper]
+                         :actions   1
+                         :coins     1
+                         :triggers  [(get-trigger champion)]}]})))))
 
 (deftest port-test
   (let [port (assoc port :id 0)]

@@ -2702,6 +2702,7 @@
                          :coins    2
                          :boons    [field-gift]
                          :triggers [{:id       1
+                                     :name     :the-field's-gift
                                      :event    :at-clean-up
                                      :duration :once
                                      :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]

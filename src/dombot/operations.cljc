@@ -926,9 +926,10 @@
                                                                 :from      :hand
                                                                 :to        :play-area}]
                                                    [:card-effect {:card card}]]
-                                                  (get-play-triggers :play-action)
+                                                  (when (:action types)
+                                                    (get-play-triggers :play-action))
                                                   (get-play-triggers [:play card-name])
-                                                  (when (empty? actions-played)
+                                                  (when (and (:action types) (empty? actions-played))
                                                     (get-play-triggers :play-first-action)))})
            check-stack)))))
 
