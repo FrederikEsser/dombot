@@ -659,7 +659,16 @@
                {:hexes   {:discard [locusts]}
                 :supply  [{:card copper :pile-size 45}]
                 :players [{:discard [copper]}]
-                :trash   [silver]}))))
+                :trash   [silver]}))
+        (is (= (-> {:hexes   {:deck [locusts]}
+                    :supply  (base/supply 2 8)
+                    :players [{:deck [silk-merchant]}]}
+                   (receive-hex {:player-no 0}))
+               {:hexes   {:discard [locusts]}
+                :supply  (base/supply 2 8)
+                :players [{:coffers   1
+                           :villagers 1}]
+                :trash   [silk-merchant]}))))
     (testing "Misery"
       (is (= (-> {:hexes   {:deck [misery]}
                   :players [{}]}

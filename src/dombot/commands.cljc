@@ -16,6 +16,8 @@
 ; choose by trigger id when set aside cards - show different cards
 
 ; Bugs & Testing:
+; fix Fool choosing Moon's Gift last (after Earth's or Mountain's)
+; fix having Lost in the Woods when you haven't bought Fleet
 ; separate mixed choices from play area and tavern mat - 2 Ratcatchers called same turn
 ; receiving boons & hexes can't be undone
 ; give coin from Key when received at-start-turn

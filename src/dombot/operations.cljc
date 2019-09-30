@@ -123,11 +123,11 @@
 
 (defn get-call-trigger [{:keys [id name call]}]
   (merge call
-         {:name    name
-          :card-id id
+         {:name      name
+          :card-id   id
           :optional? true
-          :effects (concat [[:call-reserve {:card-id id}]]
-                           (:effects call))}))
+          :effects   (concat [[:call-reserve {:card-id id}]]
+                             (:effects call))}))
 
 (defn- get-phase-change-effects [game {:keys [player-no phase-change]}]
   (let [card-triggers    (->> (get-in game [:players player-no :play-area])
@@ -138,12 +138,12 @@
                                             phase-change-effects (get card phase-change)]
                                         (when (and phase-change-effects
                                                    (condition-fn game player-no))
-                                          {:event   phase-change
-                                           :name    name
-                                           :card-id id
+                                          {:event     phase-change
+                                           :name      name
+                                           :card-id   id
                                            :mode      :manual
                                            :optional? true
-                                           :effects phase-change-effects})))))
+                                           :effects   phase-change-effects})))))
         reserve-triggers (->> (get-in game [:players player-no :tavern-mat])
                               (filter (comp #{phase-change} :event :call))
                               (map get-call-trigger))
@@ -635,7 +635,7 @@
           (push-effect-stack {:player-no player-no
                               :effects   [[:do-move-card args]
                                           (when (= to :trash)
-                                            [:on-trash args])
+                                            [:on-trash (merge args {:card-name card-name})])
                                           (when (= to :revealed)
                                             [:on-reveal {:card-name card-name}])
                                           (when (and (= to :discard)
