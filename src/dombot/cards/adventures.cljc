@@ -516,7 +516,7 @@
 (defn transmogrify-give-choice [game args]
   (push-effect-stack game (merge args
                                  {:effects [[:give-choice {:text    "Trash a card from your hand."
-                                                           :choice  :transmogrify-trash
+                                                           :choice  ::transmogrify-trash
                                                            :options [:player :hand]
                                                            :min     1
                                                            :max     1}]]})))

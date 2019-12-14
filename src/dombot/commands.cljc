@@ -16,6 +16,7 @@
 ; choose by trigger id when set aside cards - show different cards
 
 ; Bugs & Testing:
+; fix Academy gain Will'o'Wisp with Swamps gift (from Druid)
 ; fix Fool choosing Moon's Gift last (after Earth's or Mountain's)
 ; fix having Lost in the Woods when you haven't bought Fleet
 ; separate mixed choices from play area and tavern mat - 2 Ratcatchers called same turn

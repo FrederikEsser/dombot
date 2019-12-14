@@ -1250,6 +1250,80 @@
                                   :coins   0
                                   :buys    0}]}))))))
 
+(deftest transmogrify-test
+  (let [transmogrify (assoc transmogrify :id 0)
+        silver       (assoc silver :id 1)]
+    (testing "Transmogrify"
+      (is (= (-> {:players [{:hand    [transmogrify]
+                             :actions 1}]}
+                 (play 0 :transmogrify))
+             {:players [{:tavern-mat [transmogrify]
+                         :actions    1}]}))
+      (is (= (-> {:players [{:deck       [copper copper copper estate estate]
+                             :tavern-mat [transmogrify]
+                             :phase      :action}]}
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand       [copper copper copper estate estate]
+                                :tavern-mat [transmogrify]
+                                :actions    1
+                                :coins      0
+                                :buys       1
+                                :phase      :action}]
+              :effect-stack   [{:text      "One things happen at the start of your turn. Select which one happens next."
+                                :player-no 0
+                                :choice    [:simultaneous-effects-choice {:triggers [(get-call-trigger transmogrify)]}]
+                                :source    :mixed
+                                :options   [{:area :tavern-mat :card-name :transmogrify}]
+                                :max       1}
+                               {:player-no 0
+                                :effect    [:sync-repeated-play]}]}))
+      (is (= (-> {:players [{:deck       [copper copper copper estate estate]
+                             :tavern-mat [transmogrify]
+                             :phase      :action}]}
+                 (end-turn 0)
+                 (choose nil))
+             {:current-player 0
+              :players        [{:hand       [copper copper copper estate estate]
+                                :tavern-mat [transmogrify]
+                                :actions    1
+                                :coins      0
+                                :buys       1
+                                :phase      :action}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:deck       [copper copper copper estate estate]
+                             :tavern-mat [transmogrify]
+                             :phase      :action}]}
+                 (end-turn 0)
+                 (choose {:area :tavern-mat :card-name :transmogrify})
+                 (choose :copper))
+             {:current-player 0
+              :supply         [{:card silver :pile-size 40}]
+              :players        [{:hand      [copper copper estate estate]
+                                :play-area [transmogrify]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]
+              :trash          [copper]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:deck       [copper copper copper estate estate]
+                             :tavern-mat [transmogrify]
+                             :phase      :action}]}
+                 (end-turn 0)
+                 (choose {:area :tavern-mat :card-name :transmogrify})
+                 (choose :estate)
+                 (choose :silver))
+             {:current-player 0
+              :supply         [{:card silver :pile-size 39}]
+              :players        [{:hand      [copper copper copper estate silver]
+                                :play-area [transmogrify]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]
+              :trash          [estate]})))))
+
 (deftest treasure-trove-test
   (let [treasure-trove (assoc treasure-trove :id 0)
         copper         (assoc copper :id 1)
