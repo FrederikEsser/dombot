@@ -8,6 +8,7 @@
             [dombot.cards.cornucopia :as cornucopia]
             [dombot.cards.guilds :as guilds]
             [dombot.cards.adventures :as adventures]
+            [dombot.cards.empires :as empires]
             [dombot.cards.nocturne :as nocturne]
             [dombot.cards.renaissance :as renaissance]
             [dombot.cards.promos :as promos]
@@ -21,6 +22,7 @@
                      cornucopia/kingdom-cards
                      guilds/kingdom-cards
                      adventures/kingdom-cards
+                     empires/kingdom-cards
                      nocturne/kingdom-cards
                      renaissance/kingdom-cards
                      promos/kingdom-cards))
@@ -53,6 +55,7 @@
 
 (def landscapes (concat
                   adventures/events
+                  empires/events
                   renaissance/projects))
 
 (defn random-landscape [[set number]]
@@ -104,7 +107,7 @@
                                (split-at 4)
                                (keep (fn [cards]
                                        (->> cards
-                                            (keep (comp #{:adventures :renaissance} :set))
+                                            (keep (comp #{:adventures :empires :renaissance} :set))
                                             first)))
                                frequencies
                                (mapcat random-landscape)
