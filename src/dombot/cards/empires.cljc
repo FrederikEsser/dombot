@@ -40,7 +40,21 @@
                    :effects [[:give-actions 1]
                              [::chariot-race-reveal]]})
 
-(def kingdom-cards [chariot-race])
+(def forum {:name    :forum
+            :set     :empires
+            :types   #{:action}
+            :cost    5
+            :effects [[:draw 3]
+                      [:give-actions 1]
+                      [:give-choice {:text    "Discard 2 cards."
+                                     :choice  :discard-from-hand
+                                     :options [:player :hand]
+                                     :min     2
+                                     :max     2}]]
+            :on-buy  [[:give-buys 1]]})
+
+(def kingdom-cards [chariot-race
+                    forum])
 
 (def banquet {:name   :banquet
               :set    :empires

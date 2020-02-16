@@ -81,6 +81,28 @@
                        :revealed-cards {:deck 1}
                        :coffers        1}]}))))
 
+(deftest forum-test
+  (let [forum (assoc forum :id 0)]
+    (testing "Forum"
+      (is (= (-> {:players [{:hand    [forum]
+                             :deck    [copper silver estate estate]
+                             :actions 1}]}
+                 (play 0 :forum)
+                 (choose [:copper :estate]))
+             {:players [{:hand      [silver]
+                         :play-area [forum]
+                         :deck      [estate]
+                         :discard   [copper estate]
+                         :actions   1}]}))
+      (is (= (-> {:supply  [{:card forum :pile-size 10}]
+                  :players [{:coins 7
+                             :buys  1}]}
+                 (buy-card 0 :forum))
+             {:supply  [{:card forum :pile-size 9}]
+              :players [{:discard [forum]
+                         :coins   2
+                         :buys    1}]})))))
+
 
 (deftest banquet-test
   (let [copper (assoc copper :id 0)
