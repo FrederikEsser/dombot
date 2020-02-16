@@ -139,6 +139,23 @@
                                       :min     1
                                       :max     1}]]})
 
+(defn- conquest-victory-points [game {:keys [player-no]}]
+  (let [gained-silvers (->> (get-in game [:players player-no :gained-cards])
+                            (filter (comp #{:silver} :name))
+                            count)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:give-victory-points gained-silvers]]})))
+
+(effects/register {::conquest-victory-points conquest-victory-points})
+
+(def conquest {:name   :conquest
+               :set    :empires
+               :type   :event
+               :cost   6
+               :on-buy [[:gain {:card-name :silver}]
+                        [:gain {:card-name :silver}]
+                        [::conquest-victory-points]]})
+
 (def delve {:name   :delve
             :set    :empires
             :type   :event
@@ -164,5 +181,6 @@
 
 (def events [advance
              banquet
+             conquest
              delve
              windfall])

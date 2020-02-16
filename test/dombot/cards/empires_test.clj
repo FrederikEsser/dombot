@@ -289,6 +289,60 @@
                          :coins   0
                          :buys    0}]})))))
 
+(deftest conquest-test
+  (let [silver (assoc silver :id 0)]
+    (testing "Conquest"
+      (is (= (-> {:track-gained-cards? true
+                  :events              {:conquest conquest}
+                  :supply              [{:card silver :pile-size 40}]
+                  :players             [{:coins 6
+                                         :buys  1}]}
+                 (buy-event 0 :conquest))
+             {:track-gained-cards? true
+              :events              {:conquest conquest}
+              :supply              [{:card silver :pile-size 38}]
+              :players             [{:discard      [silver silver]
+                                     :coins        0
+                                     :buys         0
+                                     :vp-tokens    2
+                                     :gained-cards [{:cost  3
+                                                     :name  :silver
+                                                     :types #{:treasure}}
+                                                    {:cost  3
+                                                     :name  :silver
+                                                     :types #{:treasure}}]}]}))
+      (is (= (-> {:track-gained-cards? true
+                  :events              {:conquest conquest}
+                  :supply              [{:card silver :pile-size 39}]
+                  :players             [{:coins        6
+                                         :buys         1
+                                         :gained-cards [{:cost  3
+                                                         :name  :silver
+                                                         :types #{:treasure}}
+                                                        {:cost  6
+                                                         :name  :gold
+                                                         :types #{:treasure}}]}]}
+                 (buy-event 0 :conquest))
+             {:track-gained-cards? true
+              :events              {:conquest conquest}
+              :supply              [{:card silver :pile-size 37}]
+              :players             [{:discard      [silver silver]
+                                     :coins        0
+                                     :buys         0
+                                     :vp-tokens    3
+                                     :gained-cards [{:cost  3
+                                                     :name  :silver
+                                                     :types #{:treasure}}
+                                                    {:cost  6
+                                                     :name  :gold
+                                                     :types #{:treasure}}
+                                                    {:cost  3
+                                                     :name  :silver
+                                                     :types #{:treasure}}
+                                                    {:cost  3
+                                                     :name  :silver
+                                                     :types #{:treasure}}]}]})))))
+
 (deftest delve-test
   (let [silver (assoc silver :id 0)]
     (testing "Delve"
