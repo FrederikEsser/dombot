@@ -226,3 +226,53 @@
               :players [{:discard [silver silver]
                          :coins   0
                          :buys    1}]})))))
+
+(deftest windfall-test
+  (let [gold (assoc gold :id 0)]
+    (testing "windfall"
+      (is (= (-> {:events  {:windfall windfall}
+                  :supply  [{:card gold :pile-size 30}]
+                  :players [{:hand      [estate]
+                             :play-area [silver silver copper]
+                             :coins     5
+                             :buys      1}]}
+                 (buy-event 0 :windfall))
+             {:events  {:windfall windfall}
+              :supply  [{:card gold :pile-size 27}]
+              :players [{:hand      [estate]
+                         :play-area [silver silver copper]
+                         :discard   [gold gold gold]
+                         :coins     0
+                         :buys      0}]}))
+      (is (= (-> {:events  {:windfall windfall}
+                  :supply  [{:card gold :pile-size 30}]
+                  :players [{:deck  [estate]
+                             :coins 5
+                             :buys  1}]}
+                 (buy-event 0 :windfall))
+             {:events  {:windfall windfall}
+              :supply  [{:card gold :pile-size 30}]
+              :players [{:deck  [estate]
+                         :coins 0
+                         :buys  0}]}))
+      (is (= (-> {:events  {:windfall windfall}
+                  :supply  [{:card gold :pile-size 30}]
+                  :players [{:discard [estate]
+                             :coins   5
+                             :buys    1}]}
+                 (buy-event 0 :windfall))
+             {:events  {:windfall windfall}
+              :supply  [{:card gold :pile-size 30}]
+              :players [{:discard [estate]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:events  {:windfall windfall}
+                  :supply  [{:card gold :pile-size 2}]
+                  :players [{:coins 5
+                             :buys  1}]}
+                 (buy-event 0 :windfall))
+             {:events  {:windfall windfall}
+              :supply  [{:card gold :pile-size 0}]
+              :players [{:discard [gold gold]
+                         :coins   0
+                         :buys    0}]})))))

@@ -104,5 +104,22 @@
             :on-buy [[:give-buys 1]
                      [:gain {:card-name :silver}]]})
 
+(defn- windfall-gain-gold [game {:keys [player-no]}]
+  (let [deck    (get-in game [:players player-no :deck])
+        discard (get-in game [:players player-no :discard])]
+    (cond-> game
+            (and (empty? deck)
+                 (empty? discard)) (push-effect-stack {:player-no player-no
+                                                       :effects   (repeat 3 [:gain {:card-name :gold}])}))))
+
+(effects/register {::windfall-gain-gold windfall-gain-gold})
+
+(def windfall {:name   :windfall
+               :set    :empires
+               :type   :event
+               :cost   5
+               :on-buy [[::windfall-gain-gold]]})
+
 (def events [banquet
-             delve])
+             delve
+             windfall])

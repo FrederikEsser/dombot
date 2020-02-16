@@ -480,10 +480,7 @@
                                                           (when another-treasure-map
                                                             [[:trash-from-hand {:card-name :treasure-map}]])
                                                           (when (and this-treasure-map another-treasure-map)
-                                                            [[:gain-to-topdeck {:card-name :gold}]
-                                                             [:gain-to-topdeck {:card-name :gold}]
-                                                             [:gain-to-topdeck {:card-name :gold}]
-                                                             [:gain-to-topdeck {:card-name :gold}]]))}))))
+                                                            (repeat 4 [:gain-to-topdeck {:card-name :gold}])))}))))
 
 (effects/register {::treasure-map-trash treasure-map-trash})
 
