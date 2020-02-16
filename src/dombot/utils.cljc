@@ -152,7 +152,8 @@
                          :pirate-ship :salvager
                          :trade-route :city
                          :harvest :tournament :trusty-steed
-                         :giant :miser :teacher} name)))
+                         :giant :miser :teacher
+                         :chariot-race :farmers'-market :sacrifice} name)))
     (conj types :treasure)
     types))
 

@@ -82,6 +82,62 @@
                        :revealed-cards {:deck 1}
                        :coffers        1}]}))))
 
+(deftest charm-test
+  (let [charm        (assoc charm :id 0)
+        silver       (assoc silver :id 1)
+        chariot-race (assoc chariot-race :id 2)]
+    (testing "Charm"
+      (is (= (-> {:players [{:hand  [charm]
+                             :coins 0
+                             :buys  1}]}
+                 (play 0 :charm)
+                 (choose :coins))
+             {:players [{:play-area [charm]
+                         :coins     2
+                         :buys      2}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card chariot-race :pile-size 10}]
+                  :players [{:hand  [charm]
+                             :coins 3
+                             :buys  1}]}
+                 (play 0 :charm)
+                 (choose :gain)
+                 (buy-card 0 :silver)
+                 (choose :chariot-race))
+             {:supply  [{:card silver :pile-size 39}
+                        {:card chariot-race :pile-size 9}]
+              :players [{:play-area [charm]
+                         :discard   [chariot-race silver]
+                         :coins     0
+                         :buys      0}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card chariot-race :pile-size 10}]
+                  :players [{:hand  [charm]
+                             :coins 3
+                             :buys  1}]}
+                 (play 0 :charm)
+                 (choose :gain)
+                 (buy-card 0 :silver)
+                 (choose nil))
+             {:supply  [{:card silver :pile-size 39}
+                        {:card chariot-race :pile-size 10}]
+              :players [{:play-area [charm]
+                         :discard   [silver]
+                         :coins     0
+                         :buys      0}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand  [charm]
+                             :coins 3
+                             :buys  1}]}
+                 (play 0 :charm)
+                 (choose :gain)
+                 (buy-card 0 :silver))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:play-area [charm]
+                         :discard   [silver]
+                         :coins     0
+                         :buys      0}]})))))
+
 (deftest forum-test
   (let [forum (assoc forum :id 0)]
     (testing "Forum"

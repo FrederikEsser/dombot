@@ -468,7 +468,13 @@
                                    (map (partial ut/add-effect-args {:card-name card-name})))
         trigger-effects       (->> (get-in game [:players player-no :triggers])
                                    (filter (comp #{:on-buy} :event))
-                                   (mapcat :effects))]
+                                   (mapcat (fn [{:keys [id card-id effects]}]
+                                             (->> effects
+                                                  (map (partial ut/add-effect-args (merge {:trigger-id id
+                                                                                           :card-name  card-name}
+                                                                                          (when card-id
+                                                                                            {:card-id card-id})))))))
+                                   (map (partial ut/add-effect-args {})))]
     (concat on-buy token-effects while-in-play-effects trigger-effects)))
 
 (defn buy-card

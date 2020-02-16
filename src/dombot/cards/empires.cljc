@@ -40,6 +40,44 @@
                    :effects [[:give-actions 1]
                              [::chariot-race-reveal]]})
 
+(defn- charm-on-buy [game {:keys [player-no card-name trigger-id]}]
+  (let [{card :card} (ut/get-pile-idx game card-name)
+        cost (ut/get-cost game card)]
+    (-> game
+        (push-effect-stack {:player-no player-no
+                            :effects   [[:remove-trigger {:trigger-id trigger-id}]
+                                        [:give-choice {:text    (str "You may gain a card other than " (ut/format-name card-name) " costing exactly $" cost ".")
+                                                       :choice  :gain
+                                                       :options [:supply {:not-names #{card-name}
+                                                                          :cost      cost}]
+                                                       :max     1}]]}))))
+
+
+(defn- charm-choice [game {:keys [player-no choice]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (case choice
+                                        :coins [[:give-buys 1]
+                                                [:give-coins 2]]
+                                        :gain [[:add-trigger {:trigger {:event    :on-buy
+                                                                        :duration :once-turn
+                                                                        :effects  [[::charm-on-buy]]}}]])}))
+
+(effects/register {::charm-on-buy charm-on-buy
+                   ::charm-choice charm-choice})
+
+
+(def charm {:name    :charm
+            :set     :empires
+            :types   #{:treasure}
+            :cost    5
+            :effects [[:give-choice {:text    "Choose one:"
+                                     :choice  ::charm-choice
+                                     :options [:special
+                                               {:option :coins :text "+1 Buy and +$2"}
+                                               {:option :gain :text "The next time you buy a card this turn, you may also gain a differently named card with the same cost."}]
+                                     :min     1
+                                     :max     1}]]})
+
 (def forum {:name    :forum
             :set     :empires
             :types   #{:action}
@@ -99,6 +137,7 @@
                                          :max     1}]]})
 
 (def kingdom-cards [chariot-race
+                    charm
                     forum
                     legionary
                     sacrifice])
