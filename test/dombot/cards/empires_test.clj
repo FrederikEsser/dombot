@@ -5,6 +5,7 @@
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
             [dombot.cards.empires :as empires :refer :all]
+            [dombot.cards.dominion :as dominion :refer [market]]
             [dombot.cards.renaissance :as renaissance :refer [patron]]
             [dombot.utils :as ut]))
 
@@ -80,6 +81,49 @@
                        :revealed-cards {:deck 1}
                        :coffers        1}]}))))
 
+
+(deftest banquet-test
+  (let [copper (assoc copper :id 0)
+        market (assoc market :id 1)]
+    (testing "Banquet"
+      (is (= (-> {:events  {:banquet banquet}
+                  :supply  [{:card copper :pile-size 46}
+                            {:card silver :pile-size 40}
+                            {:card gold :pile-size 30}
+                            {:card duchy :pile-size 8}
+                            {:card market :pile-size 10}]
+                  :players [{:coins 3
+                             :buys  1}]}
+                 (buy-event 0 :banquet))
+             {:events       {:banquet banquet}
+              :supply       [{:card copper :pile-size 44}
+                             {:card silver :pile-size 40}
+                             {:card gold :pile-size 30}
+                             {:card duchy :pile-size 8}
+                             {:card market :pile-size 10}]
+              :players      [{:discard [copper copper]
+                              :coins   0
+                              :buys    0}]
+              :effect-stack [{:text      "Gain a non-Victory card costing up to $5."
+                              :player-no 0
+                              :choice    :gain
+                              :source    :supply
+                              :options   [:copper :silver :market]
+                              :min       1
+                              :max       1}]}))
+      (is (= (-> {:events  {:banquet banquet}
+                  :supply  [{:card copper :pile-size 46}
+                            {:card market :pile-size 10}]
+                  :players [{:coins 3
+                             :buys  1}]}
+                 (buy-event 0 :banquet)
+                 (choose :market))
+             {:events  {:banquet banquet}
+              :supply  [{:card copper :pile-size 44}
+                        {:card market :pile-size 9}]
+              :players [{:discard [copper copper market]
+                         :coins   0
+                         :buys    0}]})))))
 
 (deftest delve-test
   (let [silver (assoc silver :id 0)]
