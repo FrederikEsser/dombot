@@ -1447,7 +1447,6 @@
 
 (deftest expedition-test
   (testing "Expedition"
-    (ut/reset-ids!)
     (is (= (-> {:events  {:expedition expedition}
                 :players [{:deck  (repeat 8 copper)
                            :coins 3

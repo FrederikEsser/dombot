@@ -79,3 +79,29 @@
                       {:deck           [patron]
                        :revealed-cards {:deck 1}
                        :coffers        1}]}))))
+
+
+(deftest delve-test
+  (let [silver (assoc silver :id 0)]
+    (testing "Delve"
+      (is (= (-> {:events  {:delve delve}
+                  :supply  [{:card silver :pile-size 40}]
+                  :players [{:coins 4
+                             :buys  1}]}
+                 (buy-event 0 :delve))
+             {:events  {:delve delve}
+              :supply  [{:card silver :pile-size 39}]
+              :players [{:discard [silver]
+                         :coins   2
+                         :buys    1}]}))
+      (is (= (-> {:events  {:delve delve}
+                  :supply  [{:card silver :pile-size 40}]
+                  :players [{:coins 4
+                             :buys  1}]}
+                 (buy-event 0 :delve)
+                 (buy-event 0 :delve))
+             {:events  {:delve delve}
+              :supply  [{:card silver :pile-size 38}]
+              :players [{:discard [silver silver]
+                         :coins   0
+                         :buys    1}]})))))

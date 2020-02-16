@@ -43,4 +43,11 @@
 
 (def kingdom-cards [chariot-race])
 
-(def events [])
+(def delve {:name   :delve
+            :set    :empires
+            :type   :event
+            :cost   2
+            :on-buy [[:give-buys 1]
+                     [:gain {:card-name :silver}]]})
+
+(def events [delve])
