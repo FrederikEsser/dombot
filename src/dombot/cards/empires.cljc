@@ -103,6 +103,29 @@
                     legionary
                     sacrifice])
 
+
+(defn- advance-trash [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:trash-from-hand {:card-name card-name}]
+                                                    [:give-choice {:text    "Gain a Action card costing up to $6."
+                                                                   :choice  :gain
+                                                                   :options [:supply {:type     :action
+                                                                                      :max-cost 6}]
+                                                                   :min     1
+                                                                   :max     1}]]})))
+
+(effects/register {::advance-trash advance-trash})
+
+(def advance {:name   :advance
+              :set    :empires
+              :type   :event
+              :cost   0
+              :on-buy [[:give-choice {:text    "You may trash an Action card from your hand."
+                                      :choice  ::advance-trash
+                                      :options [:player :hand {:type :action}]
+                                      :max     1}]]})
+
 (def banquet {:name   :banquet
               :set    :empires
               :type   :event
@@ -139,6 +162,7 @@
                :cost   5
                :on-buy [[::windfall-gain-gold]]})
 
-(def events [banquet
+(def events [advance
+             banquet
              delve
              windfall])

@@ -198,16 +198,64 @@
               :trash   [mill]})))))
 
 
+(deftest advance-test
+  (let [legionary (assoc legionary :id 0)]
+    (testing "Advance"
+      (is (= (-> {:events  {:advance advance}
+                  :supply  [{:card legionary :pile-size 10}]
+                  :players [{:hand  [chariot-race copper estate]
+                             :coins 0
+                             :buys  1}]}
+                 (buy-event 0 :advance))
+             {:events       {:advance advance}
+              :supply       [{:card legionary :pile-size 10}]
+              :players      [{:hand  [chariot-race copper estate]
+                              :coins 0
+                              :buys  0}]
+              :effect-stack [{:text      "You may trash an Action card from your hand."
+                              :player-no 0
+                              :choice    ::empires/advance-trash
+                              :source    :hand
+                              :options   [:chariot-race]
+                              :max       1}]}))
+      (is (= (-> {:events  {:advance advance}
+                  :supply  [{:card legionary :pile-size 10}]
+                  :players [{:hand  [chariot-race copper estate]
+                             :coins 0
+                             :buys  1}]}
+                 (buy-event 0 :advance)
+                 (choose :chariot-race)
+                 (choose :legionary))
+             {:events  {:advance advance}
+              :supply  [{:card legionary :pile-size 9}]
+              :players [{:hand    [copper estate]
+                         :discard [legionary]
+                         :coins   0
+                         :buys    0}]
+              :trash   [chariot-race]}))
+      (is (= (-> {:events  {:advance advance}
+                  :supply  [{:card legionary :pile-size 10}]
+                  :players [{:hand  [chariot-race copper estate]
+                             :coins 0
+                             :buys  1}]}
+                 (buy-event 0 :advance)
+                 (choose nil))
+             {:events  {:advance advance}
+              :supply  [{:card legionary :pile-size 10}]
+              :players [{:hand  [chariot-race copper estate]
+                         :coins 0
+                         :buys  0}]})))))
+
 (deftest banquet-test
-  (let [copper (assoc copper :id 0)
-        market (assoc market :id 1)]
+  (let [copper    (assoc copper :id 0)
+        legionary (assoc legionary :id 1)]
     (testing "Banquet"
       (is (= (-> {:events  {:banquet banquet}
                   :supply  [{:card copper :pile-size 46}
                             {:card silver :pile-size 40}
                             {:card gold :pile-size 30}
                             {:card duchy :pile-size 8}
-                            {:card market :pile-size 10}]
+                            {:card legionary :pile-size 10}]
                   :players [{:coins 3
                              :buys  1}]}
                  (buy-event 0 :banquet))
@@ -216,7 +264,7 @@
                              {:card silver :pile-size 40}
                              {:card gold :pile-size 30}
                              {:card duchy :pile-size 8}
-                             {:card market :pile-size 10}]
+                             {:card legionary :pile-size 10}]
               :players      [{:discard [copper copper]
                               :coins   0
                               :buys    0}]
@@ -224,20 +272,20 @@
                               :player-no 0
                               :choice    :gain
                               :source    :supply
-                              :options   [:copper :silver :market]
+                              :options   [:copper :silver :legionary]
                               :min       1
                               :max       1}]}))
       (is (= (-> {:events  {:banquet banquet}
                   :supply  [{:card copper :pile-size 46}
-                            {:card market :pile-size 10}]
+                            {:card legionary :pile-size 10}]
                   :players [{:coins 3
                              :buys  1}]}
                  (buy-event 0 :banquet)
-                 (choose :market))
+                 (choose :legionary))
              {:events  {:banquet banquet}
               :supply  [{:card copper :pile-size 44}
-                        {:card market :pile-size 9}]
-              :players [{:discard [copper copper market]
+                        {:card legionary :pile-size 9}]
+              :players [{:discard [copper copper legionary]
                          :coins   0
                          :buys    0}]})))))
 
