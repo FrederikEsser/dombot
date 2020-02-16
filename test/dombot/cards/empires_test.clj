@@ -104,6 +104,45 @@
                          :coins   2
                          :buys    1}]})))))
 
+(deftest legionary-test
+  (let [legionary (assoc legionary :id 0)]
+    (testing "Legionary"
+      (is (= (-> {:players [{:hand    [legionary]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :legionary))
+             {:players [{:play-area [legionary]
+                         :actions   0
+                         :coins     3}]}))
+      (is (= (-> {:players [{:hand    [legionary silver gold]
+                             :actions 1
+                             :coins   0}
+                            {:hand [copper copper copper estate estate]
+                             :deck [estate copper]}]}
+                 (play 0 :legionary)
+                 (choose :gold)
+                 (choose [:estate :estate :copper]))
+             {:players [{:hand      [silver gold]
+                         :play-area [legionary]
+                         :actions   0
+                         :coins     3}
+                        {:hand    [copper copper estate]
+                         :deck    [copper]
+                         :discard [estate estate copper]}]}))
+      (is (= (-> {:players [{:hand    [legionary silver gold]
+                             :actions 1
+                             :coins   0}
+                            {:hand [copper copper copper estate estate]
+                             :deck [estate copper]}]}
+                 (play 0 :legionary)
+                 (choose nil))
+             {:players [{:hand      [silver gold]
+                         :play-area [legionary]
+                         :actions   0
+                         :coins     3}
+                        {:hand [copper copper copper estate estate]
+                         :deck [estate copper]}]})))))
+
 (deftest sacrifice-test
   (let [sacrifice (assoc sacrifice :id 0)]
     (testing "Sacrifice"

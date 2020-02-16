@@ -1,5 +1,5 @@
 (ns dombot.cards.empires
-  (:require [dombot.operations :refer [push-effect-stack give-choice]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice attack-other-players]]
             [dombot.cards.common :refer []]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -53,6 +53,24 @@
                                      :max     2}]]
             :on-buy  [[:give-buys 1]]})
 
+(defn- legionary-attack [game {:keys [player-no card-name]}]
+  (cond-> game
+          (= :gold card-name) (attack-other-players {:player-no player-no
+                                                     :effects   [[:discard-down-to 2]
+                                                                 [:draw 1]]})))
+
+(effects/register {::legionary-attack legionary-attack})
+
+(def legionary {:name    :legionary
+                :set     :empires
+                :types   #{:action :attack}
+                :cost    5
+                :effects [[:give-coins 3]
+                          [:give-choice {:text    "You may reveal a Gold from your hand."
+                                         :choice  ::legionary-attack
+                                         :options [:player :hand {:name :gold}]
+                                         :max     1}]]})
+
 (defn- sacrifice-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         types (ut/get-types game card)]
@@ -82,6 +100,7 @@
 
 (def kingdom-cards [chariot-race
                     forum
+                    legionary
                     sacrifice])
 
 (def banquet {:name   :banquet
