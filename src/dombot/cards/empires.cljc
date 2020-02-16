@@ -53,8 +53,36 @@
                                      :max     2}]]
             :on-buy  [[:give-buys 1]]})
 
+(defn- sacrifice-trash [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        types (ut/get-types game card)]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   (concat
+                                                  [[:trash-from-hand {:card-name card-name}]]
+                                                  (when (types :action)
+                                                    [[:draw 2]
+                                                     [:give-actions 2]])
+                                                  (when (types :treasure)
+                                                    [[:give-coins 2]])
+                                                  (when (types :victory)
+                                                    [[:give-victory-points 2]]))}))))
+
+(effects/register {::sacrifice-trash sacrifice-trash})
+
+(def sacrifice {:name    :sacrifice
+                :set     :empires
+                :types   #{:action}
+                :cost    4
+                :effects [[:give-choice {:text    "Trash a card from your hand."
+                                         :choice  ::sacrifice-trash
+                                         :options [:player :hand]
+                                         :min     1
+                                         :max     1}]]})
+
 (def kingdom-cards [chariot-race
-                    forum])
+                    forum
+                    sacrifice])
 
 (def banquet {:name   :banquet
               :set    :empires

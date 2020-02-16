@@ -5,8 +5,9 @@
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
             [dombot.cards.empires :as empires :refer :all]
-            [dombot.cards.dominion :as dominion :refer [market]]
-            [dombot.cards.renaissance :as renaissance :refer [patron]]
+            [dombot.cards.dominion :refer [market]]
+            [dombot.cards.intrigue :refer [mill]]
+            [dombot.cards.renaissance :refer [patron]]
             [dombot.utils :as ut]))
 
 (defn fixture [f]
@@ -102,6 +103,60 @@
               :players [{:discard [forum]
                          :coins   2
                          :buys    1}]})))))
+
+(deftest sacrifice-test
+  (let [sacrifice (assoc sacrifice :id 0)]
+    (testing "Sacrifice"
+      (is (= (-> {:players [{:hand    [sacrifice copper estate chariot-race]
+                             :deck    [copper silver estate]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :sacrifice)
+                 (choose :copper))
+             {:players [{:hand      [estate chariot-race]
+                         :play-area [sacrifice]
+                         :deck      [copper silver estate]
+                         :actions   0
+                         :coins     2}]
+              :trash   [copper]}))
+      (is (= (-> {:players [{:hand    [sacrifice copper estate chariot-race]
+                             :deck    [copper silver estate]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :sacrifice)
+                 (choose :estate))
+             {:players [{:hand      [copper chariot-race]
+                         :play-area [sacrifice]
+                         :deck      [copper silver estate]
+                         :actions   0
+                         :coins     0
+                         :vp-tokens 2}]
+              :trash   [estate]}))
+      (is (= (-> {:players [{:hand    [sacrifice copper estate chariot-race]
+                             :deck    [copper silver estate]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :sacrifice)
+                 (choose :chariot-race))
+             {:players [{:hand      [copper estate copper silver]
+                         :play-area [sacrifice]
+                         :deck      [estate]
+                         :actions   2
+                         :coins     0}]
+              :trash   [chariot-race]}))
+      (is (= (-> {:players [{:hand    [sacrifice mill]
+                             :deck    [copper silver estate]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :sacrifice)
+                 (choose :mill))
+             {:players [{:hand      [copper silver]
+                         :play-area [sacrifice]
+                         :deck      [estate]
+                         :actions   2
+                         :coins     0
+                         :vp-tokens 2}]
+              :trash   [mill]})))))
 
 
 (deftest banquet-test
