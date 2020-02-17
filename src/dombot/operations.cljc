@@ -766,7 +766,7 @@
                             {:attacker attacker}))))))
 
 (defn- choose-multi [game valid-choices selection]
-  (let [[{:keys [player-no attacker card-id choice source min max optional?]}] (get game :effect-stack)
+  (let [[{:keys [player-no attacker card-id choice source min max optional? unique?]}] (get game :effect-stack)
         {:keys [choice-fn args]} (get-choice-fn choice)
         arg-name        (case source
                           :deck-position :position
@@ -787,6 +787,11 @@
       (assert (<= (count multi-selection) max) (str "Choose error: You can only pick " max " options.")))
     (doseq [sel multi-selection]
       (assert (valid-choices sel) (str "Choose error: " (ut/format-name sel) " is not a valid choice.")))
+    (when unique?
+      (assert (or (< (count multi-selection) 2)
+                  (apply distinct? multi-selection)) (str "Choose error: All choices must be different: " (->> multi-selection
+                                                                                                               (map ut/format-name)
+                                                                                                               (string/join ", ")))))
 
     (-> game
         pop-effect-stack

@@ -311,6 +311,68 @@
                          :vp-tokens 2}]
               :trash   [mill]})))))
 
+(deftest temple-test
+  (let [temple (assoc temple :id 0)]
+    (testing "Temple"
+      (is (= (-> {:supply  [{:card temple :pile-size 9}]
+                  :players [{:hand    [temple copper copper estate]
+                             :actions 1}]}
+                 (play 0 :temple)
+                 (choose [:copper :estate]))
+             {:supply  [{:card temple :pile-size 9 :tokens [{:token-type :victory-point}]}]
+              :players [{:hand      [copper]
+                         :play-area [temple]
+                         :actions   0
+                         :vp-tokens 1}]
+              :trash   [copper estate]}))
+      (is (= (-> {:supply  [{:card temple :pile-size 9}]
+                  :players [{:hand    [temple copper copper estate]
+                             :actions 1}]}
+                 (play 0 :temple)
+                 (choose [:estate]))
+             {:supply  [{:card temple :pile-size 9 :tokens [{:token-type :victory-point}]}]
+              :players [{:hand      [copper copper]
+                         :play-area [temple]
+                         :actions   0
+                         :vp-tokens 1}]
+              :trash   [estate]}))
+      (is (= (-> {:supply  [{:card temple :pile-size 9}]
+                  :players [{:hand    [temple copper]
+                             :actions 1}]}
+                 (play 0 :temple)
+                 (choose :copper))
+             {:supply  [{:card temple :pile-size 9 :tokens [{:token-type :victory-point}]}]
+              :players [{:play-area [temple]
+                         :actions   0
+                         :vp-tokens 1}]
+              :trash   [copper]}))
+      (is (= (-> {:supply  [{:card temple :pile-size 9}]
+                  :players [{:hand    [temple]
+                             :actions 1}]}
+                 (play 0 :temple))
+             {:supply  [{:card temple :pile-size 9 :tokens [{:token-type :victory-point}]}]
+              :players [{:play-area [temple]
+                         :actions   0
+                         :vp-tokens 1}]}))
+      (is (thrown-with-msg? AssertionError #"Choose error: All choices must be different: Copper, Copper, Estate"
+                            (-> {:supply  [{:card temple :pile-size 9}]
+                                 :players [{:hand    [temple copper copper estate]
+                                            :actions 1}]}
+                                (play 0 :temple)
+                                (choose [:copper :copper :estate]))))
+      (is (= (-> {:supply  [{:card temple :pile-size 9 :tokens [{:token-type :victory-point}
+                                                                {:token-type :victory-point}
+                                                                {:token-type :victory-point}]}]
+                  :players [{:coins 4
+                             :buys  1}]}
+                 (buy-card 0 :temple))
+             {:supply  [{:card temple :pile-size 8}]
+              :players [{:discard   [temple]
+                         :coins     0
+                         :buys      0
+                         :vp-tokens 3}]})))))
+
+;; EVENTS
 
 (deftest advance-test
   (let [legionary (assoc legionary :id 0)]

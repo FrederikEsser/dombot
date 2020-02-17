@@ -1571,7 +1571,7 @@
                          :buys          1
                          :bought-events #{:pilgrimage}
                          :journey-token :face-up}]}))
-      (is (thrown-with-msg? AssertionError #"Pilgrimage error: All choices must be different: Gold, Ranger, Gold"
+      (is (thrown-with-msg? AssertionError #"Choose error: All choices must be different: Gold, Ranger, Gold"
                             (-> {:events  {:pilgrimage pilgrimage}
                                  :supply  [{:card gold :pile-size 28}
                                            {:card ranger :pile-size 9}]

@@ -606,10 +606,6 @@
 
 (defn- pilgrimage-gain [game {:keys [player-no card-name card-names]}]
   (let [card-names (if card-name [card-name] card-names)]
-    (assert (or (< (count card-names) 2)
-                (apply distinct? card-names)) (str "Pilgrimage error: All choices must be different: " (->> card-names
-                                                                                                            (map ut/format-name)
-                                                                                                            (string/join ", "))))
     (cond-> game
             (not-empty card-names) (push-effect-stack {:player-no player-no
                                                        :effects   (->> card-names

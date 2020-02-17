@@ -102,8 +102,8 @@
         vp-tokens (->> tokens
                        (filter (comp #{:victory-point} :token-type))
                        count)]
-      (-> game
-          (push-effect-stack {:player-no player-no
+    (-> game
+        (push-effect-stack {:player-no player-no
                             :effects   (if (>= vp-tokens 4)
                                          [[:trash-from-play-area {:trash-card-id card-id}]
                                           [::take-vp-tokens {:card-name :farmers'-market}]]
@@ -177,12 +177,27 @@
                                          :min     1
                                          :max     1}]]})
 
+(def temple {:name    :temple
+             :set     :empires
+             :types   #{:action :gathering}
+             :cost    4
+             :effects [[:give-victory-points 1]
+                       [:give-choice {:text    "Trash from 1 to 3 differently named cards from your hand."
+                                      :choice  :trash-from-hand
+                                      :options [:player :hand]
+                                      :unique? true
+                                      :min     1
+                                      :max     3}]
+                       [::place-vp-token {:card-name :temple}]]
+             :on-gain [[::take-vp-tokens {:card-name :temple}]]})
+
 (def kingdom-cards [chariot-race
                     charm
                     farmers-market
                     forum
                     legionary
-                    sacrifice])
+                    sacrifice
+                    temple])
 
 
 (defn- advance-trash [game {:keys [player-no card-name]}]
