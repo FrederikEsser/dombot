@@ -481,6 +481,58 @@
               :players [{:coins 0
                          :buys  0}]})))))
 
+(deftest ritual-test
+  (let [curse (assoc curse :id 0)]
+    (testing "Ritual"
+      (is (= (-> {:events  {:ritual ritual}
+                  :supply  [{:card curse :pile-size 10}]
+                  :players [{:hand  [gold]
+                             :coins 4
+                             :buys  1}]}
+                 (buy-event 0 :ritual)
+                 (choose :gold))
+             {:events  {:ritual ritual}
+              :supply  [{:card curse :pile-size 9}]
+              :players [{:discard   [curse]
+                         :coins     0
+                         :buys      0
+                         :vp-tokens 6}]
+              :trash   [gold]}))
+      (is (= (-> {:events  {:ritual ritual}
+                  :supply  [{:card curse :pile-size 10}]
+                  :players [{:hand  [copper]
+                             :coins 4
+                             :buys  1}]}
+                 (buy-event 0 :ritual)
+                 (choose :copper))
+             {:events  {:ritual ritual}
+              :supply  [{:card curse :pile-size 9}]
+              :players [{:discard [curse]
+                         :coins   0
+                         :buys    0}]
+              :trash   [copper]}))
+      (is (= (-> {:events  {:ritual ritual}
+                  :supply  [{:card curse :pile-size 10}]
+                  :players [{:coins 4
+                             :buys  1}]}
+                 (buy-event 0 :ritual))
+             {:events  {:ritual ritual}
+              :supply  [{:card curse :pile-size 9}]
+              :players [{:discard [curse]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:events  {:ritual ritual}
+                  :supply  [{:card curse :pile-size 0}]
+                  :players [{:hand  [gold]
+                             :coins 4
+                             :buys  1}]}
+                 (buy-event 0 :ritual))
+             {:events  {:ritual ritual}
+              :supply  [{:card curse :pile-size 0}]
+              :players [{:hand  [gold]
+                         :coins 0
+                         :buys  0}]})))))
+
 (deftest windfall-test
   (let [gold (assoc gold :id 0)]
     (testing "windfall"

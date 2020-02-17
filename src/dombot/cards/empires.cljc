@@ -217,6 +217,34 @@
                :cost   14
                :on-buy [[::dominate-gain-province]]})
 
+(defn- ritual-trash [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        cost (ut/get-cost game card)]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:trash-from-hand {:card-name card-name}]
+                                                 [:give-victory-points cost]]}))))
+
+(defn- ritual-gain-curse [game {:keys [player-no]}]
+  (let [{:keys [pile-size]} (ut/get-pile-idx game :curse)]
+    (cond-> game
+            (pos? pile-size) (push-effect-stack {:player-no player-no
+                                                 :effects   [[:gain {:card-name :curse}]
+                                                             [:give-choice {:text    "Trash a card from your hand."
+                                                                            :choice  ::ritual-trash
+                                                                            :options [:player :hand]
+                                                                            :min     1
+                                                                            :max     1}]]}))))
+
+(effects/register {::ritual-trash      ritual-trash
+                   ::ritual-gain-curse ritual-gain-curse})
+
+(def ritual {:name   :ritual
+             :set    :empires
+             :type   :event
+             :cost   4
+             :on-buy [[::ritual-gain-curse]]})
+
 (def salt-the-earth {:name   :salt-the-earth
                      :set    :empires
                      :type   :event
@@ -249,5 +277,6 @@
              conquest
              delve
              dominate
+             ritual
              salt-the-earth
              windfall])
