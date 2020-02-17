@@ -202,6 +202,17 @@
             :on-buy [[:give-buys 1]
                      [:gain {:card-name :silver}]]})
 
+(def salt-the-earth {:name   :salt-the-earth
+                     :set    :empires
+                     :type   :event
+                     :cost   4
+                     :on-buy [[:give-victory-points 1]
+                              [:give-choice {:text    "Trash a Victory card from the Supply."
+                                             :choice  :trash-from-supply
+                                             :options [:supply {:type :victory}]
+                                             :min     1
+                                             :max     1}]]})
+
 (defn- windfall-gain-gold [game {:keys [player-no]}]
   (let [deck    (get-in game [:players player-no :deck])
         discard (get-in game [:players player-no :discard])]
@@ -222,4 +233,5 @@
              banquet
              conquest
              delve
+             salt-the-earth
              windfall])

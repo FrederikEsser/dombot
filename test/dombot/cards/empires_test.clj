@@ -424,6 +424,39 @@
                          :coins   0
                          :buys    1}]})))))
 
+(deftest salt-the-earth-test
+  (testing "Salt the Earth"
+    (is (= (-> {:events  {:salt-the-earth salt-the-earth}
+                :supply  (base/supply 2 8)
+                :players [{:coins 4
+                           :buys  1}]}
+               (buy-event 0 :salt-the-earth))
+           {:events       {:salt-the-earth salt-the-earth}
+            :supply       (base/supply 2 8)
+            :players      [{:coins     0
+                            :buys      0
+                            :vp-tokens 1}]
+            :effect-stack [{:text      "Trash a Victory card from the Supply."
+                            :player-no 0
+                            :choice    :trash-from-supply
+                            :source    :supply
+                            :options   [:estate :duchy :province]
+                            :min       1
+                            :max       1}]}))
+    (let [province (assoc province :id 0)]
+      (is (= (-> {:events  {:salt-the-earth salt-the-earth}
+                  :supply  [{:card province :pile-size 8}]
+                  :players [{:coins 4
+                             :buys  1}]}
+                 (buy-event 0 :salt-the-earth)
+                 (choose :province))
+             {:events  {:salt-the-earth salt-the-earth}
+              :supply  [{:card province :pile-size 7}]
+              :players [{:coins     0
+                         :buys      0
+                         :vp-tokens 1}]
+              :trash   [province]})))))
+
 (deftest windfall-test
   (let [gold (assoc gold :id 0)]
     (testing "windfall"
