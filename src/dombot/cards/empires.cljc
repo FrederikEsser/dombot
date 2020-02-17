@@ -202,6 +202,21 @@
             :on-buy [[:give-buys 1]
                      [:gain {:card-name :silver}]]})
 
+(defn- dominate-gain-province [game {:keys [player-no]}]
+  (let [{:keys [pile-size]} (ut/get-pile-idx game :province)]
+    (cond-> game
+            (pos? pile-size) (push-effect-stack {:player-no player-no
+                                                 :effects   [[:gain {:card-name :province}]
+                                                             [:give-victory-points 9]]}))))
+
+(effects/register {::dominate-gain-province dominate-gain-province})
+
+(def dominate {:name   :dominate
+               :set    :empires
+               :type   :event
+               :cost   14
+               :on-buy [[::dominate-gain-province]]})
+
 (def salt-the-earth {:name   :salt-the-earth
                      :set    :empires
                      :type   :event
@@ -233,5 +248,6 @@
              banquet
              conquest
              delve
+             dominate
              salt-the-earth
              windfall])

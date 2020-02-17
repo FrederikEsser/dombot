@@ -457,6 +457,30 @@
                          :vp-tokens 1}]
               :trash   [province]})))))
 
+(deftest dominate-test
+  (let [province (assoc province :id 0)]
+    (testing "Dominate"
+      (is (= (-> {:events  {:dominate dominate}
+                  :supply  [{:card province :pile-size 8}]
+                  :players [{:coins 14
+                             :buys  1}]}
+                 (buy-event 0 :dominate))
+             {:events  {:dominate dominate}
+              :supply  [{:card province :pile-size 7}]
+              :players [{:discard   [province]
+                         :coins     0
+                         :buys      0
+                         :vp-tokens 9}]}))
+      (is (= (-> {:events  {:dominate dominate}
+                  :supply  [{:card province :pile-size 0}]
+                  :players [{:coins 14
+                             :buys  1}]}
+                 (buy-event 0 :dominate))
+             {:events  {:dominate dominate}
+              :supply  [{:card province :pile-size 0}]
+              :players [{:coins 0
+                         :buys  0}]})))))
+
 (deftest windfall-test
   (let [gold (assoc gold :id 0)]
     (testing "windfall"
