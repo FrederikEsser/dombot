@@ -31,15 +31,6 @@
       (->> (map (comp first s/capitalize))
            s/join)))
 
-(defn format-token [{:keys [token-type]}]
-  (str "("
-       (-> token-type
-           name
-           (s/split #"[- ]")
-           (->> (map (comp first s/capitalize))
-                s/join))
-       ")"))
-
 (defn format-types [types]
   (->> types
        (map format-name)

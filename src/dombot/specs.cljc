@@ -5,7 +5,7 @@
 
 (s/def ::name-ui string?)
 
-(s/def ::type #{:curse :victory :treasure :action :attack :reaction :duration :artifact :prize :traveller :reserve
+(s/def ::type #{:curse :victory :treasure :action :attack :reaction :duration :artifact :prize :traveller :reserve :gathering
                 :event :project :night :heirloom :spirit :zombie :fate :boon :doom :hex :state})
 
 (s/def ::types (s/coll-of ::type :distinct true))
@@ -25,7 +25,7 @@
 
 (s/def ::stay-in-play boolean?)
 
-(s/def ::token-type #{:embargo :trade-route})
+(s/def ::token-type #{:embargo :trade-route :victory-point})
 
 (s/def ::token (s/keys :req-un [::token-type]))
 

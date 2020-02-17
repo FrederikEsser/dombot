@@ -138,6 +138,64 @@
                          :coins     0
                          :buys      0}]})))))
 
+(deftest farmers-market-test
+  (let [farmers-market (assoc farmers-market :id 0)]
+    (testing "farmers-market"
+      (is (= (-> {:supply  [{:card farmers-market :pile-size 9}]
+                  :players [{:hand    [farmers-market]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :farmers'-market))
+             {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}]}]
+              :players [{:play-area [farmers-market]
+                         :actions   0
+                         :coins     1
+                         :buys      2}]}))
+      (is (= (-> {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}]}]
+                  :players [{:hand    [farmers-market]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :farmers'-market))
+             {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}
+                                                                    {:token-type :victory-point}]}]
+              :players [{:play-area [farmers-market]
+                         :actions   0
+                         :coins     2
+                         :buys      2}]}))
+      (is (= (-> {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}
+                                                                        {:token-type :victory-point}
+                                                                        {:token-type :victory-point}]}]
+                  :players [{:hand    [farmers-market]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :farmers'-market))
+             {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}
+                                                                    {:token-type :victory-point}
+                                                                    {:token-type :victory-point}
+                                                                    {:token-type :victory-point}]}]
+              :players [{:play-area [farmers-market]
+                         :actions   0
+                         :coins     4
+                         :buys      2}]}))
+      (is (= (-> {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}
+                                                                        {:token-type :victory-point}
+                                                                        {:token-type :victory-point}
+                                                                        {:token-type :victory-point}]}]
+                  :players [{:hand    [farmers-market]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :farmers'-market))
+             {:supply  [{:card farmers-market :pile-size 9}]
+              :players [{:actions   0
+                         :coins     0
+                         :buys      2
+                         :vp-tokens 4}]
+              :trash   [farmers-market]})))))
+
 (deftest forum-test
   (let [forum (assoc forum :id 0)]
     (testing "Forum"

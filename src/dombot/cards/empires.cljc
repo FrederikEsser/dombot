@@ -1,8 +1,27 @@
 (ns dombot.cards.empires
-  (:require [dombot.operations :refer [push-effect-stack give-choice attack-other-players]]
-            [dombot.cards.common :refer []]
+  (:require [dombot.operations :refer [push-effect-stack attack-other-players]]
+            [dombot.cards.common :refer [give-coins]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
+
+(defn- place-vp-token [game {:keys [card-name]}]
+  (let [{:keys [idx]} (ut/get-pile-idx game card-name)]
+    (-> game
+        (update-in [:supply idx :tokens] concat [{:token-type :victory-point}]))))
+
+(defn- take-vp-tokens [game {:keys [player-no card-name]}]
+  (let [{:keys [tokens idx]} (ut/get-pile-idx game card-name)
+        vp-tokens (->> tokens
+                       (filter (comp #{:victory-point} :token-type))
+                       count)]
+    (-> game
+        (update-in [:supply idx :tokens] (partial remove (comp #{:victory-point} :token-type)))
+        (update-in [:supply idx] ut/dissoc-if-empty :tokens)
+        (push-effect-stack {:player-no player-no
+                            :effects   [[:give-victory-points vp-tokens]]}))))
+
+(effects/register {::place-vp-token place-vp-token
+                   ::take-vp-tokens take-vp-tokens})
 
 (defn- chariot-race-compare [{:keys [players] :as game} {:keys [player-no]}]
   (let [next-player (mod (inc player-no) (count players))
@@ -78,6 +97,28 @@
                                      :min     1
                                      :max     1}]]})
 
+(defn- farmers-market-reap [game {:keys [player-no card-id]}]
+  (let [{:keys [tokens]} (ut/get-pile-idx game :farmers'-market)
+        vp-tokens (->> tokens
+                       (filter (comp #{:victory-point} :token-type))
+                       count)]
+      (-> game
+          (push-effect-stack {:player-no player-no
+                            :effects   (if (>= vp-tokens 4)
+                                         [[:trash-from-play-area {:trash-card-id card-id}]
+                                          [::take-vp-tokens {:card-name :farmers'-market}]]
+                                         [[::place-vp-token {:card-name :farmers'-market}]
+                                          [:give-coins (inc vp-tokens)]])}))))
+
+(effects/register {::farmers-market-reap farmers-market-reap})
+
+(def farmers-market {:name    :farmers'-market
+                     :set     :empires
+                     :types   #{:action :gathering}
+                     :cost    3
+                     :effects [[:give-buys 1]
+                               [::farmers-market-reap]]})
+
 (def forum {:name    :forum
             :set     :empires
             :types   #{:action}
@@ -138,6 +179,7 @@
 
 (def kingdom-cards [chariot-race
                     charm
+                    farmers-market
                     forum
                     legionary
                     sacrifice])

@@ -103,7 +103,13 @@
                                          :unique-choosable (select! (or choice-value name))
                                          :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name)))
                                          :buyable (swap! state assoc :game (cmd/buy name)))))}
-           (str (when tokens (str (->> tokens (map ut/format-token) (string/join " ")) " "))
+           (str (when tokens (str (->> tokens
+                                       (map :token-type)
+                                       frequencies
+                                       (map (fn [[token n]]
+                                              (str "(" (when (> n 1) n) (ut/format-name-short token) ")")))
+                                       (string/join " "))
+                                  " "))
                 name-ui
                 (when bane? " - Bane")
                 (when cost (str " ($" cost (when buy-cost (str "/" buy-cost)) ")"))
