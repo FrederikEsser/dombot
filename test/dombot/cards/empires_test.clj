@@ -372,6 +372,64 @@
                          :buys      0
                          :vp-tokens 3}]})))))
 
+(deftest villa-test
+  (let [villa (assoc villa :id 0)]
+    (testing "Villa"
+      (is (= (-> {:players [{:hand    [villa]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :villa))
+             {:players [{:play-area [villa]
+                         :actions   2
+                         :coins     1
+                         :buys      2}]}))
+      (is (= (-> {:supply  [{:card villa :pile-size 10}]
+                  :players [{:actions 0
+                             :coins   4
+                             :buys    1
+                             :phase   :buy}]}
+                 (buy-card 0 :villa))
+             {:supply  [{:card villa :pile-size 9}]
+              :players [{:hand    [villa]
+                         :actions 1
+                         :coins   0
+                         :buys    0
+                         :phase   :action}]}))
+      (is (= (-> {:supply  [{:card villa :pile-size 10}]
+                  :players [{:actions 0
+                             :coins   0
+                             :buys    0
+                             :phase   :out-of-turn}]}
+                 (gain {:player-no 0
+                        :card-name :villa}))
+             {:supply  [{:card villa :pile-size 9}]
+              :players [{:hand    [villa]
+                         :actions 1
+                         :coins   0
+                         :buys    0
+                         :phase   :out-of-turn}]}))
+      (is (= (-> {:current-player 1
+                  :supply         [{:card villa :pile-size 10}]
+                  :players        [{:actions 0
+                                    :coins   0
+                                    :buys    0
+                                    :phase   :out-of-turn}
+                                   {}]}
+                 (gain {:player-no 0
+                        :card-name :villa})
+                 (end-turn 1))
+             {:current-player 0
+              :supply         [{:card villa :pile-size 9}]
+              :players        [{:hand    [villa]
+                                :actions 1
+                                :coins   0
+                                :buys    1
+                                :phase   :action}
+                               {:actions 0
+                                :coins   0
+                                :buys    0}]})))))
+
 ;; EVENTS
 
 (deftest advance-test

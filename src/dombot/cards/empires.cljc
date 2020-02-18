@@ -1,6 +1,6 @@
 (ns dombot.cards.empires
   (:require [dombot.operations :refer [push-effect-stack attack-other-players]]
-            [dombot.cards.common :refer [give-coins]]
+            [dombot.cards.common :refer []]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -191,13 +191,32 @@
                        [::place-vp-token {:card-name :temple}]]
              :on-gain [[::take-vp-tokens {:card-name :temple}]]})
 
+(defn- villa-return-to-action-phase [game {:keys [player-no]}]
+  (let [phase (get-in game [:players player-no :phase])]
+    (cond-> game
+            (= :buy phase) (assoc-in [:players player-no :phase] :action))))
+
+(effects/register {::villa-return-to-action-phase villa-return-to-action-phase})
+
+(def villa {:name    :villa
+            :set     :empires
+            :types   #{:action}
+            :cost    4
+            :effects [[:give-actions 2]
+                      [:give-buys 1]
+                      [:give-coins 1]]
+            :gain-to :hand
+            :on-gain [[:give-actions 1]
+                      [::villa-return-to-action-phase]]})
+
 (def kingdom-cards [chariot-race
                     charm
                     farmers-market
                     forum
                     legionary
                     sacrifice
-                    temple])
+                    temple
+                    villa])
 
 
 (defn- advance-trash [game {:keys [player-no card-name]}]
