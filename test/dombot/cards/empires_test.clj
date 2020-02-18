@@ -430,6 +430,47 @@
                                 :coins   0
                                 :buys    0}]})))))
 
+(deftest wild-hunt-test
+  (let [wild-hunt (assoc wild-hunt :id 0)
+        estate    (assoc estate :id 1)]
+    (testing "Wild Hunt"
+      (is (= (-> {:supply  [{:card wild-hunt :pile-size 9}]
+                  :players [{:hand    [wild-hunt]
+                             :deck    [copper copper copper copper]
+                             :actions 1}]}
+                 (play 0 :wild-hunt)
+                 (choose :cards))
+             {:supply  [{:card wild-hunt :pile-size 9 :tokens [{:token-type :victory-point}]}]
+              :players [{:hand      [copper copper copper]
+                         :play-area [wild-hunt]
+                         :deck      [copper]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}
+                            {:card wild-hunt :pile-size 9 :tokens [{:token-type :victory-point}
+                                                                   {:token-type :victory-point}]}]
+                  :players [{:hand    [wild-hunt]
+                             :actions 1}]}
+                 (play 0 :wild-hunt)
+                 (choose :estate))
+             {:supply  [{:card estate :pile-size 7}
+                        {:card wild-hunt :pile-size 9}]
+              :players [{:play-area [wild-hunt]
+                         :discard   [estate]
+                         :actions   0
+                         :vp-tokens 2}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 0}
+                            {:card wild-hunt :pile-size 9 :tokens [{:token-type :victory-point}
+                                                                   {:token-type :victory-point}]}]
+                  :players [{:hand    [wild-hunt]
+                             :actions 1}]}
+                 (play 0 :wild-hunt)
+                 (choose :estate))
+             {:supply  [{:card estate :pile-size 0}
+                        {:card wild-hunt :pile-size 9 :tokens [{:token-type :victory-point}
+                                                               {:token-type :victory-point}]}]
+              :players [{:play-area [wild-hunt]
+                         :actions   0}]})))))
+
 ;; EVENTS
 
 (deftest advance-test

@@ -209,6 +209,31 @@
             :on-gain [[:give-actions 1]
                       [::villa-return-to-action-phase]]})
 
+(defn- wild-hunt-choice [game {:keys [player-no choice]}]
+  (case choice
+    :cards (push-effect-stack game {:player-no player-no
+                                    :effects   [[:draw 3]
+                                                [::place-vp-token {:card-name :wild-hunt}]]})
+    :estate (let [{:keys [pile-size]} (ut/get-pile-idx game :estate)]
+              (cond-> game
+                      (pos? pile-size) (push-effect-stack {:player-no player-no
+                                                           :effects   [[:gain {:card-name :estate}]
+                                                                       [::take-vp-tokens {:card-name :wild-hunt}]]})))))
+
+(effects/register {::wild-hunt-choice wild-hunt-choice})
+
+(def wild-hunt {:name    :wild-hunt
+                :set     :empires
+                :types   #{:action :gathering}
+                :cost    5
+                :effects [[:give-choice {:text    "Choose one:"
+                                         :choice  ::wild-hunt-choice
+                                         :options [:special
+                                                   {:option :cards :text "+3 Cards and add 1VP to the Wild Hunt Supply pile"}
+                                                   {:option :estate :text "Gain an Estate and the VP from the pile"}]
+                                         :min     1
+                                         :max     1}]]})
+
 (def kingdom-cards [chariot-race
                     charm
                     farmers-market
@@ -216,7 +241,8 @@
                     legionary
                     sacrifice
                     temple
-                    villa])
+                    villa
+                    wild-hunt])
 
 
 (defn- advance-trash [game {:keys [player-no card-name]}]
