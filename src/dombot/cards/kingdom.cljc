@@ -12,7 +12,8 @@
             [dombot.cards.nocturne :as nocturne]
             [dombot.cards.renaissance :as renaissance]
             [dombot.cards.promos :as promos]
-            [dombot.utils :as ut]))
+            [dombot.utils :as ut]
+            [dombot.effects :as effects]))
 
 (def kingdom-cards (concat
                      dominion/kingdom-cards
@@ -46,12 +47,25 @@
         (update-in kingdom [bane-idx] assoc :bane? true))
       kingdom)))
 
-(defn create-kingdom-supply [kingdom victory-pile-size]
-  (->> kingdom
-       (sort-by (juxt :cost :name))
-       (map (fn [{:keys [types] :as card}]
-              (let [pile-size (if (:victory types) victory-pile-size 10)]
-                {:card card :pile-size pile-size})))))
+(defn- get-victory-pile-size [number-of-players]
+  (case number-of-players
+    2 8
+    3 12
+    4 12))
+
+(defn create-kingdom-supply [kingdom number-of-players]
+  (let [victory-pile-size (case number-of-players
+                            2 8
+                            3 12
+                            4 12)]
+    (->> kingdom
+         (sort-by (juxt :cost :name))
+         (map (fn [{:keys [types split-pile] :as card}]
+                (if split-pile
+                  (let [pile-fn (effects/get-effect split-pile)]
+                    (pile-fn number-of-players))
+                  (let [pile-size (if (:victory types) victory-pile-size 10)]
+                    {:card card :pile-size pile-size})))))))
 
 (def landscapes (concat
                   adventures/events
@@ -95,10 +109,6 @@
 
 (defn create-game [player-names mode sets]
   (let [number-of-players (count player-names)
-        victory-pile-size (case number-of-players
-                            2 8
-                            3 12
-                            4 12)
         starting-player   (rand-int number-of-players)
         kingdom           (random-kingdom sets #{})
         landscape         (->> kingdom
@@ -127,9 +137,9 @@
     (ut/reset-ids!)
     (as-> (merge
             {:mode                  mode
-             :supply                (vec (concat (base/supply number-of-players victory-pile-size
+             :supply                (vec (concat (base/supply number-of-players (get-victory-pile-size number-of-players)
                                                               {:prosperity? (-> kingdom first :set #{:prosperity})})
-                                                 (create-kingdom-supply kingdom victory-pile-size)))
+                                                 (create-kingdom-supply kingdom number-of-players)))
              :players               (vec (map create-player player-names))
              :track-gained-cards?   true
              :track-played-actions? true

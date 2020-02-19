@@ -1,6 +1,6 @@
 (ns dombot.cards.empires
   (:require [dombot.operations :refer [push-effect-stack attack-other-players]]
-            [dombot.cards.common :refer []]
+            [dombot.cards.common :refer [give-victory-points]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -150,6 +150,49 @@
                                          :options [:player :hand {:name :gold}]
                                          :max     1}]]})
 
+(defn- patrician-take-card [game {:keys [player-no]}]
+  (let [revealed (get-in game [:players player-no :revealed])
+        {:keys [name] :as card} (first revealed)
+        cost     (ut/get-cost game card)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (if (and card (>= cost 5))
+                                          [[:take-from-revealed {:card-name name}]]
+                                          [[:topdeck-all-revealed]])})))
+
+(def patrician {:name       :patrician
+                :set        :empires
+                :types      #{:action}
+                :cost       2
+                :effects    [[:draw 1]
+                             [:give-actions 1]
+                             [:reveal-from-deck 1]
+                             [::patrician-take-card]]
+                :split-pile ::patrician-emporium-pile})
+
+(defn- emporium-on-gain [game {:keys [player-no]}]
+  (let [actions-in-play (->> (get-in game [:players player-no :play-area])
+                             (filter (comp :action (partial ut/get-types game)))
+                             count)]
+    (cond-> game
+            (>= actions-in-play 5) (give-victory-points {:player-no player-no :arg 2}))))
+
+(def emporium {:name    :emporium
+               :set     :empires
+               :types   #{:action}
+               :cost    5
+               :effects [[:draw 1]
+                         [:give-actions 1]
+                         [:give-coins 1]]
+               :on-gain [[::emporium-on-gain]]})
+
+(defn patrician-emporium-pile [player-count]
+  {:split-pile [{:card patrician :pile-size 5}
+                {:card emporium :pile-size 5}]})
+
+(effects/register {::patrician-take-card     patrician-take-card
+                   ::emporium-on-gain        emporium-on-gain
+                   ::patrician-emporium-pile patrician-emporium-pile})
+
 (defn- sacrifice-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         types (ut/get-types game card)]
@@ -239,6 +282,7 @@
                     farmers-market
                     forum
                     legionary
+                    patrician
                     sacrifice
                     temple
                     villa

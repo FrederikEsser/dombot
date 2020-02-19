@@ -7,6 +7,7 @@
             [dombot.cards.empires :as empires :refer :all]
             [dombot.cards.dominion :refer [market]]
             [dombot.cards.intrigue :refer [mill]]
+            [dombot.cards.seaside :refer [ambassador embargo]]
             [dombot.cards.renaissance :refer [patron]]
             [dombot.utils :as ut]))
 
@@ -256,6 +257,272 @@
                          :coins     3}
                         {:hand [copper copper copper estate estate]
                          :deck [estate copper]}]})))))
+
+(deftest split-pile-test
+  (let [patrician (assoc patrician :id 0)
+        emporium  (assoc emporium :id 1)]
+    (testing "Split piles"
+      (testing "gaining"
+        (is (= (-> {:supply  [{:split-pile [{:card patrician :pile-size 5}
+                                            {:card emporium :pile-size 5}]}]
+                    :players [{}]}
+                   (gain {:player-no 0 :card-name :patrician}))
+               {:supply  [{:split-pile [{:card patrician :pile-size 4}
+                                        {:card emporium :pile-size 5}]}]
+                :players [{:discard [patrician]}]}))
+        (is (= (-> {:supply  [{:split-pile [{:card patrician :pile-size 0}
+                                            {:card emporium :pile-size 5}]}]
+                    :players [{}]}
+                   (gain {:player-no 0 :card-name :patrician}))
+               {:supply  [{:split-pile [{:card patrician :pile-size 0}
+                                        {:card emporium :pile-size 5}]}]
+                :players [{}]}))
+        (is (= (-> {:supply  [{:split-pile [{:card patrician :pile-size 1}
+                                            {:card emporium :pile-size 5}]}]
+                    :players [{}]}
+                   (gain {:player-no 0 :card-name :emporium}))
+               {:supply  [{:split-pile [{:card patrician :pile-size 1}
+                                        {:card emporium :pile-size 5}]}]
+                :players [{}]}))
+        (is (= (-> {:supply  [{:split-pile [{:card patrician :pile-size 0}
+                                            {:card emporium :pile-size 5}]}]
+                    :players [{}]}
+                   (gain {:player-no 0 :card-name :emporium}))
+               {:supply  [{:split-pile [{:card patrician :pile-size 0}
+                                        {:card emporium :pile-size 4}]}]
+                :players [{:discard [emporium]}]})))
+      (testing "empty pile"
+        (is (= (-> {:supply [{:split-pile [{:card patrician :pile-size 5}
+                                           {:card emporium :pile-size 5}]}]}
+                   (ut/empty-supply-piles))
+               0))
+        (is (= (-> {:supply [{:split-pile [{:card patrician :pile-size 0}
+                                           {:card emporium :pile-size 5}]}]}
+                   (ut/empty-supply-piles))
+               0))
+        (is (= (-> {:supply [{:split-pile [{:card patrician :pile-size 0}
+                                           {:card emporium :pile-size 0}]}]}
+                   (ut/empty-supply-piles))
+               1))
+        (is (= (-> {:supply [{:split-pile [{:card patrician :pile-size 1}
+                                           {:card emporium :pile-size 0}]}]}
+                   (ut/empty-supply-piles))
+               0)))
+      (testing "choosing"
+        (is (= (-> {:supply [{:split-pile [{:card patrician :pile-size 5}
+                                           {:card emporium :pile-size 5}]}]}
+                   (ut/options-from-supply 0 nil {:max-cost 4}))
+               [:patrician]))
+        (is (= (-> {:supply [{:split-pile [{:card patrician :pile-size 0}
+                                           {:card emporium :pile-size 5}]}]}
+                   (ut/options-from-supply 0 nil {:max-cost 4}))
+               []))
+        (is (= (-> {:supply [{:split-pile [{:card patrician :pile-size 5}
+                                           {:card emporium :pile-size 5}]}]}
+                   (ut/options-from-supply 0 nil {:max-cost 5}))
+               [:patrician]))
+        (is (= (-> {:supply [{:split-pile [{:card patrician :pile-size 0}
+                                           {:card emporium :pile-size 5}]}]}
+                   (ut/options-from-supply 0 nil {:max-cost 5}))
+               [:emporium])))
+      (testing "with tokens"
+        (let [embargo (assoc embargo :id 2)
+              curse   (assoc curse :id 3)]
+          (is (= (-> {:supply  [{:split-pile [{:card patrician :pile-size 5}
+                                              {:card emporium :pile-size 5}]}]
+                      :players [{:hand    [embargo]
+                                 :actions 1
+                                 :coins   0}]}
+                     (play 0 :embargo)
+                     (choose :patrician))
+                 {:supply  [{:split-pile [{:card patrician :pile-size 5}
+                                          {:card emporium :pile-size 5}]
+                             :tokens     [{:token-type :embargo
+                                           :on-buy     [[:gain {:card-name :curse}]]}]}]
+                  :players [{:actions 0
+                             :coins   2}]
+                  :trash   [embargo]}))
+          (is (= (-> {:supply  [{:card curse :pile-size 10}
+                                {:split-pile [{:card patrician :pile-size 5}
+                                              {:card emporium :pile-size 5}]
+                                 :tokens     [{:token-type :embargo
+                                               :on-buy     [[:gain {:card-name :curse}]]}]}]
+                      :players [{:coins 2
+                                 :buys  1}]}
+                     (buy-card 0 :patrician))
+                 {:supply  [{:card curse :pile-size 9}
+                            {:split-pile [{:card patrician :pile-size 4}
+                                          {:card emporium :pile-size 5}]
+                             :tokens     [{:token-type :embargo
+                                           :on-buy     [[:gain {:card-name :curse}]]}]}]
+                  :players [{:discard [curse patrician]
+                             :coins   0
+                             :buys    0}]}))
+          (is (= (-> {:supply  [{:card curse :pile-size 10}
+                                {:split-pile [{:card patrician :pile-size 0}
+                                              {:card emporium :pile-size 5}]
+                                 :tokens     [{:token-type :embargo
+                                               :on-buy     [[:gain {:card-name :curse}]]}]}]
+                      :players [{:coins 5
+                                 :buys  1}]}
+                     (buy-card 0 :emporium))
+                 {:supply  [{:card curse :pile-size 9}
+                            {:split-pile [{:card patrician :pile-size 0}
+                                          {:card emporium :pile-size 4}]
+                             :tokens     [{:token-type :embargo
+                                           :on-buy     [[:gain {:card-name :curse}]]}]}]
+                  :players [{:discard [curse emporium]
+                             :coins   0
+                             :buys    0}]}))))
+      (testing "returning split-pile to supply"
+        (let [ambassador (assoc ambassador :id 2)]
+          (is (= (-> {:supply  [{:split-pile [{:card patrician :pile-size 4}
+                                              {:card emporium :pile-size 5}]}]
+                      :players [{:hand    [ambassador patrician]
+                                 :actions 1}
+                                {}]}
+                     (play 0 :ambassador)
+                     (choose :patrician)
+                     (choose :patrician))
+                 {:supply  [{:split-pile [{:card patrician :pile-size 4}
+                                          {:card emporium :pile-size 5}]}]
+                  :players [{:play-area [ambassador]
+                             :actions   0}
+                            {:discard [patrician]}]}))
+          (is (= (-> {:supply  [{:split-pile [{:card patrician :pile-size 0}
+                                              {:card emporium :pile-size 3}]}]
+                      :players [{:hand    [ambassador patrician patrician]
+                                 :actions 1}
+                                {}]}
+                     (play 0 :ambassador)
+                     (choose :patrician)
+                     (choose [:patrician :patrician]))
+                 {:supply  [{:split-pile [{:card patrician :pile-size 1}
+                                          {:card emporium :pile-size 3}]}]
+                  :players [{:play-area [ambassador]
+                             :actions   0}
+                            {:discard [patrician]}]}))
+          (is (= (-> {:supply  [{:split-pile [{:card patrician :pile-size 0}
+                                              {:card emporium :pile-size 3}]}]
+                      :players [{:hand    [ambassador emporium emporium]
+                                 :actions 1}
+                                {}]}
+                     (play 0 :ambassador)
+                     (choose :emporium)
+                     (choose [:emporium :emporium]))
+                 {:supply  [{:split-pile [{:card patrician :pile-size 0}
+                                          {:card emporium :pile-size 4}]}]
+                  :players [{:play-area [ambassador]
+                             :actions   0}
+                            {:discard [emporium]}]}))
+          (ut/reset-ids!)
+          (is (= (-> {:supply  [{:split-pile [{:card patrician :pile-size 1}
+                                              {:card emporium :pile-size 3}]}]
+                      :players [{:hand    [ambassador emporium emporium]
+                                 :actions 1}
+                                {}]}
+                     (play 0 :ambassador)
+                     (choose :emporium)
+                     (choose :emporium))
+                 {:supply  [{:split-pile [{:card patrician :pile-size 1}
+                                          {:card emporium :pile-size 3}]}]
+                  :players [{:hand      [emporium]
+                             :play-area [ambassador]
+                             :actions   0}
+                            {:discard [emporium]}]}))
+          (ut/reset-ids!)
+          (is (= (-> {:supply  [{:split-pile [{:card patrician :pile-size 1}
+                                              {:card emporium :pile-size 3}]}]
+                      :players [{:hand    [ambassador emporium emporium]
+                                 :actions 1}
+                                {}]}
+                     (play 0 :ambassador)
+                     (choose :emporium)
+                     (choose [:emporium :emporium]))
+                 {:supply  [{:split-pile [{:card empires/emporium :pile-size 1}
+                                          {:card patrician :pile-size 1}
+                                          {:card emporium :pile-size 3}]}]
+                  :players [{:play-area [ambassador]
+                             :actions   0}
+                            {:discard [emporium]}]})))))))
+
+(deftest patrician-test
+  (let [patrician (assoc patrician :id 0)]
+    (testing "Patrician"
+      (is (= (-> {:players [{:hand    [patrician]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :patrician))
+             {:players [{:hand           [copper]
+                         :play-area      [patrician]
+                         :deck           [copper]
+                         :revealed-cards {:deck 1}
+                         :actions        1}]}))
+      (is (= (-> {:players [{:hand    [patrician]
+                             :deck    [copper emporium]
+                             :actions 1}]}
+                 (play 0 :patrician))
+             {:players [{:hand           [copper emporium]
+                         :play-area      [patrician]
+                         :revealed-cards {:hand 1}
+                         :actions        1}]}))
+      (is (= (-> {:players [{:hand    [patrician]
+                             :deck    [copper]
+                             :actions 1}]}
+                 (play 0 :patrician))
+             {:players [{:hand      [copper]
+                         :play-area [patrician]
+                         :actions   1}]})))))
+
+(deftest emporium-test
+  (let [emporium (assoc emporium :id 0)]
+    (testing "emporium"
+      (is (= (-> {:players [{:hand    [emporium]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :emporium))
+             {:players [{:hand      [copper]
+                         :play-area [emporium]
+                         :deck      [copper]
+                         :actions   1
+                         :coins     1}]}))
+      (testing "on buy"
+        (is (= (-> {:supply  [{:split-pile [{:card patrician :pile-size 0}
+                                            {:card emporium :pile-size 5}]}]
+                    :players [{:coins 5
+                               :buys  1}]}
+                   (buy-card 0 :emporium))
+               {:supply  [{:split-pile [{:card patrician :pile-size 0}
+                                        {:card emporium :pile-size 4}]}]
+                :players [{:discard [emporium]
+                           :coins   0
+                           :buys    0}]}))
+        (is (= (-> {:supply  [{:split-pile [{:card patrician :pile-size 0}
+                                            {:card emporium :pile-size 5}]}]
+                    :players [{:play-area [patrician patrician patrician patrician gold]
+                               :coins     5
+                               :buys      1}]}
+                   (buy-card 0 :emporium))
+               {:supply  [{:split-pile [{:card patrician :pile-size 0}
+                                        {:card emporium :pile-size 4}]}]
+                :players [{:play-area [patrician patrician patrician patrician gold]
+                           :discard   [emporium]
+                           :coins     0
+                           :buys      0}]}))
+        (is (= (-> {:supply  [{:split-pile [{:card patrician :pile-size 0}
+                                            {:card emporium :pile-size 5}]}]
+                    :players [{:play-area [patrician patrician patrician patrician patrician]
+                               :coins     5
+                               :buys      1}]}
+                   (buy-card 0 :emporium))
+               {:supply  [{:split-pile [{:card patrician :pile-size 0}
+                                        {:card emporium :pile-size 4}]}]
+                :players [{:play-area [patrician patrician patrician patrician patrician]
+                           :discard   [emporium]
+                           :coins     0
+                           :buys      0
+                           :vp-tokens 2}]}))))))
 
 (deftest sacrifice-test
   (let [sacrifice (assoc sacrifice :id 0)]

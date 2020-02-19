@@ -82,15 +82,73 @@
 (defn count-as-coll [data]
   (-> data ensure-coll count))
 
+(defn access-top-card [{:keys [split-pile] :as pile}]
+  (if split-pile
+    (merge (or (->> split-pile
+                    (filter (comp pos? :pile-size))
+                    first)
+               (last split-pile))
+           (select-keys pile [:tokens]))
+    pile))
+
+(defn access-card [card-name {:keys [split-pile] :as pile}]
+  (if split-pile
+    (merge (or (->> split-pile
+                    (filter (comp #{card-name} :name :card))
+                    first)
+               (last split-pile))
+           (select-keys pile [:tokens]))
+    pile))
+
+(defn remove-top-card [{:keys [split-pile] :as pile}]
+  (if split-pile
+    (let [top-idx          (->> split-pile
+                                (keep-indexed (fn [idx {:keys [pile-size]}]
+                                                (when (pos? pile-size)
+                                                  idx)))
+                                first)
+          delete-sub-pile? (and (not (->> split-pile
+                                          (map (comp :name :card))
+                                          (apply distinct?)))
+                                (= 1 (get-in split-pile [top-idx :pile-size])))]
+      (if delete-sub-pile?
+        (update pile :split-pile (comp vec (partial drop 1)))
+        (update-in pile [:split-pile top-idx :pile-size] dec)))
+    (update pile :pile-size dec)))
+
+(defn add-top-card [{:keys [split-pile] :as pile} {:keys [name] :as card}]
+  (if split-pile
+    (let [idx               (->> split-pile
+                                 (keep-indexed (fn [idx sub-pile]
+                                                 (when (= name (get-in sub-pile [:card :name]))
+                                                   idx)))
+                                 first)
+          sub-pile-blocked? (->> split-pile
+                                 (take idx)
+                                 (some (comp pos? :pile-size)))]
+      (if sub-pile-blocked?
+        (update pile :split-pile (fn [split-pile]
+                                   (vec (concat [{:card      (dissoc card :id)
+                                                  :pile-size 1}]
+                                                split-pile))))
+        (update-in pile [:split-pile idx :pile-size] inc)))
+    (update pile :pile-size inc)))
+
 (defn get-pile-idx
   ([game card-name]
    (get-pile-idx game :supply card-name))
   ([game from card-name]
-   (->> game
-        from
-        (keep-indexed (fn [idx pile]
-                        (when ((comp #{card-name} :name :card) pile) (merge pile {:idx idx}))))
-        first)))
+   (get-pile-idx game from card-name #{}))
+  ([game from card-name flags]
+   (let [handle-split-piles (if (flags :include-empty-split-piles)
+                              (partial access-card card-name)
+                              access-top-card)]
+     (->> game
+          from
+          (map handle-split-piles)
+          (keep-indexed (fn [idx pile]
+                          (when ((comp #{card-name} :name :card) pile) (merge pile {:idx idx}))))
+          first))))
 
 (defn get-card-idx [game path criteria]
   (->> (get-in game path)
@@ -235,7 +293,7 @@
 (effects/register-options {:player options-from-player})
 
 (defn options-from-supply [{:keys [supply] :as game} player-no card-id & [{:keys [max-cost cost type types not-type names not-names all]}]]
-  (cond->> supply
+  (cond->> (map access-top-card supply)
            max-cost (filter (comp (partial >= max-cost) (partial get-cost game) :card))
            cost (filter (comp #{cost} (partial get-cost game) :card))
            type (filter (comp type (partial get-types game) :card))
@@ -323,6 +381,7 @@
 
 (defn empty-supply-piles [{:keys [supply] :as game}]
   (->> supply
+       (map access-top-card)
        (filter (comp zero? :pile-size))
        count))
 

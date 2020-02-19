@@ -347,7 +347,7 @@
 
 (defn- remove-card [game from-path idx]
   (if (#{:supply :extra-cards} from-path)
-    (update-in game [from-path idx :pile-size] dec)
+    (update-in game [from-path idx] ut/remove-top-card)
     (update-in game from-path ut/vec-remove idx)))
 
 (defn- add-card [game to-path to-position {:keys [name] :as card}]
@@ -362,8 +362,8 @@
                                                                 (subvec coll to-position (count coll)))
                                  :else (concat coll [card])))))]
     (if (#{:supply :extra-cards} to-path)
-      (let [{:keys [idx]} (ut/get-pile-idx game to-path name)]
-        (update-in game [to-path idx :pile-size] inc))
+      (let [{:keys [idx]} (ut/get-pile-idx game to-path name #{:include-empty-split-piles})]
+        (update-in game [to-path idx] ut/add-top-card card))
       (update-in game to-path add-card-to-coll card))))
 
 (defn get-on-gain-effects [game player-no card-name]

@@ -37,7 +37,7 @@
 (defn- butcher-trash [game {:keys [player-no card-name]}]
   (if card-name
     (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-          cost (ut/get-cost game card)
+          cost    (ut/get-cost game card)
           coffers (or (get-in game [:players player-no :coffers]) 0)]
       (push-effect-stack game {:player-no player-no
                                :effects   [[:trash-from-hand {:card-name card-name}]
@@ -136,13 +136,12 @@
 (defn- herald-play-action [game {:keys [player-no]}]
   (let [revealed (get-in game [:players player-no :revealed])
         {:keys [name] :as card} (first revealed)
-        types (ut/get-types game card)]
-    (assert (= 1 (count revealed)) "Herald error: Number of revealed cards is not 1.")
+        types    (ut/get-types game card)]
     (push-effect-stack game {:player-no player-no
-                             :effects   (if (:action types)
+                             :effects   (if (and card (:action types))
                                           [[:play-from-revealed {:card-name name}]
                                            [:card-effect {:card card}]]
-                                          [[:topdeck-from-revealed {:card-name name}]])})))
+                                          [[:topdeck-all-revealed]])})))
 
 (defn- herald-overpay [game {:keys [player-no amount]}]
   (give-choice game {:player-no player-no
@@ -231,20 +230,14 @@
                                      :options [:player :hand {:type :treasure}]
                                      :max     1}]]})
 
-(defn- soothsayer-draw [game {:keys [player-no previous-curse-count]}]
-  (let [{curse-count :pile-size} (ut/get-pile-idx game :curse)]
-    (cond-> game
-            (not= curse-count previous-curse-count) (draw {:player-no player-no
-                                                           :arg       1}))))
-
 (defn- soothsayer-attack [game {:keys [player-no]}]
-  (let [{curse-count :pile-size} (ut/get-pile-idx game :curse)]
-    (push-effect-stack game {:player-no player-no
-                             :effects   [[:gain {:card-name :curse}]
-                                         [::soothsayer-draw {:previous-curse-count curse-count}]]})))
+  (let [{:keys [pile-size]} (ut/get-pile-idx game :curse)]
+    (cond-> game
+            (pos? pile-size) (push-effect-stack {:player-no player-no
+                                                 :effects   [[:gain {:card-name :curse}]
+                                                             [:draw 1]]}))))
 
-(effects/register {::soothsayer-draw   soothsayer-draw
-                   ::soothsayer-attack soothsayer-attack})
+(effects/register {::soothsayer-attack soothsayer-attack})
 
 (def soothsayer {:name    :soothsayer
                  :set     :guilds
@@ -255,7 +248,7 @@
 
 (defn- stonemason-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        max-cost (dec (ut/get-cost game card))
+        max-cost  (dec (ut/get-cost game card))
         gain-card [:give-choice {:text    (str "Gain 2 cards each costing up to $" max-cost ".")
                                  :choice  :gain
                                  :options [:supply {:max-cost max-cost}]

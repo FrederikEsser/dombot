@@ -60,7 +60,7 @@
 (deftest butcher-test
   (let [estate (assoc estate :id 0)
         silver (assoc silver :id 1)
-        duchy (assoc duchy :id 2)]
+        duchy  (assoc duchy :id 2)]
     (testing "Butcher"
       (is (= (-> {:players [{:hand    [butcher]
                              :actions 1}]}
@@ -268,6 +268,13 @@
                          :actions        2
                          :buys           2
                          :coffers        1}]}))
+      (is (= (-> {:players [{:hand    [herald]
+                             :deck    [copper]
+                             :actions 1}]}
+                 (play 0 :herald))
+             {:players [{:hand      [copper]
+                         :play-area [herald]
+                         :actions   1}]}))
       (testing "overpay"
         (is (= (-> {:supply  [{:card herald :pile-size 10}]
                     :players [{:deck  [copper]
@@ -363,7 +370,7 @@
 
 (deftest masterpiece-test
   (let [masterpiece (assoc masterpiece :id 0)
-        silver (assoc silver :id 1)]
+        silver      (assoc silver :id 1)]
     (testing "Masterpiece"
       (is (= (-> {:players [{:hand  [masterpiece]
                              :coins 0}]}
@@ -537,7 +544,7 @@
                        :coffers   1}]}))))
 
 (deftest soothsayer-test
-  (let [gold (assoc gold :id 0)
+  (let [gold  (assoc gold :id 0)
         curse (assoc curse :id 1)]
     (testing "Soothsayer"
       (is (= (-> {:supply  [{:card curse :pile-size 10}
@@ -585,7 +592,7 @@
 
 (deftest stonemason-test
   (let [stonemason (assoc stonemason :id 0)
-        baker (assoc baker :id 1)]
+        baker      (assoc baker :id 1)]
     (testing "Stonemason"
       (is (= (-> {:players [{:hand    [stonemason copper]
                              :actions 1}]}

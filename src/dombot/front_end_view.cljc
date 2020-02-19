@@ -23,6 +23,7 @@
                     choice                               :choice
                     :as                                  game}]
   (->> supply
+       (map ut/access-top-card)
        (map (fn [{{:keys [name bane?] :as card} :card
                   number-of-cards               :pile-size
                   :keys                         [tokens]}]
