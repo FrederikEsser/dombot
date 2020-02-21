@@ -681,6 +681,128 @@
                          :vp-tokens 2}]
               :trash   [mill]})))))
 
+(deftest settlers-test
+  (let [settlers (assoc settlers :id 0)]
+    (testing "Settlers"
+      (is (= (-> {:players [{:hand    [settlers]
+                             :deck    [estate estate]
+                             :actions 1}]}
+                 (play 0 :settlers))
+             {:players [{:hand      [estate]
+                         :play-area [settlers]
+                         :deck      [estate]
+                         :actions   1}]}))
+      (is (= (-> {:players [{:hand    [settlers]
+                             :deck    [estate estate]
+                             :discard [copper]
+                             :actions 1}]}
+                 (play 0 :settlers)
+                 (choose :copper))
+             {:players [{:hand      [estate copper]
+                         :play-area [settlers]
+                         :deck      [estate]
+                         :actions   1}]}))
+      (is (= (-> {:players [{:hand    [settlers]
+                             :deck    [estate estate]
+                             :discard [copper]
+                             :actions 1}]}
+                 (play 0 :settlers)
+                 (choose nil))
+             {:players [{:hand      [estate]
+                         :play-area [settlers]
+                         :deck      [estate]
+                         :discard   [copper]
+                         :actions   1}]}))
+      (is (= (-> {:players [{:hand    [settlers]
+                             :discard [copper copper]
+                             :actions 1}]}
+                 (play 0 :settlers))
+             {:players [{:hand      [copper]
+                         :play-area [settlers]
+                         :deck      [copper]
+                         :actions   1}]}))
+      (is (= (-> {:players [{:hand    [settlers]
+                             :deck    [estate]
+                             :discard [silver copper gold]
+                             :actions 1}]}
+                 (play 0 :settlers)
+                 (choose :copper))
+             {:players [{:hand      [estate copper]
+                         :play-area [settlers]
+                         :discard   [silver gold]
+                         :actions   1}]}))
+      (is (= (-> {:players [{:hand    [settlers]
+                             :deck    [estate]
+                             :discard [silver gold]
+                             :actions 1}]}
+                 (play 0 :settlers))
+             {:players [{:hand           [estate]
+                         :play-area      [settlers]
+                         :discard        [silver gold]
+                         :actions        1
+                         :revealed-cards {:discard 2}}]})))))
+
+(deftest bustling-village-test
+  (let [bustling-village (assoc bustling-village :id 0)]
+    (testing "Bustling Village"
+      (is (= (-> {:players [{:hand    [bustling-village]
+                             :deck    [estate estate]
+                             :actions 1}]}
+                 (play 0 :bustling-village))
+             {:players [{:hand      [estate]
+                         :play-area [bustling-village]
+                         :deck      [estate]
+                         :actions   3}]}))
+      (is (= (-> {:players [{:hand    [bustling-village]
+                             :deck    [estate estate]
+                             :discard [settlers]
+                             :actions 1}]}
+                 (play 0 :bustling-village)
+                 (choose :settlers))
+             {:players [{:hand      [estate settlers]
+                         :play-area [bustling-village]
+                         :deck      [estate]
+                         :actions   3}]}))
+      (is (= (-> {:players [{:hand    [bustling-village]
+                             :deck    [estate estate]
+                             :discard [settlers]
+                             :actions 1}]}
+                 (play 0 :bustling-village)
+                 (choose nil))
+             {:players [{:hand      [estate]
+                         :play-area [bustling-village]
+                         :deck      [estate]
+                         :discard   [settlers]
+                         :actions   3}]}))
+      (is (= (-> {:players [{:hand    [bustling-village]
+                             :discard [settlers settlers]
+                             :actions 1}]}
+                 (play 0 :bustling-village))
+             {:players [{:hand      [settlers]
+                         :play-area [bustling-village]
+                         :deck      [settlers]
+                         :actions   3}]}))
+      (is (= (-> {:players [{:hand    [bustling-village]
+                             :deck    [estate]
+                             :discard [silver settlers gold]
+                             :actions 1}]}
+                 (play 0 :bustling-village)
+                 (choose :settlers))
+             {:players [{:hand      [estate settlers]
+                         :play-area [bustling-village]
+                         :discard   [silver gold]
+                         :actions   3}]}))
+      (is (= (-> {:players [{:hand    [bustling-village]
+                             :deck    [estate]
+                             :discard [silver gold]
+                             :actions 1}]}
+                 (play 0 :bustling-village))
+             {:players [{:hand           [estate]
+                         :play-area      [bustling-village]
+                         :discard        [silver gold]
+                         :actions        3
+                         :revealed-cards {:discard 2}}]})))))
+
 (deftest temple-test
   (let [temple (assoc temple :id 0)]
     (testing "Temple"

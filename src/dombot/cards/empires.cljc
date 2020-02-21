@@ -285,6 +285,35 @@
                                          :min     1
                                          :max     1}]]})
 
+(def settlers {:name       :settlers
+               :set        :empires
+               :types      #{:action}
+               :cost       2
+               :effects    [[:draw 1]
+                            [:give-actions 1]
+                            [:give-choice {:text    "You may put a Copper from your discard pile into your hand."
+                                           :choice  :take-from-discard
+                                           :options [:player :discard {:name :copper}]
+                                           :max     1}]]
+               :split-pile ::settlers-bustling-village-pile})
+
+(def bustling-village {:name    :bustling-village
+                       :set     :empires
+                       :types   #{:action}
+                       :cost    5
+                       :effects [[:draw 1]
+                                 [:give-actions 3]
+                                 [:give-choice {:text    "You may put a Settlers from your discard pile into your hand."
+                                                :choice  :take-from-discard
+                                                :options [:player :discard {:name :settlers}]
+                                                :max     1}]]})
+
+(defn settlers-bustling-village-pile [player-count]
+  {:split-pile [{:card settlers :pile-size 5}
+                {:card bustling-village :pile-size 5}]})
+
+(effects/register {::settlers-bustling-village-pile settlers-bustling-village-pile})
+
 (def temple {:name    :temple
              :set     :empires
              :types   #{:action :gathering}
@@ -350,6 +379,7 @@
                     legionary
                     patrician
                     sacrifice
+                    settlers
                     temple
                     villa
                     wild-hunt])
