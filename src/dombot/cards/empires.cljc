@@ -1,6 +1,6 @@
 (ns dombot.cards.empires
   (:require [dombot.operations :refer [push-effect-stack attack-other-players]]
-            [dombot.cards.common :refer [give-victory-points]]
+            [dombot.cards.common :refer [give-victory-points add-trigger]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -96,6 +96,71 @@
                                                {:option :gain :text "The next time you buy a card this turn, you may also gain a differently named card with the same cost."}]
                                      :min     1
                                      :max     1}]]})
+
+(defn encampment-return-to-supply [game {:keys [set-aside] :as args}]
+  (assert (= 1 (count set-aside)) (str "Encampment error: " (count set-aside) " cards were set aside: ["
+                                       (->> set-aside
+                                            (map (comp ut/format-name :name))
+                                            (clojure.string/join ", ")) "]"))
+  (let [{:keys [idx]} (ut/get-pile-idx game :supply :encampment #{:include-empty-split-piles})]
+    (update-in game [:supply idx] ut/add-top-card (first set-aside))))
+
+(def encampment-trigger {:name     :encampment
+                         :event    :at-clean-up
+                         :duration :once
+                         :effects  [[::encampment-return-to-supply]]})
+
+(defn- encampment-add-trigger [game {:keys [player-no]}]
+  (let [set-aside (get-in game [:players player-no :encampment-set-aside])]
+    (-> game
+        (update-in [:players player-no] dissoc :encampment-set-aside)
+        (add-trigger {:player-no player-no
+                      :trigger   (merge encampment-trigger {:set-aside set-aside})}))))
+
+(defn- encampment-set-aside [game {:keys [player-no card-id card-name]}]
+  (cond-> game
+          (nil? card-name) (push-effect-stack {:player-no player-no
+                                               :effects   [[:move-card {:move-card-id card-id
+                                                                        :from         :play-area
+                                                                        :to           :encampment-set-aside}]
+                                                           [::encampment-add-trigger]]})))
+
+(defn- encampment-reveal-money [game {:keys [player-no] :as args}]
+  (let [hand (get-in game [:players player-no :hand])]
+    (push-effect-stack game (merge args
+                                   {:effects (if (some (comp #{:gold :plunder} :name) hand)
+                                               [[:give-choice {:text    "You may reveal a Gold or Plunder from your hand."
+                                                               :choice  ::encampment-set-aside
+                                                               :options [:player :hand {:names #{:gold :plunder}}]
+                                                               :max     1}]]
+                                               [[::encampment-set-aside]])}))))
+
+(def encampment {:name       :encampment
+                 :set        :empires
+                 :types      #{:action}
+                 :cost       2
+                 :effects    [[:draw 2]
+                              [:give-actions 2]
+                              [::encampment-reveal-money]]
+                 :split-pile ::encampment-plunder-pile})
+
+(def plunder {:name       :plunder
+              :set        :empires
+              :types      #{:treasure}
+              :cost       5
+              :coin-value 2
+              :effects    [[:give-victory-points 1]]})
+
+(defn encampment-plunder-pile [player-count]
+  {:split-pile [{:card encampment :pile-size 5}
+                {:card plunder :pile-size 5}]})
+
+(effects/register {::encampment-return-to-supply encampment-return-to-supply
+                   ::encampment-add-trigger      encampment-add-trigger
+                   ::encampment-set-aside        encampment-set-aside
+                   ::encampment-reveal-money     encampment-reveal-money
+                   ::encampment-plunder-pile     encampment-plunder-pile})
+
 
 (defn- farmers-market-reap [game {:keys [player-no card-id]}]
   (let [{:keys [tokens]} (ut/get-pile-idx game :farmers'-market)
@@ -279,6 +344,7 @@
 
 (def kingdom-cards [chariot-race
                     charm
+                    encampment
                     farmers-market
                     forum
                     legionary

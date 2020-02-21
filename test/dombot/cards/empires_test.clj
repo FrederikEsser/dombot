@@ -16,248 +16,6 @@
 
 (use-fixtures :each fixture)
 
-(deftest chariot-race-test
-  (testing "Chariot Race"
-    (is (= (-> {:players [{:hand    [chariot-race]
-                           :deck    [silver]
-                           :actions 1
-                           :coins   0}
-                          {:deck [estate]}]}
-               (play 0 :chariot-race))
-           {:players [{:hand           [silver]
-                       :play-area      [chariot-race]
-                       :revealed-cards {:hand 1}
-                       :actions        1
-                       :coins          1
-                       :vp-tokens      1}
-                      {:deck           [estate]
-                       :revealed-cards {:deck 1}}]}))
-    (is (= (-> {:players [{:hand    [chariot-race]
-                           :deck    [estate]
-                           :actions 1
-                           :coins   0}
-                          {:deck [estate]}]}
-               (play 0 :chariot-race))
-           {:players [{:hand           [estate]
-                       :play-area      [chariot-race]
-                       :revealed-cards {:hand 1}
-                       :actions        1
-                       :coins          0}
-                      {:deck           [estate]
-                       :revealed-cards {:deck 1}}]}))
-    (is (= (-> {:players [{:hand    [chariot-race]
-                           :deck    [estate]
-                           :actions 1
-                           :coins   0}
-                          {}]}
-               (play 0 :chariot-race))
-           {:players [{:hand           [estate]
-                       :play-area      [chariot-race]
-                       :revealed-cards {:hand 1}
-                       :actions        1
-                       :coins          0}
-                      {}]}))
-    (is (= (-> {:players [{:hand    [chariot-race]
-                           :actions 1
-                           :coins   0}
-                          {:deck [estate]}]}
-               (play 0 :chariot-race))
-           {:players [{:play-area [chariot-race]
-                       :actions   1
-                       :coins     0}
-                      {:deck           [estate]
-                       :revealed-cards {:deck 1}}]}))
-    (is (= (-> {:players [{:hand    [chariot-race]
-                           :deck    [patron]
-                           :actions 1
-                           :coins   0}
-                          {:discard [patron]}]}
-               (play 0 :chariot-race))
-           {:players [{:hand           [patron]
-                       :play-area      [chariot-race]
-                       :revealed-cards {:hand 1}
-                       :actions        1
-                       :coins          0
-                       :coffers        1}
-                      {:deck           [patron]
-                       :revealed-cards {:deck 1}
-                       :coffers        1}]}))))
-
-(deftest charm-test
-  (let [charm        (assoc charm :id 0)
-        silver       (assoc silver :id 1)
-        chariot-race (assoc chariot-race :id 2)]
-    (testing "Charm"
-      (is (= (-> {:players [{:hand  [charm]
-                             :coins 0
-                             :buys  1}]}
-                 (play 0 :charm)
-                 (choose :coins))
-             {:players [{:play-area [charm]
-                         :coins     2
-                         :buys      2}]}))
-      (is (= (-> {:supply  [{:card silver :pile-size 40}
-                            {:card chariot-race :pile-size 10}]
-                  :players [{:hand  [charm]
-                             :coins 3
-                             :buys  1}]}
-                 (play 0 :charm)
-                 (choose :gain)
-                 (buy-card 0 :silver)
-                 (choose :chariot-race))
-             {:supply  [{:card silver :pile-size 39}
-                        {:card chariot-race :pile-size 9}]
-              :players [{:play-area [charm]
-                         :discard   [chariot-race silver]
-                         :coins     0
-                         :buys      0}]}))
-      (is (= (-> {:supply  [{:card silver :pile-size 40}
-                            {:card chariot-race :pile-size 10}]
-                  :players [{:hand  [charm]
-                             :coins 3
-                             :buys  1}]}
-                 (play 0 :charm)
-                 (choose :gain)
-                 (buy-card 0 :silver)
-                 (choose nil))
-             {:supply  [{:card silver :pile-size 39}
-                        {:card chariot-race :pile-size 10}]
-              :players [{:play-area [charm]
-                         :discard   [silver]
-                         :coins     0
-                         :buys      0}]}))
-      (is (= (-> {:supply  [{:card silver :pile-size 40}]
-                  :players [{:hand  [charm]
-                             :coins 3
-                             :buys  1}]}
-                 (play 0 :charm)
-                 (choose :gain)
-                 (buy-card 0 :silver))
-             {:supply  [{:card silver :pile-size 39}]
-              :players [{:play-area [charm]
-                         :discard   [silver]
-                         :coins     0
-                         :buys      0}]})))))
-
-(deftest farmers-market-test
-  (let [farmers-market (assoc farmers-market :id 0)]
-    (testing "farmers-market"
-      (is (= (-> {:supply  [{:card farmers-market :pile-size 9}]
-                  :players [{:hand    [farmers-market]
-                             :actions 1
-                             :coins   0
-                             :buys    1}]}
-                 (play 0 :farmers'-market))
-             {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}]}]
-              :players [{:play-area [farmers-market]
-                         :actions   0
-                         :coins     1
-                         :buys      2}]}))
-      (is (= (-> {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}]}]
-                  :players [{:hand    [farmers-market]
-                             :actions 1
-                             :coins   0
-                             :buys    1}]}
-                 (play 0 :farmers'-market))
-             {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}
-                                                                    {:token-type :victory-point}]}]
-              :players [{:play-area [farmers-market]
-                         :actions   0
-                         :coins     2
-                         :buys      2}]}))
-      (is (= (-> {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}
-                                                                        {:token-type :victory-point}
-                                                                        {:token-type :victory-point}]}]
-                  :players [{:hand    [farmers-market]
-                             :actions 1
-                             :coins   0
-                             :buys    1}]}
-                 (play 0 :farmers'-market))
-             {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}
-                                                                    {:token-type :victory-point}
-                                                                    {:token-type :victory-point}
-                                                                    {:token-type :victory-point}]}]
-              :players [{:play-area [farmers-market]
-                         :actions   0
-                         :coins     4
-                         :buys      2}]}))
-      (is (= (-> {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}
-                                                                        {:token-type :victory-point}
-                                                                        {:token-type :victory-point}
-                                                                        {:token-type :victory-point}]}]
-                  :players [{:hand    [farmers-market]
-                             :actions 1
-                             :coins   0
-                             :buys    1}]}
-                 (play 0 :farmers'-market))
-             {:supply  [{:card farmers-market :pile-size 9}]
-              :players [{:actions   0
-                         :coins     0
-                         :buys      2
-                         :vp-tokens 4}]
-              :trash   [farmers-market]})))))
-
-(deftest forum-test
-  (let [forum (assoc forum :id 0)]
-    (testing "Forum"
-      (is (= (-> {:players [{:hand    [forum]
-                             :deck    [copper silver estate estate]
-                             :actions 1}]}
-                 (play 0 :forum)
-                 (choose [:copper :estate]))
-             {:players [{:hand      [silver]
-                         :play-area [forum]
-                         :deck      [estate]
-                         :discard   [copper estate]
-                         :actions   1}]}))
-      (is (= (-> {:supply  [{:card forum :pile-size 10}]
-                  :players [{:coins 7
-                             :buys  1}]}
-                 (buy-card 0 :forum))
-             {:supply  [{:card forum :pile-size 9}]
-              :players [{:discard [forum]
-                         :coins   2
-                         :buys    1}]})))))
-
-(deftest legionary-test
-  (let [legionary (assoc legionary :id 0)]
-    (testing "Legionary"
-      (is (= (-> {:players [{:hand    [legionary]
-                             :actions 1
-                             :coins   0}]}
-                 (play 0 :legionary))
-             {:players [{:play-area [legionary]
-                         :actions   0
-                         :coins     3}]}))
-      (is (= (-> {:players [{:hand    [legionary silver gold]
-                             :actions 1
-                             :coins   0}
-                            {:hand [copper copper copper estate estate]
-                             :deck [estate copper]}]}
-                 (play 0 :legionary)
-                 (choose :gold)
-                 (choose [:estate :estate :copper]))
-             {:players [{:hand      [silver gold]
-                         :play-area [legionary]
-                         :actions   0
-                         :coins     3}
-                        {:hand    [copper copper estate]
-                         :deck    [copper]
-                         :discard [estate estate copper]}]}))
-      (is (= (-> {:players [{:hand    [legionary silver gold]
-                             :actions 1
-                             :coins   0}
-                            {:hand [copper copper copper estate estate]
-                             :deck [estate copper]}]}
-                 (play 0 :legionary)
-                 (choose nil))
-             {:players [{:hand      [silver gold]
-                         :play-area [legionary]
-                         :actions   0
-                         :coins     3}
-                        {:hand [copper copper copper estate estate]
-                         :deck [estate copper]}]})))))
-
 (deftest split-pile-test
   (let [patrician (assoc patrician :id 0)
         emporium  (assoc emporium :id 1)]
@@ -445,6 +203,351 @@
                   :players [{:play-area [ambassador]
                              :actions   0}
                             {:discard [emporium]}]})))))))
+
+(deftest chariot-race-test
+  (testing "Chariot Race"
+    (is (= (-> {:players [{:hand    [chariot-race]
+                           :deck    [silver]
+                           :actions 1
+                           :coins   0}
+                          {:deck [estate]}]}
+               (play 0 :chariot-race))
+           {:players [{:hand           [silver]
+                       :play-area      [chariot-race]
+                       :revealed-cards {:hand 1}
+                       :actions        1
+                       :coins          1
+                       :vp-tokens      1}
+                      {:deck           [estate]
+                       :revealed-cards {:deck 1}}]}))
+    (is (= (-> {:players [{:hand    [chariot-race]
+                           :deck    [estate]
+                           :actions 1
+                           :coins   0}
+                          {:deck [estate]}]}
+               (play 0 :chariot-race))
+           {:players [{:hand           [estate]
+                       :play-area      [chariot-race]
+                       :revealed-cards {:hand 1}
+                       :actions        1
+                       :coins          0}
+                      {:deck           [estate]
+                       :revealed-cards {:deck 1}}]}))
+    (is (= (-> {:players [{:hand    [chariot-race]
+                           :deck    [estate]
+                           :actions 1
+                           :coins   0}
+                          {}]}
+               (play 0 :chariot-race))
+           {:players [{:hand           [estate]
+                       :play-area      [chariot-race]
+                       :revealed-cards {:hand 1}
+                       :actions        1
+                       :coins          0}
+                      {}]}))
+    (is (= (-> {:players [{:hand    [chariot-race]
+                           :actions 1
+                           :coins   0}
+                          {:deck [estate]}]}
+               (play 0 :chariot-race))
+           {:players [{:play-area [chariot-race]
+                       :actions   1
+                       :coins     0}
+                      {:deck           [estate]
+                       :revealed-cards {:deck 1}}]}))
+    (is (= (-> {:players [{:hand    [chariot-race]
+                           :deck    [patron]
+                           :actions 1
+                           :coins   0}
+                          {:discard [patron]}]}
+               (play 0 :chariot-race))
+           {:players [{:hand           [patron]
+                       :play-area      [chariot-race]
+                       :revealed-cards {:hand 1}
+                       :actions        1
+                       :coins          0
+                       :coffers        1}
+                      {:deck           [patron]
+                       :revealed-cards {:deck 1}
+                       :coffers        1}]}))))
+
+(deftest charm-test
+  (let [charm        (assoc charm :id 0)
+        silver       (assoc silver :id 1)
+        chariot-race (assoc chariot-race :id 2)]
+    (testing "Charm"
+      (is (= (-> {:players [{:hand  [charm]
+                             :coins 0
+                             :buys  1}]}
+                 (play 0 :charm)
+                 (choose :coins))
+             {:players [{:play-area [charm]
+                         :coins     2
+                         :buys      2}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card chariot-race :pile-size 10}]
+                  :players [{:hand  [charm]
+                             :coins 3
+                             :buys  1}]}
+                 (play 0 :charm)
+                 (choose :gain)
+                 (buy-card 0 :silver)
+                 (choose :chariot-race))
+             {:supply  [{:card silver :pile-size 39}
+                        {:card chariot-race :pile-size 9}]
+              :players [{:play-area [charm]
+                         :discard   [chariot-race silver]
+                         :coins     0
+                         :buys      0}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card chariot-race :pile-size 10}]
+                  :players [{:hand  [charm]
+                             :coins 3
+                             :buys  1}]}
+                 (play 0 :charm)
+                 (choose :gain)
+                 (buy-card 0 :silver)
+                 (choose nil))
+             {:supply  [{:card silver :pile-size 39}
+                        {:card chariot-race :pile-size 10}]
+              :players [{:play-area [charm]
+                         :discard   [silver]
+                         :coins     0
+                         :buys      0}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand  [charm]
+                             :coins 3
+                             :buys  1}]}
+                 (play 0 :charm)
+                 (choose :gain)
+                 (buy-card 0 :silver))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:play-area [charm]
+                         :discard   [silver]
+                         :coins     0
+                         :buys      0}]})))))
+
+(deftest encampment-test
+  (let [encampment (assoc encampment :id 0)
+        plunder    (assoc plunder :id 1)]
+    (testing "Encampment"
+      (ut/reset-ids!)
+      (is (= (-> {:supply  [{:split-pile [{:card encampment :pile-size 4}
+                                          {:card plunder :pile-size 5}]}]
+                  :players [{:hand    [encampment]
+                             :deck    [copper copper copper]
+                             :actions 1}]}
+                 (play 0 :encampment))
+             {:supply  [{:split-pile [{:card encampment :pile-size 4}
+                                      {:card plunder :pile-size 5}]}]
+              :players [{:hand     [copper copper]
+                         :deck     [copper]
+                         :actions  2
+                         :triggers [(merge empires/encampment-trigger
+                                           {:id        1
+                                            :set-aside [encampment]})]}]}))
+      (is (= (-> {:supply  [{:split-pile [{:card encampment :pile-size 4}
+                                          {:card plunder :pile-size 5}]}]
+                  :players [{:hand    [encampment]
+                             :deck    [copper copper copper]
+                             :actions 1
+                             :phase   :action}]}
+                 (play 0 :encampment)
+                 (clean-up {:player-no 0}))
+             {:supply  [{:split-pile [{:card encampment :pile-size 5}
+                                      {:card plunder :pile-size 5}]}]
+              :players [{:hand    [copper copper copper]
+                         :actions 0
+                         :coins   0
+                         :buys    0
+                         :phase   :out-of-turn}]}))
+      (is (= (-> {:supply  [{:split-pile [{:card encampment :pile-size 4}
+                                          {:card plunder :pile-size 5}]}]
+                  :players [{:hand    [encampment]
+                             :deck    [gold copper copper]
+                             :actions 1}]}
+                 (play 0 :encampment)
+                 (choose :gold))
+             {:supply  [{:split-pile [{:card encampment :pile-size 4}
+                                      {:card plunder :pile-size 5}]}]
+              :players [{:hand      [gold copper]
+                         :play-area [encampment]
+                         :deck      [copper]
+                         :actions   2}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:supply  [{:split-pile [{:card encampment :pile-size 4}
+                                          {:card plunder :pile-size 5}]}]
+                  :players [{:hand    [encampment]
+                             :deck    [gold copper copper]
+                             :actions 1}]}
+                 (play 0 :encampment)
+                 (choose nil))
+             {:supply  [{:split-pile [{:card encampment :pile-size 4}
+                                      {:card plunder :pile-size 5}]}]
+              :players [{:hand     [gold copper]
+                         :deck     [copper]
+                         :actions  2
+                         :triggers [(merge empires/encampment-trigger
+                                           {:id        1
+                                            :set-aside [encampment]})]}]}))
+      (is (thrown-with-msg? AssertionError #"Buy error"
+                            (-> {:supply  [{:split-pile [{:card encampment :pile-size 0}
+                                                         {:card plunder :pile-size 4}]}]
+                                 :players [{:hand    [encampment]
+                                            :deck    [copper copper plunder]
+                                            :actions 1
+                                            :coins   2
+                                            :buys    1
+                                            :phase   :action}]}
+                                (play 0 :encampment)
+                                (buy-card 0 :encampment))))
+      (is (= (-> {:supply  [{:split-pile [{:card encampment :pile-size 0}
+                                          {:card plunder :pile-size 4}]}]
+                  :players [{:hand    [encampment]
+                             :deck    [copper copper plunder]
+                             :actions 1
+                             :coins   5
+                             :buys    1
+                             :phase   :action}]}
+                 (play 0 :encampment)
+                 (buy-card 0 :plunder)
+                 (clean-up {:player-no 0}))
+             {:supply  [{:split-pile [{:card encampment :pile-size 1}
+                                      {:card plunder :pile-size 3}]}]
+              :players [{:hand    [plunder copper copper plunder]
+                         :actions 0
+                         :coins   0
+                         :buys    0
+                         :phase   :out-of-turn}]})))))
+
+(deftest plunder-test
+  (let [plunder (assoc plunder :id 0)]
+    (testing "Plunder"
+      (is (= (-> {:players [{:hand  [plunder]
+                             :coins 0}]}
+                 (play 0 :plunder))
+             {:players [{:play-area [plunder]
+                         :coins     2
+                         :vp-tokens 1}]})))))
+
+(deftest farmers-market-test
+  (let [farmers-market (assoc farmers-market :id 0)]
+    (testing "farmers-market"
+      (is (= (-> {:supply  [{:card farmers-market :pile-size 9}]
+                  :players [{:hand    [farmers-market]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :farmers'-market))
+             {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}]}]
+              :players [{:play-area [farmers-market]
+                         :actions   0
+                         :coins     1
+                         :buys      2}]}))
+      (is (= (-> {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}]}]
+                  :players [{:hand    [farmers-market]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :farmers'-market))
+             {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}
+                                                                    {:token-type :victory-point}]}]
+              :players [{:play-area [farmers-market]
+                         :actions   0
+                         :coins     2
+                         :buys      2}]}))
+      (is (= (-> {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}
+                                                                        {:token-type :victory-point}
+                                                                        {:token-type :victory-point}]}]
+                  :players [{:hand    [farmers-market]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :farmers'-market))
+             {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}
+                                                                    {:token-type :victory-point}
+                                                                    {:token-type :victory-point}
+                                                                    {:token-type :victory-point}]}]
+              :players [{:play-area [farmers-market]
+                         :actions   0
+                         :coins     4
+                         :buys      2}]}))
+      (is (= (-> {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}
+                                                                        {:token-type :victory-point}
+                                                                        {:token-type :victory-point}
+                                                                        {:token-type :victory-point}]}]
+                  :players [{:hand    [farmers-market]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :farmers'-market))
+             {:supply  [{:card farmers-market :pile-size 9}]
+              :players [{:actions   0
+                         :coins     0
+                         :buys      2
+                         :vp-tokens 4}]
+              :trash   [farmers-market]})))))
+
+(deftest forum-test
+  (let [forum (assoc forum :id 0)]
+    (testing "Forum"
+      (is (= (-> {:players [{:hand    [forum]
+                             :deck    [copper silver estate estate]
+                             :actions 1}]}
+                 (play 0 :forum)
+                 (choose [:copper :estate]))
+             {:players [{:hand      [silver]
+                         :play-area [forum]
+                         :deck      [estate]
+                         :discard   [copper estate]
+                         :actions   1}]}))
+      (is (= (-> {:supply  [{:card forum :pile-size 10}]
+                  :players [{:coins 7
+                             :buys  1}]}
+                 (buy-card 0 :forum))
+             {:supply  [{:card forum :pile-size 9}]
+              :players [{:discard [forum]
+                         :coins   2
+                         :buys    1}]})))))
+
+(deftest legionary-test
+  (let [legionary (assoc legionary :id 0)]
+    (testing "Legionary"
+      (is (= (-> {:players [{:hand    [legionary]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :legionary))
+             {:players [{:play-area [legionary]
+                         :actions   0
+                         :coins     3}]}))
+      (is (= (-> {:players [{:hand    [legionary silver gold]
+                             :actions 1
+                             :coins   0}
+                            {:hand [copper copper copper estate estate]
+                             :deck [estate copper]}]}
+                 (play 0 :legionary)
+                 (choose :gold)
+                 (choose [:estate :estate :copper]))
+             {:players [{:hand      [silver gold]
+                         :play-area [legionary]
+                         :actions   0
+                         :coins     3}
+                        {:hand    [copper copper estate]
+                         :deck    [copper]
+                         :discard [estate estate copper]}]}))
+      (is (= (-> {:players [{:hand    [legionary silver gold]
+                             :actions 1
+                             :coins   0}
+                            {:hand [copper copper copper estate estate]
+                             :deck [estate copper]}]}
+                 (play 0 :legionary)
+                 (choose nil))
+             {:players [{:hand      [silver gold]
+                         :play-area [legionary]
+                         :actions   0
+                         :coins     3}
+                        {:hand [copper copper copper estate estate]
+                         :deck [estate copper]}]})))))
 
 (deftest patrician-test
   (let [patrician (assoc patrician :id 0)]

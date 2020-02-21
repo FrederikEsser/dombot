@@ -16,6 +16,7 @@
 ; choose by trigger id when set aside cards - show different cards
 
 ; Bugs & Testing:
+; fix split pile as Young Witch bane
 ; fix Herald & Piazza with 1 card in deck - what about Vassal & ...?
 ; fix Academy gain Will'o'Wisp with Swamps gift (from Druid) or Imp with Devil's Workshop
 ; fix Fool choosing Moon's Gift last (after Earth's or Mountain's)
