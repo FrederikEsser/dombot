@@ -1,5 +1,5 @@
 (ns dombot.cards.empires
-  (:require [dombot.operations :refer [push-effect-stack attack-other-players]]
+  (:require [dombot.operations :refer [push-effect-stack attack-other-players gain]]
             [dombot.cards.common :refer [give-victory-points add-trigger]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -22,6 +22,55 @@
 
 (effects/register {::place-vp-token place-vp-token
                    ::take-vp-tokens take-vp-tokens})
+
+(defn- catapult-trash [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        cost  (ut/get-cost game card)
+        types (ut/get-types game card)]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   (concat [[:trash-from-hand {:card-name card-name}]]
+                                                        (when (>= cost 3)
+                                                          [[:attack {:effects [[:gain {:card-name :curse}]]}]])
+                                                        (when (:treasure types)
+                                                          [[:attack {:effects [[:discard-down-to 3]]}]]))}))))
+
+(def catapult {:name       :catapult
+               :set        :empires
+               :types      #{:action :attack}
+               :cost       3
+               :effects    [[:give-coins 1]
+                            [:give-choice {:text    "Trash a card from your hand."
+                                           :choice  ::catapult-trash
+                                           :options [:player :hand]
+                                           :min     1
+                                           :max     1}]]
+               :split-pile ::catapult-rocks-pile})
+
+(defn- rocks-gain-silver [game {:keys [player-no]}]
+  (let [phase (get-in game [:players player-no :phase])]
+    (gain game (merge {:player-no player-no
+                       :card-name :silver}
+                      (if (= :buy phase)
+                        {:to          :deck
+                         :to-position :top}
+                        {:to :hand})))))
+
+(def rocks {:name       :rocks
+            :set        :empires
+            :types      #{:treasure}
+            :cost       4
+            :coin-value 1
+            :on-gain    [[::rocks-gain-silver]]
+            :on-trash   [[::rocks-gain-silver]]})
+
+(defn catapult-rocks-pile [player-count]
+  {:split-pile [{:card catapult :pile-size 5}
+                {:card rocks :pile-size 5}]})
+
+(effects/register {::catapult-trash      catapult-trash
+                   ::rocks-gain-silver   rocks-gain-silver
+                   ::catapult-rocks-pile catapult-rocks-pile})
 
 (defn- chariot-race-compare [{:keys [players] :as game} {:keys [player-no]}]
   (let [next-player (mod (inc player-no) (count players))
@@ -371,7 +420,8 @@
                                          :min     1
                                          :max     1}]]})
 
-(def kingdom-cards [chariot-race
+(def kingdom-cards [catapult
+                    chariot-race
                     charm
                     encampment
                     farmers-market

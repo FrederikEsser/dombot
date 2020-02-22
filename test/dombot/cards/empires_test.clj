@@ -204,6 +204,109 @@
                              :actions   0}
                             {:discard [emporium]}]})))))))
 
+(deftest catapult-test
+  (let [catapult (assoc catapult :id 0)
+        curse    (assoc curse :id 1)]
+    (testing "Catapult"
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:hand    [catapult estate copper catapult silver]
+                             :actions 1
+                             :coins   0}
+                            {:hand [copper copper copper copper copper]}]}
+                 (play 0 :catapult)
+                 (choose :estate))
+             {:supply  [{:card curse :pile-size 10}]
+              :players [{:hand      [copper catapult silver]
+                         :play-area [catapult]
+                         :actions   0
+                         :coins     1}
+                        {:hand [copper copper copper copper copper]}]
+              :trash   [estate]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:hand    [catapult estate copper catapult silver]
+                             :actions 1
+                             :coins   0}
+                            {:hand [copper copper copper copper copper]}]}
+                 (play 0 :catapult)
+                 (choose :copper)
+                 (choose [:copper :copper]))
+             {:supply  [{:card curse :pile-size 10}]
+              :players [{:hand      [estate catapult silver]
+                         :play-area [catapult]
+                         :actions   0
+                         :coins     1}
+                        {:hand    [copper copper copper]
+                         :discard [copper copper]}]
+              :trash   [copper]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:hand    [catapult estate copper catapult silver]
+                             :actions 1
+                             :coins   0}
+                            {:hand [copper copper copper copper copper]}]}
+                 (play 0 :catapult)
+                 (choose :catapult))
+             {:supply  [{:card curse :pile-size 9}]
+              :players [{:hand      [estate copper silver]
+                         :play-area [catapult]
+                         :actions   0
+                         :coins     1}
+                        {:hand    [copper copper copper copper copper]
+                         :discard [curse]}]
+              :trash   [catapult]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:hand    [catapult estate copper catapult silver]
+                             :actions 1
+                             :coins   0}
+                            {:hand [copper copper copper copper copper]}]}
+                 (play 0 :catapult)
+                 (choose :silver)
+                 (choose [:copper :copper]))
+             {:supply  [{:card curse :pile-size 9}]
+              :players [{:hand      [estate copper catapult]
+                         :play-area [catapult]
+                         :actions   0
+                         :coins     1}
+                        {:hand    [copper copper copper]
+                         :discard [curse copper copper]}]
+              :trash   [silver]})))))
+
+(deftest rocks-test
+  (let [rocks  (assoc rocks :id 0)
+        silver (assoc silver :id 1)]
+    (testing "Rocks"
+      (is (= (-> {:players [{:hand  [rocks]
+                             :coins 0}]}
+                 (play 0 :rocks))
+             {:players [{:play-area [rocks]
+                         :coins     1}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:split-pile [{:card rocks :pile-size 5}]}]
+                  :players [{:coins 4
+                             :buys  1
+                             :phase :buy}]}
+                 (buy-card 0 :rocks))
+             {:supply  [{:card silver :pile-size 39}
+                        {:split-pile [{:card rocks :pile-size 4}]}]
+              :players [{:deck    [silver]
+                         :discard [rocks]
+                         :coins   0
+                         :buys    0
+                         :phase   :buy}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [catapult rocks]
+                             :actions 1
+                             :coins   0
+                             :phase   :action}]}
+                 (play 0 :catapult)
+                 (choose :rocks))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:hand      [silver]
+                         :play-area [catapult]
+                         :actions   0
+                         :coins     1
+                         :phase     :action}]
+              :trash   [rocks]})))))
+
 (deftest chariot-race-test
   (testing "Chariot Race"
     (is (= (-> {:players [{:hand    [chariot-race]
