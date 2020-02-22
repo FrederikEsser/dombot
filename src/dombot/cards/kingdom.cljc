@@ -60,10 +60,12 @@
                             4 12)]
     (->> kingdom
          (sort-by (juxt :cost :name))
-         (map (fn [{:keys [types split-pile] :as card}]
+         (map (fn [{:keys [types split-pile bane?] :as card}]
                 (if split-pile
                   (let [pile-fn (effects/get-effect split-pile)]
-                    (pile-fn number-of-players))
+                    (cond-> (pile-fn number-of-players)
+                            bane? (update :split-pile (partial mapv (fn [pile]
+                                                                      (update pile :card assoc :bane? true))))))
                   (let [pile-size (if (:victory types) victory-pile-size 10)]
                     {:card card :pile-size pile-size})))))))
 
