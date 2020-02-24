@@ -756,7 +756,7 @@
                                  [::guilds/herald-play-action]]}})
 
 (defn- road-network-on-gain [game {:keys [player-no card-name]}]
-  (let [{:keys [card]} (ut/get-pile-idx game card-name)
+  (let [{:keys [card]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})
         types (ut/get-types game card)]
     (cond-> game
             (:victory types) (draw {:player-no player-no

@@ -1,5 +1,5 @@
 (ns dombot.cards.empires
-  (:require [dombot.operations :refer [push-effect-stack attack-other-players gain]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice attack-other-players gain]]
             [dombot.cards.common :refer [give-victory-points add-trigger]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -22,6 +22,162 @@
 
 (effects/register {::place-vp-token place-vp-token
                    ::take-vp-tokens take-vp-tokens})
+
+(def castles {:name       :castles
+              :set        :empires
+              :cost       3
+              :split-pile ::castles-pile})
+
+(defn humble-castle-victory-points [cards]
+  (->> cards
+       (filter (comp :castle :types))
+       count))
+
+(def humble-castle {:name           :humble-castle
+                    :set            :empires
+                    :types          #{:treasure :victory :castle}
+                    :cost           3
+                    :coin-value     1
+                    :victory-points ::humble-castle-victory-points})
+
+(def crumbling-castle {:name           :crumbling-castle
+                       :set            :empires
+                       :types          #{:victory :castle}
+                       :cost           4
+                       :victory-points 1
+                       :on-gain        [[:give-victory-points 1]
+                                        [:gain {:card-name :silver}]]
+                       :on-trash       [[:give-victory-points 1]
+                                        [:gain {:card-name :silver}]]})
+
+(defn- small-castle-trash-from-area [game {:keys [player-no choice]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no (:area choice)] {:name (:card-name choice)})]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:trash-from-area {:choice choice}]
+                                                 [:give-choice {:text    "Gain a Castle."
+                                                                :choice  :gain
+                                                                :options [:supply {:type :castle}]
+                                                                :min     1
+                                                                :max     1}]]}))))
+
+(def small-castle {:name           :small-castle
+                   :set            :empires
+                   :types          #{:action :victory :castle}
+                   :cost           5
+                   :effects        [[:give-choice {:text    "Trash this or a Castle from your hand."
+                                                   :choice  ::small-castle-trash-from-area
+                                                   :options [:mixed
+                                                             [:player :play-area {:this true}]
+                                                             [:player :hand {:type :castle}]]
+                                                   :min     1
+                                                   :max     1}]]
+                   :victory-points 2})
+
+(defn- haunted-castle-spook [game {:keys [player-no]}]
+  (let [hand (get-in game [:players player-no :hand])]
+    (cond-> game
+            (>= (count hand) 5) (give-choice {:player-no player-no
+                                              :text      "Put 2 cards from your hand onto your deck."
+                                              :choice    :topdeck-from-hand
+                                              :options   [:player :hand]
+                                              :min       2
+                                              :max       2}))))
+
+(defn- haunted-castle-on-gain [{:keys [current-player] :as game} {:keys [player-no]}]
+  (cond-> game
+          (= current-player player-no) (push-effect-stack {:player-no player-no
+                                                           :effects   [[:gain {:card-name :gold}]
+                                                                       [:other-players {:effects [[::haunted-castle-spook]]}]]})))
+
+(def haunted-castle {:name           :haunted-castle
+                     :set            :empires
+                     :types          #{:victory :castle}
+                     :cost           6
+                     :victory-points 2
+                     :on-gain        [[::haunted-castle-on-gain]]})
+
+(defn- opulent-castle-discard-victory [game {:keys [player-no card-names]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:discard-from-hand {:card-names card-names}]
+                                       [:give-coins (* 2 (count card-names))]]}))
+
+(def opulent-castle {:name           :opulent-castle
+                     :set            :empires
+                     :types          #{:action :victory :castle}
+                     :cost           7
+                     :effects        [[:give-choice {:text    "Discard any number of Victory cards for $2 per card."
+                                                     :choice  ::opulent-castle-discard-victory
+                                                     :options [:player :hand {:type :victory}]}]]
+                     :victory-points 3})
+
+(defn- sprawling-castle-gain [game {:keys [player-no card-name]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (case card-name
+                                        :duchy [[:gain {:card-name :duchy}]]
+                                        :estate (repeat 3 [:gain {:card-name :estate}]))}))
+
+(def sprawling-castle {:name           :sprawling-castle
+                       :set            :empires
+                       :types          #{:victory :castle}
+                       :cost           8
+                       :victory-points 4
+                       :on-gain        [[:give-choice {:text    "Gain a Duchy or 3 Estates."
+                                                       :choice  ::sprawling-castle-gain
+                                                       :options [:supply {:names #{:duchy :estate}
+                                                                          :all   true}]
+                                                       :min     1
+                                                       :max     1}]]})
+
+(defn- grand-castle-on-gain [game {:keys [player-no]}]
+  (let [hand          (get-in game [:players player-no :hand])
+        play-area     (get-in game [:players player-no :play-area])
+        victory-cards (->> (concat hand play-area)
+                           (filter (comp :victory (partial ut/get-types game)))
+                           count)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:reveal-hand]
+                                         [:give-victory-points victory-cards]]})))
+
+(def grand-castle {:name           :grand-castle
+                   :set            :empires
+                   :types          #{:victory :castle}
+                   :cost           9
+                   :victory-points 5
+                   :on-gain        [[::grand-castle-on-gain]]})
+
+(defn kings-castle-victory-points [cards]
+  (->> cards
+       (filter (comp :castle :types))
+       count
+       (* 2)))
+
+(def kings-castle {:name           :king's-castle
+                   :set            :empires
+                   :types          #{:victory :castle}
+                   :cost           10
+                   :victory-points ::kings-castle-victory-points})
+
+(defn castles-pile [player-count]
+  (let [one-or-two (if (> player-count 2) 2 1)]
+    {:split-pile [{:card humble-castle :pile-size one-or-two}
+                  {:card crumbling-castle :pile-size 1}
+                  {:card small-castle :pile-size one-or-two}
+                  {:card haunted-castle :pile-size 1}
+                  {:card opulent-castle :pile-size one-or-two}
+                  {:card sprawling-castle :pile-size 1}
+                  {:card grand-castle :pile-size 1}
+                  {:card kings-castle :pile-size one-or-two}]}))
+
+(effects/register {::humble-castle-victory-points   humble-castle-victory-points
+                   ::small-castle-trash-from-area   small-castle-trash-from-area
+                   ::haunted-castle-spook           haunted-castle-spook
+                   ::haunted-castle-on-gain         haunted-castle-on-gain
+                   ::opulent-castle-discard-victory opulent-castle-discard-victory
+                   ::sprawling-castle-gain          sprawling-castle-gain
+                   ::grand-castle-on-gain           grand-castle-on-gain
+                   ::kings-castle-victory-points    kings-castle-victory-points
+                   ::castles-pile                   castles-pile})
 
 (defn- catapult-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
@@ -211,7 +367,7 @@
                    ::encampment-plunder-pile     encampment-plunder-pile})
 
 
-(defn- farmers-market-reap [game {:keys [player-no card-id]}]
+(defn- farmers-market-yield [game {:keys [player-no card-id]}]
   (let [{:keys [tokens]} (ut/get-pile-idx game :farmers'-market)
         vp-tokens (->> tokens
                        (filter (comp #{:victory-point} :token-type))
@@ -224,14 +380,14 @@
                                          [[::place-vp-token {:card-name :farmers'-market}]
                                           [:give-coins (inc vp-tokens)]])}))))
 
-(effects/register {::farmers-market-reap farmers-market-reap})
+(effects/register {::farmers-market-yield farmers-market-yield})
 
 (def farmers-market {:name    :farmers'-market
                      :set     :empires
                      :types   #{:action :gathering}
                      :cost    3
                      :effects [[:give-buys 1]
-                               [::farmers-market-reap]]})
+                               [::farmers-market-yield]]})
 
 (def forum {:name    :forum
             :set     :empires
@@ -420,7 +576,8 @@
                                          :min     1
                                          :max     1}]]})
 
-(def kingdom-cards [catapult
+(def kingdom-cards [castles
+                    catapult
                     chariot-race
                     charm
                     encampment

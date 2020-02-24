@@ -5,10 +5,11 @@
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
             [dombot.cards.empires :as empires :refer :all]
-            [dombot.cards.dominion :refer [market]]
+            [dombot.cards.dominion :refer [market throne-room]]
             [dombot.cards.intrigue :refer [mill]]
             [dombot.cards.seaside :refer [ambassador embargo]]
-            [dombot.cards.renaissance :refer [patron]]
+            [dombot.cards.prosperity :as prosperity :refer [hoard]]
+            [dombot.cards.renaissance :as renaissance :refer [patron]]
             [dombot.utils :as ut]))
 
 (defn fixture [f]
@@ -202,7 +203,396 @@
                                           {:card emporium :pile-size 3}]}]
                   :players [{:play-area [ambassador]
                              :actions   0}
-                            {:discard [emporium]}]})))))))
+                            {:discard [emporium]}]}))))
+      (testing "gaining the last card of a kind"
+        (let [humble-castle (assoc humble-castle :id 0)
+              gold          (assoc gold :id 1)]
+          (is (= (-> {:supply  [{:card gold :pile-size 30}
+                                {:split-pile [{:card humble-castle :pile-size 1}
+                                              {:card crumbling-castle :pile-size 1}]}]
+                      :players [{:play-area [hoard copper]
+                                 :coins     3
+                                 :buys      1}]}
+                     (buy-card 0 :humble-castle))
+                 {:supply  [{:card gold :pile-size 29}
+                            {:split-pile [{:card humble-castle :pile-size 0}
+                                          {:card crumbling-castle :pile-size 1}]}]
+                  :players [{:play-area [hoard copper]
+                             :discard   [gold humble-castle]
+                             :coins     0
+                             :buys      0}]}))
+          (is (= (-> {:supply  [{:split-pile [{:card humble-castle :pile-size 1}
+                                              {:card crumbling-castle :pile-size 1}]
+                                 :tokens     [{:token-type :trade-route
+                                               :on-gain    [[::prosperity/trade-route-move-token]]}]}]
+                      :players [{:coins 3
+                                 :buys  1}]}
+                     (buy-card 0 :humble-castle))
+                 {:trade-route-mat 1
+                  :supply          [{:split-pile [{:card humble-castle :pile-size 0}
+                                                  {:card crumbling-castle :pile-size 1}]}]
+                  :players         [{:discard [humble-castle]
+                                     :coins   0
+                                     :buys    0}]}))
+          (is (= (-> {:supply  [{:split-pile [{:card humble-castle :pile-size 1}
+                                              {:card crumbling-castle :pile-size 1}]}]
+                      :players [{:coins    3
+                                 :buys     1
+                                 :triggers [{:name     :road-network
+                                             :duration :game
+                                             :event    :on-gain
+                                             :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}]}
+                                {:hand [copper copper copper copper copper]
+                                 :deck [silver silver]}]}
+                     (buy-card 0 :humble-castle))
+                 {:supply  [{:split-pile [{:card humble-castle :pile-size 0}
+                                          {:card crumbling-castle :pile-size 1}]}]
+                  :players [{:discard  [humble-castle]
+                             :coins    0
+                             :buys     0
+                             :triggers [{:name     :road-network
+                                         :duration :game
+                                         :event    :on-gain
+                                         :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}]}
+                            {:hand [copper copper copper copper copper silver]
+                             :deck [silver]}]})))))))
+
+(deftest humble-castle-test
+  (testing "Humble Castle"
+    (is (= (-> {:players [{:hand  [humble-castle]
+                           :coins 0}]}
+               (play 0 :humble-castle))
+           {:players [{:play-area [humble-castle]
+                       :coins     1}]}))))
+
+(deftest crumbling-castle-test
+  (let [crumbling-castle (assoc crumbling-castle :id 0)
+        silver           (assoc silver :id 1)]
+    (testing "Crumbling Castle"
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:split-pile [{:card crumbling-castle :pile-size 1}
+                                          {:card small-castle :pile-size 1}]}]
+                  :players [{:coins 4
+                             :buys  1}]}
+                 (buy-card 0 :crumbling-castle))
+             {:supply  [{:card silver :pile-size 39}
+                        {:split-pile [{:card crumbling-castle :pile-size 0}
+                                      {:card small-castle :pile-size 1}]}]
+              :players [{:discard   [silver crumbling-castle]
+                         :coins     0
+                         :buys      0
+                         :vp-tokens 1}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 39}
+                            {:split-pile [{:card crumbling-castle :pile-size 0}
+                                          {:card small-castle :pile-size 1}]}]
+                  :players [{:hand [crumbling-castle]}]}
+                 (trash-from-hand {:player-no 0
+                                   :card-name :crumbling-castle})
+                 (check-stack))
+             {:supply  [{:card silver :pile-size 38}
+                        {:split-pile [{:card crumbling-castle :pile-size 0}
+                                      {:card small-castle :pile-size 1}]}]
+              :players [{:discard   [silver]
+                         :vp-tokens 1}]
+              :trash   [crumbling-castle]})))))
+
+(deftest small-castle-test
+  (let [small-castle (assoc small-castle :id 0)]
+    (testing "Small Castle"
+      (is (= (-> {:supply  [{:split-pile [{:card small-castle :pile-size 1}]}]
+                  :players [{:hand    [small-castle]
+                             :actions 1}]}
+                 (play 0 :small-castle)
+                 (choose {:area :play-area :card-name :small-castle})
+                 (choose :small-castle))
+             {:supply  [{:split-pile [{:card small-castle :pile-size 0}]}]
+              :players [{:discard [small-castle]
+                         :actions 0}]
+              :trash   [small-castle]}))
+      (is (= (-> {:supply  [{:split-pile [{:card small-castle :pile-size 1}]}]
+                  :players [{:hand    [small-castle humble-castle]
+                             :actions 1}]}
+                 (play 0 :small-castle)
+                 (choose {:area :hand :card-name :humble-castle})
+                 (choose :small-castle))
+             {:supply  [{:split-pile [{:card small-castle :pile-size 0}]}]
+              :players [{:play-area [small-castle]
+                         :discard   [small-castle]
+                         :actions   0}]
+              :trash   [humble-castle]}))
+      (is (= (-> {:supply  [{:split-pile [{:card small-castle :pile-size 2}]}]
+                  :players [{:hand    [throne-room small-castle]
+                             :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :small-castle)
+                 (choose {:area :play-area :card-name :small-castle})
+                 (choose :small-castle))
+             {:supply  [{:split-pile [{:card small-castle :pile-size 1}]}]
+              :players [{:play-area [throne-room]
+                         :discard   [small-castle]
+                         :actions   0}]
+              :trash   [small-castle]}))
+      (is (= (-> {:supply  [{:split-pile [{:card small-castle :pile-size 2}]}]
+                  :players [{:hand    [throne-room small-castle humble-castle]
+                             :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :small-castle)                     ; Throne Room Small Castle
+                 (choose {:area :hand :card-name :humble-castle}) ; trash Humble Castle
+                 (choose :small-castle)                     ; gain Small Castle
+                 (choose {:area :play-area :card-name :small-castle}) ; trash Small Castle
+                 (choose :small-castle))                    ; gain Small Castle
+             {:supply  [{:split-pile [{:card small-castle :pile-size 0}]}]
+              :players [{:play-area [throne-room]
+                         :discard   [small-castle small-castle]
+                         :actions   0}]
+              :trash   [humble-castle small-castle]}))
+      (is (= (-> {:supply  [{:split-pile [{:card small-castle :pile-size 2}]}]
+                  :players [{:hand    [throne-room small-castle humble-castle]
+                             :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :small-castle)                     ; Throne Room Small Castle
+                 (choose {:area :play-area :card-name :small-castle}) ; trash Small Castle
+                 (choose :small-castle)                     ; gain Small Castle
+                 (choose {:area :hand :card-name :humble-castle}) ; trash Humble Castle
+                 (choose :small-castle))                    ; gain Small Castle
+             {:supply  [{:split-pile [{:card small-castle :pile-size 0}]}]
+              :players [{:play-area [throne-room]
+                         :discard   [small-castle small-castle]
+                         :actions   0}]
+              :trash   [small-castle humble-castle]})))))
+
+(deftest haunted-castle-test
+  (let [haunted-castle (assoc haunted-castle :id 0)
+        gold           (assoc gold :id 1)]
+    (testing "Haunted Castle"
+      (is (= (-> {:current-player 0
+                  :supply         [{:card gold :pile-size 30}
+                                   {:split-pile [{:card haunted-castle :pile-size 1}
+                                                 {:card opulent-castle :pile-size 1}]}]
+                  :players        [{:coins 6
+                                    :buys  1}
+                                   {:hand [copper copper copper copper copper]}]}
+                 (buy-card 0 :haunted-castle)
+                 (choose [:copper :copper]))
+             {:current-player 0
+              :supply         [{:card gold :pile-size 29}
+                               {:split-pile [{:card haunted-castle :pile-size 0}
+                                             {:card opulent-castle :pile-size 1}]}]
+              :players        [{:discard [gold haunted-castle]
+                                :coins   0
+                                :buys    0}
+                               {:hand [copper copper copper]
+                                :deck [copper copper]}]}))
+      (is (= (-> {:current-player 0
+                  :supply         [{:card gold :pile-size 30}
+                                   {:split-pile [{:card haunted-castle :pile-size 1}
+                                                 {:card opulent-castle :pile-size 1}]}]
+                  :players        [{:coins 6
+                                    :buys  1}
+                                   {:hand [copper copper copper copper]}]}
+                 (buy-card 0 :haunted-castle))
+             {:current-player 0
+              :supply         [{:card gold :pile-size 29}
+                               {:split-pile [{:card haunted-castle :pile-size 0}
+                                             {:card opulent-castle :pile-size 1}]}]
+              :players        [{:discard [gold haunted-castle]
+                                :coins   0
+                                :buys    0}
+                               {:hand [copper copper copper copper]}]}))
+      (is (= (-> {:current-player 1
+                  :supply         [{:card gold :pile-size 30}
+                                   {:split-pile [{:card haunted-castle :pile-size 1}
+                                                 {:card opulent-castle :pile-size 1}]}]
+                  :players        [{}
+                                   {:hand [copper copper copper copper copper]}]}
+                 (gain {:player-no 0
+                        :card-name :haunted-castle}))
+             {:current-player 1
+              :supply         [{:card gold :pile-size 30}
+                               {:split-pile [{:card haunted-castle :pile-size 0}
+                                             {:card opulent-castle :pile-size 1}]}]
+              :players        [{:discard [haunted-castle]}
+                               {:hand [copper copper copper copper copper]}]})))))
+
+(deftest opulent-castle-test
+  (let [opulent-castle (assoc opulent-castle :id 0)]
+    (testing "opulent Castle"
+      (is (= (-> {:players [{:hand    [opulent-castle]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :opulent-castle))
+             {:players [{:play-area [opulent-castle]
+                         :actions   0
+                         :coins     0}]}))
+      (is (= (-> {:players [{:hand    [opulent-castle estate]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :opulent-castle)
+                 (choose :estate))
+             {:players [{:play-area [opulent-castle]
+                         :discard   [estate]
+                         :actions   0
+                         :coins     2}]}))
+      (is (= (-> {:players [{:hand    [opulent-castle estate humble-castle]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :opulent-castle)
+                 (choose [:estate :humble-castle]))
+             {:players [{:play-area [opulent-castle]
+                         :discard   [estate humble-castle]
+                         :actions   0
+                         :coins     4}]})))))
+
+(deftest sprawling-castle-test
+  (let [sprawling-castle (assoc sprawling-castle :id 0)
+        estate           (assoc estate :id 1)
+        duchy            (assoc duchy :id 2)]
+    (testing "sprawling Castle"
+      (is (= (-> {:supply  [{:card estate :pile-size 8}
+                            {:card duchy :pile-size 8}
+                            {:split-pile [{:card sprawling-castle :pile-size 1}
+                                          {:card grand-castle :pile-size 1}]}]
+                  :players [{:coins 8
+                             :buys  1}]}
+                 (buy-card 0 :sprawling-castle)
+                 (choose :duchy))
+             {:supply  [{:card estate :pile-size 8}
+                        {:card duchy :pile-size 7}
+                        {:split-pile [{:card sprawling-castle :pile-size 0}
+                                      {:card grand-castle :pile-size 1}]}]
+              :players [{:discard [duchy sprawling-castle]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}
+                            {:card duchy :pile-size 8}
+                            {:split-pile [{:card sprawling-castle :pile-size 1}]}]
+                  :players [{:coins 8
+                             :buys  1}]}
+                 (buy-card 0 :sprawling-castle)
+                 (choose :estate))
+             {:supply  [{:card estate :pile-size 5}
+                        {:card duchy :pile-size 8}
+                        {:split-pile [{:card sprawling-castle :pile-size 0}]}]
+              :players [{:discard [estate estate estate sprawling-castle]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 2}
+                            {:card duchy :pile-size 8}
+                            {:split-pile [{:card sprawling-castle :pile-size 1}]}]
+                  :players [{:coins 8
+                             :buys  1}]}
+                 (buy-card 0 :sprawling-castle)
+                 (choose :estate))
+             {:supply  [{:card estate :pile-size 0}
+                        {:card duchy :pile-size 8}
+                        {:split-pile [{:card sprawling-castle :pile-size 0}]}]
+              :players [{:discard [estate estate sprawling-castle]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}
+                            {:card duchy :pile-size 0}
+                            {:split-pile [{:card sprawling-castle :pile-size 1}]}]
+                  :players [{:coins 8
+                             :buys  1}]}
+                 (buy-card 0 :sprawling-castle)
+                 (choose :duchy))
+             {:supply  [{:card estate :pile-size 8}
+                        {:card duchy :pile-size 0}
+                        {:split-pile [{:card sprawling-castle :pile-size 0}]}]
+              :players [{:discard [sprawling-castle]
+                         :coins   0
+                         :buys    0}]})))))
+
+(deftest grand-castle-test
+  (let [grand-castle (assoc grand-castle :id 0)]
+    (testing "Grand Castle"
+      (is (= (-> {:supply  [{:split-pile [{:card grand-castle :pile-size 1}
+                                          {:card kings-castle :pile-size 1}]}]
+                  :players [{:hand      [copper]
+                             :play-area [gold gold gold]
+                             :coins     9
+                             :buys      1}]}
+                 (buy-card 0 :grand-castle))
+             {:supply  [{:split-pile [{:card grand-castle :pile-size 0}
+                                      {:card kings-castle :pile-size 1}]}]
+              :players [{:hand           [copper]
+                         :play-area      [gold gold gold]
+                         :discard        [grand-castle]
+                         :revealed-cards {:hand 1}
+                         :coins          0
+                         :buys           0}]}))
+      (is (= (-> {:supply  [{:split-pile [{:card grand-castle :pile-size 1}
+                                          {:card kings-castle :pile-size 1}]}]
+                  :players [{:hand  [estate]
+                             :coins 9
+                             :buys  1}]}
+                 (buy-card 0 :grand-castle))
+             {:supply  [{:split-pile [{:card grand-castle :pile-size 0}
+                                      {:card kings-castle :pile-size 1}]}]
+              :players [{:hand           [estate]
+                         :discard        [grand-castle]
+                         :revealed-cards {:hand 1}
+                         :coins          0
+                         :buys           0
+                         :vp-tokens      1}]}))
+      (is (= (-> {:supply  [{:split-pile [{:card grand-castle :pile-size 1}
+                                          {:card kings-castle :pile-size 1}]}]
+                  :players [{:hand  [estate estate]
+                             :coins 9
+                             :buys  1}]}
+                 (buy-card 0 :grand-castle))
+             {:supply  [{:split-pile [{:card grand-castle :pile-size 0}
+                                      {:card kings-castle :pile-size 1}]}]
+              :players [{:hand           [estate estate]
+                         :discard        [grand-castle]
+                         :revealed-cards {:hand 2}
+                         :coins          0
+                         :buys           0
+                         :vp-tokens      2}]}))
+      (is (= (-> {:supply  [{:split-pile [{:card grand-castle :pile-size 1}
+                                          {:card kings-castle :pile-size 1}]}]
+                  :players [{:hand      [estate estate]
+                             :play-area [humble-castle small-castle opulent-castle]
+                             :coins     9
+                             :buys      1}]}
+                 (buy-card 0 :grand-castle))
+             {:supply  [{:split-pile [{:card grand-castle :pile-size 0}
+                                      {:card kings-castle :pile-size 1}]}]
+              :players [{:hand           [estate estate]
+                         :play-area      [humble-castle small-castle opulent-castle]
+                         :discard        [grand-castle]
+                         :revealed-cards {:hand 2}
+                         :coins          0
+                         :buys           0
+                         :vp-tokens      5}]})))))
+
+(deftest castles-victory-points-test
+  (testing "Castles Victory Points"
+    (is (= (calc-victory-points {:deck [humble-castle]})
+           1))
+    (is (= (calc-victory-points {:deck [humble-castle humble-castle]})
+           4))
+    (is (= (calc-victory-points {:deck [crumbling-castle]})
+           1))
+    (is (= (calc-victory-points {:deck [humble-castle crumbling-castle]})
+           3))
+    (is (= (calc-victory-points {:deck [small-castle]})
+           2))
+    (is (= (calc-victory-points {:deck [haunted-castle]})
+           2))
+    (is (= (calc-victory-points {:deck [opulent-castle]})
+           3))
+    (is (= (calc-victory-points {:deck [sprawling-castle]})
+           4))
+    (is (= (calc-victory-points {:deck [grand-castle]})
+           5))
+    (is (= (calc-victory-points {:deck [kings-castle]})
+           2))
+    (is (= (calc-victory-points {:deck [humble-castle kings-castle]})
+           6))
+    (is (= (calc-victory-points {:deck [humble-castle crumbling-castle small-castle haunted-castle
+                                        opulent-castle sprawling-castle grand-castle kings-castle]})
+           (+ 8 1 2 2 3 4 5 16)))))
 
 (deftest catapult-test
   (let [catapult (assoc catapult :id 0)

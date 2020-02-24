@@ -367,7 +367,7 @@
       (update-in game to-path add-card-to-coll card))))
 
 (defn get-on-gain-effects [game player-no card-name]
-  (let [{:keys [card tokens]} (ut/get-pile-idx game card-name)
+  (let [{:keys [card tokens]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})
         {:keys [on-gain]} card
         types                 (ut/get-types game card)
         token-effects         (->> tokens

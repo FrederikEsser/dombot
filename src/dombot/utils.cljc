@@ -102,18 +102,21 @@
 
 (defn remove-top-card [{:keys [split-pile] :as pile}]
   (if split-pile
-    (let [top-idx          (->> split-pile
-                                (keep-indexed (fn [idx {:keys [pile-size]}]
-                                                (when (pos? pile-size)
-                                                  idx)))
-                                first)
-          delete-sub-pile? (and (not (->> split-pile
-                                          (map (comp :name :card))
-                                          (apply distinct?)))
-                                (= 1 (get-in split-pile [top-idx :pile-size])))]
+    (let [{:keys [idx name pile-size]} (->> split-pile
+                                            (keep-indexed (fn [idx {:keys [card pile-size]}]
+                                                            (when (pos? pile-size)
+                                                              {:idx       idx
+                                                               :name      (:name card)
+                                                               :pile-size pile-size})))
+                                            first)
+          delete-sub-pile? (and (= 1 pile-size)
+                                (= 0 idx)
+                                (->> split-pile
+                                     (drop 1)
+                                     (some (comp #{name} :name :card))))]
       (if delete-sub-pile?
         (update pile :split-pile (comp vec (partial drop 1)))
-        (update-in pile [:split-pile top-idx :pile-size] dec)))
+        (update-in pile [:split-pile idx :pile-size] dec)))
     (update pile :pile-size dec)))
 
 (defn add-top-card [{:keys [split-pile] :as pile} {:keys [name] :as card}]

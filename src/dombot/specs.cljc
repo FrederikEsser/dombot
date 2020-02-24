@@ -5,7 +5,7 @@
 
 (s/def ::name-ui string?)
 
-(s/def ::type #{:curse :victory :treasure :action :attack :reaction :duration :artifact :prize :traveller :reserve :gathering
+(s/def ::type #{:curse :victory :treasure :action :attack :reaction :duration :artifact :prize :traveller :reserve :gathering :castle
                 :event :project :night :heirloom :spirit :zombie :fate :boon :doom :hex :state})
 
 (s/def ::types (s/coll-of ::type :distinct true))
