@@ -402,6 +402,22 @@
                                      :max     2}]]
             :on-buy  [[:give-buys 1]]})
 
+(defn- groundskeeper-on-gain [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})
+        types (ut/get-types game card)]
+    (cond-> game
+            (:victory types) (give-victory-points {:player-no player-no :arg 1}))))
+
+(def groundskeeper {:name          :groundskeeper
+                    :set           :empires
+                    :types         #{:action}
+                    :cost          5
+                    :effects       [[:draw 1]
+                                    [:give-actions 1]]
+                    :while-in-play {:on-gain [[::groundskeeper-on-gain]]}})
+
+(effects/register {::groundskeeper-on-gain groundskeeper-on-gain})
+
 (defn- legionary-attack [game {:keys [player-no card-name]}]
   (cond-> game
           (= :gold card-name) (attack-other-players {:player-no player-no
@@ -583,6 +599,7 @@
                     encampment
                     farmers-market
                     forum
+                    groundskeeper
                     legionary
                     patrician
                     sacrifice

@@ -1003,6 +1003,60 @@
                          :coins   2
                          :buys    1}]})))))
 
+(deftest groundskeeper-test
+  (let [groundskeeper (assoc groundskeeper :id 0)
+        estate        (assoc estate :id 1)
+        silver        (assoc silver :id 2)]
+    (testing "Groundskeeper"
+      (is (= (-> {:players [{:hand    [groundskeeper estate copper]
+                             :deck    [silver estate]
+                             :actions 1}]}
+                 (play 0 :groundskeeper))
+             {:players [{:hand      [estate copper silver]
+                         :play-area [groundskeeper]
+                         :deck      [estate]
+                         :actions   1}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:play-area [groundskeeper]
+                             :coins     3
+                             :buys      1}]}
+                 (buy-card 0 :silver))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:play-area [groundskeeper]
+                         :discard   [silver]
+                         :coins     0
+                         :buys      0}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}]
+                  :players [{:play-area [groundskeeper]
+                             :coins     2
+                             :buys      1}]}
+                 (buy-card 0 :estate))
+             {:supply  [{:card estate :pile-size 7}]
+              :players [{:play-area [groundskeeper]
+                         :discard   [estate]
+                         :coins     0
+                         :buys      0
+                         :vp-tokens 1}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}]
+                  :players [{:play-area [groundskeeper groundskeeper]}]}
+                 (gain {:player-no 0 :card-name :estate}))
+             {:supply  [{:card estate :pile-size 7}]
+              :players [{:play-area [groundskeeper groundskeeper]
+                         :discard   [estate]
+                         :vp-tokens 2}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}]
+                  :players [{:play-area [groundskeeper]
+                             :coins     4
+                             :buys      2}]}
+                 (buy-card 0 :estate)
+                 (buy-card 0 :estate))
+             {:supply  [{:card estate :pile-size 6}]
+              :players [{:play-area [groundskeeper]
+                         :discard   [estate estate]
+                         :coins     0
+                         :buys      0
+                         :vp-tokens 2}]})))))
+
 (deftest legionary-test
   (let [legionary (assoc legionary :id 0)]
     (testing "Legionary"
