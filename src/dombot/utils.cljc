@@ -88,6 +88,9 @@
                     (filter (comp pos? :pile-size))
                     first)
                (last split-pile))
+           {:total-pile-size (->> split-pile
+                                  (map :pile-size)
+                                  (apply +))}
            (select-keys pile [:tokens]))
     pile))
 

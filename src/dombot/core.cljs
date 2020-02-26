@@ -78,7 +78,8 @@
 (defn view-card
   ([card]
    (view-card nil card))
-  ([max {:keys [name name-ui choice-value types cost buy-cost set-aside number-of-cards interaction tokens bane?] :as card}]
+  ([max {:keys [name name-ui choice-value types cost buy-cost set-aside number-of-cards total-number-of-cards
+                interaction tokens bane?] :as card}]
    (if (map? card)
      (let [selection       (:selection @state)
            num-selected    (->> selection (filter #{name choice-value}) count)
@@ -114,7 +115,8 @@
                 (when bane? " - Bane")
                 (when cost (str " ($" cost (when buy-cost (str "/" buy-cost)) ")"))
                 (when set-aside (str " (" (string/join ", " set-aside) ")"))
-                (when number-of-cards (str " x" number-of-cards)))]]))
+                (when number-of-cards (str " x" number-of-cards))
+                (when total-number-of-cards (str "(" total-number-of-cards ")")))]]))
      card)))
 
 (defn view-event

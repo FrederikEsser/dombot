@@ -25,8 +25,7 @@
   (->> supply
        (map ut/access-top-card)
        (map (fn [{{:keys [name bane?] :as card} :card
-                  number-of-cards               :pile-size
-                  :keys                         [tokens]}]
+                  :keys                         [tokens pile-size total-pile-size]}]
               (let [types    (ut/get-types game card)
                     cost     (ut/get-cost game card)
                     buy-cost (ut/get-buy-cost game player-no card)]
@@ -34,12 +33,15 @@
                         :name-ui         (ut/format-name name)
                         :types           types
                         :cost            cost
-                        :number-of-cards number-of-cards}
+                        :number-of-cards pile-size}
+                       (when (and total-pile-size
+                                  (> total-pile-size pile-size))
+                         {:total-number-of-cards total-pile-size})
                        (when (not= cost buy-cost)
                          {:buy-cost buy-cost})
                        (when (and (#{:action :pay :buy} phase)
                                   (not choice)
-                                  (pos? number-of-cards)
+                                  (pos? pile-size)
                                   buys (pos? buys)
                                   coins (<= buy-cost coins)
                                   (ut/card-buyable? game player-no card))
