@@ -290,17 +290,44 @@
                    ::charm-choice charm-choice})
 
 
-(def charm {:name    :charm
-            :set     :empires
-            :types   #{:treasure}
-            :cost    5
-            :effects [[:give-choice {:text    "Choose one:"
-                                     :choice  ::charm-choice
-                                     :options [:special
-                                               {:option :coins :text "+1 Buy and +$2"}
-                                               {:option :gain :text "The next time you buy a card this turn, you may also gain a differently named card with the same cost."}]
-                                     :min     1
-                                     :max     1}]]})
+(def charm {:name            :charm
+            :set             :empires
+            :types           #{:treasure}
+            :cost            5
+            :effects         [[:give-choice {:text    "Choose one:"
+                                             :choice  ::charm-choice
+                                             :options [:special
+                                                       {:option :coins :text "+1 Buy and +$2"}
+                                                       {:option :gain :text "The next time you buy a card this turn, you may also gain a differently named card with the same cost."}]
+                                             :min     1
+                                             :max     1}]]
+            :auto-play-index 2})
+
+(defn- crown-repeat-card [game {:keys [player-no]}]
+  (let [phase (get-in game [:players player-no :phase])]
+    (cond-> game
+            (#{:action :pay :buy} phase) (give-choice {:player-no player-no
+                                                       :text      (str "You may play "
+                                                                       (case phase
+                                                                         :action "an Action"
+                                                                         :pay "a Treasure"
+                                                                         :buy "a Treasure")
+                                                                       " from your hand twice.")
+                                                       :choice    [:repeat-action {:times 2}]
+                                                       :options   [:player :hand {:type (case phase
+                                                                                          :action :action
+                                                                                          :pay :treasure
+                                                                                          :buy :treasure)}]
+                                                       :max       1}))))
+
+(effects/register {::crown-repeat-card crown-repeat-card})
+
+(def crown {:name            :crown
+            :set             :empires
+            :types           #{:action :treasure}
+            :cost            5
+            :effects         [[::crown-repeat-card]]
+            :auto-play-index -1})
 
 (defn encampment-return-to-supply [game {:keys [set-aside] :as args}]
   (assert (= 1 (count set-aside)) (str "Encampment error: " (count set-aside) " cards were set aside: ["
@@ -596,6 +623,7 @@
                     catapult
                     chariot-race
                     charm
+                    crown
                     encampment
                     farmers-market
                     forum

@@ -9,7 +9,7 @@
             [dombot.cards.intrigue :refer [mill]]
             [dombot.cards.seaside :refer [ambassador embargo]]
             [dombot.cards.prosperity :as prosperity :refer [hoard]]
-            [dombot.cards.renaissance :as renaissance :refer [patron]]
+            [dombot.cards.renaissance :as renaissance :refer [patron spices]]
             [dombot.utils :as ut]))
 
 (defn fixture [f]
@@ -819,6 +819,61 @@
                          :discard   [silver]
                          :coins     0
                          :buys      0}]})))))
+
+(deftest crown-test
+  (let [crown (assoc crown :id 0)]
+    (testing "Crown"
+      (is (= (-> {:players [{:hand    [crown groundskeeper]
+                             :deck    [copper copper copper]
+                             :actions 1
+                             :phase   :action}]}
+                 (play 0 :crown)
+                 (choose :groundskeeper))
+             {:players [{:hand      [copper copper]
+                         :play-area [crown groundskeeper]
+                         :deck      [copper]
+                         :actions   2
+                         :phase     :action}]}))
+      (is (= (-> {:players [{:hand    [crown copper]
+                             :actions 1
+                             :phase   :action}]}
+                 (play 0 :crown))
+             {:players [{:hand      [copper]
+                         :play-area [crown]
+                         :actions   0
+                         :phase     :action}]}))
+      (is (= (-> {:players [{:hand    [crown copper]
+                             :actions 1
+                             :coins   0
+                             :phase   :pay}]}
+                 (play 0 :crown)
+                 (choose :copper))
+             {:players [{:play-area [crown copper]
+                         :actions   1
+                         :coins     2
+                         :phase     :pay}]}))
+      (is (= (-> {:players [{:hand  [crown spices]
+                             :coins 0
+                             :buys  1
+                             :phase :pay}]}
+                 (play 0 :crown)
+                 (choose :spices))
+             {:players [{:play-area [crown spices]
+                         :coins     4
+                         :buys      3
+                         :phase     :pay}]}))
+      (is (= (-> {:players [{:hand  [crown crown gold spices]
+                             :coins 0
+                             :buys  1
+                             :phase :pay}]}
+                 (play 0 :crown)
+                 (choose :crown)
+                 (choose :gold)
+                 (choose :spices))
+             {:players [{:play-area [crown crown gold spices]
+                         :coins     10
+                         :buys      3
+                         :phase     :pay}]})))))
 
 (deftest encampment-test
   (let [encampment (assoc encampment :id 0)
