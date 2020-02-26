@@ -375,6 +375,14 @@
         potential-coins     (cond-> coins
                                     can-play-treasures? (+ (->> hand (keep :coin-value) (apply +))))]
     {:can-undo?           (boolean can-undo?)
+     :can-goto-buy-phase? (boolean (and (= :action phase)
+                                        (pos? actions)
+                                        (some (fn [card]
+                                                (let [types (ut/get-types game card)]
+                                                  (and (:action types)
+                                                       (or (:treasure types)
+                                                           (:night types)))))
+                                              hand)))
      :can-play-treasures? can-play-treasures?
      :can-end-turn?       (and (not choice)
                                (not= phase :end-of-game))

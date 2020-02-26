@@ -35,7 +35,6 @@
 ; show Actions as unbuyable when Deluded (and in action phase)
 ; make extra-cards (Prizes, Spirits, etc.) and unique cards (Zombies & Heirlooms) visible/choosable for Wishing Well / Doctor / Journeyman
 ; hide revealed cards on any movement (Border Guard)
-; UI button for jumping to next phase
 ; show face-down cards in trash (Necromancer)
 ; make "any order" option for all topdecking (Sentry, Navigator, Rabble, Doctor, Seer, Night Watchman)
 ; view card images
@@ -81,6 +80,14 @@
     (swap! game-state assoc :game (-> game
                                       (op/start-turn {:player-no current-player})
                                       list))
+    (view)))
+
+(defn goto-buy-phase []
+  (let [{:keys [current-player] :as game} (get-game)]
+    (swap! game-state update :game conj (-> game
+                                            (op/set-phase {:player-no current-player
+                                                           :phase     :pay})
+                                            op/check-stack))
     (view)))
 
 (defn play-treasures []

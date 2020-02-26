@@ -215,11 +215,14 @@
 
 (s/def ::can-undo? boolean?)
 
+(s/def ::can-goto-buy-phase? boolean?)
+
 (s/def ::can-play-treasures? boolean?)
 
 (s/def ::can-end-turn? boolean?)
 
 (s/def ::commands (s/keys :req-un [::can-undo?
+                                   ::can-goto-buy-phase?
                                    ::can-play-treasures?
                                    ::can-end-turn?]))
 

@@ -450,6 +450,11 @@
                                                 :disabled disabled
                                                 :on-click (fn [] (swap! state assoc :game (cmd/play-treasures)))}
                                        "Play Treasures"])]
+                              (when (get-in @state [:game :commands :can-goto-buy-phase?])
+                                [:div
+                                 [:button {:style    (button-style false)
+                                           :on-click (fn [] (swap! state assoc :game (cmd/goto-buy-phase)))}
+                                  "=> Buy Phase"]])
                               [:div (let [disabled     (-> @state :game :commands :can-end-turn? not)
                                           confirm-text (-> @state :game :commands :confirm-end-turn)]
                                       [:button {:style    (button-style disabled)
