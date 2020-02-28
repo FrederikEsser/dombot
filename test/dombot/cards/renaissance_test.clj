@@ -21,14 +21,6 @@
 
 (use-fixtures :each fixture)
 
-(defn get-project-trigger [{:keys [name type trigger]}]
-  (merge (if (= :project type)
-           {:duration :game}
-           {:duration name})
-         {:id   1
-          :name name}
-         trigger))
-
 (deftest acting-troupe-test
   (let [acting-troupe (assoc acting-troupe :id 1)]
     (testing "Acting Troupe"
@@ -515,7 +507,7 @@
                          :discard   [copper]
                          :actions   0
                          :coins     4
-                         :triggers  [(assoc (get-trigger cargo-ship-2) :id 2)
+                         :triggers  [(get-trigger cargo-ship-2 2)
                                      (merge set-aside=>hand-trigger {:id        3
                                                                      :card-id   1
                                                                      :name      :cargo-ship
@@ -630,7 +622,7 @@
                        :actions       0
                        :coins         4
                        :triggers      [(get-trigger cargo-ship)
-                                       (assoc (get-trigger cargo-ship) :id 2)]
+                                       (get-trigger cargo-ship 2)]
                        :repeated-play [{:source 8
                                         :target 1}]}]}))
     (is (= (-> {:players [{:hand    [cargo-ship throne-room]
@@ -664,7 +656,7 @@
                             :actions       0
                             :coins         4
                             :triggers      [(get-trigger cargo-ship)
-                                            (assoc (get-trigger cargo-ship) :id 2)]
+                                            (get-trigger cargo-ship 2)]
                             :repeated-play [{:source 8
                                              :target 1}]}]
             :effect-stack [{:text      "You may set the gained Gold aside on Cargo Ship."
@@ -702,7 +694,7 @@
                        :discard       [copper]
                        :actions       0
                        :coins         4
-                       :triggers      [(assoc (get-trigger cargo-ship) :id 2)
+                       :triggers      [(get-trigger cargo-ship 2)
                                        (merge set-aside=>hand-trigger {:id        3
                                                                        :card-id   1
                                                                        :name      :cargo-ship
@@ -1203,7 +1195,7 @@
                            :actions   0
                            :coins     4
                            :triggers  [(get-trigger improve)
-                                       (assoc (get-trigger improve) :id 2)]}]}))
+                                       (get-trigger improve 2)]}]}))
         #_(is (= (-> {:supply  [{:card throne-room :pile-size 9}
                                 {:card duchy :pile-size 8}]
                       :players [{:hand    [throne-room improve]
@@ -2624,12 +2616,14 @@
         flag-bearer (assoc flag-bearer :id 2)]
     (testing "Citadel"
       (is (= (-> {:track-played-actions? true
+                  :current-player        0
                   :players               [{:hand     [patron]
                                            :actions  1
                                            :coins    0
                                            :triggers [(get-project-trigger citadel)]}]}
                  (play 0 :patron))
              {:track-played-actions? true
+              :current-player        0
               :players               [{:play-area      [patron]
                                        :actions        0
                                        :coins          4
@@ -2637,6 +2631,7 @@
                                        :actions-played [0 0]
                                        :triggers       [(get-project-trigger citadel)]}]}))
       (is (= (-> {:track-played-actions? true
+                  :current-player        0
                   :players               [{:hand           [patron]
                                            :actions        1
                                            :coins          0
@@ -2644,6 +2639,7 @@
                                            :triggers       [(get-project-trigger citadel)]}]}
                  (play 0 :patron))
              {:track-played-actions? true
+              :current-player        0
               :players               [{:play-area      [patron]
                                        :actions        0
                                        :coins          2
@@ -2651,6 +2647,7 @@
                                        :actions-played [0 0]
                                        :triggers       [(get-project-trigger citadel)]}]}))
       (is (= (-> {:track-played-actions? true
+                  :current-player        0
                   :players               [{:hand     [throne-room patron flag-bearer]
                                            :actions  1
                                            :coins    0
@@ -2659,6 +2656,7 @@
                  (choose :patron)
                  (choose :flag-bearer))
              {:track-played-actions? true
+              :current-player        0
               :players               [{:play-area      [throne-room patron flag-bearer]
                                        :actions        0
                                        :coins          8

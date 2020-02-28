@@ -32,8 +32,16 @@
                   (is (= 9.90898847579956 (rand 10)))
                   (is (= [7 5 6 2 0 1 8 4 3 9] (shuffle (range 10))))))
 
-(defn get-trigger [{:keys [id name trigger]}]
-  (merge {:id 1}
+(defn get-trigger [{:keys [id name trigger]} & [trigger-id]]
+  (merge {:id (or trigger-id 1)}
          (when id {:card-id id})
          (when name {:name name})
+         trigger))
+
+(defn get-project-trigger [{:keys [name type trigger]}]
+  (merge (if (= :project type)
+           {:duration :game}
+           {:duration name})
+         {:id   1
+          :name name}
          trigger))

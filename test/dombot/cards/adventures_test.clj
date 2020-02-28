@@ -253,7 +253,7 @@
                            :actions   2
                            :phase     :out-of-turn
                            :triggers  [(get-trigger caravan-guard)
-                                       (assoc (get-trigger caravan-guard-1) :id 2)]}]})))
+                                       (get-trigger caravan-guard-1 2)]}]})))
       (is (= (-> {:players [{:hand    [militia]
                              :actions 1
                              :coins   0

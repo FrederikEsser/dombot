@@ -7,9 +7,11 @@
             [dombot.cards.empires :as empires :refer :all]
             [dombot.cards.dominion :refer [market throne-room]]
             [dombot.cards.intrigue :refer [mill]]
-            [dombot.cards.seaside :refer [ambassador embargo]]
+            [dombot.cards.seaside :refer [ambassador embargo outpost]]
             [dombot.cards.prosperity :as prosperity :refer [hoard]]
-            [dombot.cards.renaissance :as renaissance :refer [patron spices]]
+            [dombot.cards.adventures :as adventures :refer [caravan-guard]]
+            [dombot.cards.nocturne :as nocturne :refer [ghost]]
+            [dombot.cards.renaissance :as renaissance :refer [patron spices citadel innovation piazza]]
             [dombot.utils :as ut]))
 
 (defn fixture [f]
@@ -977,6 +979,331 @@
              {:players [{:play-area [plunder]
                          :coins     2
                          :vp-tokens 1}]})))))
+
+(deftest enchantress-test
+  (let [enchantress (assoc enchantress :id 0)]
+    (testing "Enchantress"
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand    [enchantress]
+                             :actions 1}]}
+                 (play 0 :enchantress))
+             {:players [{:play-area [enchantress]
+                         :actions   0
+                         :triggers  [(get-trigger enchantress)]}]}))
+      (is (= (-> {:players [{:play-area [enchantress]
+                             :deck      (repeat 10 copper)
+                             :phase     :buy
+                             :triggers  [(get-trigger enchantress)]}]}
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand      (repeat 7 copper)
+                                :play-area [enchantress]
+                                :deck      [copper copper copper]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand    [enchantress]
+                             :actions 1}
+                            {}]}
+                 (play 0 :enchantress)
+                 (end-turn 0))
+             {:current-player 1
+              :players        [{:play-area [enchantress]
+                                :actions   0
+                                :coins     0
+                                :buys      0
+                                :triggers  [(get-trigger enchantress)]}
+                               {:actions  1
+                                :coins    0
+                                :buys     1
+                                :triggers [(assoc enchantress-trigger :id 2
+                                                                      :card-id 0)]}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:track-played-actions? true
+                  :players               [{:hand    [enchantress]
+                                           :actions 1}
+                                          {:hand [enchantress copper copper copper copper]
+                                           :deck [estate estate]}]}
+                 (play 0 :enchantress)
+                 (end-turn 0)
+                 (play 1 :enchantress))
+             {:track-played-actions? true
+              :current-player        1
+              :players               [{:play-area [enchantress]
+                                       :actions   0
+                                       :coins     0
+                                       :buys      0
+                                       :triggers  [(get-trigger enchantress)]}
+                                      {:hand           [copper copper copper copper estate]
+                                       :play-area      [enchantress]
+                                       :deck           [estate]
+                                       :actions        1
+                                       :coins          0
+                                       :buys           1
+                                       :actions-played [0]
+                                       :triggers       [(assoc enchantress-trigger :id 2
+                                                                                   :card-id 0)]}]}))
+      (ut/reset-ids!)
+      (let [market (assoc market :id 1)]
+        (is (= (-> {:track-played-actions? true
+                    :players               [{:hand    [enchantress]
+                                             :actions 1}
+                                            {:hand [enchantress market copper copper copper]
+                                             :deck [copper estate estate]}]}
+                   (play 0 :enchantress)
+                   (end-turn 0)
+                   (play 1 :enchantress)
+                   (play 1 :market))
+               {:current-player        1
+                :track-played-actions? true
+                :players               [{:play-area [enchantress]
+                                         :actions   0
+                                         :coins     0
+                                         :buys      0
+                                         :triggers  [(get-trigger enchantress)]}
+                                        {:hand           [copper copper copper copper estate]
+                                         :play-area      [enchantress market]
+                                         :deck           [estate]
+                                         :actions        1
+                                         :coins          1
+                                         :buys           2
+                                         :actions-played [0 1]
+                                         :triggers       [(assoc enchantress-trigger :id 2
+                                                                                     :card-id 0)]}]})))
+      (is (= (-> {:track-played-actions? true
+                  :players               [{:hand    [enchantress]
+                                           :actions 1
+                                           :phase   :action}
+                                          {:hand  [enchantress copper copper copper copper]
+                                           :deck  [estate estate copper copper copper copper]
+                                           :phase :out-of-turn}]}
+                 (play 0 :enchantress)
+                 (end-turn 0)
+                 (play 1 :enchantress)
+                 (end-turn 1))
+             {:track-played-actions? true
+              :current-player        0
+              :players               [{:play-area [enchantress]
+                                       :actions   1
+                                       :coins     0
+                                       :buys      1
+                                       :phase     :action}
+                                      {:hand    [estate copper copper copper copper]
+                                       :discard [copper copper copper copper estate enchantress]
+                                       :actions 0
+                                       :coins   0
+                                       :buys    0
+                                       :phase   :out-of-turn}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:track-played-actions? true
+                  :players               [{:hand    [enchantress enchantress]
+                                           :actions 2}
+                                          {:hand [enchantress copper copper copper copper]
+                                           :deck [estate estate]}]}
+                 (play 0 :enchantress)
+                 (play 0 :enchantress)
+                 (end-turn 0)
+                 (play 1 :enchantress))
+             {:current-player        1
+              :track-played-actions? true
+              :players               [{:play-area [enchantress enchantress]
+                                       :actions   0
+                                       :coins     0
+                                       :buys      0
+                                       :triggers  [(get-trigger enchantress)
+                                                   (get-trigger enchantress 3)]}
+                                      {:hand           [copper copper copper copper estate]
+                                       :play-area      [enchantress]
+                                       :deck           [estate]
+                                       :actions        1
+                                       :coins          0
+                                       :buys           1
+                                       :actions-played [0]
+                                       :triggers       [(assoc enchantress-trigger :id 2
+                                                                                   :card-id 0)
+                                                        (assoc enchantress-trigger :id 4
+                                                                                   :card-id 0)]}]}))
+      (ut/reset-ids!)
+      (let [outpost-1 (assoc outpost :id 1)
+            outpost-2 (assoc outpost :id 2)]
+        (is (= (-> {:track-played-actions? true
+                    :players               [{:hand    [enchantress]
+                                             :actions 1}
+                                            {:hand  [outpost-1]
+                                             :deck  [outpost-2 enchantress copper copper estate estate]
+                                             :phase :out-of-turn}]}
+                   (play 0 :enchantress)
+                   (end-turn 0)
+                   (play 1 :outpost)
+                   (play 1 :outpost)
+                   (end-turn 1)
+                   (play 1 :enchantress))
+               {:current-player        1
+                :track-played-actions? true
+                :players               [{:play-area [enchantress]
+                                         :actions   0
+                                         :coins     0
+                                         :buys      0
+                                         :triggers  [(get-trigger enchantress)]}
+                                        {:hand                     [copper copper estate]
+                                         :play-area                [outpost-2 enchantress]
+                                         :deck                     [estate]
+                                         :discard                  [outpost-1]
+                                         :actions                  1
+                                         :coins                    0
+                                         :buys                     1
+                                         :phase                    :action
+                                         :previous-turn-was-yours? true
+                                         :actions-played           [0]
+                                         :triggers                 [(assoc enchantress-trigger :id 2
+                                                                                               :card-id 0)]}]})))
+      (is (= (-> {:track-played-actions? true
+                  :players               [{:deck     [enchantress gold]
+                                           :phase    :out-of-turn
+                                           :triggers [(get-project-trigger piazza)
+                                                      (assoc enchantress-trigger :id 2
+                                                                                 :card-id 0)]}]}
+                 (start-turn {:player-no 0}))
+             {:current-player        0
+              :track-played-actions? true
+              :players               [{:hand           [gold]
+                                       :play-area      [enchantress]
+                                       :revealed-cards {:play-area 1}
+                                       :actions        2
+                                       :coins          0
+                                       :buys           1
+                                       :phase          :action
+                                       :actions-played [0]
+                                       :triggers       [(get-project-trigger piazza)
+                                                        (assoc enchantress-trigger :id 2
+                                                                                   :card-id 0)]}]}))
+      (is (= (-> {:track-played-actions? true
+                  :current-player        0
+                  :supply                [{:card enchantress :pile-size 9}]
+                  :players               [{:deck     [copper copper]
+                                           :actions  0
+                                           :coins    3
+                                           :buys     1
+                                           :triggers [(get-project-trigger innovation)
+                                                      (assoc enchantress-trigger :id 2
+                                                                                 :card-id 0)]}]}
+                 (buy-card 0 :enchantress)
+                 (choose :enchantress))
+             {:track-played-actions? true
+              :current-player        0
+              :supply                [{:card enchantress :pile-size 8}]
+              :players               [{:hand           [copper]
+                                       :play-area      [enchantress]
+                                       :deck           [copper]
+                                       :actions        1
+                                       :coins          0
+                                       :buys           0
+                                       :actions-played [0]
+                                       :triggers       [(get-project-trigger innovation)
+                                                        (assoc enchantress-trigger :id 2
+                                                                                   :card-id 0)]}]}))
+      (let [ghost  (assoc ghost :id 1)
+            market (assoc market :id 2)]
+        (ut/reset-ids! 2)
+        (is (= (-> {:track-played-actions? true
+                    :players               [{:play-area [ghost]
+                                             :deck      [copper copper]
+                                             :actions   1
+                                             :phase     :out-of-turn
+                                             :triggers  [(merge nocturne/ghost-trigger
+                                                                {:id        1
+                                                                 :card-id   1
+                                                                 :name      :ghost
+                                                                 :set-aside [enchantress]})
+                                                         (assoc enchantress-trigger :id 2
+                                                                                    :card-id 0)]}]}
+                   (start-turn {:player-no 0}))
+               {:track-played-actions? true
+                :current-player        0
+                :players               [{:hand           [copper]
+                                         :play-area      [ghost enchantress]
+                                         :deck           [copper]
+                                         :actions        2
+                                         :coins          0
+                                         :buys           1
+                                         :actions-played [0 0]
+                                         :repeated-play  [{:source 1 :target 0}]
+                                         :phase          :action
+                                         :triggers       [(assoc enchantress-trigger :id 2
+                                                                                     :card-id 0)
+                                                          (get-trigger enchantress 3)]}]}))
+        (is (= (-> {:track-played-actions? true
+                    :players               [{:play-area [ghost]
+                                             :deck      [copper copper]
+                                             :actions   1
+                                             :phase     :out-of-turn
+                                             :triggers  [(merge nocturne/ghost-trigger
+                                                                {:id        1
+                                                                 :card-id   1
+                                                                 :name      :ghost
+                                                                 :set-aside [market]})
+                                                         (assoc enchantress-trigger :id 2
+                                                                                    :card-id 0)]}]}
+                   (start-turn {:player-no 0}))
+               {:current-player        0
+                :track-played-actions? true
+                :players               [{:hand           [copper copper]
+                                         :play-area      [ghost market]
+                                         :actions        3
+                                         :coins          1
+                                         :buys           2
+                                         :actions-played [2 2]
+                                         :phase          :action
+                                         :triggers       [(assoc enchantress-trigger :id 2
+                                                                                     :card-id 0)]}]})))
+      (ut/reset-ids!)
+      (is (= (-> {:track-played-actions? true
+                  :current-player        0
+                  :players               [{:hand     [enchantress]
+                                           :deck     [copper copper]
+                                           :actions  1
+                                           :triggers [(get-project-trigger citadel)
+                                                      (assoc enchantress-trigger :id 2
+                                                                                 :card-id 0)]}]}
+                 (play 0 :enchantress))
+             {:track-played-actions? true
+              :current-player        0
+              :players               [{:hand           [copper]
+                                       :play-area      [enchantress]
+                                       :deck           [copper]
+                                       :actions        1
+                                       :actions-played [0 0]
+                                       :triggers       [(get-project-trigger citadel)
+                                                        (assoc enchantress-trigger :id 2
+                                                                                   :card-id 0)
+                                                        (get-trigger enchantress)]}]}))
+      (ut/reset-ids!)
+      (let [caravan-guard (assoc caravan-guard :id 1)]
+        (is (= (-> {:players [{:hand    [enchantress]
+                               :actions 1}
+                              {:hand     [caravan-guard copper copper copper copper]
+                               :deck     [estate estate]
+                               :actions  0
+                               :phase    :out-of-turn
+                               :triggers [(assoc enchantress-trigger :id 1
+                                                                     :card-id 0)]}]}
+                   (play 0 :enchantress)
+                   (choose :caravan-guard))
+               {:players [{:play-area [enchantress]
+                           :actions   0
+                           :triggers  [(get-trigger enchantress)]}
+                          {:hand      [copper copper copper copper estate]
+                           :play-area [caravan-guard]
+                           :deck      [estate]
+                           :actions   1
+                           :phase     :out-of-turn
+                           :triggers  [(assoc enchantress-trigger :id 1
+                                                                  :card-id 0)
+                                       (get-trigger caravan-guard 2)
+                                       (assoc enchantress-trigger :id 3
+                                                                  :card-id 0)]}]}))))))
 
 (deftest farmers-market-test
   (let [farmers-market (assoc farmers-market :id 0)]

@@ -175,7 +175,7 @@
                          :coins     0
                          :buys      0
                          :triggers  [(get-trigger caravan-1)
-                                     (assoc (get-trigger caravan-2) :id 2)]}]}))
+                                     (get-trigger caravan-2 2)]}]}))
       (is (= (-> {:players [{:hand    [caravan-1 caravan-2 copper copper copper]
                              :deck    [copper copper estate estate copper copper silver]
                              :actions 1
@@ -205,7 +205,7 @@
                          :coins         0
                          :buys          0
                          :triggers      [(get-trigger caravan-1)
-                                         (assoc (get-trigger caravan-1) :id 2)]
+                                         (get-trigger caravan-1 2)]
                          :repeated-play [{:source 3 :target 1}]}]}))
       (is (= (-> {:players [{:hand    [caravan-1 throne-room copper copper copper]
                              :deck    [copper copper estate estate copper copper silver]

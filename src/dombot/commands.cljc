@@ -23,7 +23,7 @@
 ; separate mixed choices from play area and tavern mat - 2 Ratcatchers called same turn
 ; receiving boons & hexes can't be undone
 ; give coin from Key when received at-start-turn
-; fix Ghost/Captain/Piazza/Innovation(with Cobbler?) with Citadel
+; fix Ghost/Captain/Piazza/Innovation(with Cobbler?) with Citadel/Enchantress
 ; test swiftable for mixed choices
 ; fix Scepter / Caravan Guard reaction - not played this turn
 ; check Experiment with Innovation

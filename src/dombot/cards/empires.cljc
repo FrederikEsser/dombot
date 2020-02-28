@@ -393,6 +393,21 @@
                    ::encampment-reveal-money     encampment-reveal-money
                    ::encampment-plunder-pile     encampment-plunder-pile})
 
+(def enchantress-trigger {:event    :instead-of-first-action
+                          :duration :attack
+                          :effects  [[:draw 1]
+                                     [:give-actions 1]]})
+
+(def enchantress {:name    :enchantress
+                  :set     :empires
+                  :types   #{:action :attack :duration}
+                  :cost    3
+                  :effects [[:attack {:effects [[:add-trigger {:trigger enchantress-trigger}]]}]]
+                  :trigger {:event    :at-start-turn
+                            :duration :once
+                            :mode     :semi
+                            :effects  [[:draw 2]
+                                       [:remove-enemy-triggers]]}})
 
 (defn- farmers-market-yield [game {:keys [player-no card-id]}]
   (let [{:keys [tokens]} (ut/get-pile-idx game :farmers'-market)
@@ -625,6 +640,7 @@
                     charm
                     crown
                     encampment
+                    enchantress
                     farmers-market
                     forum
                     groundskeeper

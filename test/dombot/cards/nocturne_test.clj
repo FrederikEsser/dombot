@@ -2146,8 +2146,8 @@
                                   :coins         2
                                   :buys          1
                                   :phase         :action
-                                  :triggers      [(assoc (get-trigger fishing-village) :id 2)
-                                                  (assoc (get-trigger fishing-village) :id 3)]
+                                  :triggers      [(get-trigger fishing-village 2)
+                                                  (get-trigger fishing-village 3)]
                                   :repeated-play [{:source 0
                                                    :target 1}]}]}))
         (is (= (-> {:players [{:hand  [ghost]

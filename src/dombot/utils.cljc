@@ -5,8 +5,8 @@
 
 (defonce id-state (atom 0))
 
-(defn reset-ids! []
-  (reset! id-state 0))
+(defn reset-ids! [& [last-id]]
+  (reset! id-state (or last-id 0)))
 
 (defn next-id! []
   (swap! id-state inc))
