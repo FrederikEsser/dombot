@@ -7,11 +7,11 @@
             [dombot.cards.empires :as empires :refer :all]
             [dombot.cards.dominion :refer [market throne-room]]
             [dombot.cards.intrigue :refer [mill]]
-            [dombot.cards.seaside :refer [ambassador embargo outpost]]
+            [dombot.cards.seaside :refer [ambassador embargo fishing-village outpost]]
             [dombot.cards.prosperity :as prosperity :refer [hoard]]
             [dombot.cards.adventures :as adventures :refer [caravan-guard]]
             [dombot.cards.nocturne :as nocturne :refer [ghost]]
-            [dombot.cards.renaissance :as renaissance :refer [patron spices citadel innovation piazza]]
+            [dombot.cards.renaissance :as renaissance :refer [patron spices capitalism citadel innovation piazza]]
             [dombot.utils :as ut]))
 
 (defn fixture [f]
@@ -875,7 +875,52 @@
              {:players [{:play-area [crown crown gold spices]
                          :coins     10
                          :buys      3
-                         :phase     :pay}]})))))
+                         :phase     :pay}]}))
+      (let [enchantress (assoc enchantress :id 1)]
+        (ut/reset-ids!)
+        (is (= (-> {:players [{:hand    [crown enchantress]
+                               :actions 1
+                               :phase   :action}]}
+                   (play 0 :crown)
+                   (choose :enchantress))
+               {:players [{:play-area     [crown enchantress]
+                           :actions       0
+                           :repeated-play [{:source 0 :target 1}]
+                           :triggers      [(get-trigger enchantress)
+                                           (get-trigger enchantress 2)]
+                           :phase         :action}]})))
+      (let [fishing-village (assoc fishing-village :id 1)]
+        (ut/reset-ids!)
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :players  [{:hand    [crown fishing-village]
+                                :actions 0
+                                :coins   0
+                                :phase   :pay}]}
+                   (play 0 :crown)
+                   (choose :fishing-village))
+               {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                :players  [{:play-area     [crown fishing-village]
+                            :actions       4
+                            :coins         2
+                            :repeated-play [{:source 0 :target 1}]
+                            :triggers      [(get-trigger fishing-village)
+                                            (get-trigger fishing-village 2)]
+                            :phase         :pay}]}))
+        (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                    :players  [{:hand    [crown fishing-village]
+                                :actions 0
+                                :coins   0
+                                :phase   :pay}]}
+                   (play 0 :crown)
+                   (choose :fishing-village)
+                   (end-turn 0))
+               {:current-player 0
+                :projects       {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                :players        [{:play-area [crown fishing-village]
+                                  :actions   3
+                                  :coins     2
+                                  :buys      1
+                                  :phase     :action}]}))))))
 
 (deftest encampment-test
   (let [encampment (assoc encampment :id 0)

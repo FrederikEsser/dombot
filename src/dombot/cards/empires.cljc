@@ -303,10 +303,11 @@
                                              :max     1}]]
             :auto-play-index 2})
 
-(defn- crown-repeat-card [game {:keys [player-no]}]
+(defn- crown-repeat-card [game {:keys [player-no card-id]}]
   (let [phase (get-in game [:players player-no :phase])]
     (cond-> game
             (#{:action :pay :buy} phase) (give-choice {:player-no player-no
+                                                       :card-id   card-id
                                                        :text      (str "You may play "
                                                                        (case phase
                                                                          :action "an Action"
