@@ -1028,13 +1028,14 @@
 
 (effects/register {::idol-boon-or-curse idol-boon-or-curse})
 
-(def idol {:name       :idol
-           :set        :nocturne
-           :types      #{:treasure :attack :fate}
-           :cost       5
-           :coin-value 2
-           :effects    [[::idol-boon-or-curse]]
-           :setup      [[:setup-boons]]})
+(def idol {:name            :idol
+           :set             :nocturne
+           :types           #{:treasure :attack :fate}
+           :cost            5
+           :coin-value      2
+           :effects         [[::idol-boon-or-curse]]
+           :setup           [[:setup-boons]]
+           :auto-play-index -1})
 
 (defn- leprechaun-wish-or-hex [game {:keys [player-no]}]
   (let [play-area (get-in game [:players player-no :play-area])]
@@ -1173,15 +1174,16 @@
                                                 :min     5}]]
                      :gain-to :hand})
 
-(def goat {:name       :goat
-           :set        :nocturne
-           :types      #{:treasure :heirloom}
-           :cost       2
-           :coin-value 1
-           :effects    [[:give-choice {:text    "You may trash a card from your hand."
-                                       :choice  :trash-from-hand
-                                       :options [:player :hand]
-                                       :max     1}]]})
+(def goat {:name            :goat
+           :set             :nocturne
+           :types           #{:treasure :heirloom}
+           :cost            2
+           :coin-value      1
+           :effects         [[:give-choice {:text    "You may trash a card from your hand."
+                                            :choice  :trash-from-hand
+                                            :options [:player :hand]
+                                            :max     1}]]
+           :auto-play-index -1})
 
 (defn- pixie-receive-boon [game {:keys [player-no card-id card-name boon]}]
   (let [{:keys [name effects keep-until-clean-up?]} boon]

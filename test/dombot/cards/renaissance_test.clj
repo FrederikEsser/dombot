@@ -1740,7 +1740,7 @@
                         {:hand           [copper copper copper copper peddler]
                          :revealed-cards {:hand 5}}]}))
       (ut/reset-ids!)
-      (is (= (-> {:players [{:hand           [scepter copper]
+      (is (= (-> {:players [{:hand           [scepter estate]
                              :play-area      [priest]
                              :actions-played [5]
                              :coins          2
@@ -1749,14 +1749,14 @@
                  (play-treasures {:player-no 0})
                  (choose :replay-action)
                  (choose :priest)
-                 (choose :copper))
+                 (choose :estate))
              {:players [{:play-area      [priest scepter]
                          :actions-played [5]
                          :coins          6
                          :phase          :pay
                          :triggers       [priest-trigger
                                           (assoc priest-trigger :id 1)]}]
-              :trash   [copper]}))
+              :trash   [estate]}))
       (is (= (-> {:track-played-actions? true
                   :players               [{:hand    [merchant-ship scepter]
                                            :deck    (repeat 5 copper)

@@ -27,7 +27,7 @@
            :types           #{:treasure}
            :cost            7
            :effects         [[::bank-give-coins]]
-           :auto-play-index 2})
+           :auto-play-index 3})
 
 (defn- bishop-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
@@ -91,7 +91,7 @@
                  :coin-value      3
                  :effects         [[:give-buys 1]
                                    [::contraband-give-choice]]
-                 :auto-play-index -1})
+                 :auto-play-index -2})
 
 (def counting-house {:name    :counting-house
                      :set     :prosperity

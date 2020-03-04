@@ -375,17 +375,18 @@
 (effects/register {::scepter-replay scepter-replay
                    ::scepter-choice scepter-choice})
 
-(def scepter {:name    :scepter
-              :set     :renaissance
-              :types   #{:treasure}
-              :cost    5
-              :effects [[:give-choice {:text    "Choose one:"
-                                       :choice  ::scepter-choice
-                                       :options [:special
-                                                 {:option :coins :text "+$2"}
-                                                 {:option :replay-action :text "Replay an Action card."}]
-                                       :min     1
-                                       :max     1}]]})
+(def scepter {:name            :scepter
+              :set             :renaissance
+              :types           #{:treasure}
+              :cost            5
+              :effects         [[:give-choice {:text    "Choose one:"
+                                               :choice  ::scepter-choice
+                                               :options [:special
+                                                         {:option :coins :text "+$2"}
+                                                         {:option :replay-action :text "Replay an Action card."}]
+                                               :min     1
+                                               :max     1}]]
+              :auto-play-index -1})
 
 (def scholar {:name    :scholar
               :set     :renaissance

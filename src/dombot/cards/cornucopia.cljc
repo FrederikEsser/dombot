@@ -142,7 +142,7 @@
                      :types           #{:treasure}
                      :cost            5
                      :effects         [[::horn-of-plenty-give-choice]]
-                     :auto-play-index 2})
+                     :auto-play-index 3})
 
 (defn- horse-traders-return-to-hand [game {:keys [player-no card-id]}]
   (move-card game {:player-no    player-no
