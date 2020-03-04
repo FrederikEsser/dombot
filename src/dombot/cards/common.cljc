@@ -512,7 +512,8 @@
 (defn add-trigger [game {:keys [player-no card-id trigger]}]
   (let [{:keys [card]} (when card-id (ut/get-card-idx game [:players player-no :play-area] {:id card-id}))]
     (update-in game [:players player-no :triggers] concat [(merge trigger
-                                                                  {:id (ut/next-id!)}
+                                                                  (when-not (:id trigger)
+                                                                    {:id (ut/next-id!)})
                                                                   (when card-id
                                                                     {:card-id card-id})
                                                                   (when card

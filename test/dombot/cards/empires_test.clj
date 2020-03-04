@@ -259,6 +259,224 @@
                             {:hand [copper copper copper copper copper silver]
                              :deck [silver]}]})))))))
 
+(deftest archive-test
+  (let [archive (assoc archive :id 0)]
+    (testing "Archive"
+      (is (= (-> {:players [{:hand    [archive]
+                             :actions 1}]}
+                 (play 0 :archive))
+             {:players [{:play-area [archive]
+                         :actions   1}]}))
+      (is (= (-> {:players [{:hand    [archive]
+                             :deck    [copper]
+                             :actions 1}]}
+                 (play 0 :archive))
+             {:players [{:hand      [copper]
+                         :play-area [archive]
+                         :actions   1}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand    [archive]
+                             :deck    [copper silver]
+                             :actions 1}]}
+                 (play 0 :archive)
+                 (choose :silver))
+             {:players [{:hand      [silver]
+                         :play-area [archive]
+                         :actions   1
+                         :triggers  [(merge archive-trigger
+                                            {:id        1
+                                             :card-id   0
+                                             :name      :archive
+                                             :set-aside [copper]})]}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand    [archive]
+                             :deck    [copper silver gold]
+                             :actions 1}]}
+                 (play 0 :archive)
+                 (choose :silver))
+             {:players [{:hand      [silver]
+                         :play-area [archive]
+                         :actions   1
+                         :triggers  [(merge archive-trigger
+                                            {:id        1
+                                             :card-id   0
+                                             :name      :archive
+                                             :set-aside [copper gold]})]}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand    [archive]
+                             :deck    [copper silver gold estate]
+                             :actions 1}]}
+                 (play 0 :archive)
+                 (choose :gold))
+             {:players [{:hand      [gold]
+                         :play-area [archive]
+                         :deck      [estate]
+                         :actions   1
+                         :triggers  [(merge archive-trigger
+                                            {:id        1
+                                             :card-id   0
+                                             :name      :archive
+                                             :set-aside [copper silver]})]}]}))
+      (is (= (-> {:players [{:hand      [gold]
+                             :play-area [archive]
+                             :deck      [estate]
+                             :actions   1
+                             :phase     :action
+                             :triggers  [(merge archive-trigger
+                                                {:id        1
+                                                 :card-id   0
+                                                 :name      :archive
+                                                 :set-aside [copper silver]})]}]}
+                 (end-turn 0)
+                 (choose :silver))
+             {:current-player 0
+              :players        [{:hand      [estate gold silver]
+                                :play-area [archive]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action
+                                :triggers  [(merge archive-trigger
+                                                   {:id        1
+                                                    :card-id   0
+                                                    :name      :archive
+                                                    :set-aside [copper]})]}]}))
+      (is (= (-> {:players [{:play-area [archive]
+                             :actions   1
+                             :phase     :action
+                             :triggers  [(merge archive-trigger
+                                                {:id        1
+                                                 :card-id   0
+                                                 :name      :archive
+                                                 :set-aside [copper]})]}]}
+                 (end-turn 0)
+                 (choose :copper))
+             {:current-player 0
+              :players        [{:hand      [copper]
+                                :play-area [archive]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]}))
+      (let [crown (assoc crown :id 1)]
+        (ut/reset-ids!)
+        (is (= (-> {:players [{:hand    [crown archive]
+                               :deck    [copper copper copper silver silver silver gold]
+                               :actions 1
+                               :phase   :action}]}
+                   (play 0 :crown)
+                   (choose :archive)
+                   (choose :copper)
+                   (choose :silver))
+               {:players [{:hand          [copper silver]
+                           :play-area     [crown archive]
+                           :deck          [gold]
+                           :actions       2
+                           :phase         :action
+                           :repeated-play [{:source 1 :target 0}]
+                           :triggers      [(merge archive-trigger
+                                                  {:id        1
+                                                   :card-id   0
+                                                   :name      :archive
+                                                   :set-aside [copper copper]})
+                                           (merge archive-trigger
+                                                  {:id        2
+                                                   :card-id   0
+                                                   :name      :archive
+                                                   :set-aside [silver silver]})]}]}))
+        (is (= (-> {:players [{:play-area     [crown archive]
+                               :actions       2
+                               :phase         :action
+                               :repeated-play [{:source 1 :target 0}]
+                               :triggers      [(merge archive-trigger
+                                                      {:id        1
+                                                       :card-id   0
+                                                       :name      :archive
+                                                       :set-aside [copper copper]})
+                                               (merge archive-trigger
+                                                      {:id        2
+                                                       :card-id   0
+                                                       :name      :archive
+                                                       :set-aside [silver silver]})]}]}
+                   (end-turn 0)
+                   (choose {:area :play-area :card-name :archive})
+                   (choose :copper)
+                   (choose :silver))
+               {:current-player 0
+                :players        [{:hand          [copper silver]
+                                  :play-area     [crown archive]
+                                  :actions       1
+                                  :coins         0
+                                  :buys          1
+                                  :phase         :action
+                                  :repeated-play [{:source 1 :target 0}]
+                                  :triggers      [(merge archive-trigger
+                                                         {:id        1
+                                                          :card-id   0
+                                                          :name      :archive
+                                                          :set-aside [copper]})
+                                                  (merge archive-trigger
+                                                         {:id        2
+                                                          :card-id   0
+                                                          :name      :archive
+                                                          :set-aside [silver]})]}]}))
+        (is (= (-> {:players [{:play-area     [crown archive]
+                               :actions       2
+                               :phase         :action
+                               :repeated-play [{:source 1 :target 0}]
+                               :triggers      [(merge archive-trigger
+                                                      {:id        1
+                                                       :card-id   0
+                                                       :name      :archive
+                                                       :set-aside [copper]})
+                                               (merge archive-trigger
+                                                      {:id        2
+                                                       :card-id   0
+                                                       :name      :archive
+                                                       :set-aside [silver]})]}]}
+                   (end-turn 0)
+                   (choose {:area :play-area :card-name :archive})
+                   (choose :copper)
+                   (choose :silver))
+               {:current-player 0
+                :players        [{:hand      [copper silver]
+                                  :play-area [crown archive]
+                                  :actions   1
+                                  :coins     0
+                                  :buys      1
+                                  :phase     :action}]}))
+        (is (= (-> {:players [{:play-area     [crown archive]
+                               :actions       2
+                               :phase         :action
+                               :repeated-play [{:source 1 :target 0}]
+                               :triggers      [(merge archive-trigger
+                                                      {:id        1
+                                                       :card-id   0
+                                                       :name      :archive
+                                                       :set-aside [copper copper]})
+                                               (merge archive-trigger
+                                                      {:id        2
+                                                       :card-id   0
+                                                       :name      :archive
+                                                       :set-aside [silver]})]}]}
+                   (end-turn 0)
+                   (choose {:area :play-area :card-name :archive})
+                   (choose :copper)
+                   (choose :silver))
+               {:current-player 0
+                :players        [{:hand          [copper silver]
+                                  :play-area     [crown archive]
+                                  :actions       1
+                                  :coins         0
+                                  :buys          1
+                                  :phase         :action
+                                  :repeated-play [{:source 1 :target 0}]
+                                  :triggers      [(merge archive-trigger
+                                                         {:id        1
+                                                          :card-id   0
+                                                          :name      :archive
+                                                          :set-aside [copper]})]}]}))))))
+
 (deftest humble-castle-test
   (testing "Humble Castle"
     (is (= (-> {:players [{:hand  [humble-castle]

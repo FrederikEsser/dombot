@@ -64,7 +64,8 @@
                        check-stack))))
 
 (defn get-effects-from-trigger [{:keys [id effects card-id set-aside]}]
-  (let [effect-args (merge {:card-id card-id}
+  (let [effect-args (merge {:trigger-id id
+                            :card-id    card-id}
                            (when set-aside
                              {:set-aside set-aside}))]
     (concat (map (partial ut/add-effect-args effect-args) effects)

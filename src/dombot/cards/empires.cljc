@@ -23,6 +23,68 @@
 (effects/register {::place-vp-token place-vp-token
                    ::take-vp-tokens take-vp-tokens})
 
+(defn archive-put-card-into-hand [game {:keys [player-no trigger-id choice] :as args}]
+  (let [{:keys [trigger]} (ut/get-trigger-idx game [:players player-no :triggers] {:id trigger-id})
+        {:keys [idx card]} (ut/get-card-idx trigger [:set-aside] {:name choice})]
+    (-> game
+        (ut/update-in-vec [:players player-no :triggers] {:id trigger-id}
+                          update :set-aside ut/vec-remove idx)
+        (update-in [:players player-no :hand] concat [card]))))
+
+(def archive-trigger {:event    :at-start-turn
+                      :duration :until-empty
+                      :mode     :manual
+                      :effects  [[::archive-pick-card]]})
+
+(defn- archive-pick-card [game {:keys [player-no trigger-id card-id set-aside]}]
+  (give-choice game {:player-no player-no
+                     :card-id   card-id
+                     :text      "Put a Card from your Archive into your hand."
+                     :choice    [::archive-put-card-into-hand {:trigger-id trigger-id}]
+                     :options   (concat [:special]
+                                        (->> set-aside
+                                             (map (fn [{:keys [name]}]
+                                                    {:option name :text (ut/format-name name)}))
+                                             set))
+                     :min       1
+                     :max       1}))
+
+(defn- archive-clear-set-aside [game {:keys [player-no]}]
+  (update-in game [:players player-no] dissoc :archive-set-aside))
+
+(defn- archive-set-aside [game {:keys [player-no card-id]}]
+  (let [set-aside  (get-in game [:players player-no :archive-set-aside])
+        trigger-id (ut/next-id!)]
+    (-> game
+        (push-effect-stack {:player-no player-no
+                            :card-id   card-id
+                            :effects   (cond
+                                         (< 1 (count set-aside)) [[::archive-clear-set-aside]
+                                                                  [:add-trigger {:trigger (merge archive-trigger {:id        trigger-id
+                                                                                                                  :set-aside set-aside})}]
+                                                                  [::archive-pick-card {:trigger-id trigger-id
+                                                                                        :set-aside  set-aside}]]
+                                         (= 1 (count set-aside)) [[:move-cards {:number-of-cards 1
+                                                                                :from            :archive-set-aside
+                                                                                :from-position   :top
+                                                                                :to              :hand}]])}))))
+
+(effects/register {::archive-put-card-into-hand archive-put-card-into-hand
+                   ::archive-pick-card          archive-pick-card
+                   ::archive-clear-set-aside    archive-clear-set-aside
+                   ::archive-set-aside          archive-set-aside})
+
+(def archive {:name    :archive
+              :set     :empires
+              :types   #{:action :duration}
+              :cost    5
+              :effects [[:give-actions 1]
+                        [:move-cards {:number-of-cards 3
+                                      :from            :deck
+                                      :from-position   :top
+                                      :to              :archive-set-aside}]
+                        [::archive-set-aside]]})
+
 (def castles {:name       :castles
               :set        :empires
               :cost       3
@@ -635,7 +697,8 @@
                                          :min     1
                                          :max     1}]]})
 
-(def kingdom-cards [castles
+(def kingdom-cards [archive
+                    castles
                     catapult
                     chariot-race
                     charm

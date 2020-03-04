@@ -1334,14 +1334,15 @@
                                 :buys      1
                                 :phase     :action
                                 :triggers  [(get-trigger cobbler)]}]
-              :effect-stack   [{:text      "Gain a card to your hand costing up to $4."
-                                :player-no 0
-                                :card-id   0
-                                :choice    :gain-to-hand
-                                :source    :supply
-                                :options   [:curse :estate :copper :silver]
-                                :min       1
-                                :max       1}
+              :effect-stack   [{:text       "Gain a card to your hand costing up to $4."
+                                :player-no  0
+                                :trigger-id 1
+                                :card-id    0
+                                :choice     :gain-to-hand
+                                :source     :supply
+                                :options    [:curse :estate :copper :silver]
+                                :min        1
+                                :max        1}
                                {:player-no 0
                                 :effect    [:remove-trigger {:trigger-id 1}]}
                                {:player-no 0
