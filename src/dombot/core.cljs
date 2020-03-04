@@ -35,7 +35,8 @@
 (defn button-style [& [disabled types number-of-cards]]
   (merge {:color            (cond disabled :grey
                                   (:night types) :white
-                                  (:hex types) "#5A487A"
+                                  (or (:landmark types)
+                                      (:hex types)) "#5A487A"
                                   :else :black)
           :font-weight      :bold
           :background-color (cond
@@ -49,6 +50,7 @@
                               (:curse types) "#B890D7"
                               (:artifact types) "#F9CD88"
                               (:event types) "#C6C8C5"
+                              (:landmark types) "#60B574"
                               (:project types) "#FCA19A"
                               (:boon types) "#F6E359"
                               (:hex types) "#9677B3"
@@ -66,6 +68,7 @@
                               (:night types) "#413B3B"
                               (:artifact types) "#B4763B"
                               (:event types) "#97998E"
+                              (:landmark types) "#459A5D"
                               (:project types) "#EF8984"
                               (:boon types) "#AD9727"
                               (:hex types) "#5A487A"
@@ -130,6 +133,13 @@
                                     :buyable (swap! state assoc :game (cmd/buy-event name)))))}
       (str name-ui
            (when cost (str " ($" cost ")")))]]))
+
+(defn view-landmark
+  [{:keys [name-ui type]}]
+  [:div
+   [:button {:style    (button-style false #{type} 1)
+             :disabled true}
+    name-ui]])
 
 (defn view-project
   [{:keys [name name-ui choice-value type cost interaction participants]}]
@@ -222,7 +232,7 @@
        #_#_"Number of players: " [:input {:type      :number
                                           :min       2
                                           :max       4
-                                          :on-change (fn [event] (swap! state assoc :num-players (js/parseInt (-> event .-target .-value))))
+                                          :on-change (fn [e] (swap! state assoc :num-players (js/parseInt (-> e .-target .-value))))
                                           :value     num-players}]
        (setup-player 0)
        (setup-player 1)
@@ -280,8 +290,8 @@
                                  :border-width     2}}
                 "Druid Boons"]
           (mapk #(view-boon % {:orientation :horizontal}) (get-in @state [:game :druid-boons]))])
-       (let [{:keys [events projects boons hexes]} (:game @state)]
-         (when (or events projects boons hexes)
+       (let [{:keys [events landmarks projects boons hexes]} (:game @state)]
+         (when (or events landmarks projects boons hexes)
            [:div "Landscape"
             [:table
              [:tbody
@@ -289,6 +299,9 @@
                (->> events
                     (map view-event)
                     (mapk (fn [event] [:td event])))
+               (->> landmarks
+                    (map view-landmark)
+                    (mapk (fn [landmark] [:td landmark])))
                (->> projects
                     (map view-project)
                     (mapk (fn [project] [:td project])))
@@ -420,7 +433,7 @@
                                 [:span [:input {:type      :number
                                                 :min       1
                                                 :max       (dec (:to interval))
-                                                :on-change (fn [event] (swap! state assoc :selection [(js/parseInt (-> event .-target .-value))]))
+                                                :on-change (fn [e] (swap! state assoc :selection [(js/parseInt (-> e .-target .-value))]))
                                                 :value     (or (-> @state :selection first) 0)}]
                                  [:button {:style    (button-style)
                                            :on-click (fn [] (swap! state assoc

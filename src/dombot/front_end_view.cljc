@@ -84,6 +84,14 @@
                                 (not (contains? bought-events name)))
                        {:interaction :buyable}))))))
 
+(defn view-landmarks [{:keys [landmarks]}]
+  (->> landmarks
+       vals
+       (map (fn [{:keys [name type]}]
+              {:name    name
+               :name-ui (ut/format-name name)
+               :type    type}))))
+
 (defn view-projects [{projects                             :projects
                       {:keys [coins buys player-no phase]} :player
                       choice                               :choice
@@ -394,7 +402,7 @@
                                      (<= 3 potential-coins)) "You can buy a card."
                                 (some (comp :night (partial ut/get-types game)) hand) "You can play Night cards.")}))
 
-(defn view-game [{:keys [supply extra-cards artifacts events projects druid-boons boons hexes
+(defn view-game [{:keys [supply extra-cards artifacts events landmarks projects druid-boons boons hexes
                          trade-route-mat players effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
@@ -424,6 +432,8 @@
            (when events
              {:events (view-events (merge game {:player (assoc player :player-no current-player)
                                                 :choice choice}))})
+           (when landmarks
+             {:landmarks (view-landmarks game)})
            (when projects
              {:projects (view-projects (merge game {:player (assoc player :player-no current-player)
                                                     :choice choice}))})

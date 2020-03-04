@@ -1,5 +1,6 @@
 (ns dombot.test-utils
-  (:require [clojure.test :refer :all]))
+  (:require [clojure.test :refer :all]
+            [dombot.operations :refer [put-all-cards-in-hands calculate-victory-points]]))
 
 (defn rand-with-seed
   ([seed]
@@ -45,3 +46,10 @@
          {:id   1
           :name name}
          trigger))
+
+(defn calc-victory-points [player]
+  (-> {:players [player]}
+      put-all-cards-in-hands
+      calculate-victory-points
+      (get-in [:players 0 :victory-points])))
+

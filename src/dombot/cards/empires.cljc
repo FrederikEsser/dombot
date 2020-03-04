@@ -23,7 +23,7 @@
 (effects/register {::place-vp-token place-vp-token
                    ::take-vp-tokens take-vp-tokens})
 
-(defn archive-put-card-into-hand [game {:keys [player-no trigger-id choice] :as args}]
+(defn archive-put-card-into-hand [game {:keys [player-no trigger-id choice]}]
   (let [{:keys [trigger]} (ut/get-trigger-idx game [:players player-no :triggers] {:id trigger-id})
         {:keys [idx card]} (ut/get-card-idx trigger [:set-aside] {:name choice})]
     (-> game
@@ -392,7 +392,7 @@
             :effects         [[::crown-repeat-card]]
             :auto-play-index -1})
 
-(defn encampment-return-to-supply [game {:keys [set-aside] :as args}]
+(defn encampment-return-to-supply [game {:keys [set-aside]}]
   (assert (= 1 (count set-aside)) (str "Encampment error: " (count set-aside) " cards were set aside: ["
                                        (->> set-aside
                                             (map (comp ut/format-name :name))
@@ -854,3 +854,169 @@
              ritual
              salt-the-earth
              windfall])
+
+(defn- bandit-ford-scoring [cards _]
+  (->> cards
+       (filter (comp #{:silver :gold} :name))
+       count
+       (* -2)))
+
+(def bandit-ford {:name         :bandit-ford
+                  :set          :empires
+                  :type         :landmark
+                  :when-scoring ::bandit-ford-scoring})
+
+(defn- fountain-scoring [cards _]
+  (let [number-of-coppers (->> cards
+                               (filter (comp #{:copper} :name))
+                               count)]
+    (if (<= 10 number-of-coppers)
+      15
+      0)))
+
+(def fountain {:name         :fountain
+               :set          :empires
+               :type         :landmark
+               :when-scoring ::fountain-scoring})
+
+(defn- keep-scoring [cards {:keys [players]}]
+  (let [count-treasures (fn [cards]
+                          (->> cards
+                               (filter (comp :treasure :types))
+                               (map :name)
+                               frequencies))
+        most-treasures  (->> players
+                             (map (comp count-treasures :hand))
+                             (apply merge-with max))]
+    (->> cards
+         count-treasures
+         (filter (fn [[card-name num]]
+                   (= num (get most-treasures card-name))))
+         count
+         (* 5))))
+
+(def keep-lm {:name         :keep
+              :set          :empires
+              :type         :landmark
+              :when-scoring ::keep-scoring})
+
+(defn- museum-scoring [cards _]
+  (->> cards
+       (map :name)
+       set
+       count
+       (* 2)))
+
+(def museum {:name         :museum
+             :set          :empires
+             :type         :landmark
+             :when-scoring ::museum-scoring})
+
+(defn- orchard-scoring [cards _]
+  (->> cards
+       (filter (comp :action :types))
+       (map :name)
+       frequencies
+       vals
+       (filter (partial <= 3))
+       count
+       (* 4)))
+
+(def orchard {:name         :orchard
+              :set          :empires
+              :type         :landmark
+              :when-scoring ::orchard-scoring})
+
+(defn- palace-scoring [cards _]
+  (let [coppers (->> cards
+                     (filter (comp #{:copper} :name))
+                     count)
+        silvers (->> cards
+                     (filter (comp #{:silver} :name))
+                     count)
+        golds   (->> cards
+                     (filter (comp #{:gold} :name))
+                     count)]
+    (* 3 (min coppers silvers golds))))
+
+(def palace {:name         :palace
+             :set          :empires
+             :type         :landmark
+             :when-scoring ::palace-scoring})
+
+(defn- tower-scoring [cards {:keys [supply] :as game}]
+  (->> cards
+       (remove (comp :victory :types))
+       (filter (fn [{:keys [name]}]
+                 (when-let [{:keys [idx]} (ut/get-pile-idx game :supply name #{:include-empty-split-piles})]
+                   (->> (get supply idx)
+                        ut/access-top-card
+                        :pile-size
+                        zero?))))
+       count))
+
+(def tower {:name         :tower
+            :set          :empires
+            :type         :landmark
+            :when-scoring ::tower-scoring})
+
+(defn- triumphal-arch-scoring [cards _]
+  (let [action-count (or (->> cards
+                              (filter (comp :action :types))
+                              (map :name)
+                              frequencies
+                              vals
+                              (sort >)
+                              second)
+                         0)]
+    (* 3 action-count)))
+
+(def triumphal-arch {:name         :triumphal-arch
+                     :set          :empires
+                     :type         :landmark
+                     :when-scoring ::triumphal-arch-scoring})
+
+(defn- wall-scoring [cards _]
+  (let [cards-after-15 (drop 15 cards)]
+    (- (count cards-after-15))))
+
+(def wall {:name         :wall
+           :set          :empires
+           :type         :landmark
+           :when-scoring ::wall-scoring})
+
+(defn- wolf-den-scoring [cards _]
+  (->> cards
+       (map :name)
+       frequencies
+       vals
+       (filter #{1})
+       count
+       (* -3)))
+
+(def wolf-den {:name         :wolf-den
+               :set          :empires
+               :type         :landmark
+               :when-scoring ::wolf-den-scoring})
+
+(effects/register {::bandit-ford-scoring    bandit-ford-scoring
+                   ::fountain-scoring       fountain-scoring
+                   ::keep-scoring           keep-scoring
+                   ::museum-scoring         museum-scoring
+                   ::orchard-scoring        orchard-scoring
+                   ::palace-scoring         palace-scoring
+                   ::tower-scoring          tower-scoring
+                   ::triumphal-arch-scoring triumphal-arch-scoring
+                   ::wall-scoring           wall-scoring
+                   ::wolf-den-scoring       wolf-den-scoring})
+
+(def landmarks [bandit-ford
+                fountain
+                keep-lm
+                museum
+                orchard
+                palace
+                tower
+                triumphal-arch
+                wall
+                wolf-den])

@@ -6,7 +6,7 @@
 (s/def ::name-ui string?)
 
 (s/def ::type #{:curse :victory :treasure :action :attack :reaction :duration :artifact :prize :traveller :reserve :gathering :castle
-                :event :project :night :heirloom :spirit :zombie :fate :boon :doom :hex :state})
+                :event :landmark :project :night :heirloom :spirit :zombie :fate :boon :doom :hex :state})
 
 (s/def ::types (s/coll-of ::type :distinct true))
 
@@ -54,6 +54,11 @@
                                             ::type
                                             ::cost]
                                    :opt-un [::interaction])))
+
+(s/def ::landmarks (s/coll-of (s/keys :req-un [::name
+                                               ::name-ui
+                                               ::type]
+                                      :opt-un [::interaction])))
 
 (s/def ::projects (s/coll-of (s/keys :req-un [::name
                                               ::name-ui
@@ -235,6 +240,7 @@
                                ::commands]
                       :opt-un [::extra-cards
                                ::events
+                               ::landmarks
                                ::projects
                                ::boons
                                ::druid-boons

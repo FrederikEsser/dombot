@@ -72,6 +72,7 @@
 (def landscapes (concat
                   adventures/events
                   empires/events
+                  empires/landmarks
                   renaissance/projects))
 
 (defn random-landscape [[set number]]
@@ -129,6 +130,11 @@
                                (map (fn [{:keys [name] :as event}]
                                       [name event]))
                                (into {}))
+        landmarks         (->> landscape
+                               (filter (comp #{:landmark} :type))
+                               (map (fn [{:keys [name] :as landmark}]
+                                      [name landmark]))
+                               (into {}))
         projects          (->> landscape
                                (filter (comp #{:project} :type))
                                (map (fn [{:keys [name] :as project}]
@@ -149,6 +155,8 @@
              :starting-player       starting-player}
             (when (not-empty events)
               {:events events})
+            (when (not-empty landmarks)
+              {:landmarks landmarks})
             (when (not-empty projects)
               {:projects projects})) game
           (-> (reduce (partial prepare-cards heirlooms) game (range number-of-players))
