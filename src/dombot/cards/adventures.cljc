@@ -8,15 +8,11 @@
 (defn- setup-journey-token [game {:keys [player-no]}]
   (assoc-in game [:players player-no :journey-token] :face-up))
 
-(defn- setup-journey-tokens [game args]
-  (affect-all-players game {:effects [[::setup-journey-token]]}))
-
 (defn- turn-journey-token [game {:keys [player-no]}]
   (update-in game [:players player-no :journey-token] #(if (= :face-up %) :face-down :face-up)))
 
-(effects/register {::setup-journey-token  setup-journey-token
-                   ::setup-journey-tokens setup-journey-tokens
-                   ::turn-journey-token   turn-journey-token})
+(effects/register {::setup-journey-token setup-journey-token
+                   ::turn-journey-token  turn-journey-token})
 
 (defn- traveller-exchange [{:keys [supply extra-cards] :as game} {:keys [player-no from-card to-card]}]
   (let [pile-location (cond (some (comp #{from-card} :name :card) supply) :supply
@@ -216,7 +212,7 @@
             :cost    5
             :effects [[::turn-journey-token]
                       [::giant-journey]]
-            :setup   [[::setup-journey-tokens]]})
+            :setup   [[:all-players {:effects [[::setup-journey-token]]}]]})
 
 (def guide {:name    :guide
             :set     :adventures
@@ -441,7 +437,7 @@
              :effects [[:give-buys 1]
                        [::turn-journey-token]
                        [::ranger-journey]]
-             :setup   [[::setup-journey-tokens]]})
+             :setup   [[:all-players {:effects [[::setup-journey-token]]}]]})
 
 (def ratcatcher {:name    :ratcatcher
                  :set     :adventures
@@ -632,7 +628,7 @@
                  :once-per-turn true
                  :on-buy        [[::turn-journey-token]
                                  [::pilgrimage-journey]]
-                 :setup         [[::setup-journey-tokens]]})
+                 :setup         [[:all-players {:effects [[::setup-journey-token]]}]]})
 
 (defn- quest-discard [game {:keys [player-no card-name card-names required-cards]}]
   (let [card-names      (if card-name

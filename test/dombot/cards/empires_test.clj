@@ -2840,3 +2840,34 @@
            {:landmarks {:wolf-den wolf-den}
             :players   [{:hand           [copper copper duchy]
                          :victory-points 0}]}))))
+
+(deftest tomb-test
+  (testing "Tomb"
+    (is (= (-> {:landmarks {:tomb tomb}
+                :players   [{:hand     [sacrifice copper]
+                             :actions  1
+                             :coins    0
+                             :triggers [(assoc tomb-trigger :id 1)]}]}
+               (play 0 :sacrifice)
+               (choose :copper))
+           {:landmarks {:tomb tomb}
+            :players   [{:play-area [sacrifice]
+                         :actions   0
+                         :coins     2
+                         :vp-tokens 1
+                         :triggers  [(assoc tomb-trigger :id 1)]}]
+            :trash     [copper]}))
+    (is (= (-> {:landmarks {:tomb tomb}
+                :supply    [{:card temple :pile-size 9}]
+                :players   [{:hand     [temple copper estate]
+                             :actions  1
+                             :triggers [(assoc tomb-trigger :id 1)]}]}
+               (play 0 :temple)
+               (choose [:copper :estate]))
+           {:landmarks {:tomb tomb}
+            :supply    [{:card temple :pile-size 9 :tokens [{:token-type :victory-point}]}]
+            :players   [{:play-area [temple]
+                         :actions   0
+                         :vp-tokens 3
+                         :triggers  [(assoc tomb-trigger :id 1)]}]
+            :trash     [copper estate]}))))

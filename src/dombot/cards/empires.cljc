@@ -944,6 +944,16 @@
              :type         :landmark
              :when-scoring ::palace-scoring})
 
+(def tomb-trigger {:name     :tomb
+                   :duration :game
+                   :event    :on-trash
+                   :effects  [[:give-victory-points 1]]})
+
+(def tomb {:name  :tomb
+           :set   :empires
+           :type  :landmark
+           :setup [[:all-players {:effects [[:add-trigger {:trigger tomb-trigger}]]}]]})
+
 (defn- tower-scoring [cards {:keys [supply] :as game}]
   (->> cards
        (remove (comp :victory :types))
@@ -1016,6 +1026,7 @@
                 museum
                 orchard
                 palace
+                tomb
                 tower
                 triumphal-arch
                 wall
