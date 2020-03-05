@@ -280,7 +280,8 @@
   ([game {:keys [player-no event] :as args}]
    (apply-triggers game player-no event args))
   ([game player-no event & [args]]
-   (let [triggers          (cond->> (get-in game [:players player-no :triggers])
+   (let [triggers          (get-in game [:players player-no :triggers])
+         matching-triggers (cond->> (filter (comp #{event} :event) triggers)
                                     (= :instead-of-first-action event) (take-last 1)) ; only one effect should happen instead of "The first time you play an Action"
          apply-trigger     (fn [game {:keys [id card-id effects duration]}]
                              (push-effect-stack game {:player-no player-no
@@ -288,8 +289,7 @@
                                                       :effects   (concat effects
                                                                          (when (#{:once :once-turn} duration)
                                                                            [[:remove-trigger {:trigger-id id}]]))
-                                                      :args      args}))
-         matching-triggers (filter (comp #{event} :event) triggers)]
+                                                      :args      args}))]
      (-> (reduce apply-trigger game (reverse matching-triggers))))))
 
 (effects/register {:remove-trigger  remove-trigger
