@@ -55,10 +55,13 @@
                                             ::cost]
                                    :opt-un [::interaction])))
 
+(s/def ::chosen-cards (s/coll-of ::name))
+
 (s/def ::landmarks (s/coll-of (s/keys :req-un [::name
                                                ::name-ui
                                                ::type]
-                                      :opt-un [::interaction])))
+                                      :opt-un [::interaction
+                                               ::chosen-cards])))
 
 (s/def ::projects (s/coll-of (s/keys :req-un [::name
                                               ::name-ui

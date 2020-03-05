@@ -87,10 +87,12 @@
 (defn view-landmarks [{:keys [landmarks]}]
   (->> landmarks
        vals
-       (map (fn [{:keys [name type]}]
-              {:name    name
-               :name-ui (ut/format-name name)
-               :type    type}))))
+       (map (fn [{:keys [name type chosen-cards]}]
+              (merge {:name    name
+                      :name-ui (ut/format-name name)
+                      :type    type}
+                     (when chosen-cards
+                       {:chosen-cards chosen-cards}))))))
 
 (defn view-projects [{projects                             :projects
                       {:keys [coins buys player-no phase]} :player

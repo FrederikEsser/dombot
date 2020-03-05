@@ -912,6 +912,34 @@
              :type         :landmark
              :when-scoring ::museum-scoring})
 
+(defn- obelisk-scoring [cards {:keys [landmarks]}]
+  (let [{:keys [chosen-cards]} (:obelisk landmarks)]
+    (->> cards
+         (filter (comp chosen-cards :name))
+         count
+         (* 2))))
+
+(defn- obelisk-setup [{:keys [supply] :as game} _]
+  (let [{:keys [card split-pile]} (->> supply
+                                       (filter (comp :action :types :card ut/access-top-card))
+                                       shuffle
+                                       first)
+        chosen-cards (if split-pile
+                       (->> split-pile
+                            (map (comp :name :card))
+                            set)
+                       #{(:name card)})]
+    (assoc-in game [:landmarks :obelisk :chosen-cards] chosen-cards)))
+
+(effects/register {::obelisk-scoring obelisk-scoring
+                   ::obelisk-setup   obelisk-setup})
+
+(def obelisk {:name         :obelisk
+              :set          :empires
+              :type         :landmark
+              :when-scoring ::obelisk-scoring
+              :setup        [[::obelisk-setup]]})
+
 (defn- orchard-scoring [cards _]
   (->> cards
        (filter (comp :action :types))
@@ -1024,6 +1052,7 @@
                 fountain
                 keep-lm
                 museum
+                obelisk
                 orchard
                 palace
                 tomb

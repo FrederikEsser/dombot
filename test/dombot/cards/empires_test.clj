@@ -2614,6 +2614,24 @@
            {:landmarks {:museum museum}
             :players   [{:hand           (concat (repeat 3 copper) (repeat 3 estate))
                          :victory-points 7}]}))
+    (is (= (-> {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:forum})}
+                :players   [{:hand [forum]}]}
+               calculate-victory-points)
+           {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:forum})}
+            :players   [{:hand           [forum]
+                         :victory-points 2}]}))
+    (is (= (-> {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:settlers :bustling-village})}
+                :players   [{:hand [settlers settlers bustling-village]}]}
+               calculate-victory-points)
+           {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:settlers :bustling-village})}
+            :players   [{:hand           [settlers settlers bustling-village]
+                         :victory-points 6}]}))
+    (is (= (-> {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:forum})}
+                :players   [{:hand [forum settlers copper]}]}
+               calculate-victory-points)
+           {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:forum})}
+            :players   [{:hand           [forum settlers copper]
+                         :victory-points 2}]}))
     (is (= (-> {:landmarks {:orchard orchard}
                 :players   [{:hand (concat (repeat 3 copper) (repeat 3 estate))}]}
                calculate-victory-points)
