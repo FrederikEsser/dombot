@@ -908,6 +908,30 @@
                   :setup [[::setup-landmark-vp {:landmark-name :battlefield}]
                           [:all-players {:effects [[:add-trigger {:trigger battlefield-trigger}]]}]]})
 
+(defn- colonnade-on-buy [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})
+        types                (ut/get-types game card)
+        bought-card-in-play? (->> (get-in game [:players player-no :play-area])
+                                  (some (comp #{card-name} :name)))]
+    (cond-> game
+            (and (:action types)
+                 bought-card-in-play?) (take-landmark-vp {:player-no     player-no
+                                                          :landmark-name :colonnade
+                                                          :num-vp        2}))))
+
+(effects/register {::colonnade-on-buy colonnade-on-buy})
+
+(def colonnade-trigger {:name     :colonnade
+                        :duration :game
+                        :event    :on-buy
+                        :effects  [[::colonnade-on-buy]]})
+
+(def colonnade {:name  :colonnade
+                :set   :empires
+                :type  :landmark
+                :setup [[::setup-landmark-vp {:landmark-name :colonnade}]
+                        [:all-players {:effects [[:add-trigger {:trigger colonnade-trigger}]]}]]})
+
 (defn- fountain-scoring [cards _]
   (let [number-of-coppers (->> cards
                                (filter (comp #{:copper} :name))
@@ -1092,6 +1116,7 @@
 
 (def landmarks [bandit-ford
                 battlefield
+                colonnade
                 fountain
                 keep-lm
                 museum

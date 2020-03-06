@@ -2865,8 +2865,7 @@
       (is (= (-> {:landmarks {:battlefield (assoc battlefield :vp-tokens 12)}
                   :supply    [{:card estate :pile-size 8}]
                   :players   [{:triggers [(assoc battlefield-trigger :id 1)]}]}
-                 (gain {:player-no 0
-                        :card-name :estate}))
+                 (gain {:player-no 0 :card-name :estate}))
              {:landmarks {:battlefield (assoc battlefield :vp-tokens 10)}
               :supply    [{:card estate :pile-size 7}]
               :players   [{:discard   [estate]
@@ -2875,8 +2874,7 @@
       (is (= (-> {:landmarks {:battlefield (assoc battlefield :vp-tokens 2)}
                   :supply    [{:card estate :pile-size 8}]
                   :players   [{:triggers [(assoc battlefield-trigger :id 1)]}]}
-                 (gain {:player-no 0
-                        :card-name :estate}))
+                 (gain {:player-no 0 :card-name :estate}))
              {:landmarks {:battlefield battlefield}
               :supply    [{:card estate :pile-size 7}]
               :players   [{:discard   [estate]
@@ -2884,8 +2882,7 @@
       (is (= (-> {:landmarks {:battlefield (assoc battlefield :vp-tokens 1)}
                   :supply    [{:card estate :pile-size 8}]
                   :players   [{:triggers [(assoc battlefield-trigger :id 1)]}]}
-                 (gain {:player-no 0
-                        :card-name :estate}))
+                 (gain {:player-no 0 :card-name :estate}))
              {:landmarks {:battlefield battlefield}
               :supply    [{:card estate :pile-size 7}]
               :players   [{:discard   [estate]
@@ -2894,12 +2891,67 @@
       (is (= (-> {:landmarks {:battlefield (assoc battlefield :vp-tokens 12)}
                   :supply    [{:card silver :pile-size 40}]
                   :players   [{:triggers [(assoc battlefield-trigger :id 1)]}]}
-                 (gain {:player-no 0
-                        :card-name :silver}))
+                 (gain {:player-no 0 :card-name :silver}))
              {:landmarks {:battlefield (assoc battlefield :vp-tokens 12)}
               :supply    [{:card silver :pile-size 39}]
               :players   [{:discard  [silver]
                            :triggers [(assoc battlefield-trigger :id 1)]}]})))))
+
+(deftest colonnade-test
+  (testing "Colonnade"
+    (let [enchantress (assoc enchantress :id 0)
+          silver      (assoc silver :id 1)]
+      (is (= (-> {:landmarks {:colonnade (assoc colonnade :vp-tokens 12)}
+                  :supply    [{:card enchantress :pile-size 10}]
+                  :players   [{:coins    3
+                               :buys     1
+                               :triggers [(assoc colonnade-trigger :id 1)]}]}
+                 (buy-card 0 :enchantress))
+             {:landmarks {:colonnade (assoc colonnade :vp-tokens 12)}
+              :supply    [{:card enchantress :pile-size 9}]
+              :players   [{:discard  [enchantress]
+                           :coins    0
+                           :buys     0
+                           :triggers [(assoc colonnade-trigger :id 1)]}]}))
+      (is (= (-> {:landmarks {:colonnade (assoc colonnade :vp-tokens 12)}
+                  :supply    [{:card enchantress :pile-size 10}]
+                  :players   [{:play-area [enchantress]
+                               :coins     3
+                               :buys      1
+                               :triggers  [(assoc colonnade-trigger :id 1)]}]}
+                 (buy-card 0 :enchantress))
+             {:landmarks {:colonnade (assoc colonnade :vp-tokens 10)}
+              :supply    [{:card enchantress :pile-size 9}]
+              :players   [{:play-area [enchantress]
+                           :discard   [enchantress]
+                           :coins     0
+                           :buys      0
+                           :vp-tokens 2
+                           :triggers  [(assoc colonnade-trigger :id 1)]}]}))
+      (is (= (-> {:landmarks {:colonnade (assoc colonnade :vp-tokens 12)}
+                  :supply    [{:card enchantress :pile-size 10}]
+                  :players   [{:play-area [enchantress]
+                               :triggers  [(assoc colonnade-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :enchantress}))
+             {:landmarks {:colonnade (assoc colonnade :vp-tokens 12)}
+              :supply    [{:card enchantress :pile-size 9}]
+              :players   [{:play-area [enchantress]
+                           :discard   [enchantress]
+                           :triggers  [(assoc colonnade-trigger :id 1)]}]}))
+      (is (= (-> {:landmarks {:colonnade (assoc colonnade :vp-tokens 12)}
+                  :supply    [{:card silver :pile-size 40}]
+                  :players   [{:play-area [silver]
+                               :coins     3
+                               :buys      1
+                               :triggers  [(assoc colonnade-trigger :id 1)]}]}
+                 (buy-card 0 :silver))
+             {:landmarks {:colonnade (assoc colonnade :vp-tokens 12)}
+              :supply    [{:card silver :pile-size 39}]
+              :players   [{:play-area [silver]
+                           :discard   [silver]
+                           :coins     0
+                           :buys      0
+                           :triggers  [(assoc colonnade-trigger :id 1)]}]})))))
 
 (deftest tomb-test
   (testing "Tomb"
