@@ -87,10 +87,12 @@
 (defn view-landmarks [{:keys [landmarks]}]
   (->> landmarks
        vals
-       (map (fn [{:keys [name type chosen-cards]}]
+       (map (fn [{:keys [name type vp-tokens chosen-cards]}]
               (merge {:name    name
                       :name-ui (ut/format-name name)
                       :type    type}
+                     (when vp-tokens
+                       {:vp-tokens vp-tokens})
                      (when chosen-cards
                        {:chosen-cards chosen-cards}))))))
 

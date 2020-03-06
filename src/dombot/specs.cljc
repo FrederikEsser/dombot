@@ -61,6 +61,7 @@
                                                ::name-ui
                                                ::type]
                                       :opt-un [::interaction
+                                               ::vp-tokens
                                                ::chosen-cards])))
 
 (s/def ::projects (s/coll-of (s/keys :req-un [::name

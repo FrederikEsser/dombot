@@ -135,14 +135,19 @@
            (when cost (str " ($" cost ")")))]]))
 
 (defn view-landmark
-  [{:keys [name-ui type chosen-cards]}]
+  [{:keys [name-ui type vp-tokens chosen-cards]}]
   [:div
    [:button {:style    (button-style false #{type} 1)
              :disabled true}
-    (str name-ui (when chosen-cards
-                   (str " of " (->> chosen-cards
-                                    (map ut/format-name)
-                                    (string/join "/")))))]])
+    (str name-ui
+         (when chosen-cards
+           (str " of " (->> chosen-cards
+                            (map ut/format-name)
+                            (string/join "/"))))
+         (when (and vp-tokens (pos? vp-tokens))
+           (str " ("
+                (when (> vp-tokens 1) vp-tokens)
+                "VP)")))]])
 
 (defn view-project
   [{:keys [name name-ui choice-value type cost interaction participants]}]

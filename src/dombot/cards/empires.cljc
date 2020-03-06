@@ -855,6 +855,27 @@
              salt-the-earth
              windfall])
 
+(defn- setup-landmark-vp [{:keys [players] :as game} {:keys [landmark-name]}]
+  (assoc-in game [:landmarks landmark-name :vp-tokens] (* 6 (count players))))
+
+(defn- take-landmark-vp [game {:keys [player-no landmark-name num-vp]}]
+  (let [current-vp     (get-in game [:landmarks landmark-name :vp-tokens])
+        vp-taken       (min num-vp current-vp)
+        remaining-vp   (- current-vp vp-taken)
+        remove-trigger (fn remove-trigger [player]
+                         (-> player
+                             (update :triggers (partial remove (every-pred (ut/match {:name landmark-name}))))
+                             (ut/dissoc-if-empty :triggers)))]
+    (cond-> game
+            (pos? vp-taken) (-> (assoc-in [:landmarks landmark-name :vp-tokens] remaining-vp)
+                                (give-victory-points {:player-no player-no
+                                                      :arg       vp-taken}))
+            (zero? remaining-vp) (-> (update-in [:landmarks landmark-name] dissoc :vp-tokens)
+                                     (update :players (partial mapv remove-trigger))))))
+
+(effects/register {::setup-landmark-vp setup-landmark-vp
+                   ::take-landmark-vp  take-landmark-vp})
+
 (defn- bandit-ford-scoring [cards _]
   (->> cards
        (filter (comp #{:silver :gold} :name))
@@ -865,6 +886,27 @@
                   :set          :empires
                   :type         :landmark
                   :when-scoring ::bandit-ford-scoring})
+
+(defn- battlefield-on-gain [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})
+        types (ut/get-types game card)]
+    (cond-> game
+            (:victory types) (take-landmark-vp {:player-no     player-no
+                                                :landmark-name :battlefield
+                                                :num-vp        2}))))
+
+(effects/register {::battlefield-on-gain battlefield-on-gain})
+
+(def battlefield-trigger {:name     :battlefield
+                          :duration :game
+                          :event    :on-gain
+                          :effects  [[::battlefield-on-gain]]})
+
+(def battlefield {:name  :battlefield
+                  :set   :empires
+                  :type  :landmark
+                  :setup [[::setup-landmark-vp {:landmark-name :battlefield}]
+                          [:all-players {:effects [[:add-trigger {:trigger battlefield-trigger}]]}]]})
 
 (defn- fountain-scoring [cards _]
   (let [number-of-coppers (->> cards
@@ -1049,6 +1091,7 @@
                    ::wolf-den-scoring       wolf-den-scoring})
 
 (def landmarks [bandit-ford
+                battlefield
                 fountain
                 keep-lm
                 museum

@@ -2859,6 +2859,48 @@
             :players   [{:hand           [copper copper duchy]
                          :victory-points 0}]}))))
 
+(deftest battlefield-test
+  (testing "Battlefield"
+    (let [estate (assoc estate :id 0)]
+      (is (= (-> {:landmarks {:battlefield (assoc battlefield :vp-tokens 12)}
+                  :supply    [{:card estate :pile-size 8}]
+                  :players   [{:triggers [(assoc battlefield-trigger :id 1)]}]}
+                 (gain {:player-no 0
+                        :card-name :estate}))
+             {:landmarks {:battlefield (assoc battlefield :vp-tokens 10)}
+              :supply    [{:card estate :pile-size 7}]
+              :players   [{:discard   [estate]
+                           :vp-tokens 2
+                           :triggers  [(assoc battlefield-trigger :id 1)]}]}))
+      (is (= (-> {:landmarks {:battlefield (assoc battlefield :vp-tokens 2)}
+                  :supply    [{:card estate :pile-size 8}]
+                  :players   [{:triggers [(assoc battlefield-trigger :id 1)]}]}
+                 (gain {:player-no 0
+                        :card-name :estate}))
+             {:landmarks {:battlefield battlefield}
+              :supply    [{:card estate :pile-size 7}]
+              :players   [{:discard   [estate]
+                           :vp-tokens 2}]}))
+      (is (= (-> {:landmarks {:battlefield (assoc battlefield :vp-tokens 1)}
+                  :supply    [{:card estate :pile-size 8}]
+                  :players   [{:triggers [(assoc battlefield-trigger :id 1)]}]}
+                 (gain {:player-no 0
+                        :card-name :estate}))
+             {:landmarks {:battlefield battlefield}
+              :supply    [{:card estate :pile-size 7}]
+              :players   [{:discard   [estate]
+                           :vp-tokens 1}]})))
+    (let [silver (assoc silver :id 0)]
+      (is (= (-> {:landmarks {:battlefield (assoc battlefield :vp-tokens 12)}
+                  :supply    [{:card silver :pile-size 40}]
+                  :players   [{:triggers [(assoc battlefield-trigger :id 1)]}]}
+                 (gain {:player-no 0
+                        :card-name :silver}))
+             {:landmarks {:battlefield (assoc battlefield :vp-tokens 12)}
+              :supply    [{:card silver :pile-size 39}]
+              :players   [{:discard  [silver]
+                           :triggers [(assoc battlefield-trigger :id 1)]}]})))))
+
 (deftest tomb-test
   (testing "Tomb"
     (is (= (-> {:landmarks {:tomb tomb}
