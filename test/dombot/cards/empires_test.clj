@@ -2953,6 +2953,54 @@
                            :buys      0
                            :triggers  [(assoc colonnade-trigger :id 1)]}]})))))
 
+(deftest labyrinth-test
+  (testing "Labyrinth"
+    (let [silver (assoc silver :id 0)]
+      (is (= (-> {:track-gained-cards? true
+                  :landmarks           {:labyrinth (assoc labyrinth :vp-tokens 12)}
+                  :supply              [{:card silver :pile-size 40}]
+                  :players             [{:triggers [(assoc labyrinth-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :silver}))
+             {:track-gained-cards? true
+              :landmarks           {:labyrinth (assoc labyrinth :vp-tokens 12)}
+              :supply              [{:card silver :pile-size 39}]
+              :players             [{:discard      [silver]
+                                     :gained-cards [{:name :silver :cost 3 :types #{:treasure}}]
+                                     :triggers     [(assoc labyrinth-trigger :id 1)]}]}))
+      (is (= (-> {:track-gained-cards? true
+                  :landmarks           {:labyrinth (assoc labyrinth :vp-tokens 12)}
+                  :supply              [{:card silver :pile-size 39}]
+                  :players             [{:discard      [silver]
+                                         :gained-cards [{:name :silver :cost 3 :types #{:treasure}}]
+                                         :triggers     [(assoc labyrinth-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :silver}))
+             {:track-gained-cards? true
+              :landmarks           {:labyrinth (assoc labyrinth :vp-tokens 10)}
+              :supply              [{:card silver :pile-size 38}]
+              :players             [{:discard      [silver silver]
+                                     :gained-cards [{:name :silver :cost 3 :types #{:treasure}}
+                                                    {:name :silver :cost 3 :types #{:treasure}}]
+                                     :vp-tokens    2
+                                     :triggers     [(assoc labyrinth-trigger :id 1)]}]}))
+      (is (= (-> {:track-gained-cards? true
+                  :landmarks           {:labyrinth (assoc labyrinth :vp-tokens 10)}
+                  :supply              [{:card silver :pile-size 38}]
+                  :players             [{:discard      [silver silver]
+                                         :gained-cards [{:name :silver :cost 3 :types #{:treasure}}
+                                                        {:name :silver :cost 3 :types #{:treasure}}]
+                                         :vp-tokens    2
+                                         :triggers     [(assoc labyrinth-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :silver}))
+             {:track-gained-cards? true
+              :landmarks           {:labyrinth (assoc labyrinth :vp-tokens 10)}
+              :supply              [{:card silver :pile-size 37}]
+              :players             [{:discard      [silver silver silver]
+                                     :gained-cards [{:name :silver :cost 3 :types #{:treasure}}
+                                                    {:name :silver :cost 3 :types #{:treasure}}
+                                                    {:name :silver :cost 3 :types #{:treasure}}]
+                                     :vp-tokens    2
+                                     :triggers     [(assoc labyrinth-trigger :id 1)]}]})))))
+
 (deftest tomb-test
   (testing "Tomb"
     (is (= (-> {:landmarks {:tomb tomb}

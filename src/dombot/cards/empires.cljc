@@ -966,6 +966,26 @@
               :type         :landmark
               :when-scoring ::keep-scoring})
 
+(defn- labyrinth-on-gain [game {:keys [player-no]}]
+  (let [gained-cards (get-in game [:players player-no :gained-cards])]
+    (cond-> game
+            (= 2 (count gained-cards)) (take-landmark-vp {:player-no     player-no
+                                                          :landmark-name :labyrinth
+                                                          :num-vp        2}))))
+
+(effects/register {::labyrinth-on-gain labyrinth-on-gain})
+
+(def labyrinth-trigger {:name     :labyrinth
+                        :duration :game
+                        :event    :on-gain
+                        :effects  [[::labyrinth-on-gain]]})
+
+(def labyrinth {:name  :labyrinth
+                :set   :empires
+                :type  :landmark
+                :setup [[::setup-landmark-vp {:landmark-name :labyrinth}]
+                        [:all-players {:effects [[:add-trigger {:trigger labyrinth-trigger}]]}]]})
+
 (defn- museum-scoring [cards _]
   (->> cards
        (map :name)
@@ -1119,6 +1139,7 @@
                 colonnade
                 fountain
                 keep-lm
+                labyrinth
                 museum
                 obelisk
                 orchard
