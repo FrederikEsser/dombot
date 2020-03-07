@@ -887,6 +887,26 @@
                   :type         :landmark
                   :when-scoring ::bandit-ford-scoring})
 
+(defn- basilica-on-buy [game {:keys [player-no card-name]}]
+  (let [coins-left (get-in game [:players player-no :coins])]
+    (cond-> game
+            (>= coins-left 2) (take-landmark-vp {:player-no     player-no
+                                                 :landmark-name :basilica
+                                                 :num-vp        2}))))
+
+(effects/register {::basilica-on-buy basilica-on-buy})
+
+(def basilica-trigger {:name     :basilica
+                       :duration :game
+                       :event    :on-buy
+                       :effects  [[::basilica-on-buy]]})
+
+(def basilica {:name  :basilica
+               :set   :empires
+               :type  :landmark
+               :setup [[::setup-landmark-vp {:landmark-name :basilica}]
+                       [:all-players {:effects [[:add-trigger {:trigger basilica-trigger}]]}]]})
+
 (defn- battlefield-on-gain [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})
         types (ut/get-types game card)]
@@ -1135,6 +1155,7 @@
                    ::wolf-den-scoring       wolf-den-scoring})
 
 (def landmarks [bandit-ford
+                basilica
                 battlefield
                 colonnade
                 fountain

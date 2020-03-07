@@ -2897,6 +2897,76 @@
               :players   [{:discard  [silver]
                            :triggers [(assoc battlefield-trigger :id 1)]}]})))))
 
+(deftest basilica-test
+  (testing "Basilica"
+    (let [estate (assoc estate :id 0)]
+      (is (= (-> {:landmarks {:basilica (assoc basilica :vp-tokens 12)}
+                  :supply    [{:card estate :pile-size 8}]
+                  :players   [{:coins    4
+                               :buys     1
+                               :triggers [(assoc basilica-trigger :id 1)]}]}
+                 (buy-card {:player-no 0 :card-name :estate}))
+             {:landmarks {:basilica (assoc basilica :vp-tokens 10)}
+              :supply    [{:card estate :pile-size 7}]
+              :players   [{:discard   [estate]
+                           :coins     2
+                           :buys      0
+                           :vp-tokens 2
+                           :triggers  [(assoc basilica-trigger :id 1)]}]}))
+      (is (= (-> {:landmarks {:basilica (assoc basilica :vp-tokens 12)}
+                  :supply    [{:card estate :pile-size 8}]
+                  :players   [{:coins    3
+                               :buys     1
+                               :triggers [(assoc basilica-trigger :id 1)]}]}
+                 (buy-card {:player-no 0 :card-name :estate}))
+             {:landmarks {:basilica (assoc basilica :vp-tokens 12)}
+              :supply    [{:card estate :pile-size 7}]
+              :players   [{:discard  [estate]
+                           :coins    1
+                           :buys     0
+                           :triggers [(assoc basilica-trigger :id 1)]}]}))
+      (is (= (-> {:landmarks {:basilica (assoc basilica :vp-tokens 12)}
+                  :supply    [{:card estate :pile-size 8}]
+                  :players   [{:coins    6
+                               :buys     2
+                               :triggers [(assoc basilica-trigger :id 1)]}]}
+                 (buy-card {:player-no 0 :card-name :estate})
+                 (buy-card {:player-no 0 :card-name :estate}))
+             {:landmarks {:basilica (assoc basilica :vp-tokens 8)}
+              :supply    [{:card estate :pile-size 6}]
+              :players   [{:discard   [estate estate]
+                           :coins     2
+                           :buys      0
+                           :vp-tokens 4
+                           :triggers  [(assoc basilica-trigger :id 1)]}]}))
+      (is (= (-> {:landmarks {:basilica (assoc basilica :vp-tokens 12)}
+                  :supply    [{:card estate :pile-size 8}]
+                  :players   [{:coins    6
+                               :buys     3
+                               :triggers [(assoc basilica-trigger :id 1)]}]}
+                 (buy-card {:player-no 0 :card-name :estate})
+                 (buy-card {:player-no 0 :card-name :estate})
+                 (buy-card {:player-no 0 :card-name :estate}))
+             {:landmarks {:basilica (assoc basilica :vp-tokens 8)}
+              :supply    [{:card estate :pile-size 5}]
+              :players   [{:discard   [estate estate estate]
+                           :coins     0
+                           :buys      0
+                           :vp-tokens 4
+                           :triggers  [(assoc basilica-trigger :id 1)]}]}))
+      (is (= (-> {:landmarks {:basilica (assoc basilica :vp-tokens 12)}
+                  :supply    [{:card estate :pile-size 8}]
+                  :players   [{:coins    4
+                               :buys     1
+                               :triggers [(assoc basilica-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :estate}))
+             {:landmarks {:basilica (assoc basilica :vp-tokens 12)}
+              :supply    [{:card estate :pile-size 7}]
+              :players   [{:discard  [estate]
+                           :coins    4
+                           :buys     1
+                           :triggers [(assoc basilica-trigger :id 1)]}]})))))
+
 (deftest colonnade-test
   (testing "Colonnade"
     (let [enchantress (assoc enchantress :id 0)
