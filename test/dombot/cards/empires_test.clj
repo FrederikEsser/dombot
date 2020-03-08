@@ -98,40 +98,40 @@
                      (choose :patrician))
                  {:supply  [{:split-pile [{:card patrician :pile-size 5}
                                           {:card emporium :pile-size 5}]
-                             :tokens     [{:token-type :embargo
-                                           :on-buy     [[:gain {:card-name :curse}]]}]}]
+                             :tokens     {:embargo {:number-of-tokens 1
+                                                    :on-buy           [[:gain {:card-name :curse}]]}}}]
                   :players [{:actions 0
                              :coins   2}]
                   :trash   [embargo]}))
           (is (= (-> {:supply  [{:card curse :pile-size 10}
                                 {:split-pile [{:card patrician :pile-size 5}
                                               {:card emporium :pile-size 5}]
-                                 :tokens     [{:token-type :embargo
-                                               :on-buy     [[:gain {:card-name :curse}]]}]}]
+                                 :tokens     {:embargo {:number-of-tokens 1
+                                                        :on-buy           [[:gain {:card-name :curse}]]}}}]
                       :players [{:coins 2
                                  :buys  1}]}
                      (buy-card 0 :patrician))
                  {:supply  [{:card curse :pile-size 9}
                             {:split-pile [{:card patrician :pile-size 4}
                                           {:card emporium :pile-size 5}]
-                             :tokens     [{:token-type :embargo
-                                           :on-buy     [[:gain {:card-name :curse}]]}]}]
+                             :tokens     {:embargo {:number-of-tokens 1
+                                                    :on-buy           [[:gain {:card-name :curse}]]}}}]
                   :players [{:discard [curse patrician]
                              :coins   0
                              :buys    0}]}))
           (is (= (-> {:supply  [{:card curse :pile-size 10}
                                 {:split-pile [{:card patrician :pile-size 0}
                                               {:card emporium :pile-size 5}]
-                                 :tokens     [{:token-type :embargo
-                                               :on-buy     [[:gain {:card-name :curse}]]}]}]
+                                 :tokens     {:embargo {:number-of-tokens 1
+                                                        :on-buy           [[:gain {:card-name :curse}]]}}}]
                       :players [{:coins 5
                                  :buys  1}]}
                      (buy-card 0 :emporium))
                  {:supply  [{:card curse :pile-size 9}
                             {:split-pile [{:card patrician :pile-size 0}
                                           {:card emporium :pile-size 4}]
-                             :tokens     [{:token-type :embargo
-                                           :on-buy     [[:gain {:card-name :curse}]]}]}]
+                             :tokens     {:embargo {:number-of-tokens 1
+                                                    :on-buy           [[:gain {:card-name :curse}]]}}}]
                   :players [{:discard [curse emporium]
                              :coins   0
                              :buys    0}]}))))
@@ -225,8 +225,8 @@
                              :buys      0}]}))
           (is (= (-> {:supply  [{:split-pile [{:card humble-castle :pile-size 1}
                                               {:card crumbling-castle :pile-size 1}]
-                                 :tokens     [{:token-type :trade-route
-                                               :on-gain    [[::prosperity/trade-route-move-token]]}]}]
+                                 :tokens     {:trade-route {:number-of-tokens 1
+                                                            :on-gain          [[::prosperity/trade-route-move-token]]}}}]
                       :players [{:coins 3
                                  :buys  1}]}
                      (buy-card 0 :humble-castle))
@@ -1577,43 +1577,34 @@
                              :coins   0
                              :buys    1}]}
                  (play 0 :farmers'-market))
-             {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}]}]
+             {:supply  [{:card farmers-market :pile-size 9 :tokens {:victory-point {:number-of-tokens 1}}}]
               :players [{:play-area [farmers-market]
                          :actions   0
                          :coins     1
                          :buys      2}]}))
-      (is (= (-> {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}]}]
+      (is (= (-> {:supply  [{:card farmers-market :pile-size 9 :tokens {:victory-point {:number-of-tokens 1}}}]
                   :players [{:hand    [farmers-market]
                              :actions 1
                              :coins   0
                              :buys    1}]}
                  (play 0 :farmers'-market))
-             {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}
-                                                                    {:token-type :victory-point}]}]
+             {:supply  [{:card farmers-market :pile-size 9 :tokens {:victory-point {:number-of-tokens 2}}}]
               :players [{:play-area [farmers-market]
                          :actions   0
                          :coins     2
                          :buys      2}]}))
-      (is (= (-> {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}
-                                                                        {:token-type :victory-point}
-                                                                        {:token-type :victory-point}]}]
+      (is (= (-> {:supply  [{:card farmers-market :pile-size 9 :tokens {:victory-point {:number-of-tokens 3}}}]
                   :players [{:hand    [farmers-market]
                              :actions 1
                              :coins   0
                              :buys    1}]}
                  (play 0 :farmers'-market))
-             {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}
-                                                                    {:token-type :victory-point}
-                                                                    {:token-type :victory-point}
-                                                                    {:token-type :victory-point}]}]
+             {:supply  [{:card farmers-market :pile-size 9 :tokens {:victory-point {:number-of-tokens 4}}}]
               :players [{:play-area [farmers-market]
                          :actions   0
                          :coins     4
                          :buys      2}]}))
-      (is (= (-> {:supply  [{:card farmers-market :pile-size 9 :tokens [{:token-type :victory-point}
-                                                                        {:token-type :victory-point}
-                                                                        {:token-type :victory-point}
-                                                                        {:token-type :victory-point}]}]
+      (is (= (-> {:supply  [{:card farmers-market :pile-size 9 :tokens {:victory-point {:number-of-tokens 4}}}]
                   :players [{:hand    [farmers-market]
                              :actions 1
                              :coins   0
@@ -2003,7 +1994,7 @@
                              :actions 1}]}
                  (play 0 :temple)
                  (choose [:copper :estate]))
-             {:supply  [{:card temple :pile-size 9 :tokens [{:token-type :victory-point}]}]
+             {:supply  [{:card temple :pile-size 9 :tokens {:victory-point {:number-of-tokens 1}}}]
               :players [{:hand      [copper]
                          :play-area [temple]
                          :actions   0
@@ -2014,7 +2005,7 @@
                              :actions 1}]}
                  (play 0 :temple)
                  (choose [:estate]))
-             {:supply  [{:card temple :pile-size 9 :tokens [{:token-type :victory-point}]}]
+             {:supply  [{:card temple :pile-size 9 :tokens {:victory-point {:number-of-tokens 1}}}]
               :players [{:hand      [copper copper]
                          :play-area [temple]
                          :actions   0
@@ -2025,7 +2016,7 @@
                              :actions 1}]}
                  (play 0 :temple)
                  (choose :copper))
-             {:supply  [{:card temple :pile-size 9 :tokens [{:token-type :victory-point}]}]
+             {:supply  [{:card temple :pile-size 9 :tokens {:victory-point {:number-of-tokens 1}}}]
               :players [{:play-area [temple]
                          :actions   0
                          :vp-tokens 1}]
@@ -2034,7 +2025,7 @@
                   :players [{:hand    [temple]
                              :actions 1}]}
                  (play 0 :temple))
-             {:supply  [{:card temple :pile-size 9 :tokens [{:token-type :victory-point}]}]
+             {:supply  [{:card temple :pile-size 9 :tokens {:victory-point {:number-of-tokens 1}}}]
               :players [{:play-area [temple]
                          :actions   0
                          :vp-tokens 1}]}))
@@ -2044,9 +2035,7 @@
                                             :actions 1}]}
                                 (play 0 :temple)
                                 (choose [:copper :copper :estate]))))
-      (is (= (-> {:supply  [{:card temple :pile-size 9 :tokens [{:token-type :victory-point}
-                                                                {:token-type :victory-point}
-                                                                {:token-type :victory-point}]}]
+      (is (= (-> {:supply  [{:card temple :pile-size 9 :tokens {:victory-point {:number-of-tokens 3}}}]
                   :players [{:coins 4
                              :buys  1}]}
                  (buy-card 0 :temple))
@@ -2124,14 +2113,13 @@
                              :actions 1}]}
                  (play 0 :wild-hunt)
                  (choose :cards))
-             {:supply  [{:card wild-hunt :pile-size 9 :tokens [{:token-type :victory-point}]}]
+             {:supply  [{:card wild-hunt :pile-size 9 :tokens {:victory-point {:number-of-tokens 1}}}]
               :players [{:hand      [copper copper copper]
                          :play-area [wild-hunt]
                          :deck      [copper]
                          :actions   0}]}))
       (is (= (-> {:supply  [{:card estate :pile-size 8}
-                            {:card wild-hunt :pile-size 9 :tokens [{:token-type :victory-point}
-                                                                   {:token-type :victory-point}]}]
+                            {:card wild-hunt :pile-size 9 :tokens {:victory-point {:number-of-tokens 2}}}]
                   :players [{:hand    [wild-hunt]
                              :actions 1}]}
                  (play 0 :wild-hunt)
@@ -2143,15 +2131,13 @@
                          :actions   0
                          :vp-tokens 2}]}))
       (is (= (-> {:supply  [{:card estate :pile-size 0}
-                            {:card wild-hunt :pile-size 9 :tokens [{:token-type :victory-point}
-                                                                   {:token-type :victory-point}]}]
+                            {:card wild-hunt :pile-size 9 :tokens {:victory-point {:number-of-tokens 2}}}]
                   :players [{:hand    [wild-hunt]
                              :actions 1}]}
                  (play 0 :wild-hunt)
                  (choose :estate))
              {:supply  [{:card estate :pile-size 0}
-                        {:card wild-hunt :pile-size 9 :tokens [{:token-type :victory-point}
-                                                               {:token-type :victory-point}]}]
+                        {:card wild-hunt :pile-size 9 :tokens {:victory-point {:number-of-tokens 2}}}]
               :players [{:play-area [wild-hunt]
                          :actions   0}]})))))
 
@@ -3203,7 +3189,7 @@
                (play 0 :temple)
                (choose [:copper :estate]))
            {:landmarks {:tomb tomb}
-            :supply    [{:card temple :pile-size 9 :tokens [{:token-type :victory-point}]}]
+            :supply    [{:card temple :pile-size 9 :tokens {:victory-point {:number-of-tokens 1}}}]
             :players   [{:play-area [temple]
                          :actions   0
                          :vp-tokens 3

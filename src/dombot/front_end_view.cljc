@@ -48,7 +48,10 @@
                          {:interaction :buyable})
                        (choice-interaction name :supply choice)
                        (when tokens
-                         {:tokens tokens})
+                         {:tokens (->> tokens
+                                       (map (fn [[token {:keys [number-of-tokens]}]]
+                                              {:token-type       token
+                                               :number-of-tokens number-of-tokens})))})
                        (when bane?
                          {:bane? true})))))))
 

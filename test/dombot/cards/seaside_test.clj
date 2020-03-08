@@ -304,22 +304,22 @@
                  (play 0 :embargo)
                  (choose :silver))
              {:supply  [{:card   silver :pile-size 40
-                         :tokens [{:token-type :embargo
-                                   :on-buy     [[:gain {:card-name :curse}]]}]}]
+                         :tokens {:embargo {:number-of-tokens 1
+                                            :on-buy           [[:gain {:card-name :curse}]]}}}]
               :players [{:actions 0
                          :coins   2}]
               :trash   [embargo]}))
       (is (= (-> {:supply  [{:card curse :pile-size 10}
                             {:card   silver :pile-size 40
-                             :tokens [{:token-type :embargo
-                                       :on-buy     [[:gain {:card-name :curse}]]}]}]
+                             :tokens {:embargo {:number-of-tokens 1
+                                                :on-buy           [[:gain {:card-name :curse}]]}}}]
                   :players [{:coins 3
                              :buys  1}]}
                  (buy-card 0 :silver))
              {:supply  [{:card curse :pile-size 9}
                         {:card   silver :pile-size 39
-                         :tokens [{:token-type :embargo
-                                   :on-buy     [[:gain {:card-name :curse}]]}]}]
+                         :tokens {:embargo {:number-of-tokens 1
+                                            :on-buy           [[:gain {:card-name :curse}]]}}}]
               :players [{:coins   0
                          :buys    0
                          :discard [curse silver]}]}))
@@ -332,29 +332,23 @@
                  (choose :silver)
                  (choose :silver))
              {:supply  [{:card   silver :pile-size 40
-                         :tokens [{:token-type :embargo
-                                   :on-buy     [[:gain {:card-name :curse}]]}
-                                  {:token-type :embargo
-                                   :on-buy     [[:gain {:card-name :curse}]]}]}]
+                         :tokens {:embargo {:number-of-tokens 2
+                                            :on-buy           [[:gain {:card-name :curse}]]}}}]
               :players [{:play-area [throne-room]
                          :actions   0
                          :coins     4}]
               :trash   [embargo]}))
       (is (= (-> {:supply  [{:card curse :pile-size 10}
                             {:card   silver :pile-size 40
-                             :tokens [{:token-type :embargo
-                                       :on-buy     [[:gain {:card-name :curse}]]}
-                                      {:token-type :embargo
-                                       :on-buy     [[:gain {:card-name :curse}]]}]}]
+                             :tokens {:embargo {:number-of-tokens 2
+                                                :on-buy           [[:gain {:card-name :curse}]]}}}]
                   :players [{:coins 3
                              :buys  1}]}
                  (buy-card 0 :silver))
              {:supply  [{:card curse :pile-size 8}
                         {:card   silver :pile-size 39
-                         :tokens [{:token-type :embargo
-                                   :on-buy     [[:gain {:card-name :curse}]]}
-                                  {:token-type :embargo
-                                   :on-buy     [[:gain {:card-name :curse}]]}]}]
+                         :tokens {:embargo {:number-of-tokens 2
+                                            :on-buy           [[:gain {:card-name :curse}]]}}}]
               :players [{:coins   0
                          :buys    0
                          :discard [curse curse silver]}]})))))

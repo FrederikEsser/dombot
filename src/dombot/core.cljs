@@ -35,8 +35,8 @@
 (defn button-style [& [disabled types number-of-cards]]
   (merge {:color            (cond disabled :grey
                                   (:night types) :white
-                                  (or (:landmark types)
-                                      (:hex types)) "#5A487A"
+                                  (:landmark types) "#256A3D"
+                                  (:hex types) "#5A487A"
                                   :else :black)
           :font-weight      :bold
           :background-color (cond
@@ -108,10 +108,11 @@
                                          :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name)))
                                          :buyable (swap! state assoc :game (cmd/buy name)))))}
            (str (when tokens (str (->> tokens
-                                       (map :token-type)
-                                       frequencies
-                                       (map (fn [[token n]]
-                                              (str "(" (when (> n 1) n) (ut/format-name-short token) ")")))
+                                       (map (fn [{:keys [token-type number-of-tokens]}]
+                                              (str "("
+                                                   (when (> number-of-tokens 1) number-of-tokens)
+                                                   (ut/format-name-short token-type)
+                                                   ")")))
                                        (string/join " "))
                                   " "))
                 name-ui

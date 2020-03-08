@@ -7,15 +7,13 @@
 (defn- place-vp-token [game {:keys [card-name]}]
   (let [{:keys [idx]} (ut/get-pile-idx game card-name)]
     (-> game
-        (update-in [:supply idx :tokens] concat [{:token-type :victory-point}]))))
+        (update-in [:supply idx :tokens :victory-point :number-of-tokens] ut/plus 1))))
 
 (defn- take-vp-tokens [game {:keys [player-no card-name]}]
   (let [{:keys [tokens idx]} (ut/get-pile-idx game card-name)
-        vp-tokens (->> tokens
-                       (filter (comp #{:victory-point} :token-type))
-                       count)]
+        vp-tokens (or (get-in tokens [:victory-point :number-of-tokens]) 0)]
     (-> game
-        (update-in [:supply idx :tokens] (partial remove (comp #{:victory-point} :token-type)))
+        (update-in [:supply idx :tokens] dissoc :victory-point)
         (update-in [:supply idx] ut/dissoc-if-empty :tokens)
         (push-effect-stack {:player-no player-no
                             :effects   [[:give-victory-points vp-tokens]]}))))
@@ -474,9 +472,7 @@
 
 (defn- farmers-market-yield [game {:keys [player-no card-id]}]
   (let [{:keys [tokens]} (ut/get-pile-idx game :farmers'-market)
-        vp-tokens (->> tokens
-                       (filter (comp #{:victory-point} :token-type))
-                       count)]
+        vp-tokens (or (get-in tokens [:victory-point :number-of-tokens]) 0)]
     (-> game
         (push-effect-stack {:player-no player-no
                             :effects   (if (>= vp-tokens 4)

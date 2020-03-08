@@ -27,7 +27,8 @@
 
 (s/def ::token-type #{:embargo :trade-route :victory-point})
 
-(s/def ::token (s/keys :req-un [::token-type]))
+(s/def ::token (s/keys :req-un [::token-type
+                                ::number-of-tokens]))
 
 (s/def ::tokens (s/coll-of ::token))
 

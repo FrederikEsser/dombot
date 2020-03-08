@@ -1144,8 +1144,8 @@
                                  :max       1}]}))
       (is (= (-> {:supply  [{:card      duchy
                              :pile-size 8
-                             :tokens    [{:token-type :trade-route
-                                          :on-gain    [[::prosperity/trade-route-move-token]]}]}]
+                             :tokens    {:trade-route {:number-of-tokens 1
+                                                       :on-gain          [[::prosperity/trade-route-move-token]]}}}]
                   :players [{:coins 5
                              :buys  1}]}
                  (buy-card 0 :duchy))

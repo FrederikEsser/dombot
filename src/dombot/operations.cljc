@@ -374,7 +374,10 @@
         {:keys [on-gain]} card
         types                 (ut/get-types game card)
         token-effects         (->> tokens
-                                   (mapcat :on-gain))
+                                   vals
+                                   (mapcat (fn [{:keys [number-of-tokens on-gain]}]
+                                             (when on-gain
+                                               (apply concat (repeat number-of-tokens on-gain))))))
         while-in-play-effects (->> (get-in game [:players player-no :play-area])
                                    (mapcat (comp :on-gain :while-in-play))
                                    (map (partial ut/add-effect-args {:card-name card-name})))
@@ -465,7 +468,10 @@
   (let [{:keys [card tokens]} (ut/get-pile-idx game card-name)
         {:keys [on-buy]} card
         token-effects         (->> tokens
-                                   (mapcat :on-buy))
+                                   vals
+                                   (mapcat (fn [{:keys [number-of-tokens on-buy]}]
+                                             (when on-buy
+                                               (apply concat (repeat number-of-tokens on-buy))))))
         while-in-play-effects (->> (get-in game [:players player-no :play-area])
                                    (mapcat (comp :on-buy :while-in-play))
                                    (map (partial ut/add-effect-args {:card-name card-name})))

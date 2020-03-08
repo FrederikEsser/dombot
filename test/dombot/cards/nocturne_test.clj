@@ -1142,8 +1142,8 @@
             (is (= (-> {:supply  [{:card curse :pile-size 10}
                                   {:card changeling :pile-size 10}
                                   {:card   conclave :pile-size 10
-                                   :tokens [{:token-type :embargo
-                                             :on-buy     [[:gain {:card-name :curse}]]}]}]
+                                   :tokens {:embargo {:number-of-tokens 1
+                                                      :on-buy           [[:gain {:card-name :curse}]]}}}]
                         :players [{:coins    4
                                    :buys     1
                                    :triggers [changeling-trigger]}]}
@@ -1152,16 +1152,16 @@
                    {:supply  [{:card curse :pile-size 9}
                               {:card changeling :pile-size 9}
                               {:card   conclave :pile-size 10
-                               :tokens [{:token-type :embargo
-                                         :on-buy     [[:gain {:card-name :curse}]]}]}]
+                               :tokens {:embargo {:number-of-tokens 1
+                                                  :on-buy           [[:gain {:card-name :curse}]]}}}]
                     :players [{:discard  [curse changeling]
                                :coins    0
                                :buys     0
                                :triggers [changeling-trigger]}]}))
             (is (= (-> {:supply  [{:card curse :pile-size 10}
                                   {:card   changeling :pile-size 10
-                                   :tokens [{:token-type :embargo
-                                             :on-buy     [[:gain {:card-name :curse}]]}]}
+                                   :tokens {:embargo {:number-of-tokens 1
+                                                      :on-buy           [[:gain {:card-name :curse}]]}}}
                                   {:card conclave :pile-size 10}]
                         :players [{:coins    4
                                    :buys     1
@@ -1170,8 +1170,8 @@
                        (choose :changeling))
                    {:supply  [{:card curse :pile-size 10}
                               {:card   changeling :pile-size 9
-                               :tokens [{:token-type :embargo
-                                         :on-buy     [[:gain {:card-name :curse}]]}]}
+                               :tokens {:embargo {:number-of-tokens 1
+                                                  :on-buy           [[:gain {:card-name :curse}]]}}}
                               {:card conclave :pile-size 10}]
                     :players [{:discard  [changeling]
                                :coins    0
@@ -1196,8 +1196,8 @@
           (let [duchy (assoc duchy :id 2)]
             (is (= (-> {:supply  [{:card changeling :pile-size 10}
                                   {:card   duchy :pile-size 8
-                                   :tokens [{:token-type :trade-route
-                                             :on-gain    [[::prosperity/trade-route-move-token]]}]}]
+                                   :tokens {:trade-route {:number-of-tokens 1
+                                                          :on-gain          [[::prosperity/trade-route-move-token]]}}}]
                         :players [{:coins    5
                                    :buys     1
                                    :triggers [changeling-trigger]}]}

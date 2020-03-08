@@ -341,15 +341,15 @@
   (let [{:keys [idx]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})]
     (-> game
         (update :trade-route-mat ut/plus 1)
-        (update-in [:supply idx :tokens] (partial remove (comp #{:trade-route} :token-type)))
+        (update-in [:supply idx :tokens] dissoc :trade-route)
         (update-in [:supply idx] ut/dissoc-if-empty :tokens))))
 
 (defn- trade-route-setup [game _]
   (update game :supply (partial mapv (fn [pile]
                                        (let [{{:keys [types]} :card} (ut/access-top-card pile)]
                                          (cond-> pile
-                                                 (:victory types) (update :tokens concat [{:token-type :trade-route
-                                                                                           :on-gain    [[::trade-route-move-token]]}])))))))
+                                                 (:victory types) (assoc-in [:tokens :trade-route] {:number-of-tokens 1
+                                                                                                    :on-gain          [[::trade-route-move-token]]})))))))
 
 (effects/register {::trade-route-give-coins trade-route-give-coins
                    ::trade-route-move-token trade-route-move-token
