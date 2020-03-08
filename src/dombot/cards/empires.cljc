@@ -869,8 +869,66 @@
             (zero? remaining-vp) (-> (update-in [:landmarks landmark-name] dissoc :vp-tokens)
                                      (update :players (partial mapv remove-trigger))))))
 
+(defn- take-all-landmark-vp [game {:keys [player-no landmark-name]}]
+  (let [vp-tokens (get-in game [:landmarks landmark-name :vp-tokens])]
+    (cond-> game
+            vp-tokens (-> (update-in [:landmarks landmark-name] dissoc :vp-tokens)
+                          (give-victory-points {:player-no player-no
+                                                :arg       vp-tokens})))))
+
+(defn- move-pile-vp-to-landmark [game {:keys [pile-idx landmark-name]}]
+  (let [current-vp (get-in game [:supply pile-idx :tokens :victory-point :number-of-tokens])]
+    (cond-> game
+            (pos? current-vp) (-> (update-in [:supply pile-idx :tokens :victory-point :number-of-tokens] dec)
+                                  (update-in [:landmarks landmark-name :vp-tokens] ut/plus 1))
+            (zero? (dec current-vp)) (-> (update-in [:supply pile-idx :tokens] dissoc :victory-point)
+                                         (update-in [:supply pile-idx] ut/dissoc-if-empty :tokens)))))
+
 (effects/register {::setup-landmark-vp setup-landmark-vp
                    ::take-landmark-vp  take-landmark-vp})
+
+(defn- aqueduct-on-gain-treasure [game {:keys [card-name]}]
+  (let [{:keys [card tokens idx]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})
+        types (ut/get-types game card)]
+    (cond-> game
+            (and (:treasure types)
+                 (:victory-point tokens)) (move-pile-vp-to-landmark {:pile-idx      idx
+                                                                     :landmark-name :aqueduct}))))
+
+(defn- aqueduct-on-gain-victory [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})
+        types (ut/get-types game card)]
+    (cond-> game
+            (:victory types) (take-all-landmark-vp {:player-no     player-no
+                                                    :landmark-name :aqueduct}))))
+
+(defn- aqueduct-setup-vp-tokens [game args]
+  (let [{silver-idx :idx} (ut/get-pile-idx game :silver)
+        {gold-idx :idx} (ut/get-pile-idx game :gold)]
+    (-> game
+        (assoc-in [:supply silver-idx :tokens :victory-point :number-of-tokens] 8)
+        (assoc-in [:supply gold-idx :tokens :victory-point :number-of-tokens] 8))))
+
+(effects/register {::aqueduct-on-gain-treasure aqueduct-on-gain-treasure
+                   ::aqueduct-on-gain-victory  aqueduct-on-gain-victory
+                   ::aqueduct-setup-vp-tokens  aqueduct-setup-vp-tokens})
+
+(def aqueduct-treasure-trigger {:name     :aqueduct
+                                :duration :game
+                                :event    :on-gain
+                                :effects  [[::aqueduct-on-gain-treasure]]})
+
+(def aqueduct-victory-trigger {:name     :aqueduct
+                               :duration :game
+                               :event    :on-gain
+                               :effects  [[::aqueduct-on-gain-victory]]})
+
+(def aqueduct {:name  :aqueduct
+               :set   :empires
+               :type  :landmark
+               :setup [[::aqueduct-setup-vp-tokens]
+                       [:all-players {:effects [[:add-trigger {:trigger aqueduct-treasure-trigger}]
+                                                [:add-trigger {:trigger aqueduct-victory-trigger}]]}]]})
 
 (defn- arena-discard-action [game {:keys [player-no card-name]}]
   (cond-> game
@@ -1193,7 +1251,8 @@
                    ::wall-scoring           wall-scoring
                    ::wolf-den-scoring       wolf-den-scoring})
 
-(def landmarks [arena
+(def landmarks [aqueduct
+                arena
                 bandit-ford
                 basilica
                 baths

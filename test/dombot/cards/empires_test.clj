@@ -2845,6 +2845,61 @@
             :players   [{:hand           [copper copper duchy]
                          :victory-points 0}]}))))
 
+(deftest aqueduct-test
+  (let [silver (assoc silver :id 1)
+        estate (assoc estate :id 2)]
+    (testing "Aqueduct"
+      (is (= (-> {:landmarks {:aqueduct aqueduct}
+                  :supply    [{:card silver :pile-size 40 :tokens {:victory-point {:number-of-tokens 8}}}]
+                  :players   [{:triggers [(assoc aqueduct-treasure-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :silver}))
+             {:landmarks {:aqueduct (assoc aqueduct :vp-tokens 1)}
+              :supply    [{:card silver :pile-size 39 :tokens {:victory-point {:number-of-tokens 7}}}]
+              :players   [{:discard  [silver]
+                           :triggers [(assoc aqueduct-treasure-trigger :id 1)]}]}))
+      (is (= (-> {:landmarks {:aqueduct (assoc aqueduct :vp-tokens 3)}
+                  :supply    [{:card silver :pile-size 33 :tokens {:victory-point {:number-of-tokens 1}}}]
+                  :players   [{:triggers [(assoc aqueduct-treasure-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :silver}))
+             {:landmarks {:aqueduct (assoc aqueduct :vp-tokens 4)}
+              :supply    [{:card silver :pile-size 32}]
+              :players   [{:discard  [silver]
+                           :triggers [(assoc aqueduct-treasure-trigger :id 1)]}]}))
+      (is (= (-> {:landmarks {:aqueduct aqueduct}
+                  :supply    [{:card silver :pile-size 32}]
+                  :players   [{:triggers [(assoc aqueduct-treasure-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :silver}))
+             {:landmarks {:aqueduct aqueduct}
+              :supply    [{:card silver :pile-size 31}]
+              :players   [{:discard  [silver]
+                           :triggers [(assoc aqueduct-treasure-trigger :id 1)]}]}))
+      (is (= (-> {:landmarks {:aqueduct (assoc aqueduct :vp-tokens 1)}
+                  :supply    [{:card estate :pile-size 8}]
+                  :players   [{:triggers [(assoc aqueduct-victory-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :estate}))
+             {:landmarks {:aqueduct aqueduct}
+              :supply    [{:card estate :pile-size 7}]
+              :players   [{:discard   [estate]
+                           :vp-tokens 1
+                           :triggers  [(assoc aqueduct-victory-trigger :id 1)]}]}))
+      (is (= (-> {:landmarks {:aqueduct (assoc aqueduct :vp-tokens 4)}
+                  :supply    [{:card estate :pile-size 8}]
+                  :players   [{:triggers [(assoc aqueduct-victory-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :estate}))
+             {:landmarks {:aqueduct aqueduct}
+              :supply    [{:card estate :pile-size 7}]
+              :players   [{:discard   [estate]
+                           :vp-tokens 4
+                           :triggers  [(assoc aqueduct-victory-trigger :id 1)]}]}))
+      (is (= (-> {:landmarks {:aqueduct aqueduct}
+                  :supply    [{:card estate :pile-size 8}]
+                  :players   [{:triggers [(assoc aqueduct-victory-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :estate}))
+             {:landmarks {:aqueduct aqueduct}
+              :supply    [{:card estate :pile-size 7}]
+              :players   [{:discard  [estate]
+                           :triggers [(assoc aqueduct-victory-trigger :id 1)]}]})))))
+
 (deftest arena-test
   (testing "Arena"
     (is (= (-> {:landmarks {:arena (assoc arena :vp-tokens 12)}
