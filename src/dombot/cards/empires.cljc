@@ -1049,6 +1049,51 @@
                 :setup [[::setup-landmark-vp {:landmark-name :colonnade}]
                         [:all-players {:effects [[:add-trigger {:trigger colonnade-trigger}]]}]]})
 
+(defn- defiled-shrine-on-gain-action [game {:keys [card-name]}]
+  (let [{:keys [card tokens idx]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})
+        types (ut/get-types game card)]
+    (cond-> game
+            (and (:action types)
+                 (:victory-point tokens)) (move-pile-vp-to-landmark {:pile-idx      idx
+                                                                     :landmark-name :defiled-shrine}))))
+
+(defn- defiled-shrine-on-buy-curse [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})
+        types (ut/get-types game card)]
+    (cond-> game
+            (:curse types) (take-all-landmark-vp {:player-no     player-no
+                                                  :landmark-name :defiled-shrine}))))
+
+(defn- defiled-shrine-setup-vp-tokens [game args]
+  (let [setup-vp-tokens (fn [pile]
+                          (let [{{:keys [types]} :card} (ut/access-top-card pile)]
+                            (cond-> pile
+                                    (and (:action types)
+                                         (not (:gathering types))) (assoc-in [:tokens :victory-point :number-of-tokens] 2))))]
+    (-> game
+        (update :supply (partial mapv setup-vp-tokens)))))
+
+(effects/register {::defiled-shrine-on-gain-action  defiled-shrine-on-gain-action
+                   ::defiled-shrine-on-buy-curse    defiled-shrine-on-buy-curse
+                   ::defiled-shrine-setup-vp-tokens defiled-shrine-setup-vp-tokens})
+
+(def defiled-shrine-action-trigger {:name     :defiled-shrine
+                                    :duration :game
+                                    :event    :on-gain
+                                    :effects  [[::defiled-shrine-on-gain-action]]})
+
+(def defiled-shrine-curse-trigger {:name     :defiled-shrine
+                                   :duration :game
+                                   :event    :on-buy
+                                   :effects  [[::defiled-shrine-on-buy-curse]]})
+
+(def defiled-shrine {:name  :defiled-shrine
+                     :set   :empires
+                     :type  :landmark
+                     :setup [[::defiled-shrine-setup-vp-tokens]
+                             [:all-players {:effects [[:add-trigger {:trigger defiled-shrine-action-trigger}]
+                                                      [:add-trigger {:trigger defiled-shrine-curse-trigger}]]}]]})
+
 (defn- fountain-scoring [cards _]
   (let [number-of-coppers (->> cards
                                (filter (comp #{:copper} :name))
@@ -1258,6 +1303,7 @@
                 baths
                 battlefield
                 colonnade
+                defiled-shrine
                 fountain
                 keep-lm
                 labyrinth

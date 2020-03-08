@@ -12,6 +12,7 @@
             [dombot.cards.adventures :as adventures :refer [caravan-guard]]
             [dombot.cards.nocturne :as nocturne :refer [ghost]]
             [dombot.cards.renaissance :as renaissance :refer [patron spices capitalism citadel innovation piazza]]
+            [dombot.cards.kingdom :refer [setup-game]]
             [dombot.utils :as ut]))
 
 (defn fixture [f]
@@ -2606,6 +2607,20 @@
            {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:forum})}
             :players   [{:hand           [forum]
                          :victory-points 2}]}))
+    (testing "Setup"
+      (is (= (-> {:landmarks {:obelisk obelisk}
+                  :supply    [{:card copper :pile-size 46}
+                              {:card silver :pile-size 40}
+                              {:card gold :pile-size 30}
+                              {:card forum :pile-size 10}]
+                  :players   [{}]}
+                 setup-game)
+             {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:forum})}
+              :supply    [{:card copper :pile-size 46}
+                          {:card silver :pile-size 40}
+                          {:card gold :pile-size 30}
+                          {:card forum :pile-size 10}]
+              :players   [{}]})))
     (is (= (-> {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:settlers :bustling-village})}
                 :players   [{:hand [settlers settlers bustling-village]}]}
                calculate-victory-points)
@@ -2898,7 +2913,23 @@
              {:landmarks {:aqueduct aqueduct}
               :supply    [{:card estate :pile-size 7}]
               :players   [{:discard  [estate]
-                           :triggers [(assoc aqueduct-victory-trigger :id 1)]}]})))))
+                           :triggers [(assoc aqueduct-victory-trigger :id 1)]}]}))
+      (testing "Setup"
+        (ut/reset-ids!)
+        (is (= (-> {:landmarks {:aqueduct aqueduct}
+                    :supply    [{:card copper :pile-size 46}
+                                {:card silver :pile-size 40}
+                                {:card gold :pile-size 30}
+                                {:card charm :pile-size 10}]
+                    :players   [{}]}
+                   setup-game)
+               {:landmarks {:aqueduct aqueduct}
+                :supply    [{:card copper :pile-size 46}
+                            {:card silver :pile-size 40 :tokens {:victory-point {:number-of-tokens 8}}}
+                            {:card gold :pile-size 30 :tokens {:victory-point {:number-of-tokens 8}}}
+                            {:card charm :pile-size 10}]
+                :players   [{:triggers [(assoc aqueduct-treasure-trigger :id 1)
+                                        (assoc aqueduct-victory-trigger :id 2)]}]}))))))
 
 (deftest arena-test
   (testing "Arena"
@@ -2948,7 +2979,15 @@
                                             :phase    :action
                                             :triggers [(assoc arena-trigger :id 1)]}]}
                               (play 0 :copper)
-                              (choose [:catapult :catapult]))))))
+                              (choose [:catapult :catapult]))))
+    (testing "Setup"
+      (ut/reset-ids!)
+      (is (= (-> {:landmarks {:arena arena}
+                  :players   [{} {}]}
+                 setup-game)
+             {:landmarks {:arena (assoc arena :vp-tokens 12)}
+              :players   [{:triggers [(assoc arena-trigger :id 1)]}
+                          {:triggers [(assoc arena-trigger :id 2)]}]})))))
 
 (deftest battlefield-test
   (testing "Battlefield"
@@ -3171,6 +3210,90 @@
                            :coins     0
                            :buys      0
                            :triggers  [(assoc colonnade-trigger :id 1)]}]})))))
+
+(deftest defiled-shrine-test
+  (let [chariot-race (assoc chariot-race :id 1)
+        crown        (assoc crown :id 1)
+        curse        (assoc curse :id 2)]
+    (testing "Defiled Shrine"
+      (is (= (-> {:landmarks {:defiled-shrine defiled-shrine}
+                  :supply    [{:card chariot-race :pile-size 10 :tokens {:victory-point {:number-of-tokens 2}}}]
+                  :players   [{:triggers [(assoc defiled-shrine-action-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :chariot-race}))
+             {:landmarks {:defiled-shrine (assoc defiled-shrine :vp-tokens 1)}
+              :supply    [{:card chariot-race :pile-size 9 :tokens {:victory-point {:number-of-tokens 1}}}]
+              :players   [{:discard  [chariot-race]
+                           :triggers [(assoc defiled-shrine-action-trigger :id 1)]}]}))
+      (is (= (-> {:landmarks {:defiled-shrine (assoc defiled-shrine :vp-tokens 3)}
+                  :supply    [{:card chariot-race :pile-size 9 :tokens {:victory-point {:number-of-tokens 1}}}]
+                  :players   [{:triggers [(assoc defiled-shrine-action-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :chariot-race}))
+             {:landmarks {:defiled-shrine (assoc defiled-shrine :vp-tokens 4)}
+              :supply    [{:card chariot-race :pile-size 8}]
+              :players   [{:discard  [chariot-race]
+                           :triggers [(assoc defiled-shrine-action-trigger :id 1)]}]}))
+      (is (= (-> {:landmarks {:defiled-shrine defiled-shrine}
+                  :supply    [{:card chariot-race :pile-size 8}]
+                  :players   [{:triggers [(assoc defiled-shrine-action-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :chariot-race}))
+             {:landmarks {:defiled-shrine defiled-shrine}
+              :supply    [{:card chariot-race :pile-size 7}]
+              :players   [{:discard  [chariot-race]
+                           :triggers [(assoc defiled-shrine-action-trigger :id 1)]}]}))
+      (is (= (-> {:landmarks {:aqueduct       aqueduct
+                              :defiled-shrine defiled-shrine}
+                  :supply    [{:card crown :pile-size 10 :tokens {:victory-point {:number-of-tokens 2}}}]
+                  :players   [{:triggers [(assoc aqueduct-treasure-trigger :id 1)
+                                          (assoc defiled-shrine-action-trigger :id 2)]}]}
+                 (gain {:player-no 0 :card-name :crown}))
+             {:landmarks {:aqueduct       (assoc aqueduct :vp-tokens 1)
+                          :defiled-shrine (assoc defiled-shrine :vp-tokens 1)}
+              :supply    [{:card crown :pile-size 9}]
+              :players   [{:discard  [crown]
+                           :triggers [(assoc aqueduct-treasure-trigger :id 1)
+                                      (assoc defiled-shrine-action-trigger :id 2)]}]}))
+      (is (= (-> {:landmarks {:defiled-shrine (assoc defiled-shrine :vp-tokens 4)}
+                  :supply    [{:card curse :pile-size 8}]
+                  :players   [{:triggers [(assoc defiled-shrine-curse-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :curse}))
+             {:landmarks {:defiled-shrine (assoc defiled-shrine :vp-tokens 4)}
+              :supply    [{:card curse :pile-size 7}]
+              :players   [{:discard  [curse]
+                           :triggers [(assoc defiled-shrine-curse-trigger :id 1)]}]}))
+      (is (= (-> {:landmarks {:defiled-shrine (assoc defiled-shrine :vp-tokens 4)}
+                  :supply    [{:card curse :pile-size 8}]
+                  :players   [{:coins    0
+                               :buys     1
+                               :triggers [(assoc defiled-shrine-curse-trigger :id 1)]}]}
+                 (buy-card {:player-no 0 :card-name :curse}))
+             {:landmarks {:defiled-shrine defiled-shrine}
+              :supply    [{:card curse :pile-size 7}]
+              :players   [{:discard   [curse]
+                           :coins     0
+                           :buys      0
+                           :vp-tokens 4
+                           :triggers  [(assoc defiled-shrine-curse-trigger :id 1)]}]}))
+      (testing "Setup"
+        (ut/reset-ids!)
+        (is (= (-> {:landmarks {:defiled-shrine defiled-shrine}
+                    :supply    [{:card forum :pile-size 10}
+                                {:card temple :pile-size 10}
+                                {:card crown :pile-size 10}
+                                {:card charm :pile-size 10}
+                                (castles-pile 2)
+                                (settlers-bustling-village-pile 2)]
+                    :players   [{}]}
+                   setup-game))
+            {:landmarks {:defiled-shrine defiled-shrine}
+             :supply    [{:card forum :pile-size 10 :tokens {:victory-point {:number-of-tokens 2}}}
+                         {:card temple :pile-size 10}
+                         {:card crown :pile-size 10 :tokens {:victory-point {:number-of-tokens 2}}}
+                         {:card charm :pile-size 10}
+                         (castles-pile 2)
+                         (assoc (settlers-bustling-village-pile 2)
+                           :tokens {:victory-point {:number-of-tokens 2}})]
+             :players   [{:triggers [(assoc defiled-shrine-action-trigger :id 1)
+                                     (assoc defiled-shrine-curse-trigger :id 2)]}]})))))
 
 (deftest labyrinth-test
   (testing "Labyrinth"
