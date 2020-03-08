@@ -876,6 +876,29 @@
 (effects/register {::setup-landmark-vp setup-landmark-vp
                    ::take-landmark-vp  take-landmark-vp})
 
+(defn- arena-discard-action [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:discard-from-hand {:card-name card-name}]
+                                                    [::take-landmark-vp {:landmark-name :arena
+                                                                         :num-vp        2}]]})))
+
+(effects/register {::arena-discard-action arena-discard-action})
+
+(def arena-trigger {:name     :arena
+                    :duration :game
+                    :event    :at-start-buy
+                    :effects  [[:give-choice {:text    "You may discard an Action card for 2VP."
+                                              :choice  ::arena-discard-action
+                                              :options [:player :hand {:type :action}]
+                                              :max     1}]]})
+
+(def arena {:name  :arena
+            :set   :empires
+            :type  :landmark
+            :setup [[::setup-landmark-vp {:landmark-name :arena}]
+                    [:all-players {:effects [[:add-trigger {:trigger arena-trigger}]]}]]})
+
 (defn- bandit-ford-scoring [cards _]
   (->> cards
        (filter (comp #{:silver :gold} :name))
@@ -1174,7 +1197,8 @@
                    ::wall-scoring           wall-scoring
                    ::wolf-den-scoring       wolf-den-scoring})
 
-(def landmarks [bandit-ford
+(def landmarks [arena
+                bandit-ford
                 basilica
                 baths
                 battlefield

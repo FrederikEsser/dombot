@@ -2859,6 +2859,56 @@
             :players   [{:hand           [copper copper duchy]
                          :victory-points 0}]}))))
 
+(deftest arena-test
+  (testing "Arena"
+    (is (= (-> {:landmarks {:arena (assoc arena :vp-tokens 12)}
+                :players   [{:hand     [copper copper]
+                             :coins    0
+                             :phase    :action
+                             :triggers [(assoc arena-trigger :id 1)]}]}
+               (play 0 :copper))
+           {:landmarks {:arena (assoc arena :vp-tokens 12)}
+            :players   [{:hand      [copper]
+                         :play-area [copper]
+                         :coins     1
+                         :phase     :pay
+                         :triggers  [(assoc arena-trigger :id 1)]}]}))
+    (is (= (-> {:landmarks {:arena (assoc arena :vp-tokens 12)}
+                :players   [{:hand     [copper catapult]
+                             :coins    0
+                             :phase    :action
+                             :triggers [(assoc arena-trigger :id 1)]}]}
+               (play 0 :copper)
+               (choose nil))
+           {:landmarks {:arena (assoc arena :vp-tokens 12)}
+            :players   [{:hand      [catapult]
+                         :play-area [copper]
+                         :coins     1
+                         :phase     :pay
+                         :triggers  [(assoc arena-trigger :id 1)]}]}))
+    (is (= (-> {:landmarks {:arena (assoc arena :vp-tokens 12)}
+                :players   [{:hand     [copper catapult]
+                             :coins    0
+                             :phase    :action
+                             :triggers [(assoc arena-trigger :id 1)]}]}
+               (play 0 :copper)
+               (choose :catapult))
+           {:landmarks {:arena (assoc arena :vp-tokens 10)}
+            :players   [{:play-area [copper]
+                         :discard   [catapult]
+                         :coins     1
+                         :vp-tokens 2
+                         :phase     :pay
+                         :triggers  [(assoc arena-trigger :id 1)]}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error"
+                          (-> {:landmarks {:arena (assoc arena :vp-tokens 12)}
+                               :players   [{:hand     [copper catapult catapult]
+                                            :coins    0
+                                            :phase    :action
+                                            :triggers [(assoc arena-trigger :id 1)]}]}
+                              (play 0 :copper)
+                              (choose [:catapult :catapult]))))))
+
 (deftest battlefield-test
   (testing "Battlefield"
     (let [estate (assoc estate :id 0)]
