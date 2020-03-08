@@ -2967,6 +2967,64 @@
                            :buys     1
                            :triggers [(assoc basilica-trigger :id 1)]}]})))))
 
+(deftest baths-test
+  (testing "Baths"
+    (let [estate (assoc estate :id 0)]
+      (is (= (-> {:track-gained-cards? true
+                  :landmarks           {:baths (assoc baths :vp-tokens 12)}
+                  :supply              [{:card estate :pile-size 8}]
+                  :players             [{:phase    :action
+                                         :triggers [(assoc baths-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :estate})
+                 (end-turn 0))
+             {:current-player      0
+              :track-gained-cards? true
+              :landmarks           {:baths (assoc baths :vp-tokens 12)}
+              :supply              [{:card estate :pile-size 7}]
+              :players             [{:hand     [estate]
+                                     :actions  1
+                                     :coins    0
+                                     :buys     1
+                                     :phase    :action
+                                     :triggers [(assoc baths-trigger :id 1)]}]}))
+      (is (= (-> {:track-gained-cards? true
+                  :landmarks           {:baths (assoc baths :vp-tokens 12)}
+                  :players             [{:phase    :action
+                                         :triggers [(assoc baths-trigger :id 1)]}]}
+                 (end-turn 0))
+             {:current-player      0
+              :track-gained-cards? true
+              :landmarks           {:baths (assoc baths :vp-tokens 10)}
+              :players             [{:actions   1
+                                     :coins     0
+                                     :buys      1
+                                     :vp-tokens 2
+                                     :phase     :action
+                                     :triggers  [(assoc baths-trigger :id 1)]}]}))
+      (let [outpost (assoc outpost :id 1)]
+        (is (= (-> {:track-gained-cards? true
+                    :landmarks           {:baths (assoc baths :vp-tokens 12)}
+                    :players             [{:hand     [outpost]
+                                           :deck     (repeat 5 copper)
+                                           :actions  1
+                                           :phase    :action
+                                           :triggers [(assoc baths-trigger :id 1)]}]}
+                   (play 0 :outpost)
+                   (end-turn 0))
+               {:current-player      0
+                :track-gained-cards? true
+                :landmarks           {:baths (assoc baths :vp-tokens 10)}
+                :players             [{:hand                     [copper copper copper]
+                                       :play-area                [outpost]
+                                       :deck                     [copper copper]
+                                       :actions                  1
+                                       :coins                    0
+                                       :buys                     1
+                                       :vp-tokens                2
+                                       :phase                    :action
+                                       :previous-turn-was-yours? true
+                                       :triggers                 [(assoc baths-trigger :id 1)]}]}))))))
+
 (deftest colonnade-test
   (testing "Colonnade"
     (let [enchantress (assoc enchantress :id 0)

@@ -907,6 +907,26 @@
                :setup [[::setup-landmark-vp {:landmark-name :basilica}]
                        [:all-players {:effects [[:add-trigger {:trigger basilica-trigger}]]}]]})
 
+(defn- baths-at-end-turn [game {:keys [player-no]}]
+  (let [gained-cards (get-in game [:players player-no :gained-cards])]
+    (cond-> game
+            (empty? gained-cards) (take-landmark-vp {:player-no     player-no
+                                                     :landmark-name :baths
+                                                     :num-vp        2}))))
+
+(effects/register {::baths-at-end-turn baths-at-end-turn})
+
+(def baths-trigger {:name     :baths
+                    :duration :game
+                    :event    :at-draw-hand
+                    :effects  [[::baths-at-end-turn]]})
+
+(def baths {:name  :baths
+            :set   :empires
+            :type  :landmark
+            :setup [[::setup-landmark-vp {:landmark-name :baths}]
+                    [:all-players {:effects [[:add-trigger {:trigger baths-trigger}]]}]]})
+
 (defn- battlefield-on-gain [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})
         types (ut/get-types game card)]
@@ -1156,6 +1176,7 @@
 
 (def landmarks [bandit-ford
                 basilica
+                baths
                 battlefield
                 colonnade
                 fountain
