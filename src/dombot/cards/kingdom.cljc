@@ -11,6 +11,7 @@
             [dombot.cards.empires :as empires]
             [dombot.cards.nocturne :as nocturne]
             [dombot.cards.renaissance :as renaissance]
+            [dombot.cards.menagerie :as menagerie]
             [dombot.cards.promos :as promos]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -26,6 +27,7 @@
                      empires/kingdom-cards
                      nocturne/kingdom-cards
                      renaissance/kingdom-cards
+                     menagerie/kingdom-cards
                      promos/kingdom-cards))
 
 (defn- random-kingdom [sets included-card-names]
