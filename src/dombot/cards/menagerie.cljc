@@ -55,8 +55,20 @@
              :trigger {:event    :on-gain
                        :duration :turn
                        :mode     :auto
-                       :effects  [[::livery-on-gain]]}})
+                       :effects  [[::livery-on-gain]]}
+             :setup   [[:setup-extra-cards {:extra-cards [{:card horse :pile-size 30}]}]]})
 
+(def mastermind {:name    :mastermind
+                 :set     :menagerie
+                 :types   #{:action :duration}
+                 :cost    5
+                 :trigger {:event    :at-start-turn
+                           :duration :once
+                           :mode     :manual
+                           :effects  [[:give-choice {:text    "You may play an Action card from your hand three times."
+                                                     :choice  [:repeat-action {:times 3}]
+                                                     :options [:player :hand {:type :action}]
+                                                     :max     1}]]}})
 
 (def supplies {:name       :supplies
                :set        :menagerie
@@ -87,7 +99,7 @@
                     :set        :menagerie
                     :types      #{:action :duration :reaction}
                     :cost       3
-                    :effects    [[:give-choice {:text    "Either now or at the start of your next turn, +3 Cards and +1 Buy."
+                    :effects    [[:give-choice {:text    "Either now or at the start of your next turn, +1 Card and +2 Actions."
                                                 :choice  ::village-green-choice
                                                 :options [:special
                                                           {:option :now :text "Now"}
@@ -102,5 +114,82 @@
 
 (def kingdom-cards [barge
                     livery
+                    mastermind
                     supplies
                     village-green])
+
+(defn- alliance-gain-base-cards [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:gain {:card-name :province}]
+                                       [:gain {:card-name :duchy}]
+                                       [:gain {:card-name :estate}]
+                                       [:gain {:card-name :gold}]
+                                       [:gain {:card-name :silver}]
+                                       [:gain {:card-name :copper}]]}))
+
+(effects/register {::alliance-gain-base-cards alliance-gain-base-cards})
+
+(def alliance {:name   :alliance
+               :set    :menagerie
+               :type   :event
+               :cost   10
+               :on-buy [[::alliance-gain-base-cards]]})
+
+(defn- commerce-gain-gold [game {:keys [player-no]}]
+  (let [gained-cards (->> (get-in game [:players player-no :gained-cards])
+                          (map :name)
+                          set
+                          count)]
+    (cond-> game
+            (pos? gained-cards) (push-effect-stack {:player-no player-no
+                                                    :effects   (repeat gained-cards [:gain {:card-name :gold}])}))))
+
+(effects/register {::commerce-gain-gold commerce-gain-gold})
+
+(def commerce {:name   :commerce
+               :set    :menagerie
+               :type   :event
+               :cost   5
+               :on-buy [[::commerce-gain-gold]]})
+
+(defn- populate-gain-actions [{:keys [supply] :as game} {:keys [player-no]}]
+  (let [action-cards (->> supply
+                          (map (comp :card ut/access-top-card))
+                          (filter (comp :action (partial ut/get-types game)))
+                          (map :name))]
+    (cond-> game
+            (not-empty action-cards) (push-effect-stack {:player-no player-no
+                                                         :effects   (for [card-name action-cards]
+                                                                      [:gain {:card-name card-name}])}))))
+
+(effects/register {::populate-gain-actions populate-gain-actions})
+
+(def populate {:name   :populate
+               :set    :menagerie
+               :type   :event
+               :cost   10
+               :on-buy [[::populate-gain-actions]]})
+
+(defn- toil-play-action [game {:keys [player-no card-name]}]
+  (let [{card :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:play-from-hand {:card-name card-name}]
+                                                 [:card-effect {:card card}]]}))))
+
+(effects/register {::toil-play-action toil-play-action})
+
+(def toil {:name   :toil
+           :set    :menagerie
+           :type   :event
+           :cost   2
+           :on-buy [[:give-buys 1]
+                    [:give-choice {:text    "You may play an Action card from your hand."
+                                   :choice  ::toil-play-action
+                                   :options [:player :hand {:type :action}]
+                                   :max     1}]]})
+
+(def events [alliance
+             commerce
+             populate
+             toil])

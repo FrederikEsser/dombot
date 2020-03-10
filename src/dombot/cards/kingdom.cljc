@@ -75,7 +75,8 @@
                   adventures/events
                   empires/events
                   empires/landmarks
-                  renaissance/projects))
+                  renaissance/projects
+                  menagerie/events))
 
 (defn random-landscape [[set number]]
   (->> landscapes
@@ -123,7 +124,7 @@
                                (split-at 4)
                                (keep (fn [cards]
                                        (->> cards
-                                            (keep (comp #{:adventures :empires :renaissance} :set))
+                                            (keep (comp #{:adventures :empires :renaissance :menagerie} :set))
                                             first)))
                                frequencies
                                (mapcat random-landscape)
