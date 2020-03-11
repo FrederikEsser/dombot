@@ -246,7 +246,7 @@
     (cond-> game
             card (push-effect-stack {:player-no player-no
                                      :effects   (concat [[:trash-from-hand {:card-name card-name}]]
-                                                        (when (>= cost 3)
+                                                        (when (ut/costs-at-least 3 cost)
                                                           [[:attack {:effects [[:gain {:card-name :curse}]]}]])
                                                         (when (:treasure types)
                                                           [[:attack {:effects [[:discard-down-to 3]]}]]))}))))
@@ -294,7 +294,7 @@
         other-card  (first (get-in game [:players next-player :revealed]))
         race-won?   (and own-card
                          other-card
-                         (> (ut/get-cost game own-card) (ut/get-cost game other-card)))]
+                         (ut/costs-more (ut/get-cost game other-card) (ut/get-cost game own-card)))]
     (cond-> game
             other-card (push-effect-stack {:player-no next-player
                                            :effects   [[:topdeck-from-revealed {:card-name (:name other-card)}]]})
@@ -330,7 +330,7 @@
     (-> game
         (push-effect-stack {:player-no player-no
                             :effects   [[:remove-trigger {:trigger-id trigger-id}]
-                                        [:give-choice {:text    (str "You may gain a card other than " (ut/format-name card-name) " costing exactly $" cost ".")
+                                        [:give-choice {:text    (str "You may gain a card other than " (ut/format-name card-name) " costing exactly " (ut/format-cost cost) ".")
                                                        :choice  :gain
                                                        :options [:supply {:not-names #{card-name}
                                                                           :cost      cost}]
@@ -542,7 +542,7 @@
         {:keys [name] :as card} (first revealed)
         cost     (ut/get-cost game card)]
     (push-effect-stack game {:player-no player-no
-                             :effects   (if (and card (>= cost 5))
+                             :effects   (if (and card (ut/costs-at-least 5 cost))
                                           [[:take-from-revealed {:card-name name}]]
                                           [[:topdeck-all-revealed]])})))
 
@@ -789,11 +789,11 @@
 
 (defn- ritual-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        cost (ut/get-cost game card)]
+        {:keys [coin-cost]} (ut/get-cost game card)]
     (cond-> game
             card (push-effect-stack {:player-no player-no
                                      :effects   [[:trash-from-hand {:card-name card-name}]
-                                                 [:give-victory-points cost]]}))))
+                                                 [:give-victory-points coin-cost]]}))))
 
 (defn- ritual-gain-curse [game {:keys [player-no]}]
   (let [{:keys [pile-size]} (ut/get-pile-idx game :curse)]

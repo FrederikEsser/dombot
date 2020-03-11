@@ -31,10 +31,10 @@
 
 (defn- bishop-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        cost (ut/get-cost game card)]
+        {:keys [coin-cost]} (ut/get-cost game card)]
     (push-effect-stack game {:player-no player-no
                              :effects   [[:trash-from-hand {:card-name card-name}]
-                                         [:give-victory-points (quot cost 2)]]})))
+                                         [:give-victory-points (quot coin-cost 2)]]})))
 
 (effects/register {::bishop-trash bishop-trash})
 
@@ -116,10 +116,11 @@
                         (map (fn [card-name]
                                (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
                                  (ut/get-cost game card))))
+                        (map :coin-cost)
                         (apply + 0))]
     (push-effect-stack game {:player-no player-no
                              :effects   [[:trash-from-hand {:card-names card-names}]
-                                         [:give-choice {:text    (str "Gain a card costing exactly " total-cost ".")
+                                         [:give-choice {:text    (str "Gain a card costing exactly $" total-cost ".")
                                                         :choice  :gain
                                                         :options [:supply {:cost total-cost}]
                                                         :min     1
@@ -321,8 +322,8 @@
         cost  (ut/get-cost game card)]
     (cond-> game
             (and (not (:victory types))
-                 (<= cost 4)) (push-effect-stack {:player-no player-no
-                                                  :effects   [[:gain {:card-name card-name}]]}))))
+                 (ut/costs-up-to 4 cost)) (push-effect-stack {:player-no player-no
+                                                              :effects   [[:gain {:card-name card-name}]]}))))
 
 (effects/register {::talisman-on-buy talisman-on-buy})
 

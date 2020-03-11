@@ -32,10 +32,14 @@
 
 (s/def ::tokens (s/coll-of ::token))
 
+(s/def ::coin-cost ::cost)
+
+(s/def ::card-name (s/keys :req-un [::coin-cost]))
+
 (s/def ::card (s/keys :req-un [::name
                                ::name-ui
                                ::types]
-                      :opt-un [::cost
+                      :opt-un [::card-cost
                                ::number-of-cards
                                ::interaction
                                ::choice-value

@@ -388,11 +388,12 @@
 
 (defn replace-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        max-cost (+ 2 (ut/get-cost game card))]
+        max-cost (-> (ut/get-cost game card)
+                     (ut/add-to-cost 2))]
     (-> game
         (push-effect-stack {:player-no player-no
                             :effects   [[:trash-from-hand {:card-name card-name}]
-                                        [:give-choice {:text    (str "Gain a card costing up to $" max-cost ".")
+                                        [:give-choice {:text    (str "Gain a card costing up to " (ut/format-cost max-cost) ".")
                                                        :choice  ::replace-gain
                                                        :options [:supply {:max-cost max-cost}]
                                                        :min     1
@@ -495,7 +496,7 @@
     (cond-> game
             top-card (push-effect-stack {:player-no player-no
                                          :effects   [[:trash-from-topdeck]
-                                                     [:give-choice {:text    (str "Gain a card costing $" cost " (attacker chooses).")
+                                                     [:give-choice {:text    (str "Gain a card costing " (ut/format-cost cost) " (attacker chooses).")
                                                                     :choice  :gain
                                                                     :options [:supply {:cost cost}]
                                                                     :min     1

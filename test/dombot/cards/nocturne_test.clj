@@ -643,7 +643,7 @@
                {:hexes        {:discard [locusts]}
                 :supply       (base/supply 2 8)
                 :players      [{}]
-                :effect-stack [{:text      (str "Gain a Treasure card costing up to $2.")
+                :effect-stack [{:text      (str "Gain a Treasure card costing less than $3.")
                                 :player-no 0
                                 :choice    :gain
                                 :source    :supply

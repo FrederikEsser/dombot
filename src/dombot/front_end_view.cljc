@@ -32,7 +32,7 @@
                 (merge {:name            name
                         :name-ui         (ut/format-name name)
                         :types           types
-                        :cost            cost
+                        :card-cost       cost
                         :number-of-cards pile-size}
                        (when (and total-pile-size
                                   (> total-pile-size pile-size))
@@ -43,7 +43,7 @@
                                   (not choice)
                                   (pos? pile-size)
                                   buys (pos? buys)
-                                  coins (<= buy-cost coins)
+                                  coins (ut/costs-up-to coins buy-cost)
                                   (ut/card-buyable? game player-no card))
                          {:interaction :buyable})
                        (choice-interaction name :supply choice)
@@ -66,7 +66,7 @@
                 (merge {:name            name
                         :name-ui         (ut/format-name name)
                         :types           types
-                        :cost            cost
+                        :card-cost       cost
                         :number-of-cards number-of-cards}
                        (choice-interaction name :extra-cards choice)))))))
 

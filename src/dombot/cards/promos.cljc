@@ -68,14 +68,13 @@
 
 (defn- dismantle-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        cost     (ut/get-cost game card)
-        max-cost (dec cost)]
+        cost (ut/get-cost game card)]
     (push-effect-stack game {:player-no player-no
                              :effects   (concat [[:trash-from-hand {:card-name card-name}]]
-                                                (when (pos? cost)
-                                                  [[:give-choice {:text    (str "Gain a card costing up to $" max-cost ".")
+                                                (when (ut/costs-at-least 1 cost)
+                                                  [[:give-choice {:text    (str "Gain a card costing less than " (ut/format-cost cost) ".")
                                                                   :choice  :gain
-                                                                  :options [:supply {:max-cost max-cost}]
+                                                                  :options [:supply {:costs-less-than cost}]
                                                                   :min     1
                                                                   :max     1}]
                                                    [:gain {:card-name :gold}]]))})))

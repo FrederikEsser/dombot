@@ -398,10 +398,10 @@
 
 (defn salvager-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        cost (ut/get-cost game card)]
+        {:keys [coin-cost]} (ut/get-cost game card)]
     (push-effect-stack game {:player-no player-no
                              :effects   [[:trash-from-hand {:card-name card-name}]
-                                         [:give-coins cost]]})))
+                                         [:give-coins coin-cost]]})))
 
 (effects/register {::salvager-trash salvager-trash})
 
@@ -427,7 +427,7 @@
   (let [prev-player      (mod (dec player-no) (count players))
         valid-card-names (->> (get-in game [:players prev-player :gained-cards])
                               (keep (fn [{:keys [name] :as card}]
-                                      (when (<= (ut/get-cost game card) 6)
+                                      (when (ut/costs-up-to 6 (ut/get-cost game card))
                                         name)))
                               set)]
     (give-choice game (merge args

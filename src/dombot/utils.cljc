@@ -36,6 +36,9 @@
        (map format-name)
        (s/join "/")))
 
+(defn format-cost [{:keys [coin-cost]} & [{buy-cost :coin-cost}]]
+  (str "$" coin-cost (when buy-cost (str "/" buy-cost))))
+
 (defn number->text [n]
   (case n
     1 "one"
@@ -222,17 +225,20 @@
 (defn- reduction-matches-card-types [{reduction-type :type} card-types]
   (or (nil? reduction-type) (reduction-type card-types)))
 
-(defn- get-cost-with-reduction [game player-no card]
+(defn- get-cost-with-reduction [game player-no {:keys [cost] :as card}]
   (let [cost-reductions (->> (get-in game [:players player-no :play-area])
                              (mapcat (comp :cost-reductions :while-in-play))
                              (concat (:cost-reductions game)
                                      (get-in game [:players player-no :cost-reductions])))
-        card-types      (get-types game card)]
-    (-> (reduce (fn [card {:keys [reduction] :as reduction-data}]
-                  (cond-> card
-                          (reduction-matches-card-types reduction-data card-types) (update :cost minus-cost reduction)))
-                card cost-reductions)
-        :cost)))
+        card-types      (get-types game card)
+        base-cost       (if (int? cost)
+                          {:coin-cost cost}
+                          cost)]
+    (reduce (fn [card-cost {:keys [reduction] :as reduction-data}]
+              (cond-> card-cost
+                      (reduction-matches-card-types reduction-data card-types) (update :coin-cost minus-cost reduction)))
+            base-cost
+            cost-reductions)))
 
 (defn get-buy-cost [game player-no {:keys [buy-cost] :as card}]
   (let [buy-cost-fn (when buy-cost (effects/get-effect buy-cost))]
@@ -278,6 +284,36 @@
        (intersection types)
        not-empty))
 
+(defn costs-at-least [min-cost {:keys [coin-cost]}]
+  (let [min-coin-cost (or (:coin-cost min-cost) min-cost)]
+    (<= min-coin-cost coin-cost)))
+
+(defn costs-up-to [max-cost {:keys [coin-cost]}]
+  (let [max-coin-cost (or (:coin-cost max-cost) max-cost)]
+    (<= coin-cost max-coin-cost)))
+
+(defn costs-between [min-cost max-cost card-cost]
+  (and (costs-at-least min-cost card-cost)
+       (costs-up-to max-cost card-cost)))
+
+(defn costs-more [{coin-cost-1 :coin-cost} {coin-cost-2 :coin-cost}]
+  (< coin-cost-1 coin-cost-2))
+
+(defn costs-less [{coin-cost-1 :coin-cost} {coin-cost-2 :coin-cost}]
+  (> coin-cost-1 coin-cost-2))
+
+(defn costs-exactly [cost card-cost]
+  (let [target-cost (if (int? cost)
+                      {:coin-cost cost}
+                      cost)]
+    (= card-cost target-cost)))
+
+(defn add-to-cost [card-cost cost]
+  (let [added-cost (if (int? cost)
+                     {:coin-cost cost}
+                     cost)]
+    (merge-with + card-cost added-cost)))
+
 (defn options-from-player
   ([game player-no card-id area & [{:keys [last this id ids name names not-names type types reacts-to min-cost leaves-play]}]]
    (cond->> (get-in game [:players player-no area])
@@ -291,17 +327,18 @@
             types (filter (partial types-match game types))
             reacts-to (filter (every-pred (comp #{reacts-to} :reacts-to)
                                           (partial can-react? game player-no)))
-            min-cost (filter (comp (partial <= min-cost) (partial get-cost game)))
+            min-cost (filter (comp (partial costs-at-least min-cost) (partial get-cost game)))
             leaves-play (remove (partial stay-in-play game player-no))
             ids (filter (comp ids :id))
             :always (map :name))))
 
 (effects/register-options {:player options-from-player})
 
-(defn options-from-supply [{:keys [supply] :as game} player-no card-id & [{:keys [max-cost cost type types not-type names not-names all]}]]
+(defn options-from-supply [{:keys [supply] :as game} player-no card-id & [{:keys [max-cost costs-less-than cost type types not-type names not-names all]}]]
   (cond->> (map access-top-card supply)
-           max-cost (filter (comp (partial >= max-cost) (partial get-cost game) :card))
-           cost (filter (comp #{cost} (partial get-cost game) :card))
+           max-cost (filter (comp (partial costs-up-to max-cost) (partial get-cost game) :card))
+           costs-less-than (filter (comp (partial costs-less costs-less-than) (partial get-cost game) :card))
+           cost (filter (comp (partial costs-exactly cost) (partial get-cost game) :card))
            type (filter (comp type (partial get-types game) :card))
            types (filter (comp (partial types-match game types) :card))
            not-type (remove (comp not-type (partial get-types game) :card))
@@ -312,9 +349,10 @@
 
 (effects/register-options {:supply options-from-supply})
 
-(defn options-from-extra-cards [{:keys [extra-cards] :as game} player-no card-id & [{:keys [max-cost type]}]]
+(defn options-from-extra-cards [{:keys [extra-cards] :as game} player-no card-id & [{:keys [max-cost costs-less-than type]}]]
   (cond->> extra-cards
-           max-cost (filter (comp (partial >= max-cost) (partial get-cost game) :card))
+           max-cost (filter (comp (partial costs-up-to max-cost) (partial get-cost game) :card))
+           costs-less-than (filter (comp (partial costs-less costs-less-than) (partial get-cost game) :card))
            type (filter (comp type (partial get-types game) :card))
            :always (map (comp :name :card))))
 

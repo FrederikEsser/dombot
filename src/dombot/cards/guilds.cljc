@@ -29,9 +29,9 @@
 
 (defn- butcher-gain [game {:keys [player-no card-name trashed-card-cost]}]
   (let [{:keys [card]} (ut/get-pile-idx game card-name)
-        cost (ut/get-cost game card)]
+        {:keys [coin-cost]} (ut/get-cost game card)]
     (push-effect-stack game {:player-no player-no
-                             :effects   [[:remove-coffers (- cost trashed-card-cost)]
+                             :effects   [[:remove-coffers (- coin-cost (:coin-cost trashed-card-cost))]
                                          [:gain {:card-name card-name}]]})))
 
 (defn- butcher-trash [game {:keys [player-no card-name]}]
@@ -41,9 +41,9 @@
           coffers (or (get-in game [:players player-no :coffers]) 0)]
       (push-effect-stack game {:player-no player-no
                                :effects   [[:trash-from-hand {:card-name card-name}]
-                                           [:give-choice {:text    (str "Gain a card costing up to $" cost " plus any number of Coffers you spend.")
+                                           [:give-choice {:text    (str "Gain a card costing up to " (ut/format-cost cost) " plus any number of Coffers you spend.")
                                                           :choice  [::butcher-gain {:trashed-card-cost cost}]
-                                                          :options [:supply {:max-cost (+ cost coffers)}]
+                                                          :options [:supply {:max-cost (ut/add-to-cost cost coffers)}]
                                                           :min     1
                                                           :max     1}]]}))
     game))
@@ -248,10 +248,10 @@
 
 (defn- stonemason-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        max-cost  (dec (ut/get-cost game card))
-        gain-card [:give-choice {:text    (str "Gain 2 cards each costing up to $" max-cost ".")
+        cost      (ut/get-cost game card)
+        gain-card [:give-choice {:text    (str "Gain 2 cards each costing less than " (ut/format-cost cost) ".")
                                  :choice  :gain
-                                 :options [:supply {:max-cost max-cost}]
+                                 :options [:supply {:costs-less-than cost}]
                                  :min     1
                                  :max     1}]]
     (push-effect-stack game {:player-no player-no
@@ -300,12 +300,13 @@
 (defn- taxman-trash [game {:keys [player-no card-name]}]
   (if card-name
     (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-          max-cost (+ 3 (ut/get-cost game card))]
+          max-cost (-> (ut/get-cost game card)
+                       (ut/add-to-cost 3))]
       (-> game
           (push-effect-stack {:player-no player-no
                               :effects   [[:trash-from-hand {:card-name card-name}]
                                           [:attack {:effects [[::taxman-attack {:card-name card-name}]]}]
-                                          [:give-choice {:text    (str "Gain a Treasure onto your deck costing up to $" max-cost ".")
+                                          [:give-choice {:text    (str "Gain a Treasure onto your deck costing up to " (ut/format-cost max-cost) ".")
                                                          :choice  :gain-to-topdeck
                                                          :options [:supply {:max-cost max-cost :type :treasure}]
                                                          :min     1

@@ -393,23 +393,23 @@
 (deftest cost-reduction-test
   (testing "Cost reduction"
     (is (= (ut/get-cost {:cost-reductions [{:reduction 1}]} {:cost 3})
-           2))
+           {:coin-cost 2}))
     (is (= (ut/get-cost {:cost-reductions [{:reduction 2}]} {:cost 3})
-           1))
+           {:coin-cost 1}))
     (is (= (ut/get-cost {:cost-reductions [{:reduction 1} {:reduction 1}]} {:cost 3})
-           1))
+           {:coin-cost 1}))
     (is (= (ut/get-cost {:cost-reductions [{:reduction 1}]} {:cost 0})
-           0))
+           {:coin-cost 0}))
     (is (= (ut/get-cost {:cost-reductions [{:type      :action
                                             :reduction 2}]}
                         {:types #{:action}
                          :cost  5})
-           3))
+           {:coin-cost 3}))
     (is (= (ut/get-cost {:cost-reductions [{:type      :action
                                             :reduction 2}]}
                         {:types #{:victory}
                          :cost  5})
-           5))))
+           {:coin-cost 5}))))
 
 (deftest clean-up-test
   (testing "Clean up"

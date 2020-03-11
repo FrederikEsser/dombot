@@ -43,7 +43,7 @@
   (let [{:keys [card]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})
         cost (ut/get-cost game card)]
     (cond-> game
-            (>= cost 4) (gain {:player-no player-no :card-name :horse :from :extra-cards}))))
+            (ut/costs-at-least 4 cost) (gain {:player-no player-no :card-name :horse :from :extra-cards}))))
 
 (effects/register {::livery-on-gain livery-on-gain})
 

@@ -362,11 +362,12 @@
 
 (defn trash-and-gain [game {:keys [player-no card-name extra-cost]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        max-cost (+ (ut/get-cost game card) extra-cost)]
+        max-cost (-> (ut/get-cost game card)
+                     (ut/add-to-cost extra-cost))]
     (-> game
         (push-effect-stack {:player-no player-no
                             :effects   [[:trash-from-hand {:card-name card-name}]
-                                        [:give-choice {:text    (str "Gain a card costing up to $" max-cost ".")
+                                        [:give-choice {:text    (str "Gain a card costing up to " (ut/format-cost max-cost) ".")
                                                        :choice  :gain
                                                        :options [:supply {:max-cost max-cost}]
                                                        :min     1
@@ -538,11 +539,12 @@
 
 (defn upgrade-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        cost (inc (ut/get-cost game card))]
+        cost (-> (ut/get-cost game card)
+                 (ut/add-to-cost 1))]
     (-> game
         (push-effect-stack {:player-no player-no
                             :effects   [[:trash-from-hand {:card-name card-name}]
-                                        [:give-choice {:text    (str "Gain a card costing exactly $" cost ".")
+                                        [:give-choice {:text    (str "Gain a card costing exactly " (ut/format-cost cost) ".")
                                                        :choice  :gain
                                                        :options [:supply {:cost cost}]
                                                        :min     1

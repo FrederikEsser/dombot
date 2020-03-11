@@ -492,10 +492,10 @@
   ([{:keys [effect-stack] :as game} player-no card-name]
    (let [{:keys [buys coins phase]} (get-in game [:players player-no])
          {:keys [card pile-size] :as supply-pile} (ut/get-pile-idx game card-name)
-         cost            (ut/get-buy-cost game player-no card)
+         {:keys [coin-cost]} (ut/get-buy-cost game player-no card)
          {:keys [overpay]} card
          on-buy-effects  (get-on-buy-effects game player-no card-name)
-         overpay-effects (when (and overpay (pos? (- coins cost)))
+         overpay-effects (when (and overpay (pos? (- coins coin-cost)))
                            [[:give-choice {:text    (str "You may overpay for your " (ut/format-name card-name) ". Choose amount:")
                                            :choice  [:overpay-choice {:effect overpay}]
                                            :options [:overpay]
@@ -504,7 +504,7 @@
      (assert (empty? effect-stack) "You can't buy cards when you have a choice to make.")
      (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
      (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))
-     (assert (and coins cost (>= coins cost)) (str "Buy error: " (ut/format-name card-name) " costs " cost " and you only have " coins " coins."))
+     (assert (and coins coin-cost (>= coins coin-cost)) (str "Buy error: " (ut/format-name card-name) " costs " coin-cost " and you only have " coins " coins."))
      (assert (and pile-size (pos? pile-size)) (str "Buy error: " (ut/format-name card-name) " supply is empty."))
      (assert (ut/card-buyable? game player-no card) (str (ut/format-name card-name) " can't be bought."))
      (when phase
@@ -516,7 +516,7 @@
                                            [:buy {:card-name card-name}]]})
            check-stack)
        (-> game
-           (update-in [:players player-no :coins] - cost)
+           (update-in [:players player-no :coins] - coin-cost)
            (update-in [:players player-no :buys] - 1)
            (push-effect-stack {:player-no player-no
                                :effects   (concat overpay-effects

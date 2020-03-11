@@ -613,6 +613,13 @@
                          :discard   [baker baker]
                          :actions   0}]
               :trash   [gold]}))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:supply  [{:card baker :pile-size 10}]
+                                 :players [{:hand    [stonemason baker]
+                                            :actions 1}]}
+                                (play 0 :stonemason)
+                                (choose :baker)             ; trash Baker
+                                (choose :baker))))          ; gain Baker
       (is (= (-> {:supply  [{:card stonemason :pile-size 10}
                             {:card baker :pile-size 10}]
                   :players [{:coins 7

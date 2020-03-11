@@ -197,11 +197,12 @@
 
 (defn mine-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        max-cost (+ 3 (ut/get-cost game card))]
+        max-cost (-> (ut/get-cost game card)
+                     (ut/add-to-cost 3))]
     (-> game
         (push-effect-stack {:player-no player-no
                             :effects   [[:trash-from-hand {:card-name card-name}]
-                                        [:give-choice {:text    (str "Gain a Treasure to your hand costing up to $" max-cost ".")
+                                        [:give-choice {:text    (str "Gain a Treasure to your hand costing up to " (ut/format-cost max-cost) ".")
                                                        :choice  :gain-to-hand
                                                        :options [:supply {:max-cost max-cost :type :treasure}]
                                                        :min     1

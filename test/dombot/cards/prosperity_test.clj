@@ -364,7 +364,7 @@
             :players      [{:hand      [copper estate estate estate copper]
                             :play-area [forge]
                             :actions   0}]
-            :effect-stack [{:text      "Gain a card costing exactly 0."
+            :effect-stack [{:text      "Gain a card costing exactly $0."
                             :player-no 0
                             :choice    :gain
                             :source    :supply
@@ -380,7 +380,7 @@
             :players      [{:hand      [estate estate estate]
                             :play-area [forge]
                             :actions   0}]
-            :effect-stack [{:text      "Gain a card costing exactly 0."
+            :effect-stack [{:text      "Gain a card costing exactly $0."
                             :player-no 0
                             :choice    :gain
                             :source    :supply
@@ -397,7 +397,7 @@
             :players      [{:hand      [estate estate]
                             :play-area [forge]
                             :actions   0}]
-            :effect-stack [{:text      "Gain a card costing exactly 2."
+            :effect-stack [{:text      "Gain a card costing exactly $2."
                             :player-no 0
                             :choice    :gain
                             :source    :supply
@@ -423,7 +423,7 @@
            {:supply       (base/supply 2 8)
             :players      [{:play-area [forge]
                             :actions   0}]
-            :effect-stack [{:text      "Gain a card costing exactly 6."
+            :effect-stack [{:text      "Gain a card costing exactly $6."
                             :player-no 0
                             :choice    :gain
                             :source    :supply

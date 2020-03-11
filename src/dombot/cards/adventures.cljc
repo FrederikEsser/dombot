@@ -189,7 +189,8 @@
   (let [{:keys [name] :as card} (last (get-in game [:players player-no :revealed]))
         cost (ut/get-cost game card)]
     (push-effect-stack game {:player-no player-no
-                             :effects   (if (and card (<= 3 cost 6))
+                             :effects   (if (and card
+                                                 (ut/costs-between 3 6 cost))
                                           [[:trash-from-revealed {:card-name name}]]
                                           [[:discard-all-revealed]
                                            [:gain {:card-name :curse}]])})))
@@ -351,11 +352,12 @@
   (let [{:keys [name] :as card} (last (get-in game [:players player-no :discard]))
         cost (ut/get-cost game card)]
     (cond-> game
-            (and card (<= 3 cost 4)) (move-card {:player-no     player-no
-                                                 :card-name     name
-                                                 :from          :discard
-                                                 :from-position :bottom
-                                                 :to            :trash}))))
+            (and card
+                 (ut/costs-between 3 4 cost)) (move-card {:player-no     player-no
+                                                          :card-name     name
+                                                          :from          :discard
+                                                          :from-position :bottom
+                                                          :to            :trash}))))
 
 (defn- warrior-attack [game {:keys [player-no attacking-player-no]}]
   (let [travellers-in-play (->> (get-in game [:players attacking-player-no :play-area])
@@ -456,11 +458,11 @@
 
 (defn- raze-trash-from-area [game {:keys [player-no choice]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no (:area choice)] {:name (:card-name choice)})
-        cost (ut/get-cost game card)]
+        {:keys [coin-cost]} (ut/get-cost game card)]
     (push-effect-stack game {:player-no player-no
                              :effects   [[:trash-from-area {:choice choice}]
-                                         [:look-at cost]
-                                         [:give-choice {:text    (str "Look at " cost " cards from the top of your deck. Put one of them into your hand and discard the rest.")
+                                         [:look-at coin-cost]
+                                         [:give-choice {:text    (str "Look at " coin-cost " cards from the top of your deck. Put one of them into your hand and discard the rest.")
                                                         :choice  :take-from-look-at
                                                         :options [:player :look-at]
                                                         :min     1
@@ -499,13 +501,14 @@
 
 (defn transmogrify-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        cost (inc (ut/get-cost game card))]
+        max-cost (-> (ut/get-cost game card)
+                     (ut/add-to-cost 1))]
     (-> game
         (push-effect-stack {:player-no player-no
                             :effects   [[:trash-from-hand {:card-name card-name}]
-                                        [:give-choice {:text    (str "Gain a card to your hand costing up to $" cost ".")
+                                        [:give-choice {:text    (str "Gain a card to your hand costing up to " (ut/format-cost max-cost) ".")
                                                        :choice  :gain-to-hand
-                                                       :options [:supply {:max-cost cost}]
+                                                       :options [:supply {:max-cost max-cost}]
                                                        :min     1
                                                        :max     1}]]}))))
 

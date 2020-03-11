@@ -82,10 +82,10 @@
   (let [{:keys [id] :as card} (last (get-in game [:players player-no :revealed]))
         cost (ut/get-cost game card)]
     (cond-> game
-            (and card (<= cost 2)) (move-card {:player-no    player-no
-                                               :move-card-id id
-                                               :from         :revealed
-                                               :to           :hand}))))
+            (and card (ut/costs-up-to 2 cost)) (move-card {:player-no    player-no
+                                                           :move-card-id id
+                                                           :from         :revealed
+                                                           :to           :hand}))))
 
 (effects/register {::will-o-wisp-put-revealed-into-hand will-o-wisp-put-revealed-into-hand})
 
@@ -385,10 +385,10 @@
                                          :effects   [[:trash-from-topdeck]
                                                      (if (#{:copper :estate} name)
                                                        [:gain {:card-name :curse}]
-                                                       [:give-choice {:text    (str "Gain a " (ut/format-types types) " card costing up to $" (dec cost) ".")
+                                                       [:give-choice {:text    (str "Gain a " (ut/format-types types) " card costing less than " (ut/format-cost cost) ".")
                                                                       :choice  :gain
-                                                                      :options [:supply {:types    types
-                                                                                         :max-cost (dec cost)}]
+                                                                      :options [:supply {:types           types
+                                                                                         :costs-less-than cost}]
                                                                       :min     1
                                                                       :max     1}])]}))))
 
@@ -434,8 +434,9 @@
   (let [{:keys [revealed deck discard]} (get-in game [:players player-no])
         {:keys [name] :as card} (last revealed)
         cost (ut/get-cost game card)]
-    (cond (#{3 4} cost) (push-effect-stack game {:player-no player-no
-                                                 :effects   [[:trash-from-revealed {:card-name name}]]})
+    (cond (and card
+               (ut/costs-between 3 4 cost)) (push-effect-stack game {:player-no player-no
+                                                                     :effects   [[:trash-from-revealed {:card-name name}]]})
           (not-empty (concat deck discard)) (push-effect-stack game {:player-no player-no
                                                                      :effects   [[:reveal-from-deck 1]
                                                                                  [::war-reveal]]})
@@ -684,7 +685,7 @@
     (cond-> game
             (and card
                  pile-location
-                 (<= 3 cost)
+                 (ut/costs-at-least 3 cost)
                  (not ignore-gain?)) (give-choice {:player-no player-no
                                                    :text      (str "You may exchange the gained " (ut/format-name name) " for a Changeling.")
                                                    :choice    [::changeling-exchange {:gained-card-id gained-card-id
@@ -879,10 +880,10 @@
     (cond-> game
             card (push-effect-stack {:player-no player-no
                                      :effects   [[:trash-from-hand {:card-name card-name}]
-                                                 [:give-choice {:text    (str "Gain a Spirit costing up to $" (dec cost) ".")
+                                                 [:give-choice {:text    (str "Gain a Spirit costing less than " (ut/format-cost cost) ".")
                                                                 :choice  [:gain {:from :extra-cards}]
-                                                                :options [:extra-cards {:type     :spirit
-                                                                                        :max-cost (dec cost)}]
+                                                                :options [:extra-cards {:type           :spirit
+                                                                                        :costs-less-than cost}]
                                                                 :min     1
                                                                 :max     1}]]}))))
 
@@ -1095,14 +1096,15 @@
 (defn- zombie-mason-trash [game {:keys [player-no]}]
   (let [{[card]  :deck
          discard :discard} (get-in game [:players player-no])
-        cost (ut/get-cost game card)]
+        max-cost (-> (ut/get-cost game card)
+                     (ut/add-to-cost 1))]
     (assert (or card (empty? discard)) "Discard was not properly shuffled for Zombie Mason.")
     (cond-> game
             card (push-effect-stack {:player-no player-no
                                      :effects   [[:trash-from-topdeck]
-                                                 [:give-choice {:text    (str "You may gain a card costing up to $" (inc cost) ".")
+                                                 [:give-choice {:text    (str "You may gain a card costing up to " (ut/format-cost max-cost) ".")
                                                                 :choice  :gain
-                                                                :options [:supply {:max-cost (inc cost)}]
+                                                                :options [:supply {:max-cost max-cost}]
                                                                 :max     1}]]}))))
 
 (def zombie-mason {:name    :zombie-mason
