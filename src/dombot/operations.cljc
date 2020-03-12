@@ -490,21 +490,24 @@
   ([game {:keys [player-no card-name]}]
    (buy-card game player-no card-name))
   ([{:keys [effect-stack] :as game} player-no card-name]
-   (let [{:keys [buys coins phase]} (get-in game [:players player-no])
+   (let [{:keys [buys coins debt phase]} (get-in game [:players player-no])
+         coins-after-debt (if (and coins debt)
+                            (- coins debt)
+                            coins)
          {:keys [card pile-size] :as supply-pile} (ut/get-pile-idx game card-name)
-         {:keys [coin-cost]} (ut/get-buy-cost game player-no card)
+         {:keys [coin-cost debt-cost]} (ut/get-buy-cost game player-no card)
          {:keys [overpay]} card
-         on-buy-effects  (get-on-buy-effects game player-no card-name)
-         overpay-effects (when (and overpay (pos? (- coins coin-cost)))
-                           [[:give-choice {:text    (str "You may overpay for your " (ut/format-name card-name) ". Choose amount:")
-                                           :choice  [:overpay-choice {:effect overpay}]
-                                           :options [:overpay]
-                                           :min     1
-                                           :max     1}]])]
+         on-buy-effects   (get-on-buy-effects game player-no card-name)
+         overpay-effects  (when (and overpay (pos? (- coins-after-debt coin-cost)))
+                            [[:give-choice {:text    (str "You may overpay for your " (ut/format-name card-name) ". Choose amount:")
+                                            :choice  [:overpay-choice {:effect overpay}]
+                                            :options [:overpay]
+                                            :min     1
+                                            :max     1}]])]
      (assert (empty? effect-stack) "You can't buy cards when you have a choice to make.")
      (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
      (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))
-     (assert (and coins coin-cost (>= coins coin-cost)) (str "Buy error: " (ut/format-name card-name) " costs " coin-cost " and you only have " coins " coins."))
+     (assert (and coins-after-debt coin-cost (>= coins-after-debt coin-cost)) (str "Buy error: " (ut/format-name card-name) " costs " coin-cost " and you only have " coins-after-debt " coins."))
      (assert (and pile-size (pos? pile-size)) (str "Buy error: " (ut/format-name card-name) " supply is empty."))
      (assert (ut/card-buyable? game player-no card) (str (ut/format-name card-name) " can't be bought."))
      (when phase
@@ -516,7 +519,10 @@
                                            [:buy {:card-name card-name}]]})
            check-stack)
        (-> game
+           (cond-> debt (-> (update-in [:players player-no :coins] - debt)
+                            (update-in [:players player-no] dissoc :debt)))
            (update-in [:players player-no :coins] - coin-cost)
+           (cond-> debt-cost (update-in [:players player-no :debt] ut/plus debt-cost))
            (update-in [:players player-no :buys] - 1)
            (push-effect-stack {:player-no player-no
                                :effects   (concat overpay-effects
@@ -528,16 +534,21 @@
 (effects/register {:buy buy-card})
 
 (defn buy-project [{:keys [effect-stack] :as game} player-no project-name]
-  (let [{:keys [buys coins phase]} (get-in game [:players player-no])
+  (let [{:keys [buys coins debt phase]} (get-in game [:players player-no])
+        coins-after-debt (if (and coins debt)
+                           (- coins debt)
+                           coins)
         {:keys [cost trigger on-buy participants] :as project} (get-in game [:projects project-name])]
     (assert (empty? effect-stack) "You can't buy projects when you have a choice to make.")
     (when phase
       (assert (#{:action :pay :buy} phase) (str "You can't buy projects when you're in the " (ut/format-name phase) " phase.")))
     (assert project (str "Buy error: The Project " (ut/format-name project-name) " isn't in the game."))
     (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
-    (assert (and coins cost (>= coins cost)) (str "Buy error: " (ut/format-name project-name) " costs " cost " and you only have " coins " coins."))
+    (assert (and coins-after-debt cost (>= coins-after-debt cost)) (str "Buy error: " (ut/format-name project-name) " costs " cost " and you only have " coins-after-debt " coins."))
     (assert (not-any? (comp #{player-no} :player-no) participants) (str "Buy error: You already participate in the project " (ut/format-name project-name) "."))
     (-> game
+        (cond-> debt (-> (update-in [:players player-no :coins] - debt)
+                         (update-in [:players player-no] dissoc :debt)))
         (update-in [:players player-no :coins] - cost)
         (update-in [:players player-no :buys] - 1)
         (update-in [:projects project-name :participants] (comp vec conj) {:player-no player-no})
@@ -551,18 +562,22 @@
         check-stack)))
 
 (defn buy-event [{:keys [effect-stack] :as game} player-no event-name]
-  (let [{:keys [buys coins phase bought-events]} (get-in game [:players player-no])
+  (let [{:keys [buys coins debt phase bought-events]} (get-in game [:players player-no])
+        coins-after-debt (if (and coins debt)
+                           (- coins debt)
+                           coins)
         {:keys [cost on-buy once-per-turn] :as event} (get-in game [:events event-name])]
     (assert (empty? effect-stack) "You can't buy events when you have a choice to make.")
     (when phase
       (assert (#{:action :pay :buy} phase) (str "You can't buy events when you're in the " (ut/format-name phase) " phase.")))
     (assert event (str "Buy error: The Event " (ut/format-name event-name) " isn't in the game."))
     (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
-    (assert (and coins cost (>= coins cost)) (str "Buy error: " (ut/format-name event-name) " costs " cost " and you only have " coins " coins."))
+    (assert (and coins-after-debt cost (>= coins-after-debt cost)) (str "Buy error: " (ut/format-name event-name) " costs " cost " and you only have " coins-after-debt " coins."))
     (when once-per-turn
       (assert (not (contains? bought-events event-name)) (str "Buy error: Event " (ut/format-name event-name) " can only be bought once per turn.")))
     (-> game
-        (update-in [:players player-no :coins] - cost)
+        (cond-> debt (-> (update-in [:players player-no :coins] - debt)
+                         (update-in [:players player-no] dissoc :debt))) (update-in [:players player-no :coins] - cost)
         (update-in [:players player-no :buys] - 1)
         (cond-> once-per-turn (update-in [:players player-no :bought-events] (comp set #(conj % event-name))))
         (push-effect-stack {:player-no player-no
@@ -1036,10 +1051,13 @@
 (effects/register {:check-game-ended check-game-ended})
 
 (defn do-clean-up [game {:keys [player-no extra-turn?]}]
-  (let [clean-up-player (fn [{:keys [play-area hand number-of-turns] :as player}]
+  (let [clean-up-player (fn [{:keys [play-area hand coins debt number-of-turns] :as player}]
                           (let [used-cards (concat hand (remove (partial ut/stay-in-play game player-no) play-area))]
                             (-> player
-                                (cond-> (not-empty used-cards) (update :discard concat used-cards))
+                                (cond->
+                                  (and debt (< 0 coins debt)) (update :debt - coins)
+                                  (and debt (<= debt coins)) (dissoc :debt)
+                                  (not-empty used-cards) (update :discard concat used-cards))
                                 (dissoc :hand
                                         :actions-played
                                         :bought-events)

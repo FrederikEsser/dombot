@@ -40,11 +40,13 @@
                                    (split-at 10))]
     (if (some (comp #{:young-witch} :name) kingdom)
       (let [kingdom  (vec (concat kingdom
-                                  [(or (->> randomizers (filter (comp #{2 3} :cost)) first)
+                                  [(or (->> randomizers
+                                            (filter (comp (partial ut/costs-between 2 3) ut/normalize-cost :cost))
+                                            first)
                                        (->> randomizers first))]))
             bane-idx (->> kingdom
                           (keep-indexed (fn [idx {:keys [cost]}]
-                                          (when (#{2 3} cost) idx)))
+                                          (when (ut/costs-between 2 3 (ut/normalize-cost cost)) idx)))
                           last)]
         (update-in kingdom [bane-idx] assoc :bane? true))
       kingdom)))
@@ -61,7 +63,7 @@
                             3 12
                             4 12)]
     (->> kingdom
-         (sort-by (juxt :cost :name))
+         (sort-by (juxt (comp (juxt :coin-cost :debt-cost) ut/normalize-cost :cost) :name))
          (map (fn [{:keys [types split-pile bane?] :as card}]
                 (if split-pile
                   (let [pile-fn (effects/get-effect split-pile)]

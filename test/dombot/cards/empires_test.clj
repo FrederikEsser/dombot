@@ -11,7 +11,7 @@
             [dombot.cards.prosperity :as prosperity :refer [hoard]]
             [dombot.cards.adventures :as adventures :refer [caravan-guard]]
             [dombot.cards.nocturne :as nocturne :refer [ghost]]
-            [dombot.cards.renaissance :as renaissance :refer [patron spices capitalism citadel innovation piazza]]
+            [dombot.cards.renaissance :as renaissance :refer [patron spices canal capitalism citadel innovation piazza]]
             [dombot.cards.kingdom :refer [setup-game]]
             [dombot.utils :as ut]))
 
@@ -259,6 +259,155 @@
                                          :effects  [[::renaissance/road-network-on-gain {:player-no 1}]]}]}
                             {:hand [copper copper copper copper copper silver]
                              :deck [silver]}]})))))))
+
+(deftest debt-test
+  (let [engineer (assoc engineer :id 0)
+        silver   (assoc silver :id 1)]
+    (testing "Debt: "
+      (testing "Buying card with debt cost"
+        (is (= (-> {:supply  [{:card engineer :pile-size 10}]
+                    :players [{:coins 0
+                               :buys  1}]}
+                   (buy-card 0 :engineer))
+               {:supply  [{:card engineer :pile-size 9}]
+                :players [{:discard [engineer]
+                           :coins   0
+                           :debt    4
+                           :buys    0}]}))
+        (is (= (-> {:supply  [{:card engineer :pile-size 10}]
+                    :players [{:coins 4
+                               :buys  1}]}
+                   (buy-card 0 :engineer))
+               {:supply  [{:card engineer :pile-size 9}]
+                :players [{:discard [engineer]
+                           :coins   4
+                           :debt    4
+                           :buys    0}]}))
+        (is (thrown-with-msg? AssertionError #"Buy error:"
+                              (-> {:supply  [{:card engineer :pile-size 10}]
+                                   :players [{:coins 0
+                                              :debt  1
+                                              :buys  1}]}
+                                  (buy-card 0 :engineer)))))
+      (testing "Buying while in debt"
+        (is (= (-> {:supply  [{:card engineer :pile-size 10}]
+                    :players [{:coins 1
+                               :debt  1
+                               :buys  1}]}
+                   (buy-card 0 :engineer))
+               {:supply  [{:card engineer :pile-size 9}]
+                :players [{:discard [engineer]
+                           :coins   0
+                           :debt    4
+                           :buys    0}]}))
+        (is (thrown-with-msg? AssertionError #"Buy error:"
+                              (-> {:supply  [{:card silver :pile-size 40}]
+                                   :players [{:coins 3
+                                              :debt  1
+                                              :buys  1}]}
+                                  (buy-card 0 :silver))))
+        (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                    :players [{:coins 4
+                               :debt  1
+                               :buys  1}]}
+                   (buy-card 0 :silver))
+               {:supply  [{:card silver :pile-size 39}]
+                :players [{:discard [silver]
+                           :coins   0
+                           :buys    0}]}))
+        (is (thrown-with-msg? AssertionError #"Buy error:"
+                              (-> {:events  {:delve delve}
+                                   :supply  [{:card silver :pile-size 40}]
+                                   :players [{:coins 2
+                                              :debt  1
+                                              :buys  1}]}
+                                  (buy-event 0 :delve))))
+        (is (= (-> {:events  {:delve delve}
+                    :supply  [{:card silver :pile-size 40}]
+                    :players [{:coins 3
+                               :debt  1
+                               :buys  1}]}
+                   (buy-event 0 :delve))
+               {:events  {:delve delve}
+                :supply  [{:card silver :pile-size 39}]
+                :players [{:discard [silver]
+                           :coins   0
+                           :buys    1}]}))
+        (is (thrown-with-msg? AssertionError #"Buy error:"
+                              (-> {:events  {:advance advance}
+                                   :players [{:coins 0
+                                              :debt  1
+                                              :buys  1}]}
+                                  (buy-event 0 :advance))))
+        (is (thrown-with-msg? AssertionError #"Buy error:"
+                              (-> {:events  {:delve delve}
+                                   :supply  [{:card silver :pile-size 40}]
+                                   :players [{:coins 2
+                                              :debt  1
+                                              :buys  1}]}
+                                  (buy-event 0 :delve))))
+        (is (thrown-with-msg? AssertionError #"Buy error:"
+                              (-> {:projects {:canal canal}
+                                   :players  [{:coins 7
+                                               :debt  1
+                                               :buys  1}]}
+                                  (buy-project 0 :canal))))
+        (is (= (-> {:projects {:canal canal}
+                    :players  [{:coins 8
+                                :debt  1
+                                :buys  1}]}
+                   (buy-project 0 :canal))
+               {:projects {:canal (assoc canal :participants [{:player-no 0}])}
+                :players  [{:coins           0
+                            :buys            0
+                            :cost-reductions [{:reduction 1}]}]})))
+      (testing "Repaying debt"
+        (is (= (-> {:players [{:actions 0
+                               :coins   0
+                               :debt    4
+                               :buys    1
+                               :phase   :buy}]}
+                   (end-turn 0))
+               {:current-player 0
+                :players        [{:actions 1
+                                  :coins   0
+                                  :debt    4
+                                  :buys    1
+                                  :phase   :action}]}))
+        (is (= (-> {:players [{:actions 0
+                               :coins   1
+                               :debt    4
+                               :buys    1
+                               :phase   :buy}]}
+                   (end-turn 0))
+               {:current-player 0
+                :players        [{:actions 1
+                                  :coins   0
+                                  :debt    3
+                                  :buys    1
+                                  :phase   :action}]}))
+        (is (= (-> {:players [{:actions 0
+                               :coins   4
+                               :debt    4
+                               :buys    1
+                               :phase   :buy}]}
+                   (end-turn 0))
+               {:current-player 0
+                :players        [{:actions 1
+                                  :coins   0
+                                  :buys    1
+                                  :phase   :action}]}))
+        (is (= (-> {:players [{:actions 0
+                               :coins   5
+                               :debt    4
+                               :buys    1
+                               :phase   :buy}]}
+                   (end-turn 0))
+               {:current-player 0
+                :players        [{:actions 1
+                                  :coins   0
+                                  :buys    1
+                                  :phase   :action}]}))))))
 
 (deftest archive-test
   (let [archive (assoc archive :id 0)]
@@ -1569,6 +1718,60 @@
                                        (assoc enchantress-trigger :id 3
                                                                   :card-id 0)]}]}))))))
 
+(deftest engineer-test
+  (let [engineer    (assoc engineer :id 0)
+        silver      (assoc silver :id 1)
+        throne-room (assoc throne-room :id 2)]
+    (testing "Engineer"
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card engineer :pile-size 9}]
+                  :players [{:hand    [engineer]
+                             :actions 1}]}
+                 (play 0 :engineer)
+                 (choose :silver)
+                 (choose nil))
+             {:supply  [{:card silver :pile-size 39}
+                        {:card engineer :pile-size 9}]
+              :players [{:discard   [silver]
+                         :play-area [engineer]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card engineer :pile-size 9}]
+                  :players [{:hand    [engineer]
+                             :actions 1}]}
+                 (play 0 :engineer)
+                 (choose :silver)
+                 (choose :engineer)
+                 (choose :silver))
+             {:supply  [{:card silver :pile-size 38}
+                        {:card engineer :pile-size 9}]
+              :players [{:discard [silver silver]
+                         :actions 0}]
+              :trash   [engineer]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card engineer :pile-size 9}]
+                  :players [{:hand    [throne-room engineer]
+                             :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :engineer)
+                 (choose :silver)                           ; gain Silver
+                 (choose :engineer)                         ; trash Engineer
+                 (choose :silver)                           ; gain Silver
+                 (choose :silver))                          ; gain Silver
+             {:supply  [{:card silver :pile-size 37}
+                        {:card engineer :pile-size 9}]
+              :players [{:play-area [throne-room]
+                         :discard   [silver silver silver]
+                         :actions   0}]
+              :trash   [engineer]}))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:supply  [{:card silver :pile-size 40}
+                                           {:card engineer :pile-size 9}]
+                                 :players [{:hand    [engineer copper]
+                                            :actions 1}]}
+                                (play 0 :engineer)
+                                (choose :engineer)))))))
+
 (deftest farmers-market-test
   (let [farmers-market (assoc farmers-market :id 0)]
     (testing "farmers-market"
@@ -1617,28 +1820,6 @@
                          :buys      2
                          :vp-tokens 4}]
               :trash   [farmers-market]})))))
-
-(deftest forum-test
-  (let [forum (assoc forum :id 0)]
-    (testing "Forum"
-      (is (= (-> {:players [{:hand    [forum]
-                             :deck    [copper silver estate estate]
-                             :actions 1}]}
-                 (play 0 :forum)
-                 (choose [:copper :estate]))
-             {:players [{:hand      [silver]
-                         :play-area [forum]
-                         :deck      [estate]
-                         :discard   [copper estate]
-                         :actions   1}]}))
-      (is (= (-> {:supply  [{:card forum :pile-size 10}]
-                  :players [{:coins 7
-                             :buys  1}]}
-                 (buy-card 0 :forum))
-             {:supply  [{:card forum :pile-size 9}]
-              :players [{:discard [forum]
-                         :coins   2
-                         :buys    1}]})))))
 
 (deftest groundskeeper-test
   (let [groundskeeper (assoc groundskeeper :id 0)
@@ -2601,25 +2782,25 @@
            {:landmarks {:museum museum}
             :players   [{:hand           (concat (repeat 3 copper) (repeat 3 estate))
                          :victory-points 7}]}))
-    (is (= (-> {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:forum})}
-                :players   [{:hand [forum]}]}
+    (is (= (-> {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:engineer})}
+                :players   [{:hand [engineer]}]}
                calculate-victory-points)
-           {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:forum})}
-            :players   [{:hand           [forum]
+           {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:engineer})}
+            :players   [{:hand           [engineer]
                          :victory-points 2}]}))
     (testing "Setup"
       (is (= (-> {:landmarks {:obelisk obelisk}
                   :supply    [{:card copper :pile-size 46}
                               {:card silver :pile-size 40}
                               {:card gold :pile-size 30}
-                              {:card forum :pile-size 10}]
+                              {:card engineer :pile-size 10}]
                   :players   [{}]}
                  setup-game)
-             {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:forum})}
+             {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:engineer})}
               :supply    [{:card copper :pile-size 46}
                           {:card silver :pile-size 40}
                           {:card gold :pile-size 30}
-                          {:card forum :pile-size 10}]
+                          {:card engineer :pile-size 10}]
               :players   [{}]})))
     (is (= (-> {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:settlers :bustling-village})}
                 :players   [{:hand [settlers settlers bustling-village]}]}
@@ -2627,11 +2808,11 @@
            {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:settlers :bustling-village})}
             :players   [{:hand           [settlers settlers bustling-village]
                          :victory-points 6}]}))
-    (is (= (-> {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:forum})}
-                :players   [{:hand [forum settlers copper]}]}
+    (is (= (-> {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:engineer})}
+                :players   [{:hand [engineer settlers copper]}]}
                calculate-victory-points)
-           {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:forum})}
-            :players   [{:hand           [forum settlers copper]
+           {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:engineer})}
+            :players   [{:hand           [engineer settlers copper]
                          :victory-points 2}]}))
     (is (= (-> {:landmarks {:orchard orchard}
                 :players   [{:hand (concat (repeat 3 copper) (repeat 3 estate))}]}
@@ -2640,22 +2821,22 @@
             :players   [{:hand           (concat (repeat 3 copper) (repeat 3 estate))
                          :victory-points 3}]}))
     (is (= (-> {:landmarks {:orchard orchard}
-                :players   [{:hand (repeat 2 forum)}]}
+                :players   [{:hand (repeat 2 engineer)}]}
                calculate-victory-points)
            {:landmarks {:orchard orchard}
-            :players   [{:hand           (repeat 2 forum)
+            :players   [{:hand           (repeat 2 engineer)
                          :victory-points 0}]}))
     (is (= (-> {:landmarks {:orchard orchard}
-                :players   [{:hand (repeat 3 forum)}]}
+                :players   [{:hand (repeat 3 engineer)}]}
                calculate-victory-points)
            {:landmarks {:orchard orchard}
-            :players   [{:hand           (repeat 3 forum)
+            :players   [{:hand           (repeat 3 engineer)
                          :victory-points 4}]}))
     (is (= (-> {:landmarks {:orchard orchard}
-                :players   [{:hand (concat (repeat 3 forum) (repeat 3 villa))}]}
+                :players   [{:hand (concat (repeat 3 engineer) (repeat 3 villa))}]}
                calculate-victory-points)
            {:landmarks {:orchard orchard}
-            :players   [{:hand           (concat (repeat 3 forum) (repeat 3 villa))
+            :players   [{:hand           (concat (repeat 3 engineer) (repeat 3 villa))
                          :victory-points 8}]}))
     (is (= (-> {:landmarks {:orchard orchard}
                 :players   [{:hand (repeat 3 mill)}]}
@@ -2698,28 +2879,28 @@
                                                  (repeat 5 gold))
                          :victory-points 0}]}))
     (is (= (-> {:landmarks {:tower tower}
-                :supply    [{:card forum :pile-size 0}]
-                :players   [{:hand [forum]}]}
+                :supply    [{:card engineer :pile-size 0}]
+                :players   [{:hand [engineer]}]}
                calculate-victory-points)
            {:landmarks {:tower tower}
-            :supply    [{:card forum :pile-size 0}]
-            :players   [{:hand           [forum]
+            :supply    [{:card engineer :pile-size 0}]
+            :players   [{:hand           [engineer]
                          :victory-points 1}]}))
     (is (= (-> {:landmarks {:tower tower}
-                :supply    [{:card forum :pile-size 0}]
-                :players   [{:hand (repeat 5 forum)}]}
+                :supply    [{:card engineer :pile-size 0}]
+                :players   [{:hand (repeat 5 engineer)}]}
                calculate-victory-points)
            {:landmarks {:tower tower}
-            :supply    [{:card forum :pile-size 0}]
-            :players   [{:hand           (repeat 5 forum)
+            :supply    [{:card engineer :pile-size 0}]
+            :players   [{:hand           (repeat 5 engineer)
                          :victory-points 5}]}))
     (is (= (-> {:landmarks {:tower tower}
-                :supply    [{:card forum :pile-size 1}]
-                :players   [{:hand (repeat 5 forum)}]}
+                :supply    [{:card engineer :pile-size 1}]
+                :players   [{:hand (repeat 5 engineer)}]}
                calculate-victory-points)
            {:landmarks {:tower tower}
-            :supply    [{:card forum :pile-size 1}]
-            :players   [{:hand           (repeat 5 forum)
+            :supply    [{:card engineer :pile-size 1}]
+            :players   [{:hand           (repeat 5 engineer)
                          :victory-points 0}]}))
     (is (= (-> {:landmarks {:tower tower}
                 :supply    [{:card province :pile-size 0}]
@@ -2766,56 +2947,56 @@
             :players     [{:hand           [ghost]
                            :victory-points 0}]}))
     (is (= (-> {:landmarks {:triumphal-arch triumphal-arch}
-                :players   [{:hand [forum]}]}
+                :players   [{:hand [engineer]}]}
                calculate-victory-points)
            {:landmarks {:triumphal-arch triumphal-arch}
-            :players   [{:hand           [forum]
+            :players   [{:hand           [engineer]
                          :victory-points 0}]}))
     (is (= (-> {:landmarks {:triumphal-arch triumphal-arch}
-                :players   [{:hand [forum villa]}]}
+                :players   [{:hand [engineer villa]}]}
                calculate-victory-points)
            {:landmarks {:triumphal-arch triumphal-arch}
-            :players   [{:hand           [forum villa]
+            :players   [{:hand           [engineer villa]
                          :victory-points 3}]}))
     (is (= (-> {:landmarks {:triumphal-arch triumphal-arch}
-                :players   [{:hand [forum forum forum villa]}]}
+                :players   [{:hand [engineer engineer engineer villa]}]}
                calculate-victory-points)
            {:landmarks {:triumphal-arch triumphal-arch}
-            :players   [{:hand           [forum forum forum villa]
+            :players   [{:hand           [engineer engineer engineer villa]
                          :victory-points 3}]}))
     (is (= (-> {:landmarks {:triumphal-arch triumphal-arch}
-                :players   [{:hand [forum forum villa villa enchantress]}]}
+                :players   [{:hand [engineer engineer villa villa enchantress]}]}
                calculate-victory-points)
            {:landmarks {:triumphal-arch triumphal-arch}
-            :players   [{:hand           [forum forum villa villa enchantress]
+            :players   [{:hand           [engineer engineer villa villa enchantress]
                          :victory-points 6}]}))
     (is (= (-> {:landmarks {:triumphal-arch triumphal-arch}
                 :players   [{:hand (concat (repeat 7 copper)
-                                           [forum forum villa])}]}
+                                           [engineer engineer villa])}]}
                calculate-victory-points)
            {:landmarks {:triumphal-arch triumphal-arch}
             :players   [{:hand           (concat (repeat 7 copper)
-                                                 [forum forum villa])
+                                                 [engineer engineer villa])
                          :victory-points 3}]}))
     (is (= (-> {:landmarks {:triumphal-arch triumphal-arch}
                 :players   [{:hand (concat (repeat 7 copper)
                                            (repeat 3 estate)
-                                           [forum forum villa])}]}
+                                           [engineer engineer villa])}]}
                calculate-victory-points)
            {:landmarks {:triumphal-arch triumphal-arch}
             :players   [{:hand           (concat (repeat 7 copper)
                                                  (repeat 3 estate)
-                                                 [forum forum villa])
+                                                 [engineer engineer villa])
                          :victory-points 6}]}))
     (is (= (-> {:landmarks {:triumphal-arch triumphal-arch}
                 :players   [{:hand (concat (repeat 7 copper)
                                            (repeat 3 mill)
-                                           [forum forum villa])}]}
+                                           [engineer engineer villa])}]}
                calculate-victory-points)
            {:landmarks {:triumphal-arch triumphal-arch}
             :players   [{:hand           (concat (repeat 7 copper)
                                                  (repeat 3 mill)
-                                                 [forum forum villa])
+                                                 [engineer engineer villa])
                          :victory-points 9}]}))
     (is (= (-> {:landmarks {:wall wall}
                 :players   [{:hand (repeat 10 copper)}]}
@@ -3276,7 +3457,7 @@
       (testing "Setup"
         (ut/reset-ids!)
         (is (= (-> {:landmarks {:defiled-shrine defiled-shrine}
-                    :supply    [{:card forum :pile-size 10}
+                    :supply    [{:card engineer :pile-size 10}
                                 {:card temple :pile-size 10}
                                 {:card crown :pile-size 10}
                                 {:card charm :pile-size 10}
@@ -3285,7 +3466,7 @@
                     :players   [{}]}
                    setup-game))
             {:landmarks {:defiled-shrine defiled-shrine}
-             :supply    [{:card forum :pile-size 10 :tokens {:victory-point {:number-of-tokens 2}}}
+             :supply    [{:card engineer :pile-size 10 :tokens {:victory-point {:number-of-tokens 2}}}
                          {:card temple :pile-size 10}
                          {:card crown :pile-size 10 :tokens {:victory-point {:number-of-tokens 2}}}
                          {:card charm :pile-size 10}

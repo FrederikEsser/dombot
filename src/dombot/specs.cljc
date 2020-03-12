@@ -32,9 +32,12 @@
 
 (s/def ::tokens (s/coll-of ::token))
 
-(s/def ::coin-cost ::cost)
+(s/def ::coin-cost nat-int?)
 
-(s/def ::card-name (s/keys :req-un [::coin-cost]))
+(s/def ::debt-cost nat-int?)
+
+(s/def ::card-cost (s/keys :req-un [::coin-cost]
+                           :opt-un [::debt-cost]))
 
 (s/def ::card (s/keys :req-un [::name
                                ::name-ui
@@ -126,6 +129,8 @@
 
 (s/def ::coins nat-int?)
 
+(s/def ::debt nat-int?)
+
 (s/def ::buys nat-int?)
 
 (s/def ::set-aside ::cards)
@@ -202,7 +207,8 @@
                                  ::actions
                                  ::coins
                                  ::buys]
-                        :opt-un [::set-aside
+                        :opt-un [::debt
+                                 ::set-aside
                                  ::island-mat
                                  ::native-village-mat
                                  ::pirate-ship-coins

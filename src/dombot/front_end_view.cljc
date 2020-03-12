@@ -18,42 +18,51 @@
                             (merge interaction
                                    {:choice-value {:area area :card-name name}}))))))
 
-(defn view-supply [{supply                               :supply
-                    {:keys [coins buys player-no phase]} :player
-                    choice                               :choice
-                    :as                                  game}]
-  (->> supply
-       (map ut/access-top-card)
-       (map (fn [{{:keys [name bane?] :as card} :card
-                  :keys                         [tokens pile-size total-pile-size]}]
-              (let [types    (ut/get-types game card)
-                    cost     (ut/get-cost game card)
-                    buy-cost (ut/get-buy-cost game player-no card)]
-                (merge {:name            name
-                        :name-ui         (ut/format-name name)
-                        :types           types
-                        :card-cost       cost
-                        :number-of-cards pile-size}
-                       (when (and total-pile-size
-                                  (> total-pile-size pile-size))
-                         {:total-number-of-cards total-pile-size})
-                       (when (not= cost buy-cost)
-                         {:buy-cost buy-cost})
-                       (when (and (#{:action :pay :buy} phase)
-                                  (not choice)
-                                  (pos? pile-size)
-                                  buys (pos? buys)
-                                  coins (ut/costs-up-to coins buy-cost)
-                                  (ut/card-buyable? game player-no card))
-                         {:interaction :buyable})
-                       (choice-interaction name :supply choice)
-                       (when tokens
-                         {:tokens (->> tokens
-                                       (map (fn [[token {:keys [number-of-tokens]}]]
-                                              {:token-type       token
-                                               :number-of-tokens number-of-tokens})))})
-                       (when bane?
-                         {:bane? true})))))))
+(defn- get-coins [{:keys [coins debt]
+                   :or   {debt 0}}]
+  (merge {:coins (max (- coins debt) 0)}
+         (when (> debt coins)
+           {:debt (- debt coins)})))
+
+(defn view-supply [{supply         :supply
+                    {:keys [buys player-no phase]
+                     :as   player} :player
+                    choice         :choice
+                    :as            game}]
+  (let [{:keys [coins debt]} (get-coins player)]
+    (->> supply
+         (map ut/access-top-card)
+         (map (fn [{{:keys [name bane?] :as card} :card
+                    :keys                         [tokens pile-size total-pile-size]}]
+                (let [types (ut/get-types game card)
+                      cost  (ut/get-cost game card)
+                      {:keys [coin-cost] :as buy-cost} (ut/get-buy-cost game player-no card)]
+                  (merge {:name            name
+                          :name-ui         (ut/format-name name)
+                          :types           types
+                          :card-cost       cost
+                          :number-of-cards pile-size}
+                         (when (and total-pile-size
+                                    (> total-pile-size pile-size))
+                           {:total-number-of-cards total-pile-size})
+                         (when (not= cost buy-cost)
+                           {:buy-cost buy-cost})
+                         (when (and (#{:action :pay :buy} phase)
+                                    (not choice)
+                                    (pos? pile-size)
+                                    buys (pos? buys)
+                                    coins (>= coins coin-cost)
+                                    (not debt)
+                                    (ut/card-buyable? game player-no card))
+                           {:interaction :buyable})
+                         (choice-interaction name :supply choice)
+                         (when tokens
+                           {:tokens (->> tokens
+                                         (map (fn [[token {:keys [number-of-tokens]}]]
+                                                {:token-type       token
+                                                 :number-of-tokens number-of-tokens})))})
+                         (when bane?
+                           {:bane? true}))))))))
 
 (defn view-extra-cards [{extra-cards :extra-cards
                          choice      :choice
@@ -70,22 +79,25 @@
                         :number-of-cards number-of-cards}
                        (choice-interaction name :extra-cards choice)))))))
 
-(defn view-events [{events                                   :events
-                    {:keys [coins buys phase bought-events]} :player
-                    choice                                   :choice}]
-  (->> events
-       vals
-       (map (fn [{:keys [name type cost]}]
-              (merge {:name    name
-                      :name-ui (ut/format-name name)
-                      :type    type
-                      :cost    cost}
-                     (when (and (#{:action :pay :buy} phase)
-                                (not choice)
-                                buys (pos? buys)
-                                coins (<= cost coins)
-                                (not (contains? bought-events name)))
-                       {:interaction :buyable}))))))
+(defn view-events [{events         :events
+                    {:keys [buys phase bought-events]
+                     :as   player} :player
+                    choice         :choice}]
+  (let [{:keys [coins debt]} (get-coins player)]
+    (->> events
+         vals
+         (map (fn [{:keys [name type cost]}]
+                (merge {:name    name
+                        :name-ui (ut/format-name name)
+                        :type    type
+                        :cost    cost}
+                       (when (and (#{:action :pay :buy} phase)
+                                  (not choice)
+                                  buys (pos? buys)
+                                  coins (<= cost coins)
+                                  (not debt)
+                                  (not (contains? bought-events name)))
+                         {:interaction :buyable})))))))
 
 (defn view-landmarks [{:keys [landmarks]}]
   (->> landmarks
@@ -99,32 +111,35 @@
                      (when chosen-cards
                        {:chosen-cards chosen-cards}))))))
 
-(defn view-projects [{projects                             :projects
-                      {:keys [coins buys player-no phase]} :player
-                      choice                               :choice
-                      :as                                  game}]
-  (->> projects
-       vals
-       (map (fn [{:keys [name type cost participants]}]
-              (merge {:name    name
-                      :name-ui (ut/format-name name)
-                      :type    type
-                      :cost    cost}
-                     (when (not-empty participants)
-                       {:participants (->> participants
-                                           (map (fn [{:keys [player-no tokens]}]
-                                                  (str "["
-                                                       (-> (get-in game [:players player-no :name])
-                                                           ut/format-name-short)
-                                                       (when tokens (str ":" tokens))
-                                                       "]"))))})
-                     (when (and (#{:action :pay :buy} phase)
-                                (not choice)
-                                (not-any? (comp #{player-no} :player-no) participants)
-                                buys (pos? buys)
-                                coins (<= cost coins))
-                       {:interaction :buyable})
-                     (choice-interaction name :projects choice))))))
+(defn view-projects [{projects       :projects
+                      {:keys [buys player-no phase]
+                       :as   player} :player
+                      choice         :choice
+                      :as            game}]
+  (let [{:keys [coins debt]} (get-coins player)]
+    (->> projects
+         vals
+         (map (fn [{:keys [name type cost participants]}]
+                (merge {:name    name
+                        :name-ui (ut/format-name name)
+                        :type    type
+                        :cost    cost}
+                       (when (not-empty participants)
+                         {:participants (->> participants
+                                             (map (fn [{:keys [player-no tokens]}]
+                                                    (str "["
+                                                         (-> (get-in game [:players player-no :name])
+                                                             ut/format-name-short)
+                                                         (when tokens (str ":" tokens))
+                                                         "]"))))})
+                       (when (and (#{:action :pay :buy} phase)
+                                  (not choice)
+                                  (not-any? (comp #{player-no} :player-no) participants)
+                                  buys (pos? buys)
+                                  (not debt)
+                                  coins (<= cost coins))
+                         {:interaction :buyable})
+                       (choice-interaction name :projects choice)))))))
 
 (defn view-boon
   ([boon]
@@ -283,7 +298,6 @@
 (defn view-player [{{:keys [name
                             phase
                             actions
-                            coins
                             buys
                             set-aside
                             island-mat
@@ -297,11 +311,12 @@
                             boons
                             states
                             victory-points
-                            winner]} :player
-                    choice           :choice
-                    active-player?   :active-player?
-                    artifacts        :artifacts
-                    :as              data}]
+                            winner]
+                     :as   player} :player
+                    choice         :choice
+                    active-player? :active-player?
+                    artifacts      :artifacts
+                    :as            data}]
   (merge {:name-ui   (ut/format-name name)
           :hand      (view-hand data)
           :play-area (concat (view-area :play-area-duration data)
@@ -309,9 +324,9 @@
           :deck      (view-deck data)
           :discard   (view-discard data)
           :actions   actions
-          :coins     coins
           :buys      buys
           :active?   active-player?}
+         (get-coins player)
          (when (not-empty set-aside)
            {:set-aside (view-area :set-aside data)})
          (when (not-empty island-mat)
@@ -382,12 +397,13 @@
                                 (< 1 number-of-cards) (assoc :number-of-cards number-of-cards))))))))
 
 (defn view-commands [{:keys [supply players effect-stack current-player can-undo?] :as game}]
-  (let [{:keys [hand phase actions coins buys]} (get players current-player)
+  (let [{:keys [hand phase actions coins debt buys]} (get players current-player)
         [choice] effect-stack
         can-play-treasures? (boolean (and (not choice)
                                           (#{:action :pay} phase)
                                           (some (comp :treasure (partial ut/get-types game)) hand)))
         potential-coins     (cond-> coins
+                                    debt (- debt)
                                     can-play-treasures? (+ (->> hand (keep :coin-value) (apply +))))]
     {:can-undo?           (boolean can-undo?)
      :can-goto-buy-phase? (boolean (and (= :action phase)

@@ -470,6 +470,32 @@
                             :effects  [[:draw 2]
                                        [:remove-enemy-triggers]]}})
 
+(defn- engineer-trash [game {:keys [card-name] :as args}]
+  (cond-> game
+          card-name (push-effect-stack (merge args
+                                              {:effects [[:trash-this]
+                                                         [:give-choice {:text    "Gain a card costing up to $4."
+                                                                        :choice  :gain
+                                                                        :options [:supply {:max-cost 4}]
+                                                                        :min     1
+                                                                        :max     1}]]}))))
+
+(effects/register {::engineer-trash engineer-trash})
+
+(def engineer {:name    :engineer
+               :set     :empires
+               :types   #{:action}
+               :cost    {:debt-cost 4}
+               :effects [[:give-choice {:text    "Gain a card costing up to $4."
+                                        :choice  :gain
+                                        :options [:supply {:max-cost 4}]
+                                        :min     1
+                                        :max     1}]
+                         [:give-choice {:text    "You may trash this to gain a card costing up to $4."
+                                        :choice  ::engineer-trash
+                                        :options [:player :play-area {:this true}]
+                                        :max     1}]]})
+
 (defn- farmers-market-yield [game {:keys [player-no card-id]}]
   (let [{:keys [tokens]} (ut/get-pile-idx game :farmers'-market)
         vp-tokens (or (get-in tokens [:victory-point :number-of-tokens]) 0)]
@@ -701,6 +727,7 @@
                     crown
                     encampment
                     enchantress
+                    engineer
                     farmers-market
                     forum
                     groundskeeper

@@ -348,7 +348,7 @@
           [:tr (map-tag :th ["Name" "Hand" "Play area" "Deck" "Discard"])]
           (->> (get-in @state [:game :players])
                (mapk (fn [{:keys               [name-ui hand play-area deck discard
-                                                actions coins buys set-aside
+                                                actions coins debt buys set-aside
                                                 coffers villagers artifacts states
                                                 island-mat native-village-mat pirate-ship-coins
                                                 boons tavern-mat journey-token
@@ -401,6 +401,8 @@
                                                                          :spendable (swap! state assoc :game (cmd/spend-villager)))))}
                                            (str number " Villager" (when (< 1 number) "s"))]]))
                                 [:div "Coins: " coins]
+                                (when debt
+                                  [:div "Debt: " debt])
                                 (when coffers
                                   (let [{:keys [number interaction]} coffers
                                         disabled (nil? interaction)]

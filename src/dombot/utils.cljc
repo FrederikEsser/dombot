@@ -36,8 +36,11 @@
        (map format-name)
        (s/join "/")))
 
-(defn format-cost [{:keys [coin-cost]} & [{buy-cost :coin-cost}]]
-  (str "$" coin-cost (when buy-cost (str "/" buy-cost))))
+(defn format-cost [{:keys [coin-cost debt-cost]} & [{buy-cost :coin-cost}]]
+  (str (when (or (pos? coin-cost)
+                 (not debt-cost)) (str "$" coin-cost))
+       (when debt-cost (str "d" debt-cost))
+       (when buy-cost (str "/" buy-cost))))
 
 (defn number->text [n]
   (case n
@@ -225,7 +228,7 @@
 (defn- reduction-matches-card-types [{reduction-type :type} card-types]
   (or (nil? reduction-type) (reduction-type card-types)))
 
-(defn- get-cost-with-reduction [game player-no {:keys [cost] :as card}]
+(defn- get-cost-with-reduction [game player-no {{:keys [coin-cost debt-cost] :as cost} :cost :as card}]
   (let [cost-reductions (->> (get-in game [:players player-no :play-area])
                              (mapcat (comp :cost-reductions :while-in-play))
                              (concat (:cost-reductions game)
@@ -233,7 +236,9 @@
         card-types      (get-types game card)
         base-cost       (if (int? cost)
                           {:coin-cost cost}
-                          cost)]
+                          (merge {:coin-cost (or coin-cost 0)}
+                                 (when debt-cost
+                                   {:debt-cost debt-cost})))]
     (reduce (fn [card-cost {:keys [reduction] :as reduction-data}]
               (cond-> card-cost
                       (reduction-matches-card-types reduction-data card-types) (update :coin-cost minus-cost reduction)))
@@ -284,29 +289,37 @@
        (intersection types)
        not-empty))
 
-(defn costs-at-least [min-cost {:keys [coin-cost]}]
-  (let [min-coin-cost (or (:coin-cost min-cost) min-cost)]
-    (<= min-coin-cost coin-cost)))
+(defn normalize-cost [{:keys [coin-cost debt-cost] :as cost}]
+  (if (int? cost)
+    {:coin-cost cost
+     :debt-cost 0}
+    {:coin-cost (or coin-cost 0)
+     :debt-cost (or debt-cost 0)}))
 
-(defn costs-up-to [max-cost {:keys [coin-cost]}]
-  (let [max-coin-cost (or (:coin-cost max-cost) max-cost)]
-    (<= coin-cost max-coin-cost)))
+(defn costs-up-to [max-cost card-cost]
+  (let [{max-coin-cost :coin-cost
+         max-debt-cost :debt-cost} (normalize-cost max-cost)
+        {card-coin-cost :coin-cost
+         card-debt-cost :debt-cost} (normalize-cost card-cost)]
+    (and (<= card-coin-cost max-coin-cost)
+         (<= card-debt-cost max-debt-cost))))
+
+(defn costs-at-least [min-cost card-cost]
+  (costs-up-to card-cost min-cost))
 
 (defn costs-between [min-cost max-cost card-cost]
   (and (costs-at-least min-cost card-cost)
        (costs-up-to max-cost card-cost)))
 
-(defn costs-more [{coin-cost-1 :coin-cost} {coin-cost-2 :coin-cost}]
-  (< coin-cost-1 coin-cost-2))
-
-(defn costs-less [{coin-cost-1 :coin-cost} {coin-cost-2 :coin-cost}]
-  (> coin-cost-1 coin-cost-2))
-
 (defn costs-exactly [cost card-cost]
-  (let [target-cost (if (int? cost)
-                      {:coin-cost cost}
-                      cost)]
-    (= card-cost target-cost)))
+  (= (normalize-cost cost) (normalize-cost card-cost)))
+
+(defn costs-less [max-cost+ card-cost]
+  (and (costs-up-to max-cost+ card-cost)
+       (not (costs-exactly max-cost+ card-cost))))
+
+(defn costs-more [min-cost- card-cost]
+  (costs-less card-cost min-cost-))
 
 (defn add-to-cost [card-cost cost]
   (let [added-cost (if (int? cost)
