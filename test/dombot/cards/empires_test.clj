@@ -2036,6 +2036,36 @@
                            :buys      0
                            :vp-tokens 2}]}))))))
 
+(deftest royal-blacksmith-test
+  (let [royal-blacksmith (assoc royal-blacksmith :id 0)]
+    (testing "Royal Blacksmith"
+      (is (= (-> {:players [{:hand    [royal-blacksmith]
+                             :deck    (repeat 7 silver)
+                             :actions 1}]}
+                 (play 0 :royal-blacksmith))
+             {:players [{:hand           (repeat 5 silver)
+                         :play-area      [royal-blacksmith]
+                         :deck           [silver silver]
+                         :revealed-cards {:hand 5}
+                         :actions        0}]}))
+      (is (= (-> {:players [{:hand    [royal-blacksmith]
+                             :deck    (repeat 7 copper)
+                             :actions 1}]}
+                 (play 0 :royal-blacksmith))
+             {:players [{:play-area [royal-blacksmith]
+                         :discard   (repeat 5 copper)
+                         :deck      [copper copper]
+                         :actions   0}]}))
+      (is (= (-> {:players [{:hand    [royal-blacksmith copper silver estate]
+                             :deck    [copper silver gold estate duchy province]
+                             :actions 1}]}
+                 (play 0 :royal-blacksmith))
+             {:players [{:hand      [silver estate silver gold estate duchy]
+                         :play-area [royal-blacksmith]
+                         :discard   [copper copper]
+                         :deck      [province]
+                         :actions   0}]})))))
+
 (deftest sacrifice-test
   (let [sacrifice (assoc sacrifice :id 0)]
     (testing "Sacrifice"

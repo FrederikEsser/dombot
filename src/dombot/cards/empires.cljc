@@ -624,6 +624,24 @@
                    ::emporium-on-gain        emporium-on-gain
                    ::patrician-emporium-pile patrician-emporium-pile})
 
+(defn- royal-blacksmith-discard-coppers [game {:keys [player-no]}]
+  (let [coppers-in-hand (->> (get-in game [:players player-no :hand])
+                             (map :name)
+                             (filter #{:copper}))]
+    (cond-> game
+            (not-empty coppers-in-hand) (push-effect-stack {:player-no player-no
+                                                            :effects   [[:discard-from-hand {:card-names coppers-in-hand}]]}))))
+
+(effects/register {::royal-blacksmith-discard-coppers royal-blacksmith-discard-coppers})
+
+(def royal-blacksmith {:name    :royal-blacksmith
+                       :set     :empires
+                       :types   #{:action}
+                       :cost    {:debt-cost 8}
+                       :effects [[:draw 5]
+                                 [:reveal-hand]
+                                 [::royal-blacksmith-discard-coppers]]})
+
 (defn- sacrifice-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         types (ut/get-types game card)]
@@ -752,6 +770,7 @@
                     groundskeeper
                     legionary
                     patrician
+                    royal-blacksmith
                     sacrifice
                     settlers
                     temple
