@@ -363,6 +363,24 @@
                                              :max     1}]]
             :auto-play-index 2})
 
+(defn- city-quarter-draw [game {:keys [player-no]}]
+  (let [actions-in-hand (->> (get-in game [:players player-no :hand])
+                             (map (partial ut/get-types game))
+                             (filter :action)
+                             count)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:draw actions-in-hand]]})))
+
+(effects/register {::city-quarter-draw city-quarter-draw})
+
+(def city-quarter {:name    :city-quarter
+                   :set     :empires
+                   :types   #{:action}
+                   :cost    {:debt-cost 8}
+                   :effects [[:give-actions 2]
+                             [:reveal-hand]
+                             [::city-quarter-draw]]})
+
 (defn- crown-repeat-card [game {:keys [player-no card-id]}]
   (let [phase (get-in game [:players player-no :phase])]
     (cond-> game
@@ -724,6 +742,7 @@
                     catapult
                     chariot-race
                     charm
+                    city-quarter
                     crown
                     encampment
                     enchantress

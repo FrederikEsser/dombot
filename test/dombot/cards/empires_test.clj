@@ -1190,6 +1190,50 @@
                          :coins     0
                          :buys      0}]})))))
 
+(deftest city-quarter-test
+  (let [city-quarter (assoc city-quarter :id 0)]
+    (testing "City Quarter"
+      (is (= (-> {:players [{:hand    [city-quarter]
+                             :deck    [copper copper copper]
+                             :actions 1}]}
+                 (play 0 :city-quarter))
+             {:players [{:play-area [city-quarter]
+                         :deck      [copper copper copper]
+                         :actions   2}]}))
+      (is (= (-> {:players [{:hand    [city-quarter copper silver estate]
+                             :deck    [copper copper copper]
+                             :actions 1}]}
+                 (play 0 :city-quarter))
+             {:players [{:hand           [copper silver estate]
+                         :play-area      [city-quarter]
+                         :deck           [copper copper copper]
+                         :revealed-cards {:hand 3}
+                         :actions        2}]}))
+      (is (= (-> {:players [{:hand    [city-quarter forum]
+                             :deck    [copper copper copper]
+                             :actions 1}]}
+                 (play 0 :city-quarter))
+             {:players [{:hand      [forum copper]
+                         :play-area [city-quarter]
+                         :deck      [copper copper]
+                         :actions   2}]}))
+      (is (= (-> {:players [{:hand    [city-quarter forum forum]
+                             :deck    [copper copper copper]
+                             :actions 1}]}
+                 (play 0 :city-quarter))
+             {:players [{:hand      [forum forum copper copper]
+                         :play-area [city-quarter]
+                         :deck      [copper]
+                         :actions   2}]}))
+      (is (= (-> {:players [{:hand    [city-quarter archive charm crown]
+                             :deck    [copper copper copper]
+                             :actions 1}]}
+                 (play 0 :city-quarter))
+             {:players [{:hand      [archive charm crown copper copper]
+                         :play-area [city-quarter]
+                         :deck      [copper]
+                         :actions   2}]})))))
+
 (deftest crown-test
   (let [crown (assoc crown :id 0)]
     (testing "Crown"
