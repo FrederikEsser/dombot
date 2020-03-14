@@ -83,6 +83,23 @@
                                       :to              :archive-set-aside}]
                         [::archive-set-aside]]})
 
+(defn- capital-give-debt [game {:keys [player-no]}]
+  (let [{:keys [coins debt] :or {debt 0}} (get-in game [:players player-no])]
+    (-> game
+        (assoc-in [:players player-no :coins] (max 0 (- coins debt 6)))
+        (assoc-in [:players player-no :debt] (max 0 (- (+ debt 6) coins))))))
+
+(effects/register {::capital-give-debt capital-give-debt})
+
+(def capital {:name         :capital
+              :set          :empires
+              :types        #{:treasure}
+              :cost         5
+              :coin-value   6
+              :effects      [[:give-buys 1]]
+              :at-clean-up  [[::capital-give-debt]]
+              :trigger-mode :auto})
+
 (def castles {:name       :castles
               :set        :empires
               :cost       3
@@ -829,6 +846,7 @@
                                          :max     1}]]})
 
 (def kingdom-cards [archive
+                    capital
                     castles
                     catapult
                     chariot-race

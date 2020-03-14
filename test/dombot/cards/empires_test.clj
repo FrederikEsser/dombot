@@ -10,10 +10,11 @@
             [dombot.cards.seaside :refer [ambassador embargo fishing-village outpost]]
             [dombot.cards.prosperity :as prosperity :refer [hoard]]
             [dombot.cards.adventures :as adventures :refer [caravan-guard]]
-            [dombot.cards.nocturne :as nocturne :refer [ghost]]
+            [dombot.cards.nocturne :as nocturne :refer [crypt ghost]]
             [dombot.cards.renaissance :as renaissance :refer [patron spices canal capitalism citadel innovation piazza]]
             [dombot.cards.kingdom :refer [setup-game]]
-            [dombot.utils :as ut]))
+            [dombot.utils :as ut])
+  (:import (com.sun.javafx.scene.layout.region RepeatStruct)))
 
 (defn fixture [f]
   (with-rand-seed 123 (f)))
@@ -626,6 +627,115 @@
                                                           :card-id   0
                                                           :name      :archive
                                                           :set-aside [copper]})]}]}))))))
+
+(deftest capital-test
+  (let [capital  (assoc capital :id 0)
+        crown    (assoc crown :id 1)
+        province (assoc province :id 2)]
+    (testing "Capital"
+      (is (= (-> {:players [{:hand  [capital]
+                             :coins 0
+                             :buys  1}]}
+                 (play 0 :capital))
+             {:players [{:play-area [capital]
+                         :coins     6
+                         :buys      2}]}))
+      (is (= (-> {:players [{:play-area [capital]
+                             :coins     0
+                             :buys      0
+                             :phase     :buy}]}
+                 (clean-up {:player-no 0}))
+             {:players [{:hand    [capital]
+                         :actions 0
+                         :coins   0
+                         :debt    6
+                         :buys    0
+                         :phase   :out-of-turn}]}))
+      (is (= (-> {:players [{:play-area [capital]
+                             :coins     4
+                             :buys      0
+                             :phase     :buy}]}
+                 (clean-up {:player-no 0}))
+             {:players [{:hand    [capital]
+                         :actions 0
+                         :coins   0
+                         :debt    2
+                         :buys    0
+                         :phase   :out-of-turn}]}))
+      (is (= (-> {:players [{:hand  [capital capital]
+                             :coins 0
+                             :buys  1
+                             :phase :pay}]}
+                 (play 0 :capital)
+                 (play 0 :capital))
+             {:players [{:play-area [capital capital]
+                         :coins     12
+                         :buys      3
+                         :phase     :pay}]}))
+      (is (= (-> {:supply  [{:card province :pile-size 8}]
+                  :players [{:hand  [capital capital]
+                             :deck  (repeat 5 copper)
+                             :coins 0
+                             :buys  1
+                             :phase :pay}]}
+                 (play 0 :capital)
+                 (play 0 :capital)
+                 (buy-card 0 :province)
+                 (clean-up {:player-no 0}))
+             {:supply  [{:card province :pile-size 7}]
+              :players [{:hand    (repeat 5 copper)
+                         :discard [province capital capital]
+                         :actions 0
+                         :coins   0
+                         :debt    8
+                         :buys    0
+                         :phase   :out-of-turn}]}))
+      (is (= (-> {:players [{:hand  [crown capital]
+                             :coins 0
+                             :buys  1
+                             :phase :pay}]}
+                 (play 0 :crown)
+                 (choose :capital))
+             {:players [{:play-area [crown capital]
+                         :coins     12
+                         :buys      3
+                         :phase     :pay}]}))
+      (is (= (-> {:supply  [{:card province :pile-size 8}]
+                  :players [{:hand  [crown capital]
+                             :deck  (repeat 5 copper)
+                             :coins 0
+                             :buys  1
+                             :phase :pay}]}
+                 (play 0 :crown)
+                 (choose :capital)
+                 (buy-card 0 :province)
+                 (clean-up {:player-no 0}))
+             {:supply  [{:card province :pile-size 7}]
+              :players [{:hand    (repeat 5 copper)
+                         :discard [province crown capital]
+                         :actions 0
+                         :coins   0
+                         :debt    2
+                         :buys    0
+                         :phase   :out-of-turn}]}))
+      (ut/reset-ids!)
+      (let [crypt (assoc crypt :id 3)]
+        (is (= (-> {:players [{:hand      [crypt]
+                               :play-area [capital]
+                               :phase     :buy}]}
+                   (play 0 :crypt)
+                   (choose :capital)
+                   (clean-up {:player-no 0}))
+               {:players [{:play-area [crypt]
+                           :actions   0
+                           :coins     0
+                           :buys      0
+                           :phase     :out-of-turn
+                           :triggers  [(merge nocturne/crypt-trigger
+                                              {:id        1
+                                               :card-id   3
+                                               :name      :crypt
+                                               :set-aside [capital]})]}]}))))))
 
 (deftest humble-castle-test
   (testing "Humble Castle"

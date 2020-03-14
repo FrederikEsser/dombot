@@ -132,19 +132,21 @@
 
 (defn- get-phase-change-effects [game {:keys [player-no phase-change]}]
   (let [card-triggers    (->> (get-in game [:players player-no :play-area])
-                              (keep (fn [{:keys [id name trigger-condition] :as card}]
+                              (keep (fn [{:keys [id name trigger-condition trigger-mode] :as card}]
                                       (let [condition-fn         (if trigger-condition
                                                                    (effects/get-effect trigger-condition)
                                                                    (constantly true))
                                             phase-change-effects (get card phase-change)]
                                         (when (and phase-change-effects
                                                    (condition-fn game player-no))
-                                          {:event     phase-change
-                                           :name      name
-                                           :card-id   id
-                                           :mode      :manual
-                                           :optional? true
-                                           :effects   phase-change-effects})))))
+                                          (merge {:event   phase-change
+                                                  :name    name
+                                                  :card-id id
+                                                  :effects phase-change-effects}
+                                                 (if trigger-mode
+                                                   {:mode trigger-mode}
+                                                   {:mode      :manual
+                                                    :optional? true})))))))
         reserve-triggers (->> (get-in game [:players player-no :tavern-mat])
                               (filter (comp #{phase-change} :event :call))
                               (map get-call-trigger))
