@@ -1060,7 +1060,8 @@
                                   (not-empty used-cards) (update :discard concat used-cards))
                                 (dissoc :hand
                                         :actions-played
-                                        :bought-events)
+                                        :bought-events
+                                        :fortune-doubled?)
                                 (update :play-area (partial filter (partial ut/stay-in-play game player-no)))
                                 (ut/dissoc-if-empty :play-area)
                                 (assoc :actions 0

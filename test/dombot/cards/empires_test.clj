@@ -1225,14 +1225,15 @@
                          :play-area [city-quarter]
                          :deck      [copper]
                          :actions   2}]}))
-      (is (= (-> {:players [{:hand    [city-quarter archive charm crown]
+      (is (= (-> {:players [{:hand    [city-quarter patron charm crown]
                              :deck    [copper copper copper]
                              :actions 1}]}
                  (play 0 :city-quarter))
-             {:players [{:hand      [archive charm crown copper copper]
+             {:players [{:hand      [patron charm crown copper copper]
                          :play-area [city-quarter]
                          :deck      [copper]
-                         :actions   2}]})))))
+                         :actions   2
+                         :coffers   1}]})))))
 
 (deftest crown-test
   (let [crown (assoc crown :id 0)]
@@ -1865,6 +1866,214 @@
                          :vp-tokens 4}]
               :trash   [farmers-market]})))))
 
+(deftest forum-test
+  (let [forum (assoc forum :id 0)]
+    (testing "Forum"
+      (is (= (-> {:players [{:hand    [forum]
+                             :deck    [copper silver estate estate]
+                             :actions 1}]}
+                 (play 0 :forum)
+                 (choose [:copper :estate]))
+             {:players [{:hand      [silver]
+                         :play-area [forum]
+                         :deck      [estate]
+                         :discard   [copper estate]
+                         :actions   1}]}))
+      (is (= (-> {:supply  [{:card forum :pile-size 10}]
+                  :players [{:coins 7
+                             :buys  1}]}
+                 (buy-card 0 :forum))
+             {:supply  [{:card forum :pile-size 9}]
+              :players [{:discard [forum]
+                         :coins   2
+                         :buys    1}]})))))
+
+(deftest gladiator-test
+  (let [gladiator (assoc gladiator :id 0)]
+    (testing "Gladiator"
+      (is (= (-> {:supply  [{:split-pile [{:card gladiator :pile-size 4}
+                                          {:card fortune :pile-size 5}]}]
+                  :players [{:hand    [gladiator]
+                             :actions 1
+                             :coins   0}
+                            {:hand [estate]}]}
+                 (play 0 :gladiator))
+             {:supply  [{:split-pile [{:card gladiator :pile-size 3}
+                                      {:card fortune :pile-size 5}]}]
+              :players [{:play-area [gladiator]
+                         :actions   0
+                         :coins     3}
+                        {:hand [estate]}]
+              :trash   [gladiator]}))
+      (is (= (-> {:supply  [{:split-pile [{:card gladiator :pile-size 4}
+                                          {:card fortune :pile-size 5}]}]
+                  :players [{:hand    [gladiator copper]
+                             :actions 1
+                             :coins   0}
+                            {:hand [estate]}]}
+                 (play 0 :gladiator)
+                 (choose :copper))
+             {:supply  [{:split-pile [{:card gladiator :pile-size 3}
+                                      {:card fortune :pile-size 5}]}]
+              :players [{:hand           [copper]
+                         :play-area      [gladiator]
+                         :revealed-cards {:hand 1}
+                         :actions        0
+                         :coins          3}
+                        {:hand [estate]}]
+              :trash   [gladiator]}))
+      (is (= (-> {:supply  [{:split-pile [{:card gladiator :pile-size 4}
+                                          {:card fortune :pile-size 5}]}]
+                  :players [{:hand    [gladiator estate]
+                             :actions 1
+                             :coins   0}
+                            {:hand [estate]}]}
+                 (play 0 :gladiator)
+                 (choose :estate)
+                 (choose nil))
+             {:supply  [{:split-pile [{:card gladiator :pile-size 3}
+                                      {:card fortune :pile-size 5}]}]
+              :players [{:hand           [estate]
+                         :play-area      [gladiator]
+                         :revealed-cards {:hand 1}
+                         :actions        0
+                         :coins          3}
+                        {:hand [estate]}]
+              :trash   [gladiator]}))
+      (is (= (-> {:supply  [{:split-pile [{:card gladiator :pile-size 4}
+                                          {:card fortune :pile-size 5}]}]
+                  :players [{:hand    [gladiator estate]
+                             :actions 1
+                             :coins   0}
+                            {:hand [estate]}]}
+                 (play 0 :gladiator)
+                 (choose :estate)
+                 (choose :estate))
+             {:supply  [{:split-pile [{:card gladiator :pile-size 4}
+                                      {:card fortune :pile-size 5}]}]
+              :players [{:hand           [estate]
+                         :play-area      [gladiator]
+                         :revealed-cards {:hand 1}
+                         :actions        0
+                         :coins          2}
+                        {:hand           [estate]
+                         :revealed-cards {:hand 1}}]}))
+      (is (= (-> {:supply  [{:split-pile [{:card gladiator :pile-size 0}
+                                          {:card fortune :pile-size 5}]}]
+                  :players [{:hand    [gladiator copper]
+                             :actions 1
+                             :coins   0}
+                            {:hand [estate]}]}
+                 (play 0 :gladiator)
+                 (choose :copper))
+             {:supply  [{:split-pile [{:card gladiator :pile-size 0}
+                                      {:card fortune :pile-size 5}]}]
+              :players [{:hand           [copper]
+                         :play-area      [gladiator]
+                         :revealed-cards {:hand 1}
+                         :actions        0
+                         :coins          3}
+                        {:hand [estate]}]}))
+      (is (= (-> {:supply  [{:split-pile [{:card gladiator :pile-size 4}
+                                          {:card fortune :pile-size 5}]}]
+                  :players [{:hand    [gladiator patron]
+                             :actions 1
+                             :coins   0}
+                            {:hand [patron]}]}
+                 (play 0 :gladiator)
+                 (choose :patron)
+                 (choose :patron))
+             {:supply  [{:split-pile [{:card gladiator :pile-size 4}
+                                      {:card fortune :pile-size 5}]}]
+              :players [{:hand           [patron]
+                         :play-area      [gladiator]
+                         :revealed-cards {:hand 1}
+                         :actions        0
+                         :coins          2
+                         :coffers        1}
+                        {:hand           [patron]
+                         :revealed-cards {:hand 1}
+                         :coffers        1}]})))))
+
+(deftest fortune-test
+  (let [fortune (assoc fortune :id 0)]
+    (testing "Fortune"
+      (is (= (-> {:players [{:hand  [fortune]
+                             :coins 0
+                             :buys  1}]}
+                 (play 0 :fortune))
+             {:players [{:play-area        [fortune]
+                         :fortune-doubled? true
+                         :coins            0
+                         :buys             2}]}))
+      (is (= (-> {:players [{:hand  [fortune]
+                             :coins 1
+                             :buys  1}]}
+                 (play 0 :fortune))
+             {:players [{:play-area        [fortune]
+                         :fortune-doubled? true
+                         :coins            2
+                         :buys             2}]}))
+      (is (= (-> {:players [{:hand  [fortune]
+                             :coins 3
+                             :buys  1}]}
+                 (play 0 :fortune))
+             {:players [{:play-area        [fortune]
+                         :fortune-doubled? true
+                         :coins            6
+                         :buys             2}]}))
+      (is (= (-> {:players [{:hand  [fortune fortune]
+                             :coins 3
+                             :buys  1}]}
+                 (play 0 :fortune)
+                 (play 0 :fortune))
+             {:players [{:play-area        [fortune fortune]
+                         :fortune-doubled? true
+                         :coins            6
+                         :buys             3}]}))
+      (is (= (-> {:players [{:hand  [fortune]
+                             :coins 3
+                             :buys  1}]}
+                 (play 0 :fortune)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand    [fortune]
+                                :actions 1
+                                :coins   0
+                                :buys    1}]}))
+      (testing "on gain"
+        (let [gold (assoc gold :id 1)]
+          (is (= (-> {:supply  [{:card gold :pile-size 30}
+                                {:split-pile [{:card gladiator :pile-size 0}
+                                              {:card fortune :pile-size 5}]}]
+                      :players [{:play-area [gold]}]}
+                     (gain {:player-no 0 :card-name :fortune}))
+                 {:supply  [{:card gold :pile-size 30}
+                            {:split-pile [{:card gladiator :pile-size 0}
+                                          {:card fortune :pile-size 4}]}]
+                  :players [{:play-area [gold]
+                             :discard   [fortune]}]}))
+          (is (= (-> {:supply  [{:card gold :pile-size 30}
+                                {:split-pile [{:card gladiator :pile-size 0}
+                                              {:card fortune :pile-size 5}]}]
+                      :players [{:play-area [gladiator gold]}]}
+                     (gain {:player-no 0 :card-name :fortune}))
+                 {:supply  [{:card gold :pile-size 29}
+                            {:split-pile [{:card gladiator :pile-size 0}
+                                          {:card fortune :pile-size 4}]}]
+                  :players [{:play-area [gladiator gold]
+                             :discard   [gold fortune]}]}))
+          (is (= (-> {:supply  [{:card gold :pile-size 30}
+                                {:split-pile [{:card gladiator :pile-size 0}
+                                              {:card fortune :pile-size 5}]}]
+                      :players [{:play-area [gladiator gladiator gold]}]}
+                     (gain {:player-no 0 :card-name :fortune}))
+                 {:supply  [{:card gold :pile-size 28}
+                            {:split-pile [{:card gladiator :pile-size 0}
+                                          {:card fortune :pile-size 4}]}]
+                  :players [{:play-area [gladiator gladiator gold]
+                             :discard   [gold gold fortune]}]})))))))
+
 (deftest groundskeeper-test
   (let [groundskeeper (assoc groundskeeper :id 0)
         estate        (assoc estate :id 1)
@@ -2057,14 +2266,15 @@
                          :deck      [copper copper]
                          :actions   0}]}))
       (is (= (-> {:players [{:hand    [royal-blacksmith copper silver estate]
-                             :deck    [copper silver gold estate duchy province]
+                             :deck    [copper silver gold estate patron duchy]
                              :actions 1}]}
                  (play 0 :royal-blacksmith))
-             {:players [{:hand      [silver estate silver gold estate duchy]
+             {:players [{:hand      [silver estate silver gold estate patron]
                          :play-area [royal-blacksmith]
                          :discard   [copper copper]
-                         :deck      [province]
-                         :actions   0}]})))))
+                         :deck      [duchy]
+                         :actions   0
+                         :coffers   1}]})))))
 
 (deftest sacrifice-test
   (let [sacrifice (assoc sacrifice :id 0)]

@@ -547,6 +547,79 @@
                                      :max     2}]]
             :on-buy  [[:give-buys 1]]})
 
+(defn- gladiator-counter [game {:keys [player-no card-name gladiator-player-no]}]
+  (cond-> game
+          card-name (-> (assoc-in [:players gladiator-player-no :gladiator-countered?] true)
+                        (push-effect-stack {:player-no player-no
+                                            :effects   [[:reveal {:card-name card-name}]]}))))
+
+(defn- gladiator-reveal [{:keys [players] :as game} {:keys [player-no card-name]}]
+  (let [next-player (mod (inc player-no) (count players))]
+    (-> game
+        (push-effect-stack {:player-no next-player
+                            :effects   [[:give-choice {:text    (str "You may reveal a " (ut/format-name card-name) " from your hand.")
+                                                       :choice  [::gladiator-counter {:gladiator-player-no player-no}]
+                                                       :options [:player :hand {:names #{card-name}}]
+                                                       :max     1}]]})
+        (push-effect-stack {:player-no player-no
+                            :effects   [[:reveal {:card-name card-name}]]}))))
+
+(defn- gladiator-check [game {:keys [player-no]}]
+  (let [{:keys [gladiator-countered?]} (get-in game [:players player-no])]
+    (if gladiator-countered?
+      (update-in game [:players player-no] dissoc :gladiator-countered?)
+      (push-effect-stack game {:player-no player-no
+                               :effects   [[:give-coins 1]
+                                           [:trash-from-supply {:card-name :gladiator}]]}))))
+
+(def gladiator {:name       :gladiator
+                :set        :empires
+                :types      #{:action}
+                :cost       3
+                :effects    [[:give-coins 2]
+                             [:give-choice {:text    "Reveal a card from your hand."
+                                            :choice  ::gladiator-reveal
+                                            :options [:player :hand]
+                                            :min     1
+                                            :max     1}]
+                             [::gladiator-check]]
+                :split-pile ::gladiator-fortune-pile})
+
+(defn- double-fortune [game {:keys [player-no]}]
+  (let [{:keys [fortune-doubled?]} (get-in game [:players player-no])]
+    (-> game
+        (assoc-in [:players player-no :fortune-doubled?] true)
+        (cond-> (not fortune-doubled?) (update-in [:players player-no :coins] * 2)))))
+
+(defn- fortune-on-gain [game {:keys [player-no]}]
+  (let [gladiators-in-play (->> (get-in game [:players player-no :play-area])
+                                (filter (comp #{:gladiator} :name))
+                                count)]
+    (cond-> game
+            (pos? gladiators-in-play) (push-effect-stack {:player-no player-no
+                                                          :effects   (repeat gladiators-in-play [:gain {:card-name :gold}])}))))
+
+(def fortune {:name            :fortune
+              :set             :empires
+              :types           #{:treasure}
+              :cost            {:coin-cost 8
+                                :debt-cost 8}
+              :effects         [[:give-buys 1]
+                                [::double-fortune]]
+              :on-gain         [[::fortune-on-gain]]
+              :auto-play-index 4})
+
+(defn gladiator-fortune-pile [player-count]
+  {:split-pile [{:card gladiator :pile-size 5}
+                {:card fortune :pile-size 5}]})
+
+(effects/register {::gladiator-counter      gladiator-counter
+                   ::gladiator-reveal       gladiator-reveal
+                   ::gladiator-check        gladiator-check
+                   ::double-fortune         double-fortune
+                   ::fortune-on-gain        fortune-on-gain
+                   ::gladiator-fortune-pile gladiator-fortune-pile})
+
 (defn- groundskeeper-on-gain [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})
         types (ut/get-types game card)]
@@ -767,6 +840,7 @@
                     engineer
                     farmers-market
                     forum
+                    gladiator
                     groundskeeper
                     legionary
                     patrician

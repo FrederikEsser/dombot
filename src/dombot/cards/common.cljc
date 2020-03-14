@@ -346,9 +346,13 @@
 
 (effects/register {:trash-from-look-at trash-from-look-at})
 
-(defn trash-from-supply [game args]
-  (move-card game (merge args {:from :supply
-                               :to   :trash})))
+(defn trash-from-supply [game {:keys [player-no card-name]}]
+  (let [pile (ut/get-pile-idx game card-name)]
+    (cond-> game
+            pile (move-card {:player-no player-no
+                             :card-name card-name
+                             :from      :supply
+                             :to        :trash}))))
 
 (effects/register {:trash-from-supply trash-from-supply})
 
