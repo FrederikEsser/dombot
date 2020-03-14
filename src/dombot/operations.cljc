@@ -473,7 +473,8 @@
                                    vals
                                    (mapcat (fn [{:keys [number-of-tokens on-buy]}]
                                              (when on-buy
-                                               (apply concat (repeat number-of-tokens on-buy))))))
+                                               (apply concat (repeat number-of-tokens on-buy)))))
+                                   (map (partial ut/add-effect-args {:card-name card-name})))
         while-in-play-effects (->> (get-in game [:players player-no :play-area])
                                    (mapcat (comp :on-buy :while-in-play))
                                    (map (partial ut/add-effect-args {:card-name card-name})))
@@ -484,8 +485,7 @@
                                                   (map (partial ut/add-effect-args (merge {:trigger-id id
                                                                                            :card-name  card-name}
                                                                                           (when card-id
-                                                                                            {:card-id card-id})))))))
-                                   (map (partial ut/add-effect-args {})))]
+                                                                                            {:card-id card-id}))))))))]
     (concat on-buy token-effects while-in-play-effects trigger-effects)))
 
 (defn buy-card

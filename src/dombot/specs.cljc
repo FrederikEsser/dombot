@@ -25,7 +25,7 @@
 
 (s/def ::stay-in-play boolean?)
 
-(s/def ::token-type #{:embargo :trade-route :victory-point})
+(s/def ::token-type #{:embargo :trade-route :victory-point :debt})
 
 (s/def ::token (s/keys :req-un [::token-type
                                 ::number-of-tokens]))

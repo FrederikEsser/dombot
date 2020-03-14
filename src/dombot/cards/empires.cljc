@@ -1008,6 +1008,43 @@
                                              :min     1
                                              :max     1}]]})
 
+(defn- take-debt [game {:keys [player-no card-name]}]
+  (let [{:keys [idx]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})
+        remove-debt-token (fn [{{:keys [number-of-tokens]} :debt :as tokens}]
+                            (if (< 1 number-of-tokens)
+                              (update-in tokens [:debt :number-of-tokens] dec)
+                              (dissoc tokens :debt)))]
+    (-> game
+        (update-in [:players player-no :debt] ut/plus 1)
+        (update-in [:supply idx :tokens] remove-debt-token)
+        (update-in [:supply idx] ut/dissoc-if-empty :tokens))))
+
+(defn- tax-put-debt [game {:keys [card-name]}]
+  (let [{:keys [idx]} (ut/get-pile-idx game :supply card-name)]
+    (-> game
+        (update-in [:supply idx :tokens :debt :number-of-tokens] ut/plus 2)
+        (assoc-in [:supply idx :tokens :debt :on-buy] [[::take-debt]]))))
+
+(defn- tax-setup [game _]
+  (update game :supply (partial mapv (fn [pile]
+                                       (assoc-in pile [:tokens :debt] {:number-of-tokens 1
+                                                                       :on-buy           [[::take-debt]]})))))
+
+(effects/register {::take-debt    take-debt
+                   ::tax-put-debt tax-put-debt
+                   ::tax-setup    tax-setup})
+
+(def tax {:name   :tax
+          :set    :empires
+          :type   :event
+          :cost   2
+          :on-buy [[:give-choice {:text    "Add 2 Debt to at Supply pile."
+                                  :choice  ::tax-put-debt
+                                  :options [:supply]
+                                  :min     1
+                                  :max     1}]]
+          :setup  [[::tax-setup]]})
+
 (defn- triumph-gain-estate [game {:keys [player-no]}]
   (let [{:keys [pile-size]} (ut/get-pile-idx game :estate)
         gained-cards (->> (get-in game [:players player-no :gained-cards])
@@ -1058,6 +1095,7 @@
              dominate
              ritual
              salt-the-earth
+             tax
              triumph
              wedding
              windfall])

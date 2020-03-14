@@ -3125,6 +3125,75 @@
                          :vp-tokens 1}]
               :trash   [province]})))))
 
+(deftest tax-test
+  (testing "Tax"
+    (testing "setup"
+      (is (= (-> {:events  {:tax tax}
+                  :supply  [{:card copper :pile-size 46}
+                            {:card silver :pile-size 40}
+                            {:card gold :pile-size 30}
+                            {:card engineer :pile-size 10}]
+                  :players [{}]}
+                 setup-game)
+             {:events  {:tax tax}
+              :supply  [{:card copper :pile-size 46 :tokens {:debt {:number-of-tokens 1
+                                                                    :on-buy           [[::empires/take-debt]]}}}
+                        {:card silver :pile-size 40 :tokens {:debt {:number-of-tokens 1
+                                                                    :on-buy           [[::empires/take-debt]]}}}
+                        {:card gold :pile-size 30 :tokens {:debt {:number-of-tokens 1
+                                                                  :on-buy           [[::empires/take-debt]]}}}
+                        {:card engineer :pile-size 10 :tokens {:debt {:number-of-tokens 1
+                                                                      :on-buy           [[::empires/take-debt]]}}}]
+              :players [{}]}))
+      (let [silver (assoc silver :id 1)]
+        (is (= (-> {:events  {:tax tax}
+                    :supply  [{:card silver :pile-size 40 :tokens {:debt {:number-of-tokens 1
+                                                                          :on-buy           [[::empires/take-debt]]}}}]
+                    :players [{:coins 3
+                               :buys  1}]}
+                   (buy-card 0 :silver))
+               {:events  {:tax tax}
+                :supply  [{:card silver :pile-size 39}]
+                :players [{:discard [silver]
+                           :coins   0
+                           :debt    1
+                           :buys    0}]}))
+        (is (= (-> {:events  {:tax tax}
+                    :supply  [{:card silver :pile-size 40 :tokens {:debt {:number-of-tokens 2
+                                                                          :on-buy           [[::empires/take-debt]]}}}]
+                    :players [{:coins 3
+                               :buys  1}]}
+                   (buy-card 0 :silver))
+               {:events  {:tax tax}
+                :supply  [{:card silver :pile-size 39}]
+                :players [{:discard [silver]
+                           :coins   0
+                           :debt    2
+                           :buys    0}]}))
+        (is (= (-> {:events  {:tax tax}
+                    :supply  [{:card silver :pile-size 40}]
+                    :players [{:coins 2
+                               :buys  1}]}
+                   (buy-event 0 :tax)
+                   (choose :silver))
+               {:events  {:tax tax}
+                :supply  [{:card silver :pile-size 40 :tokens {:debt {:number-of-tokens 2
+                                                                      :on-buy           [[::empires/take-debt]]}}}]
+                :players [{:coins 0
+                           :buys  0}]}))
+        (is (= (-> {:events  {:tax tax}
+                    :supply  [{:card silver :pile-size 40 :tokens {:debt {:number-of-tokens 1
+                                                                          :on-buy           [[::empires/take-debt]]}}}]
+                    :players [{:coins 2
+                               :buys  1}]}
+                   (buy-event 0 :tax)
+                   (choose :silver))
+               {:events  {:tax tax}
+                :supply  [{:card silver :pile-size 40 :tokens {:debt {:number-of-tokens 3
+                                                                      :on-buy           [[::empires/take-debt]]}}}]
+                :players [{:coins 0
+                           :buys  0}]}))))))
+
 (deftest triumph-test
   (let [estate (assoc estate :id 0)]
     (testing "Triumph"
