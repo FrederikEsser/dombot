@@ -5,7 +5,9 @@
 
 (defn give-actions [game {:keys [player-no arg]}]
   (assert (get-in game [:players player-no :actions]) (str ":actions is not specified for player " player-no))
-  (update-in game [:players player-no :actions] + arg))
+  (let [{:keys [ignore-actions?]} (get-in game [:players player-no])]
+    (cond-> game
+            (not ignore-actions?) (update-in [:players player-no :actions] + arg))))
 
 (effects/register {:give-actions give-actions})
 
@@ -76,10 +78,14 @@
 
 (effects/register {:play-from-hand play-from-hand})
 
-(defn play-from-revealed [game {:keys [card-name] :as args}]
-  (cond-> game
-          card-name (move-card (merge args {:from :revealed
-                                            :to   :play-area}))))
+(defn play-from-revealed [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :revealed] {:name card-name})]
+    (cond-> game
+            card-name (push-effect-stack {:player-no player-no
+                                          :effects   [[:move-card {:card-name card-name
+                                                                   :from      :revealed
+                                                                   :to        :play-area}]
+                                                      [:card-effect {:card card}]]}))))
 
 
 (effects/register {:play-from-revealed play-from-revealed})

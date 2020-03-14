@@ -58,6 +58,24 @@
                        :effects  [[::livery-on-gain]]}
              :setup   [[:setup-extra-cards {:extra-cards [{:card horse :pile-size 30}]}]]})
 
+(defn- kiln-on-play [game {:keys [player-no card] :as args}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:give-choice {:text    (str "You may gain a copy of " (ut/format-name (:name card)) ".")
+                                                      :choice  :gain
+                                                      :options [:supply {:names #{(:name card)}}]
+                                                      :max     1}]]}))
+
+(effects/register {::kiln-on-play kiln-on-play})
+
+(def kiln {:name    :kiln
+           :set     :menagerie
+           :types   #{:action}
+           :cost    5
+           :effects [[:give-coins 2]]
+           :trigger {:event    :play-card
+                     :duration :once-turn
+                     :effects  [[::kiln-on-play]]}})
+
 (def mastermind {:name    :mastermind
                  :set     :menagerie
                  :types   #{:action :duration}
@@ -69,6 +87,66 @@
                                                      :choice  [:repeat-action {:times 3}]
                                                      :options [:player :hand {:type :action}]
                                                      :max     1}]]}})
+
+(defn scrap-choices [game {:keys [player-no choice choices]}]
+  (assert (or choices choice) "No choices specified for scrap.")
+  (let [choices (or choices [choice])]
+    (assert (apply distinct? choices) "The choices must be different.")
+    (push-effect-stack game {:player-no player-no
+                             :effects   [(when (:card (set choices)) [:draw 1])
+                                         (when (:action (set choices)) [:give-actions 1])
+                                         (when (:buy (set choices)) [:give-buys 1])
+                                         (when (:coin (set choices)) [:give-coins 1])
+                                         (when (:silver (set choices)) [:gain {:card-name :silver}])
+                                         (when (:horse (set choices)) [:gain {:card-name :horse
+                                                                              :from      :extra-cards}])]})))
+
+(defn scrap-trash [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        {:keys [coin-cost]} (ut/get-cost game card)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (concat
+                                          [[:trash-from-hand {:card-name card-name}]]
+                                          (when (pos? coin-cost)
+                                            [[:give-choice {:text    (str "Choose " (ut/number->text coin-cost) ":")
+                                                            :choice  ::scrap-choices
+                                                            :options [:special
+                                                                      {:option :card :text "+1 Card"}
+                                                                      {:option :action :text "+1 Action"}
+                                                                      {:option :buy :text "+1 Buy"}
+                                                                      {:option :coin :text "+$1"}
+                                                                      {:option :silver :text "Gain a Silver"}
+                                                                      {:option :horse :text "Gain a Horse"}]
+                                                            :min     coin-cost
+                                                            :max     coin-cost}]]))})))
+
+(effects/register {::scrap-choices scrap-choices
+                   ::scrap-trash   scrap-trash})
+
+(def scrap {:name    :scrap
+            :set     :menagerie
+            :types   #{:action}
+            :cost    3
+            :effects [[:give-choice {:text    "Trash a card from your hand."
+                                     :choice  ::scrap-trash
+                                     :options [:player :hand]
+                                     :min     1
+                                     :max     1}]]
+            :setup   [[:setup-extra-cards {:extra-cards [{:card horse :pile-size 30}]}]]})
+
+(defn- ignore-actions [game {:keys [player-no]}]
+  (assoc-in game [:players player-no :ignore-actions?] true))
+
+(effects/register {::ignore-actions ignore-actions})
+
+(def snowy-village {:name    :snowy-village
+                    :set     :menagerie
+                    :types   #{:action}
+                    :cost    3
+                    :effects [[:draw 1]
+                              [:give-actions 4]
+                              [:give-buys 1]
+                              [::ignore-actions]]})
 
 (def supplies {:name       :supplies
                :set        :menagerie
@@ -113,8 +191,11 @@
                                                 :max     1}]]})
 
 (def kingdom-cards [barge
+                    kiln
                     livery
                     mastermind
+                    scrap
+                    snowy-village
                     supplies
                     village-green])
 
@@ -152,6 +233,29 @@
                :cost   5
                :on-buy [[::commerce-gain-gold]]})
 
+(defn- gamble-handle-revealed [game {:keys [player-no]}]
+  (let [{:keys [name] :as card} (get-in game [:players player-no :revealed 0])
+        types (ut/get-types game card)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (if (or (:treasure types)
+                                                (:action types))
+                                          [[:give-choice {:text    (str "You may play the revealed " (ut/format-name name) ".")
+                                                          :choice  :play-from-revealed
+                                                          :options [:player :revealed {:name name}]
+                                                          :max     1}]]
+                                          [[:discard-from-revealed {:card-name name}]])})))
+
+(effects/register {::gamble-handle-revealed gamble-handle-revealed})
+
+(def gamble {:name   :gamble
+             :set    :menagerie
+             :type   :event
+             :cost   2
+             :on-buy [[:give-buys 1]
+                      [:reveal-from-deck 1]
+                      [::gamble-handle-revealed]
+                      [:topdeck-all-revealed]]})
+
 (defn- populate-gain-actions [{:keys [supply] :as game} {:keys [player-no]}]
   (let [action-cards (->> supply
                           (map (comp :card ut/access-top-card))
@@ -169,6 +273,23 @@
                :type   :event
                :cost   10
                :on-buy [[::populate-gain-actions]]})
+
+(defn- stampeding-horses [game {:keys [player-no]}]
+  (let [cards-in-play (->> (get-in game [:players player-no :play-area])
+                           count)]
+    (cond-> game
+            (<= cards-in-play 5) (push-effect-stack {:player-no player-no
+                                                     :effects   (repeat 5 [:gain-to-topdeck {:card-name :horse
+                                                                                             :from      :extra-cards}])}))))
+
+(effects/register {::stampeding-horses stampeding-horses})
+
+(def stampede {:name   :stampede
+               :set    :menagerie
+               :type   :event
+               :cost   5
+               :on-buy [[::stampeding-horses]]
+               :setup  [[:setup-extra-cards {:extra-cards [{:card horse :pile-size 30}]}]]})
 
 (defn- toil-play-action [game {:keys [player-no card-name]}]
   (let [{card :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
@@ -191,5 +312,7 @@
 
 (def events [alliance
              commerce
+             gamble
              populate
+             stampede
              toil])

@@ -134,13 +134,11 @@
              :overpay ::doctor-overpay})
 
 (defn- herald-play-action [game {:keys [player-no]}]
-  (let [revealed (get-in game [:players player-no :revealed])
-        {:keys [name] :as card} (first revealed)
-        types    (ut/get-types game card)]
+  (let [{:keys [name] :as card} (get-in game [:players player-no :revealed 0])
+        types (ut/get-types game card)]
     (push-effect-stack game {:player-no player-no
                              :effects   (if (and card (:action types))
-                                          [[:play-from-revealed {:card-name name}]
-                                           [:card-effect {:card card}]]
+                                          [[:play-from-revealed {:card-name name}]]
                                           [[:topdeck-all-revealed]])})))
 
 (defn- herald-overpay [game {:keys [player-no amount]}]

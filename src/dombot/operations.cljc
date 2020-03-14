@@ -946,7 +946,7 @@
   ([game {:keys [player-no card-name]}]
    (play game player-no card-name))
   ([{:keys [effect-stack] :as game} player-no card-name]
-   (let [{:keys [phase actions actions-played triggers]
+   (let [{:keys [phase actions triggers]
           :or   {phase :action}} (get-in game [:players player-no])
          {{:keys [effects coin-value trigger] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
          types      (ut/get-types game card)
@@ -981,11 +981,12 @@
            (push-effect-stack {:player-no player-no
                                :effects   (concat [[:move-card {:card-name card-name
                                                                 :from      :hand
-                                                                :to        :play-area}]
-                                                   [:card-effect {:card card}]]
+                                                                :to        :play-area}]]
                                                   (when (:action types)
                                                     (get-play-triggers :play-action card triggers))
-                                                  (get-play-triggers [:play card-name] card triggers))})
+                                                  (get-play-triggers [:play card-name] card triggers)
+                                                  (get-play-triggers :play-card card triggers)
+                                                  [[:card-effect {:card card}]])})
            check-stack)))))
 
 (effects/register {:play play})
@@ -1072,7 +1073,8 @@
                                 (dissoc :hand
                                         :actions-played
                                         :bought-events
-                                        :fortune-doubled?)
+                                        :fortune-doubled?
+                                        :ignore-actions?)
                                 (update :play-area (partial filter (partial ut/stay-in-play game player-no)))
                                 (ut/dissoc-if-empty :play-area)
                                 (assoc :actions 0
