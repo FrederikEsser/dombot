@@ -983,6 +983,24 @@
                                              :min     1
                                              :max     1}]]})
 
+(defn- triumph-gain-estate [game {:keys [player-no]}]
+  (let [{:keys [pile-size]} (ut/get-pile-idx game :estate)
+        gained-cards (->> (get-in game [:players player-no :gained-cards])
+                          count
+                          inc)]
+    (cond-> game
+            (pos? pile-size) (push-effect-stack {:player-no player-no
+                                                 :effects   [[:gain {:card-name :estate}]
+                                                             [:give-victory-points gained-cards]]}))))
+
+(effects/register {::triumph-gain-estate triumph-gain-estate})
+
+(def triumph {:name   :triumph
+              :set    :empires
+              :type   :event
+              :cost   {:debt-cost 5}
+              :on-buy [[::triumph-gain-estate]]})
+
 (def wedding {:name   :wedding
               :set    :empires
               :type   :event
@@ -1014,6 +1032,7 @@
              dominate
              ritual
              salt-the-earth
+             triumph
              wedding
              windfall])
 
