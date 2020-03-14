@@ -64,6 +64,13 @@
   (let [vcoll (vec coll)]
     (vec (concat (subvec vcoll 0 pos) (subvec vcoll (inc pos))))))
 
+(defn coll-diff [coll1 coll2]
+  (->>
+    [coll1 coll2]
+    (map frequencies)
+    (apply merge-with -)
+    (mapcat (fn [[x n]] (repeat n x)))))
+
 (defn frequencies-of [coll key]
   (->> coll
        (map key)

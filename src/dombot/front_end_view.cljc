@@ -87,11 +87,11 @@
     (->> events
          vals
          (map (fn [{:keys [name type cost]}]
-                (let [{:keys [coin-cost]} (ut/normalize-cost cost)]
+                (let [{:keys [coin-cost] :as mixed-cost} (ut/normalize-cost cost)]
                   (merge {:name       name
                           :name-ui    (ut/format-name name)
                           :type       type
-                          :mixed-cost cost}
+                          :mixed-cost mixed-cost}
                          (when (and (#{:action :pay :buy} phase)
                                     (not choice)
                                     buys (pos? buys)

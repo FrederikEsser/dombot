@@ -615,8 +615,14 @@
                                                 on-shuffle
                                                 after)})))
 
-(effects/register {:do-shuffle do-shuffle
-                   :shuffle    shuffle-discard})
+(defn shuffle-deck [game {:keys [player-no]}]
+  (let [deck (get-in game [:players player-no :deck])]
+    (cond-> game
+            deck (update-in [:players player-no :deck] shuffle))))
+
+(effects/register {:do-shuffle   do-shuffle
+                   :shuffle      shuffle-discard
+                   :shuffle-deck shuffle-deck})
 
 (defn peek-deck [game {:keys [player-no arg]}]
   (let [{:keys [deck discard]} (get-in game [:players player-no])]

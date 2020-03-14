@@ -892,6 +892,31 @@
                                       :options [:player :hand {:type :action}]
                                       :max     1}]]})
 
+(defn- annex-move-cards [game {:keys [player-no card-name card-names]}]
+  (let [card-names       (cond card-names card-names
+                               card-name [card-name]
+                               :else [])
+        other-card-names (ut/coll-diff (map :name (get-in game [:players player-no :discard]))
+                                       card-names)]
+    (cond-> game
+            (not-empty other-card-names) (push-effect-stack {:player-no player-no
+                                                             :effects   [[:move-cards {:card-names other-card-names
+                                                                                       :from       :discard
+                                                                                       :to         :deck}]]}))))
+
+(effects/register {::annex-move-cards annex-move-cards})
+
+(def annex {:name   :annex
+            :set    :empires
+            :type   :event
+            :cost   {:debt-cost 8}
+            :on-buy [[:give-choice {:text    "Shuffle all but up to 5 cards from your discard pile into your deck."
+                                    :choice  ::annex-move-cards
+                                    :options [:player :discard]
+                                    :max     5}]
+                     [:shuffle-deck]
+                     [:gain {:card-name :duchy}]]})
+
 (def banquet {:name   :banquet
               :set    :empires
               :type   :event
@@ -1026,6 +1051,7 @@
                :on-buy [[::windfall-gain-gold]]})
 
 (def events [advance
+             annex
              banquet
              conquest
              delve

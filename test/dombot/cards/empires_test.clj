@@ -2767,6 +2767,133 @@
                          :coins 0
                          :buys  0}]})))))
 
+(deftest annex-test
+  (let [duchy (assoc duchy :id 0)]
+    (testing "Annex"
+      (is (= (-> {:events  {:annex annex}
+                  :supply  [{:card duchy :pile-size 8}]
+                  :players [{:deck  [copper silver gold]
+                             :coins 0
+                             :buys  1}]}
+                 (buy-event 0 :annex))
+             {:events  {:annex annex}
+              :supply  [{:card duchy :pile-size 7}]
+              :players [{:deck    [silver copper gold]
+                         :discard [duchy]
+                         :coins   0
+                         :debt    8
+                         :buys    0}]}))
+      (is (= (-> {:events  {:annex annex}
+                  :supply  [{:card duchy :pile-size 7}]
+                  :players [{:discard [duchy]
+                             :coins   0
+                             :buys    1}]}
+                 (buy-event 0 :annex)
+                 (choose :duchy))
+             {:events  {:annex annex}
+              :supply  [{:card duchy :pile-size 6}]
+              :players [{:discard [duchy duchy]
+                         :coins   0
+                         :debt    8
+                         :buys    0}]}))
+      (is (= (-> {:events  {:annex annex}
+                  :supply  [{:card duchy :pile-size 7}]
+                  :players [{:discard [gold]
+                             :coins   0
+                             :buys    1}]}
+                 (buy-event 0 :annex)
+                 (choose nil))
+             {:events  {:annex annex}
+              :supply  [{:card duchy :pile-size 6}]
+              :players [{:deck    [gold]
+                         :discard [duchy]
+                         :coins   0
+                         :debt    8
+                         :buys    0}]}))
+      (is (= (-> {:events  {:annex annex}
+                  :supply  [{:card duchy :pile-size 7}]
+                  :players [{:discard [estate estate]
+                             :coins   0
+                             :buys    1}]}
+                 (buy-event 0 :annex)
+                 (choose [:estate :estate]))
+             {:events  {:annex annex}
+              :supply  [{:card duchy :pile-size 6}]
+              :players [{:discard [estate estate duchy]
+                         :coins   0
+                         :debt    8
+                         :buys    0}]}))
+      (is (= (-> {:events  {:annex annex}
+                  :supply  [{:card duchy :pile-size 7}]
+                  :players [{:discard [silver silver]
+                             :coins   0
+                             :buys    1}]}
+                 (buy-event 0 :annex)
+                 (choose nil))
+             {:events  {:annex annex}
+              :supply  [{:card duchy :pile-size 6}]
+              :players [{:deck    [silver silver]
+                         :discard [duchy]
+                         :coins   0
+                         :debt    8
+                         :buys    0}]}))
+      (is (= (-> {:events  {:annex annex}
+                  :supply  [{:card duchy :pile-size 8}]
+                  :players [{:discard [silver silver estate duchy province copper silver]
+                             :coins   0
+                             :buys    1}]}
+                 (buy-event 0 :annex)
+                 (choose [:estate :duchy :province :copper]))
+             {:events  {:annex annex}
+              :supply  [{:card duchy :pile-size 7}]
+              :players [{:deck    [silver silver silver]
+                         :discard [estate duchy province copper duchy]
+                         :coins   0
+                         :debt    8
+                         :buys    0}]}))
+      (is (= (-> {:events  {:annex annex}
+                  :supply  [{:card duchy :pile-size 8}]
+                  :players [{:deck    (repeat 2 copper)
+                             :discard (concat (repeat 2 silver)
+                                              (repeat 2 gold)
+                                              (repeat 6 estate))
+                             :coins   0
+                             :buys    1}]}
+                 (buy-event 0 :annex)
+                 (choose (repeat 5 :estate)))
+             {:events  {:annex annex}
+              :supply  [{:card duchy :pile-size 7}]
+              :players [{:deck    [silver estate silver copper gold gold copper]
+                         :discard (concat (repeat 5 estate) [duchy])
+                         :coins   0
+                         :debt    8
+                         :buys    0}]}))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:events  {:annex annex}
+                                 :supply  [{:card duchy :pile-size 8}]
+                                 :players [{:deck    (repeat 2 copper)
+                                            :discard (concat (repeat 2 silver)
+                                                             (repeat 2 gold)
+                                                             (repeat 6 estate))
+                                            :coins   0
+                                            :buys    1}]}
+                                (buy-event 0 :annex)
+                                (choose (repeat 6 :estate)))))
+      (is (= (-> {:events  {:annex annex}
+                  :supply  [{:card duchy :pile-size 0}]
+                  :players [{:discard [gold gold gold duchy duchy duchy]
+                             :coins   0
+                             :buys    1}]}
+                 (buy-event 0 :annex)
+                 (choose [:duchy :duchy :duchy]))
+             {:events  {:annex annex}
+              :supply  [{:card duchy :pile-size 0}]
+              :players [{:deck    [gold gold gold]
+                         :discard [duchy duchy duchy]
+                         :coins   0
+                         :debt    8
+                         :buys    0}]})))))
+
 (deftest banquet-test
   (let [copper    (assoc copper :id 0)
         legionary (assoc legionary :id 1)]
