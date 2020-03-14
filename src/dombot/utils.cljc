@@ -36,10 +36,12 @@
        (map format-name)
        (s/join "/")))
 
-(defn format-cost [{:keys [coin-cost debt-cost]} & [{buy-cost :coin-cost}]]
+(defn format-cost [{:keys [coin-cost debt-cost]
+                    :or   {coin-cost 0
+                           debt-cost 0}} & [{buy-cost :coin-cost}]]
   (str (when (or (pos? coin-cost)
-                 (not debt-cost)) (str "$" coin-cost))
-       (when debt-cost (str "d" debt-cost))
+                 (zero? debt-cost)) (str "$" coin-cost))
+       (when (pos? debt-cost) (str "d" debt-cost))
        (when buy-cost (str "/" buy-cost))))
 
 (defn number->text [n]

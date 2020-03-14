@@ -497,7 +497,7 @@
                             (- coins debt)
                             coins)
          {:keys [card pile-size] :as supply-pile} (ut/get-pile-idx game card-name)
-         {:keys [coin-cost debt-cost]} (ut/get-buy-cost game player-no card)
+         {:keys [coin-cost debt-cost] :as buy-cost} (ut/get-buy-cost game player-no card)
          {:keys [overpay]} card
          on-buy-effects   (get-on-buy-effects game player-no card-name)
          overpay-effects  (when (and overpay (pos? (- coins-after-debt coin-cost)))
@@ -509,7 +509,7 @@
      (assert (empty? effect-stack) "You can't buy cards when you have a choice to make.")
      (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
      (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))
-     (assert (and coins-after-debt coin-cost (>= coins-after-debt coin-cost)) (str "Buy error: " (ut/format-name card-name) " costs " coin-cost " and you only have " coins-after-debt " coins."))
+     (assert (and coins-after-debt coin-cost (>= coins-after-debt coin-cost)) (str "Buy error: " (ut/format-name card-name) " costs " (ut/format-cost buy-cost) " and you only have " coins-after-debt " coins."))
      (assert (and pile-size (pos? pile-size)) (str "Buy error: " (ut/format-name card-name) " supply is empty."))
      (assert (ut/card-buyable? game player-no card) (str (ut/format-name card-name) " can't be bought."))
      (when phase
@@ -568,18 +568,21 @@
         coins-after-debt (if (and coins debt)
                            (- coins debt)
                            coins)
-        {:keys [cost on-buy once-per-turn] :as event} (get-in game [:events event-name])]
+        {:keys [cost on-buy once-per-turn] :as event} (get-in game [:events event-name])
+        {:keys [coin-cost debt-cost]} (ut/normalize-cost cost)]
     (assert (empty? effect-stack) "You can't buy events when you have a choice to make.")
     (when phase
       (assert (#{:action :pay :buy} phase) (str "You can't buy events when you're in the " (ut/format-name phase) " phase.")))
     (assert event (str "Buy error: The Event " (ut/format-name event-name) " isn't in the game."))
     (assert (and buys (> buys 0)) "Buy error: You have no more buys.")
-    (assert (and coins-after-debt cost (>= coins-after-debt cost)) (str "Buy error: " (ut/format-name event-name) " costs " cost " and you only have " coins-after-debt " coins."))
+    (assert (and coins-after-debt coin-cost (>= coins-after-debt coin-cost)) (str "Buy error: " (ut/format-name event-name) " costs " (ut/format-cost cost) " and you only have " coins-after-debt " coins."))
     (when once-per-turn
       (assert (not (contains? bought-events event-name)) (str "Buy error: Event " (ut/format-name event-name) " can only be bought once per turn.")))
     (-> game
         (cond-> debt (-> (update-in [:players player-no :coins] - debt)
-                         (update-in [:players player-no] dissoc :debt))) (update-in [:players player-no :coins] - cost)
+                         (update-in [:players player-no] dissoc :debt)))
+        (update-in [:players player-no :coins] - coin-cost)
+        (cond-> (pos? debt-cost) (update-in [:players player-no :debt] ut/plus debt-cost))
         (update-in [:players player-no :buys] - 1)
         (cond-> once-per-turn (update-in [:players player-no :bought-events] (comp set #(conj % event-name))))
         (push-effect-stack {:player-no player-no

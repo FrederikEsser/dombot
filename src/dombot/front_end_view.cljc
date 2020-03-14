@@ -40,7 +40,7 @@
                   (merge {:name            name
                           :name-ui         (ut/format-name name)
                           :types           types
-                          :card-cost       cost
+                          :mixed-cost      cost
                           :number-of-cards pile-size}
                          (when (and total-pile-size
                                     (> total-pile-size pile-size))
@@ -75,7 +75,7 @@
                 (merge {:name            name
                         :name-ui         (ut/format-name name)
                         :types           types
-                        :card-cost       cost
+                        :mixed-cost      cost
                         :number-of-cards number-of-cards}
                        (choice-interaction name :extra-cards choice)))))))
 
@@ -87,17 +87,18 @@
     (->> events
          vals
          (map (fn [{:keys [name type cost]}]
-                (merge {:name    name
-                        :name-ui (ut/format-name name)
-                        :type    type
-                        :cost    cost}
-                       (when (and (#{:action :pay :buy} phase)
-                                  (not choice)
-                                  buys (pos? buys)
-                                  coins (<= cost coins)
-                                  (not debt)
-                                  (not (contains? bought-events name)))
-                         {:interaction :buyable})))))))
+                (let [{:keys [coin-cost]} (ut/normalize-cost cost)]
+                  (merge {:name       name
+                          :name-ui    (ut/format-name name)
+                          :type       type
+                          :mixed-cost cost}
+                         (when (and (#{:action :pay :buy} phase)
+                                    (not choice)
+                                    buys (pos? buys)
+                                    coins (<= coin-cost coins)
+                                    (not debt)
+                                    (not (contains? bought-events name)))
+                           {:interaction :buyable}))))))))
 
 (defn view-landmarks [{:keys [landmarks]}]
   (->> landmarks

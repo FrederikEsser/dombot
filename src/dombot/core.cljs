@@ -81,7 +81,7 @@
 (defn view-card
   ([card]
    (view-card nil card))
-  ([max {:keys [name name-ui choice-value types card-cost buy-cost set-aside number-of-cards total-number-of-cards
+  ([max {:keys [name name-ui choice-value types mixed-cost buy-cost set-aside number-of-cards total-number-of-cards
                 interaction tokens bane?] :as card}]
    (if (map? card)
      (let [selection       (:selection @state)
@@ -117,14 +117,14 @@
                                   " "))
                 name-ui
                 (when bane? " - Bane")
-                (when card-cost (str " (" (ut/format-cost card-cost buy-cost) ")"))
+                (when mixed-cost (str " (" (ut/format-cost mixed-cost buy-cost) ")"))
                 (when set-aside (str " (" (string/join ", " set-aside) ")"))
                 (when number-of-cards (str " x" number-of-cards))
                 (when total-number-of-cards (str "(" total-number-of-cards ")")))]]))
      card)))
 
 (defn view-event
-  [{:keys [name name-ui type cost interaction]}]
+  [{:keys [name name-ui type mixed-cost interaction]}]
   (let [disabled (nil? interaction)]
     [:div
      [:button {:style    (button-style disabled #{type} 1)
@@ -133,7 +133,7 @@
                            (fn [] (case interaction
                                     :buyable (swap! state assoc :game (cmd/buy-event name)))))}
       (str name-ui
-           (when cost (str " ($" cost ")")))]]))
+           (when mixed-cost (str " (" (ut/format-cost mixed-cost) ")")))]]))
 
 (defn view-landmark
   [{:keys [name-ui type vp-tokens chosen-cards]}]

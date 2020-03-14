@@ -983,6 +983,14 @@
                                              :min     1
                                              :max     1}]]})
 
+(def wedding {:name   :wedding
+              :set    :empires
+              :type   :event
+              :cost   {:coin-cost 4
+                       :debt-cost 3}
+              :on-buy [[:give-victory-points 1]
+                       [:gain {:card-name :gold}]]})
+
 (defn- windfall-gain-gold [game {:keys [player-no]}]
   (let [deck    (get-in game [:players player-no :deck])
         discard (get-in game [:players player-no :discard])]
@@ -1006,6 +1014,7 @@
              dominate
              ritual
              salt-the-earth
+             wedding
              windfall])
 
 (defn- setup-landmark-vp [{:keys [players] :as game} {:keys [landmark-name]}]

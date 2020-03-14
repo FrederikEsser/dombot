@@ -130,7 +130,7 @@
                                             first)))
                                frequencies
                                (mapcat random-landscape)
-                               (sort-by (juxt :cost :name)))
+                               (sort-by (juxt (comp (juxt :coin-cost :debt-cost) ut/normalize-cost :cost) :name)))
         events            (->> landscape
                                (filter (comp #{:event} :type))
                                (map (fn [{:keys [name] :as event}]

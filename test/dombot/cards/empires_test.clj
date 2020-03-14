@@ -2998,6 +2998,54 @@
                          :coins 0
                          :buys  0}]})))))
 
+(deftest wedding-test
+  (let [gold (assoc gold :id 0)]
+    (testing "Wedding"
+      (is (= (-> {:events  {:wedding wedding}
+                  :supply  [{:card gold :pile-size 30}]
+                  :players [{:coins 4
+                             :buys  1}]}
+                 (buy-event 0 :wedding))
+             {:events  {:wedding wedding}
+              :supply  [{:card gold :pile-size 29}]
+              :players [{:discard   [gold]
+                         :coins     0
+                         :debt      3
+                         :buys      0
+                         :vp-tokens 1}]}))
+      (is (= (-> {:events  {:wedding wedding}
+                  :supply  [{:card gold :pile-size 30}]
+                  :players [{:coins 7
+                             :buys  1}]}
+                 (buy-event 0 :wedding))
+             {:events  {:wedding wedding}
+              :supply  [{:card gold :pile-size 29}]
+              :players [{:discard   [gold]
+                         :coins     3
+                         :debt      3
+                         :buys      0
+                         :vp-tokens 1}]}))
+      (is (thrown-with-msg? AssertionError #"Buy error:"
+                            (-> {:events  {:wedding wedding}
+                                 :supply  [{:card gold :pile-size 30}]
+                                 :players [{:coins 4
+                                            :debt  1
+                                            :buys  1}]}
+                                (buy-event 0 :wedding))))
+      (is (= (-> {:events  {:wedding wedding}
+                  :supply  [{:card gold :pile-size 30}]
+                  :players [{:coins 5
+                             :debt  1
+                             :buys  1}]}
+                 (buy-event 0 :wedding))
+             {:events  {:wedding wedding}
+              :supply  [{:card gold :pile-size 29}]
+              :players [{:discard   [gold]
+                         :coins     0
+                         :debt      3
+                         :buys      0
+                         :vp-tokens 1}]})))))
+
 (deftest windfall-test
   (let [gold (assoc gold :id 0)]
     (testing "windfall"

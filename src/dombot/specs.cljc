@@ -36,13 +36,13 @@
 
 (s/def ::debt-cost nat-int?)
 
-(s/def ::card-cost (s/keys :req-un [::coin-cost]
-                           :opt-un [::debt-cost]))
+(s/def ::mixed-cost (s/keys :req-un [::coin-cost]
+                            :opt-un [::debt-cost]))
 
 (s/def ::card (s/keys :req-un [::name
                                ::name-ui
                                ::types]
-                      :opt-un [::card-cost
+                      :opt-un [::mixed-cost
                                ::number-of-cards
                                ::interaction
                                ::choice-value
@@ -60,7 +60,7 @@
 (s/def ::events (s/coll-of (s/keys :req-un [::name
                                             ::name-ui
                                             ::type
-                                            ::cost]
+                                            ::mixed-cost]
                                    :opt-un [::interaction])))
 
 (s/def ::chosen-cards (s/coll-of ::name))

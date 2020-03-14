@@ -61,7 +61,7 @@
                                                     :buys  0}]}
                                         0 :copper))))
       (testing "player has not enough coins"
-        (is (thrown-with-msg? AssertionError #"Buy error: Silver costs 3 and you only have 2 coins."
+        (is (thrown-with-msg? AssertionError #"Buy error: Silver costs \$3 and you only have 2 coins"
                               (buy-card {:supply  [{:card {:name :silver :cost 3} :pile-size 40}]
                                          :players [{:coins 2
                                                     :buys  1}]}
