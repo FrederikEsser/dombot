@@ -446,12 +446,14 @@
                       :trigger   (merge encampment-trigger {:set-aside set-aside})}))))
 
 (defn- encampment-set-aside [game {:keys [player-no card-id card-name]}]
-  (cond-> game
-          (nil? card-name) (push-effect-stack {:player-no player-no
-                                               :effects   [[:move-card {:move-card-id card-id
-                                                                        :from         :play-area
-                                                                        :to           :encampment-set-aside}]
-                                                           [::encampment-add-trigger]]})))
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
+    (cond-> game
+            (and card
+                 (nil? card-name)) (push-effect-stack {:player-no player-no
+                                                       :effects   [[:move-card {:move-card-id card-id
+                                                                                :from         :play-area
+                                                                                :to           :encampment-set-aside}]
+                                                                   [::encampment-add-trigger]]}))))
 
 (defn- encampment-reveal-money [game {:keys [player-no] :as args}]
   (let [hand (get-in game [:players player-no :hand])]
