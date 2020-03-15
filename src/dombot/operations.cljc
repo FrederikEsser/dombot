@@ -1008,8 +1008,8 @@
 
 (effects/register {:play-treasures play-treasures})
 
-(defn- all-cards [{:keys [deck discard hand play-area island-mat native-village-mat tavern-mat triggers]}]
-  (let [cards           (concat deck discard hand play-area island-mat native-village-mat tavern-mat)
+(defn- all-cards [{:keys [deck discard hand play-area island-mat native-village-mat tavern-mat exile triggers]}]
+  (let [cards           (concat deck discard hand play-area island-mat native-village-mat tavern-mat exile)
         set-aside-cards (mapcat :set-aside triggers)]
     (concat cards set-aside-cards)))
 
@@ -1023,7 +1023,7 @@
   (update game :players (partial mapv (fn [player]
                                         (-> player
                                             (assoc :hand (all-cards player))
-                                            (dissoc :deck :discard :play-area :island-mat :native-village-mat)
+                                            (dissoc :deck :discard :play-area :island-mat :native-village-mat :exile)
                                             (assoc :phase :end-of-game))))))
 
 (defn calculate-victory-points [{:keys [landmarks] :as game}]

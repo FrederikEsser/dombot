@@ -13,6 +13,63 @@
                       [:give-actions 1]
                       [:return-this-to-supply {:area :extra-cards}]]})
 
+(defn- exile-this [game {:keys [player-no card-id]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:move-card {:move-card-id card-id
+                                                              :from         :play-area
+                                                              :to           :exile}]]}))))
+
+(defn- exile-from-supply [game {:keys [player-no card-name]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:move-card {:card-name card-name
+                                                    :from      :supply
+                                                    :to        :exile}]]}))
+
+(defn- exile-from-hand [game {:keys [player-no card-name]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:move-card {:card-name card-name
+                                                    :from      :hand
+                                                    :to        :exile}]]}))
+
+(defn- discard-from-exile [game {:keys [player-no card-name]}]
+  (if card-name
+    (let [card-names (->> (get-in game [:players player-no :exile])
+                          (map :name)
+                          (filter #{card-name}))]
+      (push-effect-stack game {:player-no player-no
+                               :effects   [[:move-cards {:card-names card-names
+                                                         :from       :exile
+                                                         :to         :discard}]]}))
+    game))
+
+(defn- exile-on-gain [game {:keys [player-no card-name]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:give-choice {:text    (str "You may discard all copies of " (ut/format-name card-name) " from Exile.")
+                                                      :choice  ::discard-from-exile
+                                                      :options [:player :exile {:names #{card-name}}]
+                                                      :max     1}]]}))
+
+(def exile-trigger {:name     :exile
+                    :event    :on-gain
+                    :duration :game
+                    :effects  [[::exile-on-gain]]})
+
+(defn- add-exile-trigger [game {:keys [player-no]}]
+  (let [trigger-exists? (->> (get-in game [:players player-no :triggers])
+                             (some (comp #{:exile} :name)))]
+    (cond-> game
+            (not trigger-exists?) (push-effect-stack {:player-no player-no
+                                                      :effects   [[:add-trigger {:trigger exile-trigger}]]}))))
+
+(effects/register {::exile-this         exile-this
+                   ::exile-from-supply  exile-from-supply
+                   ::exile-from-hand    exile-from-hand
+                   ::discard-from-exile discard-from-exile
+                   ::exile-on-gain      exile-on-gain
+                   ::add-exile-trigger  add-exile-trigger})
+
 (defn- barge-choice [game {:keys [player-no card-id choice]}]
   (let [effects [[:draw 3]
                  [:give-buys 1]]]
@@ -38,6 +95,58 @@
                                                {:option :next-turn :text "Next turn"}]
                                      :min     1
                                      :max     1}]]})
+
+(defn- bounty-hunter-exile [game {:keys [player-no card-name]}]
+  (let [already-exiled? (->> (get-in game [:players player-no :exile])
+                             (some (comp #{card-name} :name)))]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (concat [[::exile-from-hand {:card-name card-name}]]
+                                                (when-not already-exiled?
+                                                  [[:give-coins 3]]))})))
+
+(effects/register {::bounty-hunter-exile bounty-hunter-exile})
+
+(def bounty-hunter {:name    :bounty-hunter
+                    :set     :menagerie
+                    :types   #{:action}
+                    :cost    4
+                    :effects [[:give-actions 1]
+                              [:give-choice {:text    "Exile a card from your hand."
+                                             :choice  ::bounty-hunter-exile
+                                             :options [:player :hand]
+                                             :min     1
+                                             :max     1}]]
+                    :setup   [[:all-players {:effects [[::add-exile-trigger]]}]]})
+
+(def camel-train {:name    :camel-train
+                  :set     :menagerie
+                  :types   #{:action}
+                  :cost    3
+                  :effects [[:give-choice {:text    "Exile a non-Victory card from the Supply."
+                                           :choice  ::exile-from-supply
+                                           :options [:supply {:not-type :victory}]
+                                           :min     1
+                                           :max     1}]]
+                  :on-gain [[::exile-from-supply {:card-name :gold}]]
+                  :setup   [[:all-players {:effects [[::add-exile-trigger]]}]]})
+
+(defn- coven-curse [game {:keys [player-no]}]
+  (let [{:keys [pile-size]} (ut/get-pile-idx game :curse)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (if (pos? pile-size)
+                                          [[::exile-from-supply {:card-name :curse}]]
+                                          [[::discard-from-exile {:card-name :curse}]])})))
+
+(effects/register {::coven-curse coven-curse})
+
+(def coven {:name    :coven
+            :set     :menagerie
+            :types   #{:action :attack}
+            :cost    5
+            :effects [[:give-actions 1]
+                      [:give-coins 2]
+                      [:attack {:effects [[::coven-curse]]}]]
+            :setup   [[:all-players {:effects [[::add-exile-trigger]]}]]})
 
 (defn- livery-on-gain [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})
@@ -148,6 +257,15 @@
                               [:give-buys 1]
                               [::ignore-actions]]})
 
+(def stockpile {:name       :stockpile
+                :set        :menagerie
+                :types      #{:treasure}
+                :cost       3
+                :coin-value 3
+                :effects    [[:give-buys 1]
+                             [::exile-this]]
+                :setup      [[:all-players {:effects [[::add-exile-trigger]]}]]})
+
 (def supplies {:name       :supplies
                :set        :menagerie
                :types      #{:treasure}
@@ -191,11 +309,15 @@
                                                 :max     1}]]})
 
 (def kingdom-cards [barge
+                    bounty-hunter
+                    camel-train
+                    coven
                     kiln
                     livery
                     mastermind
                     scrap
                     snowy-village
+                    stockpile
                     supplies
                     village-green])
 

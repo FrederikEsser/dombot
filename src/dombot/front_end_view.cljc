@@ -304,6 +304,7 @@
                             island-mat
                             native-village-mat
                             tavern-mat
+                            exile
                             pirate-ship-coins
                             vp-tokens
                             journey-token
@@ -338,6 +339,8 @@
                                   {:number-of-cards (count native-village-mat)})})
          (when (not-empty tavern-mat)
            {:tavern-mat (view-area :tavern-mat data)})
+         (when (not-empty exile)
+           {:exile-mat (view-area :exile data)})
          (when pirate-ship-coins
            {:pirate-ship-coins pirate-ship-coins})
          (when vp-tokens

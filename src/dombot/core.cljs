@@ -351,7 +351,7 @@
                                                 actions coins debt buys set-aside
                                                 coffers villagers artifacts states
                                                 island-mat native-village-mat pirate-ship-coins
-                                                boons tavern-mat journey-token
+                                                boons tavern-mat exile-mat journey-token
                                                 vp-tokens active? victory-points winner?]
                            {:keys [text
                                    options
@@ -488,6 +488,10 @@
                                                                                           "\nAre you sure you want to end your turn?")))
                                                                    (swap! state assoc :game (cmd/end-turn))))}
                                        "End Turn"])]])])
+                        (when exile-mat
+                          [:td
+                           [:div "Exile"]
+                           [:div (mapk (partial view-card max) exile-mat)]])
                         (when set-aside
                           [:td
                            [:div "Set aside"]

@@ -142,6 +142,8 @@
 
 (s/def ::tavern-mat ::cards)
 
+(s/def ::exile-mat ::cards)
+
 (s/def ::pirate-ship-coins nat-int?)
 
 (s/def ::vp-tokens nat-int?)
@@ -214,6 +216,7 @@
                                  ::pirate-ship-coins
                                  ::vp-tokens
                                  ::tavern-mat
+                                 ::exile-mat
                                  ::journey-token
                                  ::coffers
                                  ::villagers
