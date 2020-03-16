@@ -339,7 +339,7 @@
     (merge-with + card-cost added-cost)))
 
 (defn options-from-player
-  ([game player-no card-id area & [{:keys [last this id ids name names not-names type types reacts-to min-cost leaves-play]}]]
+  ([game player-no card-id area & [{:keys [last this id ids name names not-names type types reacts-to min-cost max-cost leaves-play]}]]
    (cond->> (get-in game [:players player-no area])
             last (take-last 1)                              ; it's important that 'last' is evaluated first
             this (filter (comp #{card-id} :id))
@@ -352,6 +352,7 @@
             reacts-to (filter (every-pred (comp #{reacts-to} :reacts-to)
                                           (partial can-react? game player-no)))
             min-cost (filter (comp (partial costs-at-least min-cost) (partial get-cost game)))
+            max-cost (filter (comp (partial costs-up-to max-cost) (partial get-cost game)))
             leaves-play (remove (partial stay-in-play game player-no))
             ids (filter (comp ids :id))
             :always (map :name))))

@@ -33,6 +33,12 @@
                                                     :from      :hand
                                                     :to        :exile}]]}))
 
+(defn- exile-from-revealed [game {:keys [player-no card-name]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:move-card {:card-name card-name
+                                                    :from      :revealed
+                                                    :to        :exile}]]}))
+
 (defn- discard-from-exile [game {:keys [player-no card-name]}]
   (if card-name
     (let [card-names (->> (get-in game [:players player-no :exile])
@@ -63,12 +69,13 @@
             (not trigger-exists?) (push-effect-stack {:player-no player-no
                                                       :effects   [[:add-trigger {:trigger exile-trigger}]]}))))
 
-(effects/register {::exile-this         exile-this
-                   ::exile-from-supply  exile-from-supply
-                   ::exile-from-hand    exile-from-hand
-                   ::discard-from-exile discard-from-exile
-                   ::exile-on-gain      exile-on-gain
-                   ::add-exile-trigger  add-exile-trigger})
+(effects/register {::exile-this          exile-this
+                   ::exile-from-supply   exile-from-supply
+                   ::exile-from-hand     exile-from-hand
+                   ::exile-from-revealed exile-from-revealed
+                   ::discard-from-exile  discard-from-exile
+                   ::exile-on-gain       exile-on-gain
+                   ::add-exile-trigger   add-exile-trigger})
 
 (defn- barge-choice [game {:keys [player-no card-id choice]}]
   (let [effects [[:draw 3]
@@ -117,6 +124,20 @@
                                              :min     1
                                              :max     1}]]
                     :setup   [[:all-players {:effects [[::add-exile-trigger]]}]]})
+
+(def cardinal {:name    :cardinal
+               :set     :menagerie
+               :types   #{:action :attack}
+               :cost    4
+               :effects [[:give-coins 2]
+                         [:attack {:effects [[:reveal-from-deck 2]
+                                             [:give-choice {:text    "Exile a revealed card costing from $3 to $6."
+                                                            :choice  ::exile-from-revealed
+                                                            :options [:player :revealed {:min-cost 3 :max-cost 6}]
+                                                            :min     1
+                                                            :max     1}]
+                                             [:discard-all-revealed]]}]]
+               :setup   [[:all-players {:effects [[::add-exile-trigger]]}]]})
 
 (def camel-train {:name    :camel-train
                   :set     :menagerie
@@ -311,6 +332,7 @@
 (def kingdom-cards [barge
                     bounty-hunter
                     camel-train
+                    cardinal
                     coven
                     kiln
                     livery
