@@ -377,6 +377,23 @@
                :cost   5
                :on-buy [[::commerce-gain-gold]]})
 
+(defn- desperation-gain-curse [game {:keys [player-no]}]
+  (let [{:keys [pile-size]} (ut/get-pile-idx game :curse)]
+    (cond-> game
+            (pos? pile-size) (push-effect-stack {:player-no player-no
+                                                 :effects   [[:gain {:card-name :curse}]
+                                                             [:give-buys 1]
+                                                             [:give-coins 2]]}))))
+
+(effects/register {::desperation-gain-curse desperation-gain-curse})
+
+(def desperation {:name          :desperation
+                  :set           :menagerie
+                  :type          :event
+                  :cost          0
+                  :once-per-turn true
+                  :on-buy        [[::desperation-gain-curse]]})
+
 (defn- gamble-handle-revealed [game {:keys [player-no]}]
   (let [{:keys [name] :as card} (get-in game [:players player-no :revealed 0])
         types (ut/get-types game card)]
@@ -456,6 +473,7 @@
 
 (def events [alliance
              commerce
+             desperation
              gamble
              populate
              stampede
