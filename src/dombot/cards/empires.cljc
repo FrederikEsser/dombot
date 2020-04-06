@@ -804,13 +804,6 @@
                        [::place-vp-token {:card-name :temple}]]
              :on-gain [[::take-vp-tokens {:card-name :temple}]]})
 
-(defn- villa-return-to-action-phase [game {:keys [player-no]}]
-  (let [phase (get-in game [:players player-no :phase])]
-    (cond-> game
-            (= :buy phase) (assoc-in [:players player-no :phase] :action))))
-
-(effects/register {::villa-return-to-action-phase villa-return-to-action-phase})
-
 (def villa {:name    :villa
             :set     :empires
             :types   #{:action}
@@ -820,7 +813,7 @@
                       [:give-coins 1]]
             :gain-to :hand
             :on-gain [[:give-actions 1]
-                      [::villa-return-to-action-phase]]})
+                      [:return-to-action-phase]]})
 
 (defn- wild-hunt-choice [game {:keys [player-no choice]}]
   (case choice

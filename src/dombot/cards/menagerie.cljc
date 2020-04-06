@@ -125,6 +125,18 @@
                                              :max     1}]]
                     :setup   [[:all-players {:effects [[::add-exile-trigger]]}]]})
 
+(def camel-train {:name    :camel-train
+                  :set     :menagerie
+                  :types   #{:action}
+                  :cost    3
+                  :effects [[:give-choice {:text    "Exile a non-Victory card from the Supply."
+                                           :choice  ::exile-from-supply
+                                           :options [:supply {:not-type :victory}]
+                                           :min     1
+                                           :max     1}]]
+                  :on-gain [[::exile-from-supply {:card-name :gold}]]
+                  :setup   [[:all-players {:effects [[::add-exile-trigger]]}]]})
+
 (def cardinal {:name    :cardinal
                :set     :menagerie
                :types   #{:action :attack}
@@ -139,17 +151,16 @@
                                              [:discard-all-revealed]]}]]
                :setup   [[:all-players {:effects [[::add-exile-trigger]]}]]})
 
-(def camel-train {:name    :camel-train
-                  :set     :menagerie
-                  :types   #{:action}
-                  :cost    3
-                  :effects [[:give-choice {:text    "Exile a non-Victory card from the Supply."
-                                           :choice  ::exile-from-supply
-                                           :options [:supply {:not-type :victory}]
-                                           :min     1
-                                           :max     1}]]
-                  :on-gain [[::exile-from-supply {:card-name :gold}]]
-                  :setup   [[:all-players {:effects [[::add-exile-trigger]]}]]})
+(def cavalry {:name    :cavalry
+              :set     :menagerie
+              :types   #{:action}
+              :cost    4
+              :effects [[:gain {:card-name :horse :from :extra-cards}]
+                        [:gain {:card-name :horse :from :extra-cards}]]
+              :on-gain [[:draw 2]
+                        [:give-buys 1]
+                        [:return-to-action-phase]]
+              :setup   [[:setup-extra-cards {:extra-cards [{:card horse :pile-size 30}]}]]})
 
 (defn- coven-curse [game {:keys [player-no]}]
   (let [{:keys [pile-size]} (ut/get-pile-idx game :curse)]
@@ -333,6 +344,7 @@
                     bounty-hunter
                     camel-train
                     cardinal
+                    cavalry
                     coven
                     kiln
                     livery

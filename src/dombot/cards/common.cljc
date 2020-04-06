@@ -598,6 +598,13 @@
 
 (effects/register {:mark-unbuyable mark-unbuyable})
 
+(defn return-to-action-phase [game {:keys [player-no]}]
+  (let [phase (get-in game [:players player-no :phase])]
+    (cond-> game
+            (= :buy phase) (assoc-in [:players player-no :phase] :action))))
+
+(effects/register {:return-to-action-phase return-to-action-phase})
+
 (defn add-artifact [game {:keys [artifact]}]
   (assoc-in game [:artifacts (:name artifact)] artifact))
 
