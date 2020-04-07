@@ -277,3 +277,111 @@
                              :deck      [horse]
                              :actions   0
                              :coins     1}]})))))
+
+(deftest bargain-test
+  (let [horse  (assoc horse :id 1)
+        livery (assoc livery :id 2)]
+    (testing "Bargain"
+      (is (= (-> {:events      {:bargain bargain}
+                  :extra-cards [{:card horse :pile-size 30}]
+                  :supply      [{:card livery :pile-size 10}]
+                  :players     [{:coins 4
+                                 :buys  1}
+                                {}
+                                {}]}
+                 (buy-event 0 :bargain)
+                 (choose :livery))
+             {:events      {:bargain bargain}
+              :extra-cards [{:card horse :pile-size 28}]
+              :supply      [{:card livery :pile-size 9}]
+              :players     [{:discard [livery]
+                             :coins   0
+                             :buys    0}
+                            {:discard [horse]}
+                            {:discard [horse]}]}))
+      (is (= (-> {:events      {:bargain bargain}
+                  :extra-cards [{:card horse :pile-size 1}]
+                  :supply      [{:card duchy :pile-size 8}]
+                  :players     [{:coins 4
+                                 :buys  1}
+                                {}
+                                {}]}
+                 (buy-event 0 :bargain))
+             {:events      {:bargain bargain}
+              :extra-cards [{:card horse :pile-size 0}]
+              :supply      [{:card duchy :pile-size 8}]
+              :players     [{:coins 0
+                             :buys  0}
+                            {:discard [horse]}
+                            {}]})))))
+
+(deftest demand-test
+  (let [horse    (assoc horse :id 1)
+        cardinal (assoc cardinal :id 2)]
+    (testing "Demand"
+      (is (= (-> {:events      {:demand demand}
+                  :extra-cards [{:card horse :pile-size 30}]
+                  :supply      [{:card cardinal :pile-size 10}]
+                  :players     [{:deck  [copper]
+                                 :coins 5
+                                 :buys  1}]}
+                 (buy-event 0 :demand)
+                 (choose :cardinal))
+             {:events      {:demand demand}
+              :extra-cards [{:card horse :pile-size 29}]
+              :supply      [{:card cardinal :pile-size 9}]
+              :players     [{:deck  [cardinal horse copper]
+                             :coins 0
+                             :buys  0}]})))))
+
+(deftest ride-test
+  (let [horse (assoc horse :id 1)]
+    (testing "Ride"
+      (is (= (-> {:events      {:ride ride}
+                  :extra-cards [{:card horse :pile-size 30}]
+                  :players     [{:coins 2
+                                 :buys  1}]}
+                 (buy-event 0 :ride))
+             {:events      {:ride ride}
+              :extra-cards [{:card horse :pile-size 29}]
+              :players     [{:discard [horse]
+                             :coins   0
+                             :buys    0}]})))))
+
+(deftest stampede-test
+  (let [horse (assoc horse :id 1)]
+    (testing "Stampede"
+      (is (= (-> {:events      {:stampede stampede}
+                  :extra-cards [{:card horse :pile-size 30}]
+                  :players     [{:coins 5
+                                 :buys  1}]}
+                 (buy-event 0 :stampede))
+             {:events      {:stampede stampede}
+              :extra-cards [{:card horse :pile-size 25}]
+              :players     [{:deck  (repeat 5 horse)
+                             :coins 0
+                             :buys  0}]}))
+      (is (= (-> {:events      {:stampede stampede}
+                  :extra-cards [{:card horse :pile-size 3}]
+                  :players     [{:play-area (repeat 5 copper)
+                                 :deck      [silver]
+                                 :coins     5
+                                 :buys      1}]}
+                 (buy-event 0 :stampede))
+             {:events      {:stampede stampede}
+              :extra-cards [{:card horse :pile-size 0}]
+              :players     [{:play-area (repeat 5 copper)
+                             :deck      [horse horse horse silver]
+                             :coins     0
+                             :buys      0}]}))
+      (is (= (-> {:events      {:stampede stampede}
+                  :extra-cards [{:card horse :pile-size 30}]
+                  :players     [{:play-area (repeat 6 copper)
+                                 :coins     5
+                                 :buys      1}]}
+                 (buy-event 0 :stampede))
+             {:events      {:stampede stampede}
+              :extra-cards [{:card horse :pile-size 30}]
+              :players     [{:play-area (repeat 6 copper)
+                             :coins     0
+                             :buys      0}]})))))

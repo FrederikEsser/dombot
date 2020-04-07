@@ -372,6 +372,20 @@
                :cost   10
                :on-buy [[::alliance-gain-base-cards]]})
 
+(def bargain {:name   :bargain
+              :set    :menagerie
+              :type   :event
+              :cost   4
+              :on-buy [[:give-choice {:text    "Gain a non-Victory card costing up to $5."
+                                      :choice  :gain
+                                      :options [:supply {:not-type :victory
+                                                         :max-cost 5}]
+                                      :min     1
+                                      :max     1}]
+                       [:other-players {:effects [[:gain {:card-name :horse
+                                                          :from      :extra-cards}]]}]]
+              :setup  [[:setup-extra-cards {:extra-cards [{:card horse :pile-size 30}]}]]})
+
 (defn- commerce-gain-gold [game {:keys [player-no]}]
   (let [gained-cards (->> (get-in game [:players player-no :gained-cards])
                           (map :name)
@@ -388,6 +402,23 @@
                :type   :event
                :cost   5
                :on-buy [[::commerce-gain-gold]]})
+
+(def demand {:name   :demand
+             :set    :menagerie
+             :type   :event
+             :cost   5
+             :on-buy [[:gain {:card-name   :horse
+                              :from        :extra-cards
+                              :to          :deck
+                              :to-position :top}]
+                      [:give-choice {:text    "Gain a card costing up to $4 onto your deck."
+                                     :choice  [:gain {:to          :deck
+                                                      :to-position :top}]
+                                     :options [:supply {:not-type :victory
+                                                        :max-cost 4}]
+                                     :min     1
+                                     :max     1}]]
+             :setup  [[:setup-extra-cards {:extra-cards [{:card horse :pile-size 30}]}]]})
 
 (defn- desperation-gain-curse [game {:keys [player-no]}]
   (let [{:keys [pile-size]} (ut/get-pile-idx game :curse)]
@@ -447,6 +478,14 @@
                :cost   10
                :on-buy [[::populate-gain-actions]]})
 
+(def ride {:name   :ride
+           :set    :menagerie
+           :type   :event
+           :cost   2
+           :on-buy [[:gain {:card-name :horse
+                            :from      :extra-cards}]]
+           :setup  [[:setup-extra-cards {:extra-cards [{:card horse :pile-size 30}]}]]})
+
 (defn- stampeding-horses [game {:keys [player-no]}]
   (let [cards-in-play (->> (get-in game [:players player-no :play-area])
                            count)]
@@ -484,9 +523,12 @@
                                    :max     1}]]})
 
 (def events [alliance
+             bargain
              commerce
+             demand
              desperation
              gamble
              populate
+             ride
              stampede
              toil])
