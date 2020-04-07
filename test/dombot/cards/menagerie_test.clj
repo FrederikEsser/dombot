@@ -14,6 +14,164 @@
 
 (use-fixtures :each fixture)
 
+(deftest exile-test
+  (let [gold (assoc gold :id 1)]
+    (testing "Camel Train"
+      (is (= (-> {:supply  [{:card gold :pile-size 29}]
+                  :players [{:exile    [gold]
+                             :triggers [(assoc exile-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :gold})
+                 (choose :gold))
+             {:supply  [{:card gold :pile-size 28}]
+              :players [{:discard  [gold gold]
+                         :triggers [(assoc exile-trigger :id 1)]}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 28}]
+                  :players [{:exile    [gold gold]
+                             :triggers [(assoc exile-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :gold})
+                 (choose :gold))
+             {:supply  [{:card gold :pile-size 27}]
+              :players [{:discard  [gold gold gold]
+                         :triggers [(assoc exile-trigger :id 1)]}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 29}]
+                  :players [{:exile    [gold]
+                             :triggers [(assoc exile-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :gold})
+                 (choose nil))
+             {:supply  [{:card gold :pile-size 28}]
+              :players [{:discard  [gold]
+                         :exile    [gold]
+                         :triggers [(assoc exile-trigger :id 1)]}]})))))
+
+(deftest bounty-hunter-test
+  (let [bounty-hunter (assoc bounty-hunter :id 0)]
+    (testing "Bounty Huunter"
+      (is (= (-> {:players [{:hand    [bounty-hunter copper]
+                             :actions 1
+                             :coins   0
+                             :phase   :action}]}
+                 (play 0 :bounty-hunter)
+                 (choose :copper))
+             {:players [{:play-area [bounty-hunter]
+                         :exile     [copper]
+                         :actions   1
+                         :coins     3
+                         :phase     :action}]}))
+      (is (= (-> {:players [{:hand    [bounty-hunter copper]
+                             :exile   [copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :bounty-hunter)
+                 (choose :copper))
+             {:players [{:play-area [bounty-hunter]
+                         :exile     [copper copper]
+                         :actions   1
+                         :coins     0}]}))
+      (is (= (-> {:players [{:hand    [bounty-hunter estate]
+                             :exile   [copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :bounty-hunter)
+                 (choose :estate))
+             {:players [{:play-area [bounty-hunter]
+                         :exile     [copper estate]
+                         :actions   1
+                         :coins     3}]}))
+      (is (= (-> {:players [{:hand    [bounty-hunter]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :bounty-hunter))
+             {:players [{:play-area [bounty-hunter]
+                         :actions   1
+                         :coins     0}]}))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:players [{:hand    [bounty-hunter gold]
+                                            :actions 1
+                                            :coins   0
+                                            :buys    1}]}
+                                (play 0 :bounty-hunter)
+                                (choose nil)))))))
+
+(deftest camel-train-test
+  (let [camel-train (assoc camel-train :id 0)
+        gold        (assoc gold :id 1)]
+    (testing "Camel Train"
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [camel-train]
+                             :actions 1}]}
+                 (play 0 :camel-train)
+                 (choose :gold))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:play-area [camel-train]
+                         :exile     [gold]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:hand    [camel-train]
+                             :actions 1}]}
+                 (play 0 :camel-train))
+             {:supply  [{:card duchy :pile-size 8}]
+              :players [{:play-area [camel-train]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}
+                            {:card camel-train :pile-size 10}]
+                  :players [{}]}
+                 (gain {:player-no 0 :card-name :camel-train}))
+             {:supply  [{:card gold :pile-size 29}
+                        {:card camel-train :pile-size 9}]
+              :players [{:discard [camel-train]
+                         :exile   [gold]}]})))))
+
+(deftest cardinal-test
+  (let [cardinal (assoc cardinal :id 0)]
+    (testing "Cardinal"
+      (is (= (-> {:players [{:hand    [cardinal]
+                             :actions 1
+                             :coins   0}
+                            {:deck [silver estate]}]}
+                 (play 0 :cardinal)
+                 (choose :silver))
+             {:players [{:play-area [cardinal]
+                         :actions   0
+                         :coins     2}
+                        {:exile          [silver]
+                         :discard        [estate]
+                         :revealed-cards {:discard 1
+                                          :exile   1}}]}))
+      (is (= (-> {:players [{:hand    [cardinal]
+                             :actions 1
+                             :coins   0}
+                            {:deck [gold province]}]}
+                 (play 0 :cardinal)
+                 (choose :gold))
+             {:players [{:play-area [cardinal]
+                         :actions   0
+                         :coins     2}
+                        {:exile          [gold]
+                         :discard        [province]
+                         :revealed-cards {:discard 1
+                                          :exile   1}}]}))
+      (is (= (-> {:players [{:hand    [cardinal]
+                             :actions 1
+                             :coins   0}
+                            {:deck [estate province]}]}
+                 (play 0 :cardinal))
+             {:players [{:play-area [cardinal]
+                         :actions   0
+                         :coins     2}
+                        {:discard        [estate province]
+                         :revealed-cards {:discard 2}}]}))
+      (is (= (-> {:players [{:hand    [cardinal]
+                             :actions 1
+                             :coins   0}
+                            {:deck [silver]}]}
+                 (play 0 :cardinal)
+                 (choose :silver))
+             {:players [{:play-area [cardinal]
+                         :actions   0
+                         :coins     2}
+                        {:exile          [silver]
+                         :revealed-cards {:exile 1}}]})))))
+
 (deftest cavalry-test
   (let [cavalry (assoc cavalry :id 0)
         horse   (assoc horse :id 1)]
@@ -82,6 +240,57 @@
                            :coins     0
                            :buys      2
                            :phase     :action}]}))))))
+
+(deftest coven-test
+  (let [coven (assoc coven :id 0)
+        curse (assoc curse :id 1)]
+    (testing "Coven"
+      (is (= (-> {:supply  [{:card curse :pile-size 10}]
+                  :players [{:hand    [coven]
+                             :actions 1
+                             :coins   0}
+                            {}]}
+                 (play 0 :coven))
+             {:supply  [{:card curse :pile-size 9}]
+              :players [{:play-area [coven]
+                         :actions   1
+                         :coins     2}
+                        {:exile [curse]}]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 1}]
+                  :players [{:hand    [coven]
+                             :actions 1
+                             :coins   0}
+                            {:exile (repeat 5 curse)}]}
+                 (play 0 :coven))
+             {:supply  [{:card curse :pile-size 0}]
+              :players [{:play-area [coven]
+                         :actions   1
+                         :coins     2}
+                        {:exile (repeat 6 curse)}]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 0}]
+                  :players [{:hand    [coven]
+                             :actions 1
+                             :coins   0}
+                            {:exile (repeat 6 curse)}]}
+                 (play 0 :coven))
+             {:supply  [{:card curse :pile-size 0}]
+              :players [{:play-area [coven]
+                         :actions   1
+                         :coins     2}
+                        {:discard (repeat 6 curse)}]}))
+      (is (= (-> {:supply  [{:card curse :pile-size 1}]
+                  :players [{:hand    [coven]
+                             :actions 1
+                             :coins   0}
+                            {:exile (repeat 6 curse)}
+                            {:exile (repeat 6 curse)}]}
+                 (play 0 :coven))
+             {:supply  [{:card curse :pile-size 0}]
+              :players [{:play-area [coven]
+                         :actions   1
+                         :coins     2}
+                        {:exile (repeat 7 curse)}
+                        {:discard (repeat 6 curse)}]})))))
 
 (deftest horse-test
   (let [horse (assoc horse :id 1)]
@@ -190,6 +399,42 @@
                              :triggers  [(get-trigger livery)
                                          (get-trigger livery 2)]}]})))))
 
+(deftest sanctuary-test
+  (let [sanctuary (assoc sanctuary :id 0)]
+    (testing "Sanctuary"
+      (is (= (-> {:players [{:hand    [sanctuary]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :sanctuary)
+                 (choose nil))
+             {:players [{:hand      [copper]
+                         :play-area [sanctuary]
+                         :deck      [copper]
+                         :actions   1
+                         :coins     0
+                         :buys      2}]}))
+      (is (= (-> {:players [{:hand    [sanctuary]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :sanctuary)
+                 (choose :copper))
+             {:players [{:play-area [sanctuary]
+                         :deck      [copper]
+                         :exile     [copper]
+                         :actions   1
+                         :coins     0
+                         :buys      2}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:supply  [{:card sanctuary :pile-size 10}]
+                  :players [{}]}
+                 setup-game)
+             {:supply  [{:card sanctuary :pile-size 10}]
+              :players [{:triggers [(assoc exile-trigger :id 1)]}]})))))
+
 (deftest scrap-test
   (let [scrap  (assoc scrap :id 0)
         horse  (assoc horse :id 1)
@@ -262,6 +507,21 @@
                              :coins     1
                              :buys      2}]
               :trash       [gold]})))))
+
+(deftest stockpile-test
+  (let [stockpile (assoc stockpile :id 0)]
+    (testing "Stockpile"
+      (is (= (-> {:players [{:hand    [stockpile]
+                             :actions 0
+                             :coins   0
+                             :buys    1
+                             :phase   :action}]}
+                 (play 0 :stockpile))
+             {:players [{:exile   [stockpile]
+                         :actions 0
+                         :coins   3
+                         :buys    2
+                         :phase   :pay}]})))))
 
 (deftest supplies-test
   (let [supplies (assoc supplies :id 0)

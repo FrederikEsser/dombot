@@ -28,10 +28,11 @@
                                                     :to        :exile}]]}))
 
 (defn- exile-from-hand [game {:keys [player-no card-name]}]
-  (push-effect-stack game {:player-no player-no
-                           :effects   [[:move-card {:card-name card-name
-                                                    :from      :hand
-                                                    :to        :exile}]]}))
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:move-card {:card-name card-name
+                                                                 :from      :hand
+                                                                 :to        :exile}]]})))
 
 (defn- exile-from-revealed [game {:keys [player-no card-name]}]
   (push-effect-stack game {:player-no player-no
@@ -229,6 +230,19 @@
                                                      :options [:player :hand {:type :action}]
                                                      :max     1}]]}})
 
+(def sanctuary {:name    :sanctuary
+                :set     :menagerie
+                :types   #{:action}
+                :cost    5
+                :effects [[:draw 1]
+                          [:give-actions 1]
+                          [:give-buys 1]
+                          [:give-choice {:text    "You may Exile a card from your hand."
+                                         :choice  ::exile-from-hand
+                                         :options [:player :hand]
+                                         :max     1}]]
+                :setup   [[:all-players {:effects [[::add-exile-trigger]]}]]})
+
 (defn scrap-choices [game {:keys [player-no choice choices]}]
   (assert (or choices choice) "No choices specified for scrap.")
   (let [choices (or choices [choice])]
@@ -349,6 +363,7 @@
                     kiln
                     livery
                     mastermind
+                    sanctuary
                     scrap
                     snowy-village
                     stockpile
