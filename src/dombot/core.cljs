@@ -81,20 +81,23 @@
 (defn view-card
   ([card]
    (view-card nil card))
-  ([max {:keys [name name-ui choice-value types mixed-cost buy-cost set-aside number-of-cards total-number-of-cards
+  ([max {:keys [name name-ui choice-value choice-opts types mixed-cost buy-cost set-aside number-of-cards total-number-of-cards
                 interaction tokens bane?] :as card}]
    (if (map? card)
      (let [selection       (:selection @state)
            num-selected    (->> selection (filter #{name choice-value}) count)
-           number-of-cards (if (= :choosable interaction)
+           number-of-cards (if (and (= :choosable interaction)
+                                    (not (:leave-in-play-area choice-opts)))
                              (let [num (- (or number-of-cards 1) num-selected)]
                                (if (= 1 num) nil num))
                              number-of-cards)
            disabled        (or (nil? interaction)
                                (and (= :choosable interaction)
                                     (= (count selection) max))
-                               (and (= :unique-choosable interaction)
-                                    (some #{name choice-value} selection)))]
+                               (and (:unique choice-opts)
+                                    (some #{name choice-value} selection))
+                               (and (:similar choice-opts)
+                                    (some (comp not #{name choice-value}) selection)))]
        (when-not (and (= :choosable interaction)
                       (= 0 number-of-cards))
          [:div
@@ -104,7 +107,6 @@
                                 (fn [] (case interaction
                                          :playable (swap! state assoc :game (cmd/play name))
                                          :choosable (select! (or choice-value name))
-                                         :unique-choosable (select! (or choice-value name))
                                          :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name)))
                                          :buyable (swap! state assoc :game (cmd/buy name)))))}
            (str (when tokens (str (->> tokens

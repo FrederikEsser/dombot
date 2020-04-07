@@ -3,11 +3,12 @@
             [dombot.specs :as specs]
             [clojure.spec.alpha :as s]))
 
-(defn- choice-interaction [name area {:keys [source options max unique?]}]
-  (let [interaction (cond
-                      (= 1 (or max (count options))) {:interaction :quick-choosable}
-                      unique? {:interaction :unique-choosable}
-                      :else {:interaction :choosable})]
+(defn- choice-interaction [name area {:keys [source options max choice-opts]}]
+  (let [interaction (if (= 1 (or max (count options)))
+                      {:interaction :quick-choosable}
+                      (merge {:interaction    :choosable}
+                             (when choice-opts
+                               {:choice-opts choice-opts})))]
     (cond
       (and (= area source) ((set options) name)) interaction
       (= :mixed source) (let [card-names (->> options

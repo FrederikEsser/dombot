@@ -2605,7 +2605,7 @@
               :players [{:play-area [temple]
                          :actions   0
                          :vp-tokens 1}]}))
-      (is (thrown-with-msg? AssertionError #"Choose error: All choices must be different: Copper, Copper, Estate"
+      (is (thrown-with-msg? AssertionError #"Choose error:"
                             (-> {:supply  [{:card temple :pile-size 9}]
                                  :players [{:hand    [temple copper copper estate]
                                             :actions 1}]}

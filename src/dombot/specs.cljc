@@ -14,7 +14,7 @@
 
 (s/def ::number-of-cards nat-int?)
 
-(s/def ::interaction #{:buyable :playable :choosable :quick-choosable :unique-choosable :spendable})
+(s/def ::interaction #{:buyable :playable :choosable :quick-choosable :spendable})
 
 (s/def ::area #{:hand :play-area :tavern-mat :projects :artifacts :boons})
 
@@ -22,6 +22,10 @@
 
 (s/def ::choice-value (s/keys :req-un [::area
                                        ::card-name]))
+
+(s/def ::choice-option #{:unique :similar :leave-in-play-area})
+
+(s/def ::choice-opts (s/coll-of ::choice-option))
 
 (s/def ::stay-in-play boolean?)
 
@@ -46,6 +50,7 @@
                                ::number-of-cards
                                ::interaction
                                ::choice-value
+                               ::choice-opts
                                ::stay-in-play
                                ::tokens]))
 

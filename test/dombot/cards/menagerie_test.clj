@@ -6,6 +6,7 @@
             [dombot.cards.common :refer :all]
             [dombot.cards.menagerie :as menagerie :refer :all]
             [dombot.cards.dominion :refer [throne-room workshop]]
+            [dombot.cards.intrigue :refer [nobles]]
             [dombot.cards.kingdom :refer [setup-game]]
             [dombot.utils :as ut]))
 
@@ -538,6 +539,66 @@
                              :actions   0
                              :coins     1}]})))))
 
+(deftest banish-test
+  (testing "Banish"
+    (is (= (-> {:events  {:banish banish}
+                :players [{:hand  [copper copper estate]
+                           :coins 4
+                           :buys  1}]}
+               (buy-event 0 :banish)
+               (choose [:copper :copper]))
+           {:events  {:banish banish}
+            :players [{:hand  [estate]
+                       :exile [copper copper]
+                       :coins 0
+                       :buys  0}]}))
+    (is (= (-> {:events  {:banish banish}
+                :players [{:hand  [copper copper estate]
+                           :coins 4
+                           :buys  1}]}
+               (buy-event 0 :banish)
+               (choose [:copper]))
+           {:events  {:banish banish}
+            :players [{:hand  [copper estate]
+                       :exile [copper]
+                       :coins 0
+                       :buys  0}]}))
+    (is (= (-> {:events  {:banish banish}
+                :players [{:hand  [copper copper estate]
+                           :coins 4
+                           :buys  1}]}
+               (buy-event 0 :banish)
+               (choose :estate))
+           {:events  {:banish banish}
+            :players [{:hand  [copper copper]
+                       :exile [estate]
+                       :coins 0
+                       :buys  0}]}))
+    (is (= (-> {:events  {:banish banish}
+                :players [{:hand  [copper copper estate]
+                           :coins 4
+                           :buys  1}]}
+               (buy-event 0 :banish)
+               (choose nil))
+           {:events  {:banish banish}
+            :players [{:hand  [copper copper estate]
+                       :coins 0
+                       :buys  0}]}))
+    (is (= (-> {:events  {:banish banish}
+                :players [{:coins 4
+                           :buys  1}]}
+               (buy-event 0 :banish))
+           {:events  {:banish banish}
+            :players [{:coins 0
+                       :buys  0}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:events  {:banish banish}
+                               :players [{:hand  [copper copper estate]
+                                          :coins 4
+                                          :buys  1}]}
+                              (buy-event 0 :banish)
+                              (choose [:copper :copper :estate]))))))
+
 (deftest bargain-test
   (let [horse  (assoc horse :id 1)
         livery (assoc livery :id 2)]
@@ -594,6 +655,24 @@
                              :coins 0
                              :buys  0}]})))))
 
+(deftest enclave-test
+  (let [gold  (assoc gold :id 1)
+        duchy (assoc duchy :id 2)]
+    (testing "Enclave"
+      (is (= (-> {:events  {:enclave enclave}
+                  :supply  [{:card duchy :pile-size 8}
+                            {:card gold :pile-size 30}]
+                  :players [{:coins 8
+                             :buys  1}]}
+                 (buy-event 0 :enclave))
+             {:events  {:enclave enclave}
+              :supply  [{:card duchy :pile-size 7}
+                        {:card gold :pile-size 29}]
+              :players [{:discard [gold]
+                         :exile   [duchy]
+                         :coins   0
+                         :buys    0}]})))))
+
 (deftest ride-test
   (let [horse (assoc horse :id 1)]
     (testing "Ride"
@@ -645,3 +724,69 @@
               :players     [{:play-area (repeat 6 copper)
                              :coins     0
                              :buys      0}]})))))
+
+(deftest transport-test
+  (let [livery (assoc livery :id 1)
+        nobles (assoc nobles :id 2)]
+    (testing "Transport"
+      (is (= (-> {:events  {:transport transport}
+                  :supply  [{:card livery :pile-size 10}]
+                  :players [{:coins 3
+                             :buys  1}]}
+                 (buy-event 0 :transport)
+                 (choose :exile)
+                 (choose :livery))
+             {:events  {:transport transport}
+              :supply  [{:card livery :pile-size 9}]
+              :players [{:exile [livery]
+                         :coins 0
+                         :buys  0}]}))
+      (is (= (-> {:events  {:transport transport}
+                  :supply  [{:card nobles :pile-size 10}]
+                  :players [{:coins 3
+                             :buys  1}]}
+                 (buy-event 0 :transport)
+                 (choose :exile)
+                 (choose :nobles))
+             {:events  {:transport transport}
+              :supply  [{:card nobles :pile-size 9}]
+              :players [{:exile [nobles]
+                         :coins 0
+                         :buys  0}]}))
+      (is (= (-> {:events  {:transport transport}
+                  :supply  [{:card duchy :pile-size 8}]
+                  :players [{:coins 3
+                             :buys  1}]}
+                 (buy-event 0 :transport)
+                 (choose :exile))
+             {:events  {:transport transport}
+              :supply  [{:card duchy :pile-size 8}]
+              :players [{:coins 0
+                         :buys  0}]}))
+      (is (= (-> {:events  {:transport transport}
+                  :supply  [{:card livery :pile-size 9}]
+                  :players [{:exile [livery]
+                             :coins 3
+                             :buys  1}]}
+                 (buy-event 0 :transport)
+                 (choose :deliver)
+                 (choose :livery))
+             {:events  {:transport transport}
+              :supply  [{:card livery :pile-size 9}]
+              :players [{:deck [livery]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:events  {:transport transport}
+                  :supply  [{:card livery :pile-size 9}]
+                  :players [{:exile [livery livery]
+                             :coins 3
+                             :buys  1}]}
+                 (buy-event 0 :transport)
+                 (choose :deliver)
+                 (choose :livery))
+             {:events  {:transport transport}
+              :supply  [{:card livery :pile-size 9}]
+              :players [{:deck [livery]
+                         :exile [livery]
+                         :coins   0
+                         :buys    0}]})))))

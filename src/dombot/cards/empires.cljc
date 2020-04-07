@@ -795,12 +795,12 @@
              :types   #{:action :gathering}
              :cost    4
              :effects [[:give-victory-points 1]
-                       [:give-choice {:text    "Trash from 1 to 3 differently named cards from your hand."
-                                      :choice  :trash-from-hand
-                                      :options [:player :hand]
-                                      :unique? true
-                                      :min     1
-                                      :max     3}]
+                       [:give-choice {:text        "Trash from 1 to 3 differently named cards from your hand."
+                                      :choice      :trash-from-hand
+                                      :choice-opts #{:unique}
+                                      :options     [:player :hand]
+                                      :min         1
+                                      :max         3}]
                        [::place-vp-token {:card-name :temple}]]
              :on-gain [[::take-vp-tokens {:card-name :temple}]]})
 

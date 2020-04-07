@@ -1,5 +1,5 @@
 (ns dombot.cards.menagerie
-  (:require [dombot.operations :refer [push-effect-stack gain]]
+  (:require [dombot.operations :refer [push-effect-stack gain give-choice]]
             [dombot.cards.common :refer []]
             [dombot.cards.dominion :as dominion]
             [dombot.utils :as ut]
@@ -27,12 +27,14 @@
                                                     :from      :supply
                                                     :to        :exile}]]}))
 
-(defn- exile-from-hand [game {:keys [player-no card-name]}]
-  (cond-> game
-          card-name (push-effect-stack {:player-no player-no
-                                        :effects   [[:move-card {:card-name card-name
-                                                                 :from      :hand
-                                                                 :to        :exile}]]})))
+(defn- exile-from-hand [game {:keys [player-no card-name card-names]}]
+  (let [card-names (cond card-name [card-name]
+                         card-names card-names)]
+    (cond-> game
+            card-names (push-effect-stack {:player-no player-no
+                                           :effects   [[:move-cards {:card-names card-names
+                                                                     :from       :hand
+                                                                     :to         :exile}]]}))))
 
 (defn- exile-from-revealed [game {:keys [player-no card-name]}]
   (push-effect-stack game {:player-no player-no
@@ -50,6 +52,14 @@
                                                          :from       :exile
                                                          :to         :discard}]]}))
     game))
+
+(defn- topdeck-from-exile [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:move-card {:card-name   card-name
+                                                                 :from        :exile
+                                                                 :to          :deck
+                                                                 :to-position :top}]]})))
 
 (defn- exile-on-gain [game {:keys [player-no card-name]}]
   (push-effect-stack game {:player-no player-no
@@ -75,6 +85,7 @@
                    ::exile-from-hand     exile-from-hand
                    ::exile-from-revealed exile-from-revealed
                    ::discard-from-exile  discard-from-exile
+                   ::topdeck-from-exile  topdeck-from-exile
                    ::exile-on-gain       exile-on-gain
                    ::add-exile-trigger   add-exile-trigger})
 
@@ -387,6 +398,16 @@
                :cost   10
                :on-buy [[::alliance-gain-base-cards]]})
 
+(def banish {:name   :banish
+             :set    :menagerie
+             :type   :event
+             :cost   4
+             :on-buy [[:give-choice {:text        "Exile any number of cards with the same name from your hand."
+                                     :choice      ::exile-from-hand
+                                     :choice-opts #{:similar}
+                                     :options     [:player :hand]}]]
+             :setup  [[:all-players {:effects [[::add-exile-trigger]]}]]})
+
 (def bargain {:name   :bargain
               :set    :menagerie
               :type   :event
@@ -451,6 +472,14 @@
                   :cost          0
                   :once-per-turn true
                   :on-buy        [[::desperation-gain-curse]]})
+
+(def enclave {:name   :enclave
+              :set    :menagerie
+              :type   :event
+              :cost   8
+              :on-buy [[:gain {:card-name :gold}]
+                       [::exile-from-supply {:card-name :duchy}]]
+              :setup  [[:all-players {:effects [[::add-exile-trigger]]}]]})
 
 (defn- gamble-handle-revealed [game {:keys [player-no]}]
   (let [{:keys [name] :as card} (get-in game [:players player-no :revealed 0])
@@ -537,13 +566,47 @@
                                    :options [:player :hand {:type :action}]
                                    :max     1}]]})
 
+(defn transport-choice [game {:keys [player-no choice]}]
+  (assert choice "No choice specified for transport.")
+  (case choice
+    :exile (give-choice game {:player-no player-no
+                              :text      "Exile an Action card from the Supply."
+                              :choice    ::exile-from-supply
+                              :options   [:supply {:type :action}]
+                              :min       1
+                              :max       1})
+    :deliver (give-choice game {:player-no player-no
+                                :text      "Put an Action card you have in Exile onto your deck."
+                                :choice    ::topdeck-from-exile
+                                :options   [:player :exile {:type :action}]
+                                :min       1
+                                :max       1})))
+
+(effects/register {::transport-choice transport-choice})
+
+(def transport {:name   :transport
+                :set    :menagerie
+                :type   :event
+                :cost   3
+                :on-buy [[:give-choice {:text    "Choose one:"
+                                        :choice  ::transport-choice
+                                        :options [:special
+                                                  {:option :exile :text "Exile an Action card from the Supply."}
+                                                  {:option :deliver :text "Put an Action card you have in Exile onto your deck."}]
+                                        :min     1
+                                        :max     1}]]
+                :setup  [[:all-players {:effects [[::add-exile-trigger]]}]]})
+
 (def events [alliance
+             banish
              bargain
              commerce
              demand
              desperation
+             enclave
              gamble
              populate
              ride
              stampede
-             toil])
+             toil
+             transport])

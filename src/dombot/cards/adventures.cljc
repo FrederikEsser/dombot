@@ -614,12 +614,12 @@
 (defn- pilgrimage-journey [game {:keys [player-no]}]
   (let [journey-token (get-in game [:players player-no :journey-token])]
     (cond-> game
-            (= :face-up journey-token) (give-choice {:player-no player-no
-                                                     :text      "Choose up to 3 differently named cards you have in play and gain a copy of each."
-                                                     :choice    ::pilgrimage-gain
-                                                     :options   [:player :play-area]
-                                                     :unique?   true
-                                                     :max       3}))))
+            (= :face-up journey-token) (give-choice {:player-no   player-no
+                                                     :text        "Choose up to 3 differently named cards you have in play and gain a copy of each."
+                                                     :choice      ::pilgrimage-gain
+                                                     :choice-opts #{:unique :leave-in-play-area}
+                                                     :options     [:player :play-area]
+                                                     :max         3}))))
 
 (effects/register {::pilgrimage-gain    pilgrimage-gain
                    ::pilgrimage-journey pilgrimage-journey})
