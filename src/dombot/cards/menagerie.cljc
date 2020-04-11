@@ -192,6 +192,28 @@
                       [:attack {:effects [[::coven-curse]]}]]
             :setup   [[:all-players {:effects [[::add-exile-trigger]]}]]})
 
+(defn- hunting-lodge-discard [game {:keys [player-no choice]}]
+  (cond-> game
+          (= :yes choice) (push-effect-stack {:player-no player-no
+                                              :effects   [[:discard-all-hand]
+                                                          [:draw 5]]})))
+
+(effects/register {::hunting-lodge-discard hunting-lodge-discard})
+
+(def hunting-lodge {:name    :hunting-lodge
+                    :set     :menagerie
+                    :types   #{:action}
+                    :cost    5
+                    :effects [[:draw 1]
+                              [:give-actions 2]
+                              [:give-choice {:text    "You may discard your hand for +5 Cards."
+                                             :choice  ::hunting-lodge-discard
+                                             :options [:special
+                                                       {:option :yes :text "Yes"}
+                                                       {:option :no :text "No"}]
+                                             :min     1
+                                             :max     1}]]})
+
 (defn- livery-on-gain [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})
         cost (ut/get-cost game card)]
@@ -372,6 +394,7 @@
                     cavalry
                     coven
                     kiln
+                    hunting-lodge
                     livery
                     mastermind
                     sanctuary

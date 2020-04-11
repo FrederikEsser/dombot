@@ -17,7 +17,7 @@
 
 (deftest exile-test
   (let [gold (assoc gold :id 1)]
-    (testing "Camel Train"
+    (testing "Exile"
       (is (= (-> {:supply  [{:card gold :pile-size 29}]
                   :players [{:exile    [gold]
                              :triggers [(assoc exile-trigger :id 1)]}]}
@@ -43,6 +43,36 @@
               :players [{:discard  [gold]
                          :exile    [gold]
                          :triggers [(assoc exile-trigger :id 1)]}]})))))
+
+(deftest barge-test
+  (let [barge (assoc barge :id 1)]
+    (testing "Barge"
+      (is (= (-> {:players [{:hand    [barge copper copper gold estate]
+                             :deck    [copper copper copper copper]
+                             :actions 1
+                             :buys    1}]}
+                 (play 0 :barge)
+                 (choose :now))
+             {:players [{:hand      [copper copper gold estate copper copper copper]
+                         :play-area [barge]
+                         :deck      [copper]
+                         :actions   0
+                         :buys      2}]}))
+      (is (= (-> {:players [{:hand    [barge]
+                             :deck    [copper copper copper copper copper silver silver silver silver]
+                             :actions 1
+                             :phase   :action}]}
+                 (play 0 :barge)
+                 (choose :next-turn)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand      [copper copper copper copper copper silver silver silver]
+                                :play-area [barge]
+                                :deck      [silver]
+                                :actions   1
+                                :coins     0
+                                :buys      2
+                                :phase     :action}]})))))
 
 (deftest bounty-hunter-test
   (let [bounty-hunter (assoc bounty-hunter :id 0)]
@@ -317,9 +347,44 @@
                              :deck      [copper]
                              :actions   2}]})))))
 
+(deftest hunting-lodge-test
+  (let [hunting-lodge (assoc hunting-lodge :id 1)]
+    (testing "Hunting Lodge"
+      (is (= (-> {:players [{:hand    [hunting-lodge copper copper gold barge]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :hunting-lodge)
+                 (choose :no))
+             {:players [{:hand      [copper copper gold barge copper]
+                         :play-area [hunting-lodge]
+                         :deck      [copper]
+                         :actions   2}]}))
+      (is (= (-> {:players [{:hand    [hunting-lodge copper copper estate estate]
+                             :deck    [copper copper gold barge silver estate estate]
+                             :actions 1}]}
+                 (play 0 :hunting-lodge)
+                 (choose :yes))
+             {:players [{:hand      [copper gold barge silver estate]
+                         :play-area [hunting-lodge]
+                         :deck      [estate]
+                         :discard   [copper copper estate estate copper]
+                         :actions   2}]}))
+      (is (= (-> {:players [{:hand    [hunting-lodge copper copper estate village-green]
+                             :deck    [copper copper gold barge silver estate estate]
+                             :actions 1}]}
+                 (play 0 :hunting-lodge)
+                 (choose :yes)                              ; discard hand
+                 (choose :village-green)                    ; play Village Green on discard
+                 (choose :now))
+             {:players [{:hand      [copper gold barge silver estate estate]
+                         :play-area [hunting-lodge village-green]
+                         :discard   [copper copper estate copper]
+                         :actions   4}]})))))
+
 (deftest livery-test
   (let [livery (assoc livery :id 0)
-        horse  (assoc horse :id 1)]
+        horse  (assoc horse :id 1)
+        silver (assoc silver :id 2)]
     (testing "Livery"
       (ut/reset-ids!)
       (is (= (-> {:extra-cards [{:card horse :pile-size 30}]
@@ -344,6 +409,21 @@
               :supply      [{:card livery :pile-size 8}]
               :players     [{:play-area [livery]
                              :discard   [horse livery]
+                             :actions   0
+                             :coins     3
+                             :triggers  [(get-trigger livery)]}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:extra-cards [{:card horse :pile-size 30}]
+                  :supply      [{:card silver :pile-size 40}]
+                  :players     [{:hand    [livery]
+                                 :actions 1
+                                 :coins   0}]}
+                 (play 0 :livery)
+                 (gain {:player-no 0 :card-name :silver}))
+             {:extra-cards [{:card horse :pile-size 30}]
+              :supply      [{:card silver :pile-size 39}]
+              :players     [{:play-area [livery]
+                             :discard   [silver]
                              :actions   0
                              :coins     3
                              :triggers  [(get-trigger livery)]}]}))
@@ -399,6 +479,67 @@
                              :coins     6
                              :triggers  [(get-trigger livery)
                                          (get-trigger livery 2)]}]})))))
+
+(deftest mastermind-test
+  (let [mastermind (assoc mastermind :id 0)
+        livery     (assoc livery :id 1)]
+    (testing "Mastermind"
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand    [mastermind]
+                             :deck    [livery copper copper copper copper]
+                             :actions 1
+                             :phase   :action}]}
+                 (play 0 :mastermind))
+             {:players [{:play-area [mastermind]
+                         :deck      [livery copper copper copper copper]
+                         :actions   0
+                         :phase     :action
+                         :triggers  [(get-trigger mastermind)]}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand    [mastermind]
+                             :deck    [livery copper copper copper copper]
+                             :actions 1
+                             :phase   :action}]}
+                 (play 0 :mastermind)
+                 (end-turn 0)
+                 (choose :livery))
+             {:current-player 0
+              :players        [{:hand      [copper copper copper copper]
+                                :play-area [mastermind livery]
+                                :actions   1
+                                :coins     9
+                                :buys      1
+                                :phase     :action
+                                :triggers  [(get-trigger livery 2)
+                                            (get-trigger livery 3)
+                                            (get-trigger livery 4)]}]}))
+      (is (= (-> {:players [{:hand    [mastermind]
+                             :deck    [scrap province province gold gold]
+                             :actions 1
+                             :phase   :action}]}
+                 (play 0 :mastermind)
+                 (end-turn 0)
+                 (choose nil))
+             {:current-player 0
+              :players        [{:hand      [scrap province province gold gold]
+                                :play-area [mastermind]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]}))
+      (is (= (-> {:players [{:hand    [mastermind]
+                             :deck    [copper copper copper copper copper]
+                             :actions 1
+                             :phase   :action}]}
+                 (play 0 :mastermind)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand      [copper copper copper copper copper]
+                                :play-area [mastermind]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]})))))
 
 (deftest sanctuary-test
   (let [sanctuary (assoc sanctuary :id 0)]
@@ -538,6 +679,76 @@
                              :deck      [horse]
                              :actions   0
                              :coins     1}]})))))
+
+(deftest village-green-test
+  (let [village-green (assoc village-green :id 1)]
+    (testing "Village Green"
+      (is (= (-> {:players [{:hand    [village-green copper copper gold barge]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :village-green)
+                 (choose :now))
+             {:players [{:hand      [copper copper gold barge copper]
+                         :play-area [village-green]
+                         :deck      [copper]
+                         :actions   2}]}))
+      (is (= (-> {:players [{:hand    [village-green copper copper estate estate]
+                             :deck    [copper copper gold barge estate silver silver]
+                             :actions 1
+                             :phase   :action}]}
+                 (play 0 :village-green)
+                 (choose :next-turn)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand      [copper copper gold barge estate silver]
+                                :play-area [village-green]
+                                :deck      [silver]
+                                :discard   [copper copper estate estate]
+                                :actions   3
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]}))
+      (is (= (-> {:supply  [{:card village-green :pile-size 9}]
+                  :players [{:deck     [copper copper]
+                             :exile    [village-green]
+                             :actions  0
+                             :triggers [(assoc exile-trigger :id 1)]}]}
+                 (gain {:player-no 0 :card-name :village-green})
+                 (choose :village-green)                    ; discard from Exile
+                 (choose :village-green)                    ; play when discarded
+                 (choose :now))
+             {:supply  [{:card village-green :pile-size 8}]
+              :players [{:hand      [copper]
+                         :play-area [village-green]
+                         :deck      [copper]
+                         :discard   [village-green]
+                         :actions   2
+                         :triggers  [(assoc exile-trigger :id 1)]}]}))
+      (is (= (-> {:players [{:hand    [cardinal]
+                             :actions 1
+                             :coins   0
+                             :phase   :action}
+                            {:hand  [copper copper copper copper copper]
+                             :deck  [village-green silver gold]
+                             :phase :out-of-turn}]}
+                 (play 0 :cardinal)
+                 (choose :silver)                           ; exile Silver
+                 (choose :village-green)                    ; play when discarded
+                 (choose :next-turn)
+                 (end-turn 0))
+             {:current-player 1
+              :players        [{:hand    [cardinal]
+                                :actions 0
+                                :coins   0
+                                :buys    0
+                                :phase   :out-of-turn}
+                               {:hand      [copper copper copper copper copper gold]
+                                :play-area [village-green]
+                                :exile     [silver]
+                                :actions   3
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]})))))
 
 (deftest banish-test
   (testing "Banish"
@@ -773,9 +984,9 @@
                  (choose :livery))
              {:events  {:transport transport}
               :supply  [{:card livery :pile-size 9}]
-              :players [{:deck [livery]
-                         :coins   0
-                         :buys    0}]}))
+              :players [{:deck  [livery]
+                         :coins 0
+                         :buys  0}]}))
       (is (= (-> {:events  {:transport transport}
                   :supply  [{:card livery :pile-size 9}]
                   :players [{:exile [livery livery]
@@ -786,7 +997,7 @@
                  (choose :livery))
              {:events  {:transport transport}
               :supply  [{:card livery :pile-size 9}]
-              :players [{:deck [livery]
+              :players [{:deck  [livery]
                          :exile [livery]
-                         :coins   0
-                         :buys    0}]})))))
+                         :coins 0
+                         :buys  0}]})))))
