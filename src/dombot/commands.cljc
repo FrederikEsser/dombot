@@ -16,10 +16,10 @@
 ; choose by trigger id when set aside cards - show different cards
 
 ; Bugs & Testing:
+; Fix Vassal on Village Green
 ; Fix Labyrinth & buying Skulk
 ; fix Herald & Piazza with 1 card in deck - what about Vassal & ...?
 ; fix Academy gain Will'o'Wisp with Swamps gift (from Druid) or Imp with Devil's Workshop
-; fix Fool choosing Moon's Gift last (after Earth's or Mountain's)
 ; fix having Lost in the Woods when you haven't bought Fleet
 ; separate mixed choices from play area and tavern mat - 2 Ratcatchers called same turn
 ; receiving boons & hexes can't be undone
@@ -33,8 +33,9 @@
 ; unit tests for affect-other-players, give-choice, choose, calc-victory-points, ...
 
 ; Front End:
+; fix Fool choosing Moon's Gift last (after Earth's or Mountain's)
 ; show Actions as unbuyable when Deluded (and in action phase)
-; make extra-cards (Prizes, Spirits, etc.) and unique cards (Zombies & Heirlooms) visible/choosable for Wishing Well / Doctor / Journeyman
+; make extra-cards (Prizes, Spirits, etc.) and unique cards (Zombies & Heirlooms) visible/choosable for Wishing Well / Doctor / Journeyman / Pursue
 ; hide revealed cards on any movement (Border Guard)
 ; show face-down cards in trash (Necromancer)
 ; make "any order" option for all topdecking (Sentry, Navigator, Rabble, Doctor, Seer, Night Watchman)

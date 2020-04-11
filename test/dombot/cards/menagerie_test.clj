@@ -5,7 +5,7 @@
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
             [dombot.cards.menagerie :as menagerie :refer :all]
-            [dombot.cards.dominion :refer [throne-room workshop]]
+            [dombot.cards.dominion :refer [throne-room vassal workshop]]
             [dombot.cards.intrigue :refer [nobles]]
             [dombot.cards.kingdom :refer [setup-game]]
             [dombot.utils :as ut]))
@@ -681,7 +681,7 @@
                              :coins     1}]})))))
 
 (deftest village-green-test
-  (let [village-green (assoc village-green :id 1)]
+  (let [village-green (assoc village-green :id 0)]
     (testing "Village Green"
       (is (= (-> {:players [{:hand    [village-green copper copper gold barge]
                              :deck    [copper copper]
@@ -748,7 +748,19 @@
                                 :actions   3
                                 :coins     0
                                 :buys      1
-                                :phase     :action}]})))))
+                                :phase     :action}]}))
+      (let [vassal (assoc vassal :id 1)]
+        (is (= (-> {:players [{:hand    [vassal]
+                               :deck    [village-green silver]
+                               :actions 1
+                               :coins   0}]}
+                   (play 0 :vassal)
+                   (choose :village-green)                  ; play when discarded
+                   (choose :now))                           ; problem: should still be able to play through Vassal, but lost track
+               {:players [{:hand      [silver]
+                           :play-area [vassal village-green]
+                           :actions   2
+                           :coins     2}]}))))))
 
 (deftest banish-test
   (testing "Banish"
@@ -866,6 +878,28 @@
                              :coins 0
                              :buys  0}]})))))
 
+(deftest desperation-test
+  (let [curse (assoc curse :id 1)]
+    (testing "Desperation"
+      (is (= (-> {:events  {:desperation desperation}
+                  :supply  [{:card curse :pile-size 10}]
+                  :players [{:coins 4
+                             :buys  1}]}
+                 (buy-event 0 :desperation))
+             {:events  {:desperation desperation}
+              :supply  [{:card curse :pile-size 9}]
+              :players [{:discard       [curse]
+                         :bought-events #{:desperation}
+                         :coins         6
+                         :buys          1}]}))
+      (is (thrown-with-msg? AssertionError #"Buy error:"
+                            (-> {:events  {:desperation desperation}
+                                 :supply  [{:card curse :pile-size 10}]
+                                 :players [{:bought-events #{:desperation}
+                                            :coins         6
+                                            :buys          1}]}
+                                (buy-event 0 :desperation)))))))
+
 (deftest enclave-test
   (let [gold  (assoc gold :id 1)
         duchy (assoc duchy :id 2)]
@@ -884,6 +918,147 @@
                          :coins   0
                          :buys    0}]})))))
 
+(deftest gamble-test
+  (let [livery (assoc livery :id 1)]
+    (testing "Gamble"
+      (ut/reset-ids!)
+      (is (= (-> {:events  {:gamble gamble}
+                  :players [{:deck    [livery]
+                             :actions 0
+                             :coins   5
+                             :buys    1}]}
+                 (buy-event 0 :gamble)
+                 (choose :livery))
+             {:events  {:gamble gamble}
+              :players [{:play-area      [livery]
+                         :revealed-cards {:play-area 1}
+                         :actions        0
+                         :coins          6
+                         :buys           1
+                         :triggers       [(get-trigger livery)]}]}))
+      (is (= (-> {:events  {:gamble gamble}
+                  :players [{:deck    [gold]
+                             :actions 0
+                             :coins   5
+                             :buys    1}]}
+                 (buy-event 0 :gamble)
+                 (choose :gold))
+             {:events  {:gamble gamble}
+              :players [{:play-area      [gold]
+                         :revealed-cards {:play-area 1}
+                         :actions        0
+                         :coins          6
+                         :buys           1}]}))
+      (is (= (-> {:events  {:gamble gamble}
+                  :players [{:deck    [livery]
+                             :actions 0
+                             :coins   5
+                             :buys    1}]}
+                 (buy-event 0 :gamble)
+                 (choose nil))
+             {:events  {:gamble gamble}
+              :players [{:discard        [livery]
+                         :revealed-cards {:discard 1}
+                         :actions        0
+                         :coins          3
+                         :buys           1}]}))
+      (is (= (-> {:events  {:gamble gamble}
+                  :players [{:deck    [estate]
+                             :actions 0
+                             :coins   5
+                             :buys    1}]}
+                 (buy-event 0 :gamble))
+             {:events  {:gamble gamble}
+              :players [{:discard        [estate]
+                         :revealed-cards {:discard 1}
+                         :actions        0
+                         :coins          3
+                         :buys           1}]}))
+      (is (= (-> {:events  {:gamble gamble}
+                  :players [{:coins 5
+                             :buys  1}]}
+                 (buy-event 0 :gamble))
+             {:events  {:gamble gamble}
+              :players [{:coins 3
+                         :buys  1}]})))))
+
+(deftest pursue-test
+  (testing "Pursue"
+    (is (= (-> {:events      {:pursue pursue}
+                :extra-cards [{:card horse :pile-size 28}]
+                :players     [{:deck  [horse copper horse copper copper]
+                               :coins 2
+                               :buys  1}]}
+               (buy-event 0 :pursue)
+               (choose {:area :extra-cards :card-name :horse}))
+           {:events      {:pursue pursue}
+            :extra-cards [{:card horse :pile-size 28}]
+            :players     [{:deck           [horse horse copper]
+                           :discard        [copper copper]
+                           :revealed-cards {:deck    2
+                                            :discard 2}
+                           :coins          0
+                           :buys           1}]}))
+    (is (= (-> {:events      {:pursue pursue}
+                :extra-cards [{:card horse :pile-size 0}]
+                :players     [{:deck  [horse copper horse copper copper]
+                               :coins 2
+                               :buys  1}]}
+               (buy-event 0 :pursue)
+               (choose {:area :extra-cards :card-name :horse}))
+           {:events      {:pursue pursue}
+            :extra-cards [{:card horse :pile-size 0}]
+            :players     [{:deck           [horse horse copper]
+                           :discard        [copper copper]
+                           :revealed-cards {:deck    2
+                                            :discard 2}
+                           :coins          0
+                           :buys           1}]}))
+    (is (= (-> {:events      {:pursue pursue}
+                :extra-cards [{:card horse :pile-size 28}]
+                :supply      [{:card silver :pile-size 43}]
+                :players     [{:deck  [horse silver silver silver horse]
+                               :coins 2
+                               :buys  1}]}
+               (buy-event 0 :pursue)
+               (choose {:area :supply :card-name :silver}))
+           {:events      {:pursue pursue}
+            :extra-cards [{:card horse :pile-size 28}]
+            :supply      [{:card silver :pile-size 43}]
+            :players     [{:deck           [silver silver silver horse]
+                           :discard        [horse]
+                           :revealed-cards {:deck    3
+                                            :discard 1}
+                           :coins          0
+                           :buys           1}]}))
+    (is (= (-> {:events  {:pursue pursue}
+                :supply  [{:card silver :pile-size 43}]
+                :players [{:deck  [copper copper copper copper copper]
+                           :coins 2
+                           :buys  1}]}
+               (buy-event 0 :pursue)
+               (choose {:area :supply :card-name :silver}))
+           {:events  {:pursue pursue}
+            :supply  [{:card silver :pile-size 43}]
+            :players [{:deck           [copper]
+                       :discard        [copper copper copper copper]
+                       :revealed-cards {:discard 4}
+                       :coins          0
+                       :buys           1}]}))
+    (is (= (-> {:events  {:pursue pursue}
+                :supply  [{:card silver :pile-size 43}]
+                :players [{:deck  [silver silver silver silver silver]
+                           :coins 2
+                           :buys  1}]}
+               (buy-event 0 :pursue)
+               (choose {:area :supply :card-name :silver}))
+           {:events  {:pursue pursue}
+            :supply  [{:card silver :pile-size 43}]
+            :players [{:deck           [silver silver silver silver silver]
+                       :revealed-cards {:deck 4}
+                       :coins          0
+                       :buys           1}]}))))
+
 (deftest ride-test
   (let [horse (assoc horse :id 1)]
     (testing "Ride"
@@ -897,6 +1072,43 @@
               :players     [{:discard [horse]
                              :coins   0
                              :buys    0}]})))))
+
+(deftest toil-test
+  (let [livery (assoc livery :id 1)]
+    (testing "Toil"
+      (ut/reset-ids!)
+      (is (= (-> {:events  {:toil toil}
+                  :players [{:hand    [livery]
+                             :actions 0
+                             :coins   5
+                             :buys    1}]}
+                 (buy-event 0 :toil)
+                 (choose :livery))
+             {:events  {:toil toil}
+              :players [{:play-area [livery]
+                         :actions   0
+                         :coins     6
+                         :buys      1
+                         :triggers  [(get-trigger livery)]}]}))
+      (is (= (-> {:events  {:toil toil}
+                  :players [{:hand    [livery]
+                             :actions 0
+                             :coins   5
+                             :buys    1}]}
+                 (buy-event 0 :toil)
+                 (choose nil))
+             {:events  {:toil toil}
+              :players [{:hand    [livery]
+                         :actions 0
+                         :coins   3
+                         :buys    1}]}))
+      (is (= (-> {:events  {:toil toil}
+                  :players [{:coins 5
+                             :buys  1}]}
+                 (buy-event 0 :toil))
+             {:events  {:toil toil}
+              :players [{:coins 3
+                         :buys  1}]})))))
 
 (deftest stampede-test
   (let [horse (assoc horse :id 1)]

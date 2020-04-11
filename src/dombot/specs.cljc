@@ -16,7 +16,7 @@
 
 (s/def ::interaction #{:buyable :playable :choosable :quick-choosable :spendable})
 
-(s/def ::area #{:hand :play-area :tavern-mat :projects :artifacts :boons})
+(s/def ::area #{:hand :play-area :tavern-mat :projects :artifacts :boons :supply :extra-cards})
 
 (s/def ::card-name ::name)
 

@@ -507,14 +507,13 @@
 (defn- gamble-handle-revealed [game {:keys [player-no]}]
   (let [{:keys [name] :as card} (get-in game [:players player-no :revealed 0])
         types (ut/get-types game card)]
-    (push-effect-stack game {:player-no player-no
-                             :effects   (if (or (:treasure types)
-                                                (:action types))
-                                          [[:give-choice {:text    (str "You may play the revealed " (ut/format-name name) ".")
-                                                          :choice  :play-from-revealed
-                                                          :options [:player :revealed {:name name}]
-                                                          :max     1}]]
-                                          [[:discard-from-revealed {:card-name name}]])})))
+    (cond-> game
+            (or (:treasure types)
+                (:action types)) (push-effect-stack {:player-no player-no
+                                                     :effects   [[:give-choice {:text    (str "You may play the revealed " (ut/format-name name) ".")
+                                                                                :choice  :play-from-revealed
+                                                                                :options [:player :revealed {:name name}]
+                                                                                :max     1}]]}))))
 
 (effects/register {::gamble-handle-revealed gamble-handle-revealed})
 
@@ -525,7 +524,7 @@
              :on-buy [[:give-buys 1]
                       [:reveal-from-deck 1]
                       [::gamble-handle-revealed]
-                      [:topdeck-all-revealed]]})
+                      [:discard-all-revealed]]})
 
 (defn- populate-gain-actions [{:keys [supply] :as game} {:keys [player-no]}]
   (let [action-cards (->> supply
@@ -544,6 +543,35 @@
                :type   :event
                :cost   10
                :on-buy [[::populate-gain-actions]]})
+
+(defn- pursue-topdeck [game {:keys [player-no card-name]}]
+  (let [card-names (->> (get-in game [:players player-no :revealed])
+                        (keep (comp #{card-name} :name)))]
+    (cond-> game
+            (not-empty card-names) (push-effect-stack {:player-no player-no
+                                                       :effects   [[:topdeck-from-revealed {:card-names card-names}]]}))))
+
+(defn- pursue-reveal [game {:keys [player-no choice]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:reveal-from-deck 4]
+                                       [::pursue-topdeck choice]
+                                       [:discard-all-revealed]]}))
+
+(effects/register {::pursue-topdeck pursue-topdeck
+                   ::pursue-reveal  pursue-reveal})
+
+(def pursue {:name   :pursue
+             :set    :menagerie
+             :type   :event
+             :cost   2
+             :on-buy [[:give-buys 1]
+                      [:give-choice {:text    "Name a card. Reveal the top 4 cards from your deck. Put the matches back and discard the rest."
+                                     :choice  ::pursue-reveal
+                                     :options [:mixed
+                                               [:supply {:all true}]
+                                               [:extra-cards {:all true}]]
+                                     :min     1
+                                     :max     1}]]})
 
 (def ride {:name   :ride
            :set    :menagerie
@@ -629,6 +657,7 @@
              enclave
              gamble
              populate
+             pursue
              ride
              stampede
              toil

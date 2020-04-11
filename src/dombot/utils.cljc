@@ -374,11 +374,12 @@
 
 (effects/register-options {:supply options-from-supply})
 
-(defn options-from-extra-cards [{:keys [extra-cards] :as game} player-no card-id & [{:keys [max-cost costs-less-than type]}]]
+(defn options-from-extra-cards [{:keys [extra-cards] :as game} player-no card-id & [{:keys [max-cost costs-less-than type all]}]]
   (cond->> extra-cards
            max-cost (filter (comp (partial costs-up-to max-cost) (partial get-cost game) :card))
            costs-less-than (filter (comp (partial costs-less costs-less-than) (partial get-cost game) :card))
            type (filter (comp type (partial get-types game) :card))
+           (not all) (filter (comp pos? :pile-size))
            :always (map (comp :name :card))))
 
 (effects/register-options {:extra-cards options-from-extra-cards})
