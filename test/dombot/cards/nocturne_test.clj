@@ -2902,8 +2902,7 @@
                             {:hand [conclave copper raider silver gold]}]}
                  (play 0 :raider))
              {:players      [{:hand      [copper]
-                              :play-area [silver conclave raider]
-                              :triggers  [(get-trigger raider)]}
+                              :play-area [silver conclave raider]}
                              {:hand [conclave copper raider silver gold]}]
               :effect-stack [{:player-no 1
                               :text      "Discard a copy of a card the attacker has in play."
@@ -2912,6 +2911,9 @@
                               :options   [:conclave :raider :silver]
                               :min       1
                               :max       1}
+                             {:player-no 0
+                              :card-id   0
+                              :effect    [:add-trigger {:trigger (get-trigger raider)}]}
                              {:player-no 1
                               :effect    [:clear-unaffected {:works :once}]}]}))
       (ut/reset-ids!)

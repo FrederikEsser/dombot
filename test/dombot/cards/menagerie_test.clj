@@ -6,12 +6,13 @@
             [dombot.cards.common :refer :all]
             [dombot.cards.menagerie :as menagerie :refer :all]
             [dombot.cards.dominion :refer [throne-room vassal workshop]]
-            [dombot.cards.intrigue :refer [nobles]]
+            [dombot.cards.intrigue :refer [mill nobles]]
+            [dombot.cards.nocturne :refer [exorcist]]
             [dombot.cards.kingdom :refer [setup-game]]
             [dombot.utils :as ut]))
 
 (defn fixture [f]
-  (with-rand-seed 123 (f)))
+  (with-rand-seed 234 (f)))
 
 (use-fixtures :each fixture)
 
@@ -323,6 +324,86 @@
                         {:exile (repeat 7 curse)}
                         {:discard (repeat 6 curse)}]})))))
 
+(deftest groom-test
+  (let [groom  (assoc groom :id 0)
+        estate (assoc estate :id 1)
+        silver (assoc silver :id 2)
+        mill   (assoc mill :id 3)
+        horse  (assoc horse :id 4)]
+    (testing "Groom"
+      (is (= (-> {:extra-cards [{:card horse :pile-size 30}]
+                  :supply      [{:card estate :pile-size 8}
+                                {:card silver :pile-size 40}
+                                {:card groom :pile-size 9}
+                                {:card mill :pile-size 8}]
+                  :players     [{:hand    [groom]
+                                 :actions 1}]}
+                 (play 0 :groom)
+                 (choose :groom))
+             {:extra-cards [{:card horse :pile-size 29}]
+              :supply      [{:card estate :pile-size 8}
+                            {:card silver :pile-size 40}
+                            {:card groom :pile-size 8}
+                            {:card mill :pile-size 8}]
+              :players     [{:play-area [groom]
+                             :discard   [groom horse]
+                             :actions   0}]}))
+      (is (= (-> {:extra-cards [{:card horse :pile-size 30}]
+                  :supply      [{:card estate :pile-size 8}
+                                {:card silver :pile-size 40}
+                                {:card groom :pile-size 9}
+                                {:card mill :pile-size 8}]
+                  :players     [{:hand    [groom]
+                                 :actions 1}]}
+                 (play 0 :groom)
+                 (choose :silver))
+             {:extra-cards [{:card horse :pile-size 30}]
+              :supply      [{:card estate :pile-size 8}
+                            {:card silver :pile-size 38}
+                            {:card groom :pile-size 9}
+                            {:card mill :pile-size 8}]
+              :players     [{:play-area [groom]
+                             :discard   [silver silver]
+                             :actions   0}]}))
+      (is (= (-> {:extra-cards [{:card horse :pile-size 30}]
+                  :supply      [{:card estate :pile-size 8}
+                                {:card silver :pile-size 40}
+                                {:card groom :pile-size 9}
+                                {:card mill :pile-size 8}]
+                  :players     [{:hand    [groom]
+                                 :deck    [copper copper]
+                                 :actions 1}]}
+                 (play 0 :groom)
+                 (choose :estate))
+             {:extra-cards [{:card horse :pile-size 30}]
+              :supply      [{:card estate :pile-size 7}
+                            {:card silver :pile-size 40}
+                            {:card groom :pile-size 9}
+                            {:card mill :pile-size 8}]
+              :players     [{:hand      [copper]
+                             :play-area [groom]
+                             :deck      [copper]
+                             :discard   [estate]
+                             :actions   1}]}))
+      (is (= (-> {:extra-cards [{:card horse :pile-size 30}]
+                  :supply      [{:card estate :pile-size 8}
+                                {:card silver :pile-size 40}
+                                {:card groom :pile-size 9}
+                                {:card mill :pile-size 8}]
+                  :players     [{:hand    [groom]
+                                 :actions 1}]}
+                 (play 0 :groom)
+                 (choose :mill))
+             {:extra-cards [{:card horse :pile-size 29}]
+              :supply      [{:card estate :pile-size 8}
+                            {:card silver :pile-size 40}
+                            {:card groom :pile-size 9}
+                            {:card mill :pile-size 7}]
+              :players     [{:hand      [horse]
+                             :play-area [groom]
+                             :deck      [mill]
+                             :actions   1}]})))))
+
 (deftest horse-test
   (let [horse (assoc horse :id 1)]
     (testing "Horse"
@@ -380,6 +461,109 @@
                          :play-area [hunting-lodge village-green]
                          :discard   [copper copper estate copper]
                          :actions   4}]})))))
+
+(deftest kiln-test
+  (let [kiln (assoc kiln :id 0)]
+    (testing "Kiln"
+      (ut/reset-ids!)
+      (is (= (-> {:players [{:hand    [kiln]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :kiln))
+             {:players [{:play-area [kiln]
+                         :actions   0
+                         :coins     2
+                         :triggers  [(get-trigger kiln)]}]}))
+      (let [gold (assoc gold :id 1)]
+        (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                    :players [{:hand    [kiln gold]
+                               :actions 1
+                               :coins   0}]}
+                   (play 0 :kiln)
+                   (play 0 :gold)
+                   (choose :gold))
+               {:supply  [{:card gold :pile-size 29}]
+                :players [{:play-area [kiln gold]
+                           :discard   [gold]
+                           :actions   0
+                           :coins     5}]})))
+      (is (= (-> {:supply  [{:card copper :pile-size 46}]
+                  :players [{:hand    [kiln copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :kiln)
+                 (play 0 :copper)
+                 (choose nil))
+             {:supply  [{:card copper :pile-size 46}]
+              :players [{:play-area [kiln copper]
+                         :actions   0
+                         :coins     3}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:supply  [{:card kiln :pile-size 8}]
+                  :players [{:hand    [kiln kiln]
+                             :actions 2
+                             :coins   0}]}
+                 (play 0 :kiln)
+                 (play 0 :kiln)
+                 (choose :kiln))
+             {:supply  [{:card kiln :pile-size 7}]
+              :players [{:play-area [kiln kiln]
+                         :discard   [kiln]
+                         :actions   0
+                         :coins     4
+                         :triggers  [(get-trigger kiln 2)]}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:supply  [{:card kiln :pile-size 9}]
+                  :players [{:hand    [throne-room kiln]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :throne-room)
+                 (choose :kiln)                             ; Throne Room the Kiln
+                 (choose :kiln))                            ; gain Kiln on second play
+             {:supply  [{:card kiln :pile-size 8}]
+              :players [{:play-area [throne-room kiln]
+                         :discard   [kiln]
+                         :actions   0
+                         :coins     4
+                         :triggers  [(get-trigger kiln 2)]}]}))
+      (let [horse (assoc horse :id 1)]
+        (is (= (-> {:extra-cards [{:card horse :pile-size 29}]
+                    :players     [{:hand    [kiln horse]
+                                   :actions 2
+                                   :coins   0}]}
+                   (play 0 :kiln)
+                   (play 0 :horse))
+               {:extra-cards [{:card horse :pile-size 30}]
+                :players     [{:play-area [kiln]
+                               :actions   1
+                               :coins     2}]})))
+      (let [exorcist (assoc exorcist :id 1)]
+        (is (= (-> {:supply  [{:card exorcist :pile-size 9}]
+                    :players [{:hand    [kiln exorcist]
+                               :actions 1
+                               :coins   0
+                               :phase   :action}]}
+                   (play 0 :kiln)
+                   (play 0 :exorcist)
+                   (choose :exorcist))
+               {:supply  [{:card exorcist :pile-size 8}]
+                :players [{:play-area [kiln exorcist]
+                           :discard   [exorcist]
+                           :actions   0
+                           :coins     2
+                           :phase     :night}]})))
+      (is (= (-> {:players [{:hand    [kiln]
+                             :actions 1
+                             :coins   0
+                             :phase   :action}]}
+                 (play 0 :kiln)
+                 (end-turn 0))
+             {:current-player 0
+              :players        [{:hand    [kiln]
+                                :actions 1
+                                :coins   0
+                                :buys    1
+                                :phase   :action}]})))))
 
 (deftest livery-test
   (let [livery (assoc livery :id 0)
@@ -650,6 +834,40 @@
                              :buys      2}]
               :trash       [gold]})))))
 
+(deftest snowy-village-test
+  (let [snowy-village (assoc snowy-village :id 0)]
+    (testing "Snowy Village"
+      (is (= (-> {:players [{:hand    [snowy-village]
+                             :deck    [snowy-village copper]
+                             :actions 1
+                             :buys    1}]}
+                 (play 0 :snowy-village))
+             {:players [{:hand            [snowy-village]
+                         :play-area       [snowy-village]
+                         :deck            [copper]
+                         :actions         4
+                         :buys            2
+                         :ignore-actions? true}]}))
+      (is (= (-> {:players [{:hand            [snowy-village]
+                             :play-area       [snowy-village]
+                             :deck            [copper]
+                             :actions         4
+                             :buys            2
+                             :ignore-actions? true}]}
+                 (play 0 :snowy-village))
+             {:players [{:hand            [copper]
+                         :play-area       [snowy-village snowy-village]
+                         :actions         3
+                         :buys            3
+                         :ignore-actions? true}]}))
+      (is (= (-> {:players [{:actions         0
+                             :villagers       1
+                             :ignore-actions? true}]}
+                 (spend-villager 0))
+             {:players [{:actions         0
+                         :villagers       0
+                         :ignore-actions? true}]})))))
+
 (deftest stockpile-test
   (let [stockpile (assoc stockpile :id 0)]
     (testing "Stockpile"
@@ -892,9 +1110,19 @@
                          :bought-events #{:desperation}
                          :coins         6
                          :buys          1}]}))
+      (is (= (-> {:events  {:desperation desperation}
+                  :supply  [{:card curse :pile-size 0}]
+                  :players [{:coins 4
+                             :buys  1}]}
+                 (buy-event 0 :desperation))
+             {:events  {:desperation desperation}
+              :supply  [{:card curse :pile-size 0}]
+              :players [{:bought-events #{:desperation}
+                         :coins         4
+                         :buys          0}]}))
       (is (thrown-with-msg? AssertionError #"Buy error:"
                             (-> {:events  {:desperation desperation}
-                                 :supply  [{:card curse :pile-size 10}]
+                                 :supply  [{:card curse :pile-size 9}]
                                  :players [{:bought-events #{:desperation}
                                             :coins         6
                                             :buys          1}]}

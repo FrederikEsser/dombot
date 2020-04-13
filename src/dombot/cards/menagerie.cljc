@@ -192,6 +192,32 @@
                       [:attack {:effects [[::coven-curse]]}]]
             :setup   [[:all-players {:effects [[::add-exile-trigger]]}]]})
 
+(defn groom-gain [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-pile-idx game card-name)
+        types (ut/get-types game card)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (concat [[:gain {:card-name card-name}]]
+                                                (when (:action types)
+                                                  [[:gain {:card-name :horse :from :extra-cards}]])
+                                                (when (:treasure types)
+                                                  [[:gain {:card-name :silver}]])
+                                                (when (:victory types)
+                                                  [[:draw 1]
+                                                   [:give-actions 1]]))})))
+
+(effects/register {::groom-gain groom-gain})
+
+(def groom {:name    :groom
+            :set     :menagerie
+            :types   #{:action}
+            :cost    4
+            :effects [[:give-choice {:text    "Gain a card costing up to $4."
+                                     :choice  ::groom-gain
+                                     :options [:supply {:max-cost 4}]
+                                     :min     1
+                                     :max     1}]]
+            :setup   [[:setup-extra-cards {:extra-cards [{:card horse :pile-size 30}]}]]})
+
 (defn- hunting-lodge-discard [game {:keys [player-no choice]}]
   (cond-> game
           (= :yes choice) (push-effect-stack {:player-no player-no
@@ -393,8 +419,9 @@
                     cardinal
                     cavalry
                     coven
-                    kiln
+                    groom
                     hunting-lodge
+                    kiln
                     livery
                     mastermind
                     sanctuary

@@ -248,14 +248,14 @@
 
 (defn spend-villager [{:keys [effect-stack] :as game} player-no]
   (assert (empty? effect-stack) "You can't spend Villagers when you have a choice to make.")
-  (let [{:keys [phase villagers]} (get-in game [:players player-no])]
+  (let [{:keys [phase villagers ignore-actions?]} (get-in game [:players player-no])]
     (when phase
       (assert (#{:action} phase)
               (str "You can't spend Villagers when you're in the " (ut/format-name phase) " phase.")))
     (assert (and villagers (pos? villagers)) "You have no Villagers to spend.")
     (-> game
         (update-in [:players player-no :villagers] dec)
-        (update-in [:players player-no :actions] inc))))
+        (cond-> (not ignore-actions?) (update-in [:players player-no :actions] inc)))))
 
 (defn remove-trigger [game {:keys [player-no trigger-id card-id]}]
   (-> game
@@ -938,13 +938,18 @@
                                                                          [[:give-coins coin-value]])
                                                                        effects))
                                                            (when first-action-played?
-                                                             (get-play-triggers :play-first-action card triggers)))})
+                                                             (get-play-triggers :play-first-action card triggers))
+                                                           (when (:action types)
+                                                             (get-play-triggers :play-action card triggers))
+                                                           (get-play-triggers [:play name] card triggers)
+                                                           (get-play-triggers :play-card card triggers)
+                                                           (when (and trigger
+                                                                      (not special-card-effects))
+                                                             [[:add-trigger {:trigger (assoc trigger :id (ut/next-id!)
+                                                                                                     :card-id id
+                                                                                                     :name name)}]]))})
             (:attack types) (affect-other-players {:player-no player-no
-                                                   :effects   reaction-choice})
-            (and trigger
-                 (not special-card-effects)) (update-in [:players player-no :triggers] concat [(assoc trigger :id (ut/next-id!)
-                                                                                                              :card-id id
-                                                                                                              :name name)]))))
+                                                   :effects   reaction-choice}))))
 
 (effects/register {:card-effect card-effect})
 
@@ -988,10 +993,6 @@
                                :effects   (concat [[:move-card {:card-name card-name
                                                                 :from      :hand
                                                                 :to        :play-area}]]
-                                                  (when (:action types)
-                                                    (get-play-triggers :play-action card triggers))
-                                                  (get-play-triggers [:play card-name] card triggers)
-                                                  (get-play-triggers :play-card card triggers)
                                                   [[:card-effect {:card card}]])})
            check-stack)))))
 
