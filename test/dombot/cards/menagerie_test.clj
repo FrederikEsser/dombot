@@ -7,6 +7,8 @@
             [dombot.cards.menagerie :as menagerie :refer :all]
             [dombot.cards.dominion :refer [throne-room vassal workshop]]
             [dombot.cards.intrigue :refer [mill nobles]]
+            [dombot.cards.prosperity :refer [royal-seal colony platinum]]
+            [dombot.cards.empires :refer [crown]]
             [dombot.cards.nocturne :refer [exorcist]]
             [dombot.cards.kingdom :refer [setup-game]]
             [dombot.utils :as ut]))
@@ -816,7 +818,6 @@
       (is (= (-> {:extra-cards [{:card horse :pile-size 30}]
                   :supply      [{:card silver :pile-size 40}]
                   :players     [{:hand    [scrap gold]
-                                 :deck    [copper copper]
                                  :actions 1
                                  :coins   0
                                  :buys    1}]}
@@ -825,10 +826,8 @@
                  (choose [:card :action :buy :coin :silver :horse]))
              {:extra-cards [{:card horse :pile-size 29}]
               :supply      [{:card silver :pile-size 39}]
-              :players     [{:hand      [copper]
-                             :play-area [scrap]
-                             :deck      [copper]
-                             :discard   [silver horse]
+              :players     [{:play-area [scrap]
+                             :discard   [silver horse]      ; cards are gained after +1 Card
                              :actions   1
                              :coins     1
                              :buys      2}]
@@ -980,6 +979,47 @@
                            :actions   2
                            :coins     2}]}))))))
 
+(deftest alliance-test
+  (let [estate   (assoc estate :id 1)
+        duchy    (assoc duchy :id 2)
+        province (assoc province :id 3)
+        copper   (assoc copper :id 4)
+        silver   (assoc silver :id 5)
+        gold     (assoc gold :id 6)]
+    (testing "Alliance"
+      (is (= (-> {:events      {:alliance alliance}
+                  :extra-cards [{:card horse :pile-size 30}]
+                  :supply      [{:card curse :pile-size 10}
+                                {:card estate :pile-size 8}
+                                {:card duchy :pile-size 0}
+                                {:card province :pile-size 8}
+                                {:card copper :pile-size 46}
+                                {:card silver :pile-size 40}
+                                {:card gold :pile-size 30}
+                                {:card colony :pile-size 8}
+                                {:card platinum :pile-size 12}
+                                {:card supplies :pile-size 10}
+                                {:card livery :pile-size 10}]
+                  :players     [{:coins 10
+                                 :buys  1}]}
+                 (buy-event 0 :alliance))
+             {:events      {:alliance alliance}
+              :extra-cards [{:card horse :pile-size 30}]
+              :supply      [{:card curse :pile-size 10}
+                            {:card estate :pile-size 7}
+                            {:card duchy :pile-size 0}
+                            {:card province :pile-size 7}
+                            {:card copper :pile-size 45}
+                            {:card silver :pile-size 39}
+                            {:card gold :pile-size 29}
+                            {:card colony :pile-size 8}
+                            {:card platinum :pile-size 12}
+                            {:card supplies :pile-size 10}
+                            {:card livery :pile-size 10}]
+              :players     [{:discard [province estate gold silver copper]
+                             :coins   0
+                             :buys    0}]})))))
+
 (deftest banish-test
   (testing "Banish"
     (is (= (-> {:events  {:banish banish}
@@ -1076,6 +1116,97 @@
                              :buys  0}
                             {:discard [horse]}
                             {}]})))))
+
+(deftest commerce-test
+  (let [gold (assoc gold :id 1)]
+    (testing "Commerce"
+      (is (= (-> {:events  {:commerce commerce}
+                  :supply  [{:card gold :pile-size 30}]
+                  :players [{:coins 5
+                             :buys  1}]}
+                 (buy-event 0 :commerce))
+             {:events  {:commerce commerce}
+              :supply  [{:card gold :pile-size 30}]
+              :players [{:coins 0
+                         :buys  0}]}))
+      (is (= (-> {:track-gained-cards? true
+                  :events              {:commerce commerce}
+                  :supply              [{:card gold :pile-size 30}]
+                  :players             [{:gained-cards [{:name  :silver
+                                                         :types #{:treasure}
+                                                         :cost  3}]
+                                         :coins        5
+                                         :buys         1}]}
+                 (buy-event 0 :commerce))
+             {:track-gained-cards? true
+              :events              {:commerce commerce}
+              :supply              [{:card gold :pile-size 29}]
+              :players             [{:discard      [gold]
+                                     :gained-cards [{:name  :silver
+                                                     :types #{:treasure}
+                                                     :cost  3}
+                                                    {:name  :gold
+                                                     :types #{:treasure}
+                                                     :cost  6}]
+                                     :coins        0
+                                     :buys         0}]}))
+      (is (= (-> {:track-gained-cards? true
+                  :events              {:commerce commerce}
+                  :supply              [{:card gold :pile-size 30}]
+                  :players             [{:gained-cards [{:name  :silver
+                                                         :types #{:treasure}
+                                                         :cost  3}
+                                                        {:name  :silver
+                                                         :types #{:treasure}
+                                                         :cost  3}]
+                                         :coins        5
+                                         :buys         1}]}
+                 (buy-event 0 :commerce))
+             {:track-gained-cards? true
+              :events              {:commerce commerce}
+              :supply              [{:card gold :pile-size 29}]
+              :players             [{:discard      [gold]
+                                     :gained-cards [{:name  :silver
+                                                     :types #{:treasure}
+                                                     :cost  3}
+                                                    {:name  :silver
+                                                     :types #{:treasure}
+                                                     :cost  3}
+                                                    {:name  :gold
+                                                     :types #{:treasure}
+                                                     :cost  6}]
+                                     :coins        0
+                                     :buys         0}]}))
+      (is (= (-> {:track-gained-cards? true
+                  :events              {:commerce commerce}
+                  :supply              [{:card gold :pile-size 29}]
+                  :players             [{:gained-cards [{:name  :silver
+                                                         :types #{:treasure}
+                                                         :cost  3}
+                                                        {:name  :gold
+                                                         :types #{:treasure}
+                                                         :cost  6}]
+                                         :coins        5
+                                         :buys         1}]}
+                 (buy-event 0 :commerce))
+             {:track-gained-cards? true
+              :events              {:commerce commerce}
+              :supply              [{:card gold :pile-size 27}]
+              :players             [{:discard      [gold gold]
+                                     :gained-cards [{:name  :silver
+                                                     :types #{:treasure}
+                                                     :cost  3}
+                                                    {:name  :gold
+                                                     :types #{:treasure}
+                                                     :cost  6}
+                                                    {:name  :gold
+                                                     :types #{:treasure}
+                                                     :cost  6}
+                                                    {:name  :gold
+                                                     :types #{:treasure}
+                                                     :cost  6}]
+                                     :coins        0
+                                     :buys         0}]})))))
 
 (deftest demand-test
   (let [horse    (assoc horse :id 1)
@@ -1210,6 +1341,51 @@
               :players [{:coins 3
                          :buys  1}]})))))
 
+(deftest populate-test
+  (let [livery        (assoc livery :id 1)
+        crown         (assoc crown :id 2)
+        nobles        (assoc nobles :id 3)
+        village-green (assoc village-green :id 4)]
+    (testing "Populate"
+      (is (= (-> {:events      {:populate populate}
+                  :extra-cards [{:card horse :pile-size 30}]
+                  :supply      [{:card curse :pile-size 10}
+                                {:card estate :pile-size 8}
+                                {:card duchy :pile-size 8}
+                                {:card province :pile-size 8}
+                                {:card copper :pile-size 46}
+                                {:card silver :pile-size 40}
+                                {:card gold :pile-size 30}
+                                {:card supplies :pile-size 10}
+                                {:card livery :pile-size 10}
+                                {:card crown :pile-size 10}
+                                {:card nobles :pile-size 8}
+                                {:card village-green :pile-size 10}
+                                {:card groom :pile-size 0}
+                                {:card exorcist :pile-size 10}]
+                  :players     [{:coins 10
+                                 :buys  1}]}
+                 (buy-event 0 :populate))
+             {:events      {:populate populate}
+              :extra-cards [{:card horse :pile-size 30}]
+              :supply      [{:card curse :pile-size 10}
+                            {:card estate :pile-size 8}
+                            {:card duchy :pile-size 8}
+                            {:card province :pile-size 8}
+                            {:card copper :pile-size 46}
+                            {:card silver :pile-size 40}
+                            {:card gold :pile-size 30}
+                            {:card supplies :pile-size 10}
+                            {:card livery :pile-size 9}
+                            {:card crown :pile-size 9}
+                            {:card nobles :pile-size 7}
+                            {:card village-green :pile-size 9}
+                            {:card groom :pile-size 0}
+                            {:card exorcist :pile-size 10}]
+              :players     [{:discard [livery crown nobles village-green]
+                             :coins   0
+                             :buys    0}]})))))
+
 (deftest pursue-test
   (testing "Pursue"
     (is (= (-> {:events      {:pursue pursue}
@@ -1286,6 +1462,35 @@
                        :revealed-cards {:deck 4}
                        :coins          0
                        :buys           1}]}))))
+
+(deftest reap-test
+  (let [gold (assoc gold :id 1)]
+    (testing "Reap"
+      (ut/reset-ids!)
+      (is (= (-> {:events  {:reap reap}
+                  :supply  [{:card gold :pile-size 30}]
+                  :players [{:coins 7
+                             :buys  1}]}
+                 (buy-event 0 :reap))
+             {:events  {:reap reap}
+              :supply  [{:card gold :pile-size 29}]
+              :players [{:coins    0
+                         :buys     0
+                         :triggers [(merge reap-trigger {:id        1
+                                                         :set-aside [gold]})]}]}))
+      (is (= (-> {:events  {:reap reap}
+                  :supply  [{:card gold :pile-size 30}]
+                  :players [{:play-area [royal-seal]
+                             :coins     7
+                             :buys      1}]}
+                 (buy-event 0 :reap)
+                 (choose :gold))                            ; topdeck from Royal Seal
+             {:events  {:reap reap}
+              :supply  [{:card gold :pile-size 29}]
+              :players [{:play-area [royal-seal]
+                         :deck      [gold]
+                         :coins     0
+                         :buys      0}]})))))
 
 (deftest ride-test
   (let [horse (assoc horse :id 1)]

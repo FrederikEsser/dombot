@@ -1,6 +1,6 @@
 (ns dombot.cards.menagerie
   (:require [dombot.operations :refer [push-effect-stack gain give-choice]]
-            [dombot.cards.common :refer []]
+            [dombot.cards.common :refer [add-trigger]]
             [dombot.cards.dominion :as dominion]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -600,6 +600,37 @@
                                      :min     1
                                      :max     1}]]})
 
+(defn- reap-play-gold [game {:keys [player-no set-aside]}]
+  (-> game
+      (update-in [:players player-no :play-area] concat set-aside)
+      (push-effect-stack {:player-no player-no
+                          :effects   (for [card set-aside]
+                                       [:card-effect {:card card}])})))
+
+(def reap-trigger {:name     :reap
+                   :event    :at-start-turn
+                   :mode     :auto
+                   :duration :once
+                   :effects  [[::reap-play-gold]]})
+
+(defn- reap-set-aside [game {:keys [player-no]}]
+  (let [set-aside (get-in game [:players player-no :reap-set-aside])]
+    (cond-> game
+            (not-empty set-aside) (-> (update-in [:players player-no] dissoc :reap-set-aside)
+                                      (add-trigger {:player-no player-no
+                                                    :trigger   (merge reap-trigger {:set-aside set-aside})})))))
+
+(effects/register {::reap-set-aside reap-set-aside
+                   ::reap-play-gold reap-play-gold})
+
+(def reap {:name   :reap
+           :set    :menagerie
+           :type   :event
+           :cost   7
+           :on-buy [[:gain {:card-name :gold
+                            :to        :reap-set-aside}]
+                    [::reap-set-aside]]})
+
 (def ride {:name   :ride
            :set    :menagerie
            :type   :event
@@ -685,6 +716,7 @@
              gamble
              populate
              pursue
+             reap
              ride
              stampede
              toil

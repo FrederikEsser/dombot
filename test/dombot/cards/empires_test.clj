@@ -5,7 +5,7 @@
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
             [dombot.cards.empires :as empires :refer :all]
-            [dombot.cards.dominion :refer [market throne-room]]
+            [dombot.cards.dominion :refer [market merchant throne-room]]
             [dombot.cards.intrigue :refer [mill]]
             [dombot.cards.seaside :refer [ambassador embargo fishing-village outpost]]
             [dombot.cards.prosperity :as prosperity :refer [hoard]]
@@ -1443,7 +1443,20 @@
                                   :actions   3
                                   :coins     2
                                   :buys      1
-                                  :phase     :action}]}))))))
+                                  :phase     :action}]})))
+      (let [merchant (assoc merchant :id 1)]
+        (is (= (-> {:players [{:hand    [merchant copper crown silver]
+                               :actions 1
+                               :coins   0
+                               :phase   :action}]}
+                   (play 0 :merchant)
+                   (play 0 :copper)
+                   (play 0 :crown)
+                   (choose :silver))
+               {:players [{:play-area [merchant copper crown silver]
+                           :actions   1
+                           :coins     6
+                           :phase     :pay}]}))))))
 
 (deftest encampment-test
   (let [encampment (assoc encampment :id 0)
