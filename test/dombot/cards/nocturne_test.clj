@@ -800,6 +800,9 @@
                              {:player-no 0
                               :effect    [:remove-triggers {:event :on-gain}]}
                              {:player-no 0
+                              :effect    [:track-gain {:card   blessed-village
+                                                       :bought false}]}
+                             {:player-no 0
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :blessed-village
                                                           :gained-card-id 0}]}]}))

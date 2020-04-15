@@ -4262,7 +4262,30 @@
                                                     {:name :silver :cost 3 :types #{:treasure}}
                                                     {:name :silver :cost 3 :types #{:treasure}}]
                                      :vp-tokens    2
-                                     :triggers     [(assoc labyrinth-trigger :id 1)]}]})))))
+                                     :triggers     [(assoc labyrinth-trigger :id 1)]}]}))
+      (let [rocks (assoc rocks :id 2)]
+        (is (= (-> {:track-gained-cards? true
+                    :landmarks           {:labyrinth (assoc labyrinth :vp-tokens 12)}
+                    :supply              [{:card silver :pile-size 40}
+                                          {:split-pile [{:card rocks :pile-size 5}]}]
+                    :players             [{:coins    4
+                                           :buys     1
+                                           :phase    :buy
+                                           :triggers [(assoc labyrinth-trigger :id 1)]}]}
+                   (buy-card 0 :rocks))
+               {:track-gained-cards? true
+                :landmarks           {:labyrinth (assoc labyrinth :vp-tokens 10)}
+                :supply              [{:card silver :pile-size 39}
+                                      {:split-pile [{:card rocks :pile-size 4}]}]
+                :players             [{:deck         [silver]
+                                       :discard      [rocks]
+                                       :gained-cards [{:name :silver :cost 3 :types #{:treasure}}
+                                                      {:name :rocks :cost 4 :types #{:treasure} :bought true}]
+                                       :coins        0
+                                       :buys         0
+                                       :vp-tokens    2
+                                       :phase        :buy
+                                       :triggers     [(assoc labyrinth-trigger :id 1)]}]}))))))
 
 (deftest tomb-test
   (testing "Tomb"

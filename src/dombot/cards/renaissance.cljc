@@ -703,11 +703,11 @@
                             (filter (comp :action (partial ut/get-types game)))
                             count)]
     (cond-> game
-            (<= gained-actions 1) (give-choice {:player-no player-no
-                                                :text      (str "You may play the gained " (ut/format-name name) ".")
-                                                :choice    [::innovation-play-action {:gained-card-id gained-card-id}]
-                                                :options   [:player :gaining {:id gained-card-id}]
-                                                :max       1}))))
+            (zero? gained-actions) (give-choice {:player-no player-no
+                                                 :text      (str "You may play the gained " (ut/format-name name) ".")
+                                                 :choice    [::innovation-play-action {:gained-card-id gained-card-id}]
+                                                 :options   [:player :gaining {:id gained-card-id}]
+                                                 :max       1}))))
 
 (effects/register {::innovation-play-action innovation-play-action
                    ::innovation-on-gain     innovation-on-gain})

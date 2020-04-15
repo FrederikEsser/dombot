@@ -1375,7 +1375,7 @@
 (defn- labyrinth-on-gain [game {:keys [player-no]}]
   (let [gained-cards (get-in game [:players player-no :gained-cards])]
     (cond-> game
-            (= 2 (count gained-cards)) (take-landmark-vp {:player-no     player-no
+            (= 1 (count gained-cards)) (take-landmark-vp {:player-no     player-no
                                                           :landmark-name :labyrinth
                                                           :num-vp        2}))))
 

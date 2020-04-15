@@ -1002,6 +1002,9 @@
                              {:player-no 0
                               :effect    [:remove-triggers {:event :on-gain}]}
                              {:player-no 0
+                              :effect    [:track-gain {:card   gold
+                                                       :bought true}]}
+                             {:player-no 0
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :gold
                                                           :gained-card-id 0
@@ -1352,6 +1355,9 @@
                              {:player-no 0
                               :effect    [:remove-triggers {:event :on-gain}]}
                              {:player-no 0
+                              :effect    [:track-gain {:card   gold
+                                                       :bought true}]}
+                             {:player-no 0
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :gold
                                                           :gained-card-id 0
@@ -1414,6 +1420,9 @@
                               :max       1}
                              {:player-no 1
                               :effect    [:remove-triggers {:event :on-gain}]}
+                             {:player-no 1
+                              :effect    [:track-gain {:card   curse
+                                                       :bought false}]}
                              {:player-no 1
                               :effect    [:finalize-gain {:player-no           1
                                                           :card-name           :curse

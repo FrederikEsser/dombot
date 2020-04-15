@@ -384,6 +384,9 @@
                              {:player-no 0
                               :effect    [:remove-triggers {:event :on-gain}]}
                              {:player-no 0
+                              :effect    [:track-gain {:card   gold
+                                                       :bought false}]}
+                             {:player-no 0
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :gold
                                                           :gained-card-id 5}]}]}))
@@ -446,6 +449,9 @@
                               :max       1}
                              {:player-no 0
                               :effect    [:remove-triggers {:event :on-gain}]}
+                             {:player-no 0
+                              :effect    [:track-gain {:card   border-guard
+                                                       :bought false}]}
                              {:player-no 0
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :border-guard
@@ -676,6 +682,9 @@
                            {:player-no 0
                             :effect    [:remove-triggers {:event :on-gain}]}
                            {:player-no 0
+                            :effect    [:track-gain {:card   gold
+                                                     :bought false}]}
+                           {:player-no 0
                             :effect    [:finalize-gain {:player-no      0
                                                         :card-name      :gold
                                                         :gained-card-id 5}]}]}))
@@ -789,8 +798,7 @@
                          :coffers   1}]}))
       (is (= (-> {:supply  [{:card ducat :pile-size 10}]
                   :players [{:hand [copper copper]}]}
-                 (gain {:player-no 0
-                        :card-name :ducat}))
+                 (gain {:player-no 0 :card-name :ducat}))
              {:supply       [{:card ducat :pile-size 9}]
               :players      [{:hand    [copper copper]
                               :gaining [ducat]}]
@@ -804,6 +812,9 @@
                               :max            1}
                              {:player-no 0
                               :effect    [:remove-triggers {:event :on-gain}]}
+                             {:player-no 0
+                              :effect    [:track-gain {:card   ducat
+                                                       :bought false}]}
                              {:player-no 0
                               :effect    [:finalize-gain {:player-no      0
                                                           :card-name      :ducat
