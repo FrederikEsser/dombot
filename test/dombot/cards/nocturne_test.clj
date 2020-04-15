@@ -9,6 +9,7 @@
             [dombot.cards.seaside :refer [fishing-village]]
             [dombot.cards.prosperity :as prosperity :refer [hoard mint talisman]]
             [dombot.cards.cornucopia :refer [trusty-steed]]
+            [dombot.cards.empires :refer [rocks]]
             [dombot.cards.nocturne :as nocturne :refer :all]
             [dombot.cards.renaissance :refer [patron silk-merchant academy]]
             [dombot.cards.kingdom :refer [setup-game]]
@@ -1068,6 +1069,27 @@
                {:supply  [{:card changeling :pile-size 0}
                           {:card conclave :pile-size 9}]
                 :players [{:discard  [conclave]
+                           :triggers [changeling-trigger]}]})))
+      (let [rocks  (assoc rocks :id 1)
+            silver (assoc silver :id 2)]
+        (is (= (-> {:supply  [{:card silver :pile-size 30}
+                              {:card changeling :pile-size 10}
+                              {:split-pile [{:card rocks :pile-size 5}]}]
+                    :players [{:coins    4
+                               :buys     1
+                               :phase    :pay
+                               :triggers [changeling-trigger]}]}
+                   (buy-card 0 :rocks)
+                   (choose nil)
+                   (choose nil))
+               {:supply  [{:card silver :pile-size 29}
+                          {:card changeling :pile-size 10}
+                          {:split-pile [{:card rocks :pile-size 4}]}]
+                :players [{:deck     [silver]
+                           :discard  [rocks]
+                           :coins    0
+                           :buys     0
+                           :phase    :buy
                            :triggers [changeling-trigger]}]})))
       (testing "ignoring gains"
         (let [conclave (assoc conclave :id 1)]

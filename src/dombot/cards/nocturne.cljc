@@ -669,10 +669,13 @@
                                                                  :from      :supply
                                                                  :to        :discard}]]})))
 
-(defn- changeling-on-gain [{:keys [supply extra-cards] :as game} {:keys [player-no gained-card-id bought]}]
+(defn- changeling-on-gain [{:keys [supply extra-cards] :as game} {:keys [player-no gained-card-id bought] :as args}]
   (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
-        pile-location   (cond (some (comp #{name} :name :card) supply) :supply
-                              (some (comp #{name} :name :card) extra-cards) :extra-cards)
+        pile-location   (cond (->> supply
+                                   (map ut/access-top-card)
+                                   (some (comp #{name} :name :card))) :supply
+                              (->> extra-cards
+                                   (some (comp #{name} :name :card))) :extra-cards)
         cost            (ut/get-cost game card)
         on-buy-effects  (concat (get-on-buy-effects game player-no name)
                                 (get-on-buy-effects game player-no :changeling))
@@ -882,7 +885,7 @@
                                      :effects   [[:trash-from-hand {:card-name card-name}]
                                                  [:give-choice {:text    (str "Gain a Spirit costing less than " (ut/format-cost cost) ".")
                                                                 :choice  [:gain {:from :extra-cards}]
-                                                                :options [:extra-cards {:type           :spirit
+                                                                :options [:extra-cards {:type            :spirit
                                                                                         :costs-less-than cost}]
                                                                 :min     1
                                                                 :max     1}]]}))))

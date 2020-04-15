@@ -17,7 +17,6 @@
 
 ; Bugs & Testing:
 ; Fix Vassal on Village Green
-; fix Changeling & buying Rocks
 ; fix Herald & Piazza with 1 card in deck - what about Vassal & ...?
 ; fix Academy gain Will'o'Wisp with Swamps gift (from Druid) or Imp with Devil's Workshop
 ; fix having Lost in the Woods when you haven't bought Fleet
