@@ -14,6 +14,27 @@
 
 (use-fixtures :each fixture)
 
+(deftest armory-test
+  (let [armory (assoc armory :id 0)
+        duchy  (assoc duchy :id 1)]
+    (testing "Armory"
+      (is (= (-> {:supply  [{:card armory :pile-size 9}]
+                  :players [{:hand    [armory]
+                             :actions 1}]}
+                 (play 0 :armory)
+                 (choose :armory))
+             {:supply  [{:card armory :pile-size 8}]
+              :players [{:play-area [armory]
+                         :deck      [armory]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:hand    [armory]
+                             :actions 1}]}
+                 (play 0 :armory))
+             {:supply  [{:card duchy :pile-size 8}]
+              :players [{:play-area [armory]
+                         :actions   0}]})))))
+
 (deftest beggar-test
   (let [beggar (assoc beggar :id 0)
         copper (assoc copper :id 1)

@@ -3,6 +3,16 @@
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
+(def armory {:name    :armory
+             :set     :dark-ages
+             :types   #{:action}
+             :cost    4
+             :effects [[:give-choice {:text    "Gain a card onto your deck costing up to $4."
+                                      :choice  :gain-to-topdeck
+                                      :options [:supply {:max-cost 4}]
+                                      :min     1
+                                      :max     1}]]})
+
 (def beggar {:name      :beggar
              :set       :dark-ages
              :types     #{:action :reaction}
@@ -85,7 +95,8 @@
                                        :min     1
                                        :max     1}]]})
 
-(def kingdom-cards [beggar
+(def kingdom-cards [armory
+                    beggar
                     forager
                     poor-house
                     squire])
