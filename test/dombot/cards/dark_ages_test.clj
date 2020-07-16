@@ -119,6 +119,45 @@
                            :deck    [silver]
                            :discard [beggar silver copper]}]}))))))
 
+(deftest counterfeit-test
+  (let [counterfeit (assoc counterfeit :id 0)]
+    (testing "Counterfeit"
+      (is (= (-> {:players [{:hand  [counterfeit]
+                             :coins 0}]}
+                 (play 0 :counterfeit))
+             {:players [{:play-area [counterfeit]
+                         :coins     1}]}))
+      (is (= (-> {:players [{:hand  [counterfeit copper]
+                             :coins 0}]}
+                 (play 0 :counterfeit)
+                 (choose nil))
+             {:players [{:hand      [copper]
+                         :play-area [counterfeit]
+                         :coins     1}]}))
+      (is (= (-> {:players [{:hand  [counterfeit copper]
+                             :coins 0}]}
+                 (play 0 :counterfeit)
+                 (choose :copper))
+             {:players [{:play-area [counterfeit]
+                         :coins     3}]
+              :trash   [copper]}))
+      (is (= (-> {:players [{:hand  [counterfeit silver]
+                             :coins 0}]}
+                 (play 0 :counterfeit)
+                 (choose :silver))
+             {:players [{:play-area [counterfeit]
+                         :coins     5}]
+              :trash   [silver]}))
+      (is (= (-> {:extra-cards [{:card spoils :pile-size 14}]
+                  :players     [{:hand  [counterfeit spoils]
+                                 :coins 0}]}
+                 (play 0 :counterfeit)
+                 (choose :spoils))
+             {:extra-cards [{:card spoils :pile-size 14}]
+              :players     [{:play-area [counterfeit]
+                             :coins     7}]
+              :trash       [spoils]})))))
+
 (deftest forager-test
   (let [forager (assoc forager :id 0)]
     (testing "Forager"

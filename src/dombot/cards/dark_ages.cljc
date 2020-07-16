@@ -43,6 +43,25 @@
                          [:gain-to-topdeck {:card-name :silver}]
                          [:gain {:card-name :silver}]]})
 
+(defn- counterfeit-treasure [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:repeat-action {:card-name card-name
+                                                                     :times     2}]
+                                                    [:trash-from-play-area {:card-name card-name}]]})))
+
+(effects/register {::counterfeit-treasure counterfeit-treasure})
+
+(def counterfeit {:name       :counterfeit
+                  :set        :dark-ages
+                  :types      #{:treasure}
+                  :cost       5
+                  :coin-value 1
+                  :effects    [[:give-choice {:text    "You may play a Treasure from your hand twice."
+                                              :choice  ::counterfeit-treasure
+                                              :options [:player :hand {:type :treasure}]
+                                              :max     1}]]})
+
 (defn- forager-give-coins [game {:keys [player-no]}]
   (let [different-treasures (->> game
                                  :trash
@@ -137,6 +156,7 @@
 (def kingdom-cards [armory
                     bandit-camp
                     beggar
+                    counterfeit
                     forager
                     poor-house
                     squire
