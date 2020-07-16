@@ -1,7 +1,8 @@
 (ns dombot.cards.dark-ages
   (:require [dombot.operations :refer [push-effect-stack give-choice]]
             [dombot.utils :as ut]
-            [dombot.effects :as effects]))
+            [dombot.effects :as effects]
+            [clojure.set :refer [intersection]]))
 
 (def armory {:name    :armory
              :set     :dark-ages
@@ -95,8 +96,30 @@
                                        :min     1
                                        :max     1}]]})
 
+(defn- vagrant-check-revealed [game {:keys [player-no]}]
+  (let [{:keys [name] :as card} (last (get-in game [:players player-no :revealed]))
+        take-card? (->> (ut/get-types game card)
+                        (intersection #{:curse :ruins :shelter :victory})
+                        not-empty)]
+    (cond-> game
+            take-card? (push-effect-stack {:player-no player-no
+                                           :effects   [[:take-from-revealed {:card-name name}]]}))))
+
+(effects/register {::vagrant-check-revealed vagrant-check-revealed})
+
+(def vagrant {:name    :vagrant
+              :set     :dark-ages
+              :types   #{:action}
+              :cost    2
+              :effects [[:draw 1]
+                        [:give-actions 1]
+                        [:reveal-from-deck 1]
+                        [::vagrant-check-revealed]
+                        [:topdeck-all-revealed]]})
+
 (def kingdom-cards [armory
                     beggar
                     forager
                     poor-house
-                    squire])
+                    squire
+                    vagrant])

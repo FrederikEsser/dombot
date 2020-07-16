@@ -6,6 +6,7 @@
             [dombot.cards.common :refer :all]
             [dombot.cards.dark-ages :as dark-ages :refer :all]
             [dombot.cards.dominion :refer [militia]]
+            [dombot.cards.intrigue :refer [harem]]
             [dombot.cards.kingdom :refer [setup-game]]
             [dombot.utils :as ut]))
 
@@ -261,3 +262,65 @@
                              :coins     0
                              :buys      2}]
                   :trash   [squire]})))))))
+
+(deftest vagrant-test
+  (let [vagrant (assoc vagrant :id 0)]
+    (testing "Vagrant"
+      (is (= (-> {:players [{:hand    [vagrant]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :vagrant))
+             {:players [{:hand           [copper]
+                         :play-area      [vagrant]
+                         :deck           [copper]
+                         :revealed-cards {:deck 1}
+                         :actions        1}]}))
+      (is (= (-> {:players [{:hand    [vagrant]
+                             :deck    [copper vagrant]
+                             :actions 1}]}
+                 (play 0 :vagrant))
+             {:players [{:hand           [copper]
+                         :play-area      [vagrant]
+                         :deck           [vagrant]
+                         :revealed-cards {:deck 1}
+                         :actions        1}]}))
+      (is (= (-> {:players [{:hand    [vagrant]
+                             :deck    [copper curse]
+                             :actions 1}]}
+                 (play 0 :vagrant))
+             {:players [{:hand           [copper curse]
+                         :play-area      [vagrant]
+                         :revealed-cards {:hand 1}
+                         :actions        1}]}))
+      (is (= (-> {:players [{:hand    [vagrant]
+                             :deck    [copper estate]
+                             :actions 1}]}
+                 (play 0 :vagrant))
+             {:players [{:hand           [copper estate]
+                         :play-area      [vagrant]
+                         :revealed-cards {:hand 1}
+                         :actions        1}]}))
+      (is (= (-> {:players [{:hand    [vagrant]
+                             :deck    [copper harem]
+                             :actions 1}]}
+                 (play 0 :vagrant))
+             {:players [{:hand           [copper harem]
+                         :play-area      [vagrant]
+                         :revealed-cards {:hand 1}
+                         :actions        1}]}))
+      #_(is (= (-> {:players [{:hand    [vagrant]
+                               :deck    [copper ruined-market]
+                               :actions 1}]}
+                   (play 0 :vagrant))
+               {:players [{:hand           [copper ruined-market]
+                           :play-area      [vagrant]
+                           :revealed-cards {:hand 1}
+                           :actions        1}]}))
+      #_(is (= (-> {:players [{:hand    [vagrant]
+                               :deck    [copper necropolis]
+                               :actions 1}]}
+                   (play 0 :vagrant))
+               {:players [{:hand           [copper necropolis]
+                           :play-area      [vagrant]
+                           :revealed-cards {:hand 1}
+                           :actions        1}]})))))
