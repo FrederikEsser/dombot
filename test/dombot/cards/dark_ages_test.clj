@@ -65,3 +65,52 @@
                           {:hand    [copper copper copper]
                            :deck    [silver]
                            :discard [beggar silver copper]}]}))))))
+
+(deftest poor-house-test
+  (let [poor-house (assoc poor-house :id 0)]
+    (testing "Poor House"
+      (is (= (-> {:players [{:hand    [poor-house estate]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :poor-house))
+             {:players [{:hand           [estate]
+                         :play-area      [poor-house]
+                         :revealed-cards {:hand 1}
+                         :actions        0
+                         :coins          4}]}))
+      (is (= (-> {:players [{:hand    [poor-house estate copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :poor-house))
+             {:players [{:hand           [estate copper]
+                         :play-area      [poor-house]
+                         :revealed-cards {:hand 2}
+                         :actions        0
+                         :coins          3}]}))
+      (is (= (-> {:players [{:hand    [poor-house copper copper copper copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :poor-house))
+             {:players [{:hand           [copper copper copper copper]
+                         :play-area      [poor-house]
+                         :revealed-cards {:hand 4}
+                         :actions        0
+                         :coins          0}]}))
+      (is (= (-> {:players [{:hand    [poor-house copper copper copper copper copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :poor-house))
+             {:players [{:hand           [copper copper copper copper copper]
+                         :play-area      [poor-house]
+                         :revealed-cards {:hand 5}
+                         :actions        0
+                         :coins          0}]}))
+      (is (= (-> {:players [{:hand    [poor-house copper copper copper copper copper]
+                             :actions 1
+                             :coins   2}]}
+                 (play 0 :poor-house))
+             {:players [{:hand           [copper copper copper copper copper]
+                         :play-area      [poor-house]
+                         :revealed-cards {:hand 5}
+                         :actions        0
+                         :coins          1}]})))))
