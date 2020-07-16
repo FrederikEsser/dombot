@@ -4,6 +4,13 @@
             [dombot.effects :as effects]
             [clojure.set :refer [intersection]]))
 
+(def spoils {:name       :spoils
+             :set        :dark-ages
+             :types      #{:treasure}
+             :cost       0
+             :coin-value 3
+             :effects    [[:return-this-to-supply {:area :extra-cards}]]})
+
 (def armory {:name    :armory
              :set     :dark-ages
              :types   #{:action}
@@ -13,6 +20,16 @@
                                       :options [:supply {:max-cost 4}]
                                       :min     1
                                       :max     1}]]})
+
+(def bandit-camp {:name    :bandit-camp
+                  :set     :dark-ages
+                  :types   #{:action}
+                  :cost    5
+                  :effects [[:draw 1]
+                            [:give-actions 2]
+                            [:gain {:card-name :spoils
+                                    :from      :extra-cards}]]
+                  :setup   [[:setup-extra-cards {:extra-cards [{:card spoils :pile-size 15}]}]]})
 
 (def beggar {:name      :beggar
              :set       :dark-ages
@@ -118,6 +135,7 @@
                         [:topdeck-all-revealed]]})
 
 (def kingdom-cards [armory
+                    bandit-camp
                     beggar
                     forager
                     poor-house

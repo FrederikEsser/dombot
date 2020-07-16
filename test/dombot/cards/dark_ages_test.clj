@@ -36,6 +36,37 @@
               :players [{:play-area [armory]
                          :actions   0}]})))))
 
+(deftest bandit-camp-test
+  (let [bandit-camp (assoc bandit-camp :id 0)]
+    (testing "Bandit Camp"
+      (let [spoils (assoc spoils :id 1)]
+        (is (= (-> {:extra-cards [{:card spoils :pile-size 15}]
+                    :players     [{:hand    [bandit-camp]
+                                   :deck    [copper copper]
+                                   :actions 1}]}
+                   (play 0 :bandit-camp))
+               {:extra-cards [{:card spoils :pile-size 14}]
+                :players     [{:hand      [copper]
+                               :play-area [bandit-camp]
+                               :deck      [copper]
+                               :discard   [spoils]
+                               :actions   2}]}))
+        (is (= (-> {:extra-cards [{:card spoils :pile-size 0}]
+                    :players     [{:hand    [bandit-camp]
+                                   :deck    [copper copper]
+                                   :actions 1}]}
+                   (play 0 :bandit-camp))
+               {:extra-cards [{:card spoils :pile-size 0}]
+                :players     [{:hand      [copper]
+                               :play-area [bandit-camp]
+                               :deck      [copper]
+                               :actions   2}]})))
+      (testing "setup"
+        (is (= (-> {:supply [{:card bandit-camp :pile-size 10}]}
+                   setup-game)
+               {:extra-cards [{:card spoils :pile-size 15}]
+                :supply      [{:card bandit-camp :pile-size 10}]}))))))
+
 (deftest beggar-test
   (let [beggar (assoc beggar :id 0)
         copper (assoc copper :id 1)
@@ -198,6 +229,16 @@
                          :revealed-cards {:hand 5}
                          :actions        0
                          :coins          1}]})))))
+
+(deftest spoils-test
+  (let [spoils (assoc spoils :id 0)]
+    (testing "Spoils"
+      (is (= (-> {:extra-cards [{:card spoils :pile-size 14}]
+                  :players     [{:hand  [spoils]
+                                 :coins 0}]}
+                 (play 0 :spoils))
+             {:extra-cards [{:card spoils :pile-size 15}]
+              :players     [{:coins 3}]})))))
 
 (deftest squire-test
   (let [squire (assoc squire :id 0)
