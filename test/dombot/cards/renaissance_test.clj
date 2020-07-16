@@ -881,8 +881,7 @@
              {:supply  [{:card experiment :pile-size 8}]
               :players [{:play-area [lurker]
                          :discard   [experiment experiment]
-                         :actions   1}]
-              :trash   []})))))
+                         :actions   1}]})))))
 
 (deftest flag-bearer-test
   (let [flag-bearer (assoc flag-bearer :id 1)]
@@ -1317,8 +1316,7 @@
               :players [{:play-area [lurker]
                          :discard   [lackeys]
                          :actions   1
-                         :villagers 2}]
-              :trash   []})))))
+                         :villagers 2}]})))))
 
 (deftest mountain-village-test
   (testing "Mountain Village"
@@ -2033,8 +2031,7 @@
                          :discard   [silk-merchant]
                          :actions   1
                          :coffers   1
-                         :villagers 1}]
-              :trash   []})))))
+                         :villagers 1}]})))))
 
 (deftest spices-test
   (let [spices (assoc spices :id 1)]
@@ -2580,8 +2577,7 @@
                 :players  [{:hand      [patron]
                             :play-area [treasurer]
                             :actions   0
-                            :coins     3}]
-                :trash    []})))
+                            :coins     3}]})))
       (testing "with Mint"
         (is (= (-> {:projects {:capitalism (assoc capitalism :participants [{:player-no 0}])}
                     :supply   [{:card mint :pile-size 10}]

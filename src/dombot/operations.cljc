@@ -327,7 +327,8 @@
             (= from :revealed) (increase-revealed-number-of-cards player-no to)
             (not= from :revealed) (-> (reset-revealed-number-of-cards player-no from)
                                       (reset-revealed-number-of-cards player-no to))
-            (empty? from-cards) (update-in [:players player-no] dissoc from))))
+            (empty? from-cards) (update-in [:players player-no] dissoc from)
+            (empty? (:trash game)) (dissoc :trash))))
 
 (defn- get-card [game {:keys [player-no card-name move-card-id from from-position] :as args}]
   (assert (or card-name move-card-id from-position) (str "Can't move unspecified card: " args))
@@ -669,7 +670,8 @@
 
 (defn move-card [game {:keys [player-no from to] :as args}]
   (let [{:keys [deck discard]} (get-in game [:players player-no])
-        {{card-name :name} :card} (get-card game args)]
+        {{card-name :name
+          card-id   :id} :card} (get-card game args)]
     (if (and (= :deck from) (empty? deck) (not-empty discard))
       (push-effect-stack game {:player-no player-no
                                :effects   [[:shuffle]
@@ -678,7 +680,8 @@
           (push-effect-stack {:player-no player-no
                               :effects   [[:do-move-card args]
                                           (when (= to :trash)
-                                            [:on-trash (merge args {:card-name card-name})])
+                                            [:on-trash (merge args {:card-name card-name
+                                                                    :card-id   card-id})])
                                           (when (= to :revealed)
                                             [:on-reveal {:card-name card-name}])
                                           (when (and (= to :discard)

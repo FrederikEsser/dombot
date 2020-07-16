@@ -1318,8 +1318,7 @@
                  {:supply  [{:card changeling :pile-size 9}
                             {:card conclave :pile-size 10}]
                   :players [{:discard  [changeling]
-                             :triggers [changeling-trigger]}]
-                  :trash   []})))
+                             :triggers [changeling-trigger]}]})))
         (let [ghost (assoc ghost :id 1)]
           (is (= (-> {:extra-cards [{:card ghost :pile-size 5}]
                       :supply      [{:card changeling :pile-size 10}]
@@ -1330,8 +1329,7 @@
                  {:extra-cards [{:card ghost :pile-size 6}]
                   :supply      [{:card changeling :pile-size 9}]
                   :players     [{:discard  [changeling]
-                                 :triggers [changeling-trigger]}]
-                  :trash       []})))
+                                 :triggers [changeling-trigger]}]})))
         (let [zombie-apprentice (assoc zombie-apprentice :id 1)]
           (is (= (-> {:supply  [{:card changeling :pile-size 10}]
                       :players [{:triggers [changeling-trigger]}]
@@ -1339,8 +1337,7 @@
                      (gain {:player-no 0 :card-name :zombie-apprentice :from :trash}))
                  {:supply  [{:card changeling :pile-size 10}]
                   :players [{:discard  [zombie-apprentice]
-                             :triggers [changeling-trigger]}]
-                  :trash   []})))))))
+                             :triggers [changeling-trigger]}]})))))))
 
 (deftest cobbler-test
   (let [cobbler (assoc cobbler :id 0)]
@@ -2516,8 +2513,7 @@
                  (choose :zombie-apprentice))
              {:players [{:play-area [lurker]
                          :discard   [zombie-apprentice]
-                         :actions   1}]
-              :trash   []})))
+                         :actions   1}]})))
     (testing "Zombie Apprentice"
       (is (= (-> {:players [{:hand    [necromancer]
                              :actions 1}]

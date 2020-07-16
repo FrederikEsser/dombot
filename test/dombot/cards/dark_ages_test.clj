@@ -7,6 +7,7 @@
             [dombot.cards.dark-ages :as dark-ages :refer :all]
             [dombot.cards.dominion :refer [militia]]
             [dombot.cards.intrigue :refer [harem]]
+            [dombot.cards.adventures :refer [warrior]]
             [dombot.cards.kingdom :refer [setup-game]]
             [dombot.utils :as ut]))
 
@@ -219,6 +220,37 @@
                          :coins     2
                          :buys      2}]
               :trash   [silver copper]})))))
+
+(deftest fortress-test
+  (let [fortress (assoc fortress :id 0)]
+    (testing "Fortress"
+      (is (= (-> {:players [{:hand    [fortress]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :fortress))
+             {:players [{:hand      [copper]
+                         :play-area [fortress]
+                         :deck      [copper]
+                         :actions   2}]}))
+      (testing "on trash"
+        (is (= (-> {:players [{:hand    [forager fortress]
+                               :actions 1
+                               :coins   0
+                               :buys    1}]}
+                   (play 0 :forager)
+                   (choose :fortress))
+               {:players [{:hand      [fortress]
+                           :play-area [forager]
+                           :actions   1
+                           :coins     0
+                           :buys      2}]}))
+        (is (= (-> {:players [{:hand    [warrior]
+                               :actions 1}
+                              {:deck [fortress]}]}
+                   (play 0 :warrior))
+               {:players [{:play-area [warrior]
+                           :actions   0}
+                          {:hand [fortress]}]}))))))
 
 (deftest poor-house-test
   (let [poor-house (assoc poor-house :id 0)]

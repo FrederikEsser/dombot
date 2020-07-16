@@ -87,6 +87,23 @@
                                        :max     1}]
                         [::forager-give-coins]]})
 
+(defn- fortress-trashed [game {:keys [player-no card-id] :as args}]
+  (prn "fortress-trashed" args)
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:move-card {:move-card-id card-id
+                                                    :from         :trash
+                                                    :to           :hand}]]}))
+
+(effects/register {::fortress-trashed fortress-trashed})
+
+(def fortress {:name     :fortress
+               :set      :dark-ages
+               :types    #{:action}
+               :cost     4
+               :effects  [[:draw 1]
+                          [:give-actions 2]]
+               :on-trash [[::fortress-trashed]]})
+
 (defn- poor-house-lose-coins [game {:keys [player-no]}]
   (let [{:keys [coins hand]} (get-in game [:players player-no])
         treasures-in-hand (->> hand
@@ -158,6 +175,7 @@
                     beggar
                     counterfeit
                     forager
+                    fortress
                     poor-house
                     squire
                     vagrant])
