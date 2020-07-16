@@ -176,3 +176,67 @@
                          :revealed-cards {:hand 5}
                          :actions        0
                          :coins          1}]})))))
+
+(deftest squire-test
+  (let [squire (assoc squire :id 0)
+        silver (assoc silver :id 1)]
+    (testing "Squire"
+      (is (= (-> {:players [{:hand    [squire]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :squire)
+                 (choose :actions))
+             {:players [{:play-area [squire]
+                         :actions   2
+                         :coins     1}]}))
+      (is (= (-> {:players [{:hand    [squire]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :squire)
+                 (choose :buys))
+             {:players [{:play-area [squire]
+                         :actions   0
+                         :coins     1
+                         :buys      3}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand    [squire]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :squire)
+                 (choose :silver))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:play-area [squire]
+                         :discard   [silver]
+                         :actions   0
+                         :coins     1}]}))
+      (testing "on trash"
+        (is (= (-> {:supply  [{:card squire :pile-size 9}]
+                    :players [{:hand    [forager squire]
+                               :actions 1
+                               :coins   0
+                               :buys    1}]}
+                   (play 0 :forager)
+                   (choose :squire))
+               {:supply  [{:card squire :pile-size 9}]
+                :players [{:play-area [forager]
+                           :actions   1
+                           :coins     0
+                           :buys      2}]
+                :trash   [squire]}))
+        (let [militia (assoc militia :id 1)]
+          (is (= (-> {:supply  [{:card militia :pile-size 10}]
+                      :players [{:hand    [forager squire]
+                                 :actions 1
+                                 :coins   0
+                                 :buys    1}]}
+                     (play 0 :forager)
+                     (choose :squire)
+                     (choose :militia))
+                 {:supply  [{:card militia :pile-size 9}]
+                  :players [{:play-area [forager]
+                             :discard   [militia]
+                             :actions   1
+                             :coins     0
+                             :buys      2}]
+                  :trash   [squire]})))))))

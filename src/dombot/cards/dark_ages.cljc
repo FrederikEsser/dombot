@@ -57,6 +57,35 @@
                            [:reveal-hand]
                            [::poor-house-lose-coins]]})
 
+(defn squire-choice [game {:keys [player-no choice]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [(case choice
+                                         :actions [:give-actions 2]
+                                         :buys [:give-buys 2]
+                                         :silver [:gain {:card-name :silver}])]}))
+
+(effects/register {::squire-choice squire-choice})
+
+(def squire {:name     :squire
+             :set      :dark-ages
+             :types    #{:action}
+             :cost     2
+             :effects  [[:give-coins 1]
+                        [:give-choice {:text    "Choose one:"
+                                       :choice  ::squire-choice
+                                       :options [:special
+                                                 {:option :actions :text "+2 Actions"}
+                                                 {:option :buys :text "+2 Buys"}
+                                                 {:option :silver :text "Gain a Silver"}]
+                                       :min     1
+                                       :max     1}]]
+             :on-trash [[:give-choice {:text    "Gain an Attack card."
+                                       :choice  :gain
+                                       :options [:supply {:type :attack}]
+                                       :min     1
+                                       :max     1}]]})
+
 (def kingdom-cards [beggar
                     forager
-                    poor-house])
+                    poor-house
+                    squire])
