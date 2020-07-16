@@ -170,6 +170,19 @@
                         [::vagrant-check-revealed]
                         [:topdeck-all-revealed]]})
 
+(def wandering-minstrel {:name    :wandering-minstrel
+                         :set     :dark-ages
+                         :types   #{:action}
+                         :cost    4
+                         :effects [[:draw 1]
+                                   [:give-actions 2]
+                                   [:reveal-from-deck 3]
+                                   [:give-choice {:text    "Put the Action cards back in any order."
+                                                  :choice  :topdeck-from-revealed
+                                                  :options [:player :revealed {:type :action}]
+                                                  :min     3}]
+                                   [:discard-all-revealed]]})
+
 (def kingdom-cards [armory
                     bandit-camp
                     beggar
@@ -178,4 +191,5 @@
                     fortress
                     poor-house
                     squire
-                    vagrant])
+                    vagrant
+                    wandering-minstrel])

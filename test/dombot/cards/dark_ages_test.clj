@@ -436,3 +436,60 @@
                            :play-area      [vagrant]
                            :revealed-cards {:hand 1}
                            :actions        1}]})))))
+
+(deftest wandering-minstrel-test
+  (let [wandering-minstrel (assoc wandering-minstrel :id 0)]
+    (testing "Wandering Minstrel"
+      (is (= (-> {:players [{:hand    [wandering-minstrel]
+                             :deck    [copper]
+                             :actions 1}]}
+                 (play 0 :wandering-minstrel))
+             {:players [{:hand      [copper]
+                         :play-area [wandering-minstrel]
+                         :actions   2}]}))
+      (is (= (-> {:players [{:hand    [wandering-minstrel]
+                             :deck    [copper copper copper copper copper]
+                             :actions 1}]}
+                 (play 0 :wandering-minstrel))
+             {:players [{:hand           [copper]
+                         :play-area      [wandering-minstrel]
+                         :deck           [copper]
+                         :discard        [copper copper copper]
+                         :revealed-cards {:discard 3}
+                         :actions        2}]}))
+      (is (= (-> {:players [{:hand    [wandering-minstrel]
+                             :deck    [copper wandering-minstrel copper copper copper]
+                             :actions 1}]}
+                 (play 0 :wandering-minstrel)
+                 (choose :wandering-minstrel))
+             {:players [{:hand           [copper]
+                         :play-area      [wandering-minstrel]
+                         :deck           [wandering-minstrel copper]
+                         :discard        [copper copper]
+                         :revealed-cards {:deck    1
+                                          :discard 2}
+                         :actions        2}]}))
+      (is (= (-> {:players [{:hand    [wandering-minstrel]
+                             :deck    [copper wandering-minstrel gold vagrant copper]
+                             :actions 1}]}
+                 (play 0 :wandering-minstrel)
+                 (choose [:wandering-minstrel :vagrant]))
+             {:players [{:hand           [copper]
+                         :play-area      [wandering-minstrel]
+                         :deck           [vagrant wandering-minstrel copper]
+                         :discard        [gold]
+                         :revealed-cards {:deck    2
+                                          :discard 1}
+                         :actions        2}]}))
+      (is (thrown-with-msg? AssertionError #"Choose error"
+                            (-> {:players [{:hand    [wandering-minstrel]
+                                            :deck    [copper wandering-minstrel gold vagrant copper]
+                                            :actions 1}]}
+                                (play 0 :wandering-minstrel)
+                                (choose [:wandering-minstrel]))))
+      (is (thrown-with-msg? AssertionError #"Choose error"
+                            (-> {:players [{:hand    [wandering-minstrel]
+                                            :deck    [copper wandering-minstrel gold vagrant copper]
+                                            :actions 1}]}
+                                (play 0 :wandering-minstrel)
+                                (choose [:wandering-minstrel :vagrant :gold])))))))
