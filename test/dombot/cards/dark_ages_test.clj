@@ -66,6 +66,68 @@
                            :deck    [silver]
                            :discard [beggar silver copper]}]}))))))
 
+(deftest forager-test
+  (let [forager (assoc forager :id 0)]
+    (testing "Forager"
+      (is (= (-> {:players [{:hand    [forager estate]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :forager)
+                 (choose :estate))
+             {:players [{:play-area [forager]
+                         :actions   1
+                         :coins     0
+                         :buys      2}]
+              :trash   [estate]}))
+      (is (= (-> {:players [{:hand    [forager estate]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]
+                  :trash   [copper]}
+                 (play 0 :forager)
+                 (choose :estate))
+             {:players [{:play-area [forager]
+                         :actions   1
+                         :coins     1
+                         :buys      2}]
+              :trash   [copper estate]}))
+      (is (= (-> {:players [{:hand    [forager copper]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :forager)
+                 (choose :copper))
+             {:players [{:play-area [forager]
+                         :actions   1
+                         :coins     1
+                         :buys      2}]
+              :trash   [copper]}))
+      (is (= (-> {:players [{:hand    [forager copper]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]
+                  :trash   [copper]}
+                 (play 0 :forager)
+                 (choose :copper))
+             {:players [{:play-area [forager]
+                         :actions   1
+                         :coins     1
+                         :buys      2}]
+              :trash   [copper copper]}))
+      (is (= (-> {:players [{:hand    [forager copper]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]
+                  :trash   [silver]}
+                 (play 0 :forager)
+                 (choose :copper))
+             {:players [{:play-area [forager]
+                         :actions   1
+                         :coins     2
+                         :buys      2}]
+              :trash   [silver copper]})))))
+
 (deftest poor-house-test
   (let [poor-house (assoc poor-house :id 0)]
     (testing "Poor House"
