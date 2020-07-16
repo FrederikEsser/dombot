@@ -16,6 +16,8 @@
 ; choose by trigger id when set aside cards - show different cards
 
 ; Bugs & Testing:
+; Fix Demand on Skulk (topdecks gained Gold)
+; Fix Miser with no Copper in hand
 ; Fix Vassal on Village Green
 ; fix Herald & Piazza with 1 card in deck - what about Vassal & ...?
 ; fix Academy gain Will'o'Wisp with Swamps gift (from Druid) or Imp with Devil's Workshop

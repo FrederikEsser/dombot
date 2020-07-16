@@ -6,6 +6,7 @@
             [dombot.cards.seaside :as seaside]
             [dombot.cards.prosperity :as prosperity]
             [dombot.cards.cornucopia :as cornucopia]
+            [dombot.cards.dark-ages :as dark-ages]
             [dombot.cards.guilds :as guilds]
             [dombot.cards.adventures :as adventures]
             [dombot.cards.empires :as empires]
@@ -22,6 +23,7 @@
                      seaside/kingdom-cards
                      prosperity/kingdom-cards
                      cornucopia/kingdom-cards
+                     dark-ages/kingdom-cards
                      guilds/kingdom-cards
                      adventures/kingdom-cards
                      empires/kingdom-cards
@@ -167,3 +169,16 @@
               {:projects projects})) game
           (-> (reduce (partial prepare-cards heirlooms) game (range number-of-players))
               setup-game))))
+
+(defn random-sets [required & [num-sets]]
+  (->> kingdom-cards
+       (map :set)
+       distinct
+       (remove (set (concat required #{:promos})))
+       shuffle
+       (take (- (or num-sets 3) (count required)))
+       (concat required)
+       sort))
+
+(comment
+  (random-sets #{:empires :menagerie} 5))
