@@ -11,6 +11,21 @@
              :coin-value 3
              :effects    [[:return-this-to-supply {:area :extra-cards}]]})
 
+(def altar {:name    :altar
+            :set     :dark-ages
+            :types   #{:action}
+            :cost    6
+            :effects [[:give-choice {:text    "Trash a card from your hand."
+                                     :choice  :trash-from-hand
+                                     :options [:player :hand]
+                                     :min     1
+                                     :max     1}]
+                      [:give-choice {:text    "Gain a card costing up to $5."
+                                     :choice  :gain
+                                     :options [:supply {:max-cost 5}]
+                                     :min     1
+                                     :max     1}]]})
+
 (def armory {:name    :armory
              :set     :dark-ages
              :types   #{:action}
@@ -224,7 +239,8 @@
                                                   :min     3}]
                                    [:discard-all-revealed]]})
 
-(def kingdom-cards [armory
+(def kingdom-cards [altar
+                    armory
                     bandit-camp
                     beggar
                     counterfeit

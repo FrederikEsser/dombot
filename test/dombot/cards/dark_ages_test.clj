@@ -16,6 +16,42 @@
 
 (use-fixtures :each fixture)
 
+(deftest altar-test
+  (let [altar (assoc altar :id 0)
+        duchy (assoc duchy :id 1)]
+    (testing "altar"
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:hand    [altar copper]
+                             :actions 1}]}
+                 (play 0 :altar)
+                 (choose :copper)
+                 (choose :duchy))
+             {:supply  [{:card duchy :pile-size 7}]
+              :players [{:play-area [altar]
+                         :discard   [duchy]
+                         :actions   0}]
+              :trash   [copper]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:hand    [altar]
+                             :actions 1}]}
+                 (play 0 :altar)
+                 (choose :duchy))
+             {:supply  [{:card duchy :pile-size 7}]
+              :players [{:play-area [altar]
+                         :discard   [duchy]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 0}
+                            {:card gold :pile-size 30}]
+                  :players [{:hand    [altar copper]
+                             :actions 1}]}
+                 (play 0 :altar)
+                 (choose :copper))
+             {:supply  [{:card duchy :pile-size 0}
+                        {:card gold :pile-size 30}]
+              :players [{:play-area [altar]
+                         :actions   0}]
+              :trash   [copper]})))))
+
 (deftest armory-test
   (let [armory (assoc armory :id 0)
         duchy  (assoc duchy :id 1)]
