@@ -19,7 +19,7 @@
 (deftest altar-test
   (let [altar (assoc altar :id 0)
         duchy (assoc duchy :id 1)]
-    (testing "altar"
+    (testing "Altar"
       (is (= (-> {:supply  [{:card duchy :pile-size 8}]
                   :players [{:hand    [altar copper]
                              :actions 1}]}
@@ -454,6 +454,38 @@
                          :buys      2}]
               :trash   [hunting-grounds]})))))
 
+(deftest pillage-test
+  (let [pillage (assoc pillage :id 0)]
+    (testing "Pillage"
+      (let [spoils (assoc spoils :id 1)]
+        (is (= (-> {:extra-cards [{:card spoils :pile-size 15}]
+                    :players     [{:hand    [pillage]
+                                   :actions 1}
+                                  {:hand [copper copper copper gold]}]}
+                   (play 0 :pillage))
+               {:extra-cards [{:card spoils :pile-size 13}]
+                :players     [{:discard [spoils spoils]
+                               :actions 0}
+                              {:hand [copper copper copper gold]}]
+                :trash       [pillage]}))
+        (is (= (-> {:extra-cards [{:card spoils :pile-size 15}]
+                    :players     [{:hand    [pillage]
+                                   :actions 1}
+                                  {:hand [copper copper copper gold copper]}]}
+                   (play 0 :pillage)
+                   (choose :gold))
+               {:extra-cards [{:card spoils :pile-size 13}]
+                :players     [{:discard [spoils spoils]
+                               :actions 0}
+                              {:hand    [copper copper copper copper]
+                               :discard [gold]}]
+                :trash       [pillage]})))
+      (testing "setup"
+        (is (= (-> {:supply [{:card pillage :pile-size 10}]}
+                   setup-game)
+               {:extra-cards [{:card spoils :pile-size 15}]
+                :supply      [{:card pillage :pile-size 10}]}))))))
+
 (deftest poor-house-test
   (let [poor-house (assoc poor-house :id 0)]
     (testing "Poor House"
@@ -507,7 +539,7 @@
   (let [rogue  (assoc rogue :id 0)
         silver (assoc silver :id 1)
         gold   (assoc gold :id 2)]
-    (testing "rogue"
+    (testing "Rogue"
       (is (= (-> {:players [{:hand    [rogue]
                              :actions 1
                              :coins   0}]

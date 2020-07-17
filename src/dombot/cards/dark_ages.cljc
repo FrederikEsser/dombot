@@ -42,8 +42,7 @@
                   :cost    5
                   :effects [[:draw 1]
                             [:give-actions 2]
-                            [:gain {:card-name :spoils
-                                    :from      :extra-cards}]]
+                            [:gain {:card-name :spoils :from :extra-cards}]]
                   :setup   [[:setup-extra-cards {:extra-cards [{:card spoils :pile-size 15}]}]]})
 
 (def beggar {:name      :beggar
@@ -159,6 +158,29 @@
                                                           {:option :estates :text "3 Estates"}]
                                                 :min     1
                                                 :max     1}]]})
+
+(defn pillage-attack [game {:keys [player-no]}]
+  (let [hand (get-in game [:players player-no :hand])]
+    (cond-> game
+            (<= 5 (count hand)) (push-effect-stack {:player-no player-no
+                                                    :effects   [[:reveal-hand]
+                                                                [:give-choice {:text    "Discard a card (attacker chooses)."
+                                                                               :choice  :discard-from-hand
+                                                                               :options [:player :hand]
+                                                                               :min     1
+                                                                               :max     1}]]}))))
+
+(effects/register {::pillage-attack pillage-attack})
+
+(def pillage {:name    :pillage
+              :set     :dark-ages
+              :types   #{:action :attack}
+              :cost    5
+              :effects [[:trash-this]
+                        [:attack {:effects [[::pillage-attack]]}]
+                        [:gain {:card-name :spoils :from :extra-cards}]
+                        [:gain {:card-name :spoils :from :extra-cards}]]
+              :setup   [[:setup-extra-cards {:extra-cards [{:card spoils :pile-size 15}]}]]})
 
 (defn- poor-house-lose-coins [game {:keys [player-no]}]
   (let [{:keys [coins hand]} (get-in game [:players player-no])
@@ -279,6 +301,7 @@
                     forager
                     fortress
                     hunting-grounds
+                    pillage
                     poor-house
                     rogue
                     squire

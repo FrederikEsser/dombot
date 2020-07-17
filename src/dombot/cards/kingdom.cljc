@@ -106,7 +106,7 @@
       (ut/redupeat (- 7 (count heirlooms)) op/gain {:player-no player-no
                                                     :card-name :copper})
       (cond-> (not shelters?) (ut/redupeat 3 op/gain {:player-no player-no
-                              :card-name :estate})
+                                                      :card-name :estate})
               shelters? (update-in [:players player-no :discard] concat (map ut/give-id! dark-ages/shelters)))
       (update-in [:players player-no :discard] concat (map ut/give-id! heirlooms))
       (op/draw {:player-no player-no :arg 5})))
