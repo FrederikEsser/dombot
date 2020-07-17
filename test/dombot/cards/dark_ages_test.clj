@@ -454,6 +454,28 @@
                          :buys      2}]
               :trash   [hunting-grounds]})))))
 
+(deftest junk-dealer-test
+  (let [junk-dealer (assoc junk-dealer :id 0)]
+    (testing "Junk Dealer"
+      (is (= (-> {:players [{:hand    [junk-dealer estate]
+                             :deck    [copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :junk-dealer)
+                 (choose :estate))
+             {:players [{:hand      [copper]
+                         :play-area [junk-dealer]
+                         :actions   1
+                         :coins     1}]
+              :trash   [estate]}))
+      (is (= (-> {:players [{:hand    [junk-dealer]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :junk-dealer))
+             {:players [{:play-area [junk-dealer]
+                         :actions   1
+                         :coins     1}]})))))
+
 (deftest pillage-test
   (let [pillage (assoc pillage :id 0)]
     (testing "Pillage"

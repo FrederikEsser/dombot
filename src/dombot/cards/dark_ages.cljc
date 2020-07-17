@@ -159,6 +159,19 @@
                                                 :min     1
                                                 :max     1}]]})
 
+(def junk-dealer {:name    :junk-dealer
+                  :set     :dark-ages
+                  :types   #{:action}
+                  :cost    5
+                  :effects [[:draw 1]
+                            [:give-actions 1]
+                            [:give-coins 1]
+                            [:give-choice {:text    "Trash a card from your hand."
+                                           :choice  :trash-from-hand
+                                           :options [:player :hand]
+                                           :min     1
+                                           :max     1}]]})
+
 (defn pillage-attack [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])]
     (cond-> game
@@ -301,6 +314,7 @@
                     forager
                     fortress
                     hunting-grounds
+                    junk-dealer
                     pillage
                     poor-house
                     rogue
