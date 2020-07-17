@@ -9,6 +9,7 @@
             [dombot.cards.intrigue :refer [harem lurker]]
             [dombot.cards.adventures :refer [warrior]]
             [dombot.cards.kingdom :refer [setup-game]]
+            [dombot.cards.menagerie :refer [village-green]]
             [dombot.utils :as ut]))
 
 (defn fixture [f]
@@ -632,6 +633,70 @@
                                  :trash   []}
                                 (play 0 :rogue)
                                 (choose :estate)))))))
+
+(deftest scavenger-test
+  (let [scavenger (assoc scavenger :id 0)]
+    (testing "Scavenger"
+      (is (= (-> {:players [{:hand    [scavenger]
+                             :deck    [copper copper silver gold]
+                             :discard [estate silver]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :scavenger)
+                 (choose :yes)
+                 (choose :gold))
+             {:players [{:play-area [scavenger]
+                         :deck      [gold]
+                         :discard   [estate silver copper copper silver]
+                         :actions   0
+                         :coins     2}]}))
+      (is (= (-> {:players [{:hand    [scavenger]
+                             :deck    [copper copper silver gold]
+                             :discard [estate silver]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :scavenger)
+                 (choose :no)
+                 (choose :silver))
+             {:players [{:play-area [scavenger]
+                         :deck      [silver copper copper silver gold]
+                         :discard   [estate]
+                         :actions   0
+                         :coins     2}]}))
+      (is (= (-> {:players [{:hand    [scavenger]
+                             :discard [estate silver]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :scavenger)
+                 (choose :silver))
+             {:players [{:play-area [scavenger]
+                         :deck      [silver]
+                         :discard   [estate]
+                         :actions   0
+                         :coins     2}]}))
+      (is (= (-> {:players [{:hand    [scavenger]
+                             :deck    [copper copper silver gold]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :scavenger)
+                 (choose :no))
+             {:players [{:play-area [scavenger]
+                         :deck      [copper copper silver gold]
+                         :actions   0
+                         :coins     2}]}))
+      (is (= (-> {:players [{:hand    [scavenger]
+                             :deck    [village-green]
+                             :discard [estate silver]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :scavenger)
+                 (choose :yes)
+                 (choose :silver))
+             {:players [{:play-area [scavenger]
+                         :deck      [silver]
+                         :discard   [estate village-green]
+                         :actions   0
+                         :coins     2}]})))))
 
 (deftest shelters-test
   (testing "Hovel"

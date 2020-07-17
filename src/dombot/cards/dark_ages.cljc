@@ -243,6 +243,38 @@
             :effects [[:give-coins 2]
                       [::rogue-gain-or-attack]]})
 
+(defn- scavenger-discard [game {:keys [player-no choice]}]
+  (cond-> game
+          (= :yes choice) (push-effect-stack {:player-no player-no
+                                              :effects   [[:put-deck-into-discard]]})))
+
+(defn- scavenger-choice [game {:keys [player-no]}]
+  (let [deck (get-in game [:players player-no :deck])]
+    (cond-> game
+            (not-empty deck) (give-choice {:player-no player-no
+                                           :text      "You may put your deck into your discard pile."
+                                           :choice    ::scavenger-discard
+                                           :options   [:special
+                                                       {:option :yes :text "Yes"}
+                                                       {:option :no :text "No"}]
+                                           :min       1
+                                           :max       1}))))
+
+(effects/register {::scavenger-discard scavenger-discard
+                   ::scavenger-choice  scavenger-choice})
+
+(def scavenger {:name    :scavenger
+                :set     :dark-ages
+                :types   #{:action}
+                :cost    4
+                :effects [[:give-coins 2]
+                          [::scavenger-choice]
+                          [:give-choice {:text    "Look through your discard pile and put one card from it onto your deck."
+                                         :choice  :topdeck-from-discard
+                                         :options [:player :discard]
+                                         :min     1
+                                         :max     1}]]})
+
 (defn squire-choice [game {:keys [player-no choice]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [(case choice
@@ -318,6 +350,7 @@
                     pillage
                     poor-house
                     rogue
+                    scavenger
                     squire
                     vagrant
                     wandering-minstrel])
