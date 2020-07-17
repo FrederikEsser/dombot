@@ -122,6 +122,29 @@
                           [:give-actions 2]]
                :on-trash [[::fortress-trashed]]})
 
+(defn- hunting-grounds-choice [game {:keys [player-no choice]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (case choice
+                                        :duchy [[:gain {:card-name :duchy}]]
+                                        :estates [[:gain {:card-name :estate}]
+                                                  [:gain {:card-name :estate}]
+                                                  [:gain {:card-name :estate}]])}))
+
+(effects/register {::hunting-grounds-choice hunting-grounds-choice})
+
+(def hunting-grounds {:name     :hunting-grounds
+                      :set      :dark-ages
+                      :types    #{:action}
+                      :cost     6
+                      :effects  [[:draw 4]]
+                      :on-trash [[:give-choice {:text    "Gain"
+                                                :choice  ::hunting-grounds-choice
+                                                :options [:special
+                                                          {:option :duchy :text "a Duchy"}
+                                                          {:option :estates :text "3 Estates"}]
+                                                :min     1
+                                                :max     1}]]})
+
 (defn- poor-house-lose-coins [game {:keys [player-no]}]
   (let [{:keys [coins hand]} (get-in game [:players player-no])
         treasures-in-hand (->> hand
@@ -208,6 +231,7 @@
                     feodum
                     forager
                     fortress
+                    hunting-grounds
                     poor-house
                     squire
                     vagrant

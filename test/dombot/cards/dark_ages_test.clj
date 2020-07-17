@@ -337,6 +337,87 @@
                            :play-area [lurker]
                            :actions   1}]}))))))
 
+(deftest hunting-grounds-test
+  (let [hunting-grounds (assoc hunting-grounds :id 0)
+        estate          (assoc estate :id 1)
+        duchy           (assoc duchy :id 2)]
+    (testing "Hunting Grounds"
+      (is (= (-> {:players [{:hand    [hunting-grounds]
+                             :deck    [copper copper copper copper copper]
+                             :actions 1}]}
+                 (play 0 :hunting-grounds))
+             {:players [{:hand      [copper copper copper copper]
+                         :play-area [hunting-grounds]
+                         :deck      [copper]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}
+                            {:card duchy :pile-size 8}]
+                  :players [{:hand    [forager hunting-grounds]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :forager)
+                 (choose :hunting-grounds)
+                 (choose :duchy))
+             {:supply  [{:card estate :pile-size 8}
+                        {:card duchy :pile-size 7}]
+              :players [{:play-area [forager]
+                         :discard   [duchy]
+                         :actions   1
+                         :coins     0
+                         :buys      2}]
+              :trash   [hunting-grounds]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}
+                            {:card duchy :pile-size 0}]
+                  :players [{:hand    [forager hunting-grounds]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :forager)
+                 (choose :hunting-grounds)
+                 (choose :duchy))
+             {:supply  [{:card estate :pile-size 8}
+                        {:card duchy :pile-size 0}]
+              :players [{:play-area [forager]
+                         :actions   1
+                         :coins     0
+                         :buys      2}]
+              :trash   [hunting-grounds]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}
+                            {:card duchy :pile-size 8}]
+                  :players [{:hand    [forager hunting-grounds]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :forager)
+                 (choose :hunting-grounds)
+                 (choose :estates))
+             {:supply  [{:card estate :pile-size 5}
+                        {:card duchy :pile-size 8}]
+              :players [{:play-area [forager]
+                         :discard   [estate estate estate]
+                         :actions   1
+                         :coins     0
+                         :buys      2}]
+              :trash   [hunting-grounds]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 2}
+                            {:card duchy :pile-size 8}]
+                  :players [{:hand    [forager hunting-grounds]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :forager)
+                 (choose :hunting-grounds)
+                 (choose :estates))
+             {:supply  [{:card estate :pile-size 0}
+                        {:card duchy :pile-size 8}]
+              :players [{:play-area [forager]
+                         :discard   [estate estate]
+                         :actions   1
+                         :coins     0
+                         :buys      2}]
+              :trash   [hunting-grounds]})))))
+
 (deftest poor-house-test
   (let [poor-house (assoc poor-house :id 0)]
     (testing "Poor House"
