@@ -212,6 +212,36 @@
                            [:reveal-hand]
                            [::poor-house-lose-coins]]})
 
+(defn- rats-trash [game {:keys [player-no]}]
+  (let [all-rats? (->> (get-in game [:players player-no :hand])
+                       (every? (comp #{:rats} :name)))]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (if all-rats?
+                                          [[:reveal-hand]]
+                                          [[:give-choice {:text    "Trash a card from your hand other than a Rats."
+                                                          :choice  :trash-from-hand
+                                                          :options [:player :hand {:not-names #{:rats}}]
+                                                          :min     1
+                                                          :max     1}]])})))
+
+(defn rats-20 [game _]
+  (let [{:keys [idx]} (ut/get-pile-idx game :rats)]
+    (assoc-in game [:supply idx :pile-size] 20)))
+
+(effects/register {::rats-trash rats-trash
+                   ::rats-20    rats-20})
+
+(def rats {:name     :rats
+           :set      :dark-ages
+           :types    #{:action}
+           :cost     4
+           :effects  [[:draw 1]
+                      [:give-actions 1]
+                      [:gain {:card-name :rats}]
+                      [::rats-trash]]
+           :on-trash [[:draw 1]]
+           :setup    [[::rats-20]]})
+
 (defn- rogue-gain-or-attack [game {:keys [player-no]}]
   (let [cards-in-trash? (->> game
                              :trash
@@ -349,6 +379,7 @@
                     junk-dealer
                     pillage
                     poor-house
+                    rats
                     rogue
                     scavenger
                     squire

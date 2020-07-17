@@ -558,6 +558,71 @@
                          :actions        0
                          :coins          1}]})))))
 
+(deftest rats-test
+  (let [rats (assoc rats :id 0)]
+    (testing "Rats"
+      (is (= (-> {:supply  [{:card rats :pile-size 19}]
+                  :players [{:hand    [rats estate]
+                             :deck    [copper]
+                             :actions 1}]}
+                 (play 0 :rats)
+                 (choose :estate))
+             {:supply  [{:card rats :pile-size 18}]
+              :players [{:hand      [copper]
+                         :play-area [rats]
+                         :discard   [rats]
+                         :actions   1}]
+              :trash   [estate]}))
+      (is (= (-> {:supply  [{:card rats :pile-size 18}]
+                  :players [{:hand    [rats gold]
+                             :deck    [rats]
+                             :actions 1}]}
+                 (play 0 :rats)
+                 (choose :gold))
+             {:supply  [{:card rats :pile-size 17}]
+              :players [{:hand      [rats]
+                         :play-area [rats]
+                         :discard   [rats]
+                         :actions   1}]
+              :trash   [gold]}))
+      (is (thrown-with-msg? AssertionError #"Choose error"
+                            (-> {:supply  [{:card rats :pile-size 18}]
+                                 :players [{:hand    [rats gold]
+                                            :deck    [rats]
+                                            :actions 1}]}
+                                (play 0 :rats)
+                                (choose :rats))))
+      (is (= (-> {:supply  [{:card rats :pile-size 17}]
+                  :players [{:hand    [rats rats]
+                             :deck    [rats]
+                             :actions 1}]}
+                 (play 0 :rats))
+             {:supply  [{:card rats :pile-size 16}]
+              :players [{:hand           [rats rats]
+                         :play-area      [rats]
+                         :discard        [rats]
+                         :revealed-cards {:hand 2}
+                         :actions        1}]}))
+      (testing "on trash"
+        (is (= (-> {:players [{:hand    [forager rats]
+                               :deck    [copper copper]
+                               :actions 1
+                               :coins   0
+                               :buys    1}]}
+                   (play 0 :forager)
+                   (choose :rats))
+               {:players [{:hand      [copper]
+                           :play-area [forager]
+                           :deck      [copper]
+                           :actions   1
+                           :coins     0
+                           :buys      2}]
+                :trash   [rats]})))
+      (testing "setup"
+        (is (= (-> {:supply [{:card rats :pile-size 10}]}
+                   setup-game)
+               {:supply [{:card rats :pile-size 20}]}))))))
+
 (deftest rogue-test
   (let [rogue  (assoc rogue :id 0)
         silver (assoc silver :id 1)
