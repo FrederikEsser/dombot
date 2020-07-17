@@ -495,13 +495,16 @@
   ([game {:keys [player-no card-name]}]
    (buy-card game player-no card-name))
   ([{:keys [effect-stack] :as game} player-no card-name]
-   (let [{:keys [buys coins debt phase]} (get-in game [:players player-no])
+   (let [{:keys [hand buys coins debt phase]} (get-in game [:players player-no])
          coins-after-debt (if (and coins debt)
                             (- coins debt)
                             coins)
          {:keys [card pile-size] :as supply-pile} (ut/get-pile-idx game card-name)
          {:keys [coin-cost debt-cost] :as buy-cost} (ut/get-buy-cost game player-no card)
          {:keys [overpay]} card
+         reaction-effects (->> hand
+                               (mapcat (comp :on-buy :reaction))
+                               (map (partial ut/add-effect-args {:card card})))
          on-buy-effects   (get-on-buy-effects game player-no card-name)
          overpay-effects  (when (and overpay (pos? (- coins-after-debt coin-cost)))
                             [[:give-choice {:text    (str "You may overpay for your " (ut/format-name card-name) ". Choose amount:")
@@ -531,6 +534,7 @@
            (update-in [:players player-no :buys] - 1)
            (push-effect-stack {:player-no player-no
                                :effects   (concat overpay-effects
+                                                  reaction-effects
                                                   on-buy-effects
                                                   [[:gain {:card-name card-name
                                                            :bought    true}]])})
@@ -634,9 +638,8 @@
 
 (effects/register {:peek-deck peek-deck})
 
-(defn do-move-card [game {:keys [player-no card-name from to to-position to-player] :as args}]
-  (let [{:keys [card from-path idx]} (get-card game args)
-        to-path (case to
+(defn do-move-card [game {:keys [player-no card from-path idx card-name from to to-position to-player]}]
+  (let [to-path (case to
                   :trash [:trash]
                   :supply :supply
                   :extra-cards :extra-cards
@@ -670,23 +673,22 @@
 
 (defn move-card [game {:keys [player-no from to] :as args}]
   (let [{:keys [deck discard]} (get-in game [:players player-no])
-        {{card-name :name
-          card-id   :id} :card} (get-card game args)]
+        {:keys [card] :as card-info} (get-card game args)]
     (if (and (= :deck from) (empty? deck) (not-empty discard))
       (push-effect-stack game {:player-no player-no
                                :effects   [[:shuffle]
                                            [:move-card args]]})
       (-> game
           (push-effect-stack {:player-no player-no
-                              :effects   [[:do-move-card args]
+                              :effects   [[:do-move-card (merge args card-info)]
                                           (when (= to :trash)
-                                            [:on-trash (merge args {:card-name card-name
-                                                                    :card-id   card-id})])
+                                            [:on-trash (merge args {:card-name (:name card)
+                                                                    :card-id   (:id card)})])
                                           (when (= to :revealed)
-                                            [:on-reveal {:card-name card-name}])
+                                            [:on-reveal {:card-name (:name card)}])
                                           (when (and (= to :discard)
                                                      (not= from :gaining))
-                                            [:on-discard {:card-name card-name}])]})
+                                            [:on-discard {:card-name (:name card)}])]})
           check-stack))))
 
 (defn move-cards [game {:keys [player-no card-name card-names number-of-cards from-position] :as args}]

@@ -6,7 +6,7 @@
             [dombot.cards.common :refer :all]
             [dombot.cards.dark-ages :as dark-ages :refer :all]
             [dombot.cards.dominion :refer [militia]]
-            [dombot.cards.intrigue :refer [harem]]
+            [dombot.cards.intrigue :refer [harem lurker]]
             [dombot.cards.adventures :refer [warrior]]
             [dombot.cards.kingdom :refer [setup-game]]
             [dombot.utils :as ut]))
@@ -325,7 +325,17 @@
                    (play 0 :warrior))
                {:players [{:play-area [warrior]
                            :actions   0}
-                          {:hand [fortress]}]}))))))
+                          {:hand [fortress]}]}))
+        (is (= (-> {:supply  [{:card fortress :pile-size 10}]
+                    :players [{:hand    [lurker]
+                               :actions 1}]}
+                   (play 0 :lurker)
+                   (choose :trash)
+                   (choose :fortress))
+               {:supply  [{:card fortress :pile-size 9}]
+                :players [{:hand      [fortress]
+                           :play-area [lurker]
+                           :actions   1}]}))))))
 
 (deftest poor-house-test
   (let [poor-house (assoc poor-house :id 0)]
@@ -375,6 +385,93 @@
                          :revealed-cards {:hand 5}
                          :actions        0
                          :coins          1}]})))))
+
+(deftest shelters-test
+  (testing "Hovel"
+    (let [hovel  (assoc hovel :id 0)
+          estate (assoc estate :id 1)
+          silver (assoc silver :id 2)]
+      (is (= (-> {:supply  [{:card estate :pile-size 8}]
+                  :players [{:hand  [hovel]
+                             :coins 2
+                             :buys  1}]}
+                 (buy-card 0 :estate)
+                 (choose :hovel))
+             {:supply  [{:card estate :pile-size 7}]
+              :players [{:discard [estate]
+                         :coins   0
+                         :buys    0}]
+              :trash   [hovel]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}]
+                  :players [{:hand  [hovel]
+                             :coins 2
+                             :buys  1}]}
+                 (buy-card 0 :estate)
+                 (choose nil))
+             {:supply  [{:card estate :pile-size 7}]
+              :players [{:hand    [hovel]
+                         :discard [estate]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand  [hovel]
+                             :coins 3
+                             :buys  1}]}
+                 (buy-card 0 :silver))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:hand    [hovel]
+                         :discard [silver]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}]
+                  :players [{:hand    [hovel armory]
+                             :actions 1}]}
+                 (play 0 :armory)
+                 (choose :estate))
+             {:supply  [{:card estate :pile-size 7}]
+              :players [{:hand      [hovel]
+                         :play-area [armory]
+                         :deck      [estate]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 8}]
+                  :players [{:hand  [hovel hovel]
+                             :coins 2
+                             :buys  1}]}
+                 (buy-card 0 :estate)
+                 (choose :hovel)
+                 (choose :hovel))
+             {:supply  [{:card estate :pile-size 7}]
+              :players [{:discard [estate]
+                         :coins   0
+                         :buys    0}]
+              :trash   [hovel hovel]}))))
+  (testing "Necropolis"
+    (let [necropolis (assoc necropolis :id 0)]
+      (is (= (-> {:players [{:hand    [necropolis]
+                             :deck    [copper]
+                             :actions 1}]}
+                 (play 0 :necropolis))
+             {:players [{:play-area [necropolis]
+                         :deck      [copper]
+                         :actions   2}]}))))
+  (testing "Overgrown Estate"
+    (let [overgrown-estate (assoc overgrown-estate :id 0)]
+      (is (= (-> {:players [{:hand    [forager overgrown-estate]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :forager)
+                 (choose :overgrown-estate))
+             {:players [{:hand      [copper]
+                         :play-area [forager]
+                         :deck      [copper]
+                         :actions   1
+                         :coins     0
+                         :buys      2}]
+              :trash   [overgrown-estate]}))
+      (is (= (calc-victory-points {:deck [overgrown-estate]})
+             0)))))
 
 (deftest spoils-test
   (let [spoils (assoc spoils :id 0)]
@@ -503,14 +600,14 @@
                            :play-area      [vagrant]
                            :revealed-cards {:hand 1}
                            :actions        1}]}))
-      #_(is (= (-> {:players [{:hand    [vagrant]
-                               :deck    [copper necropolis]
-                               :actions 1}]}
-                   (play 0 :vagrant))
-               {:players [{:hand           [copper necropolis]
-                           :play-area      [vagrant]
-                           :revealed-cards {:hand 1}
-                           :actions        1}]})))))
+      (is (= (-> {:players [{:hand    [vagrant]
+                             :deck    [copper necropolis]
+                             :actions 1}]}
+                 (play 0 :vagrant))
+             {:players [{:hand           [copper necropolis]
+                         :play-area      [vagrant]
+                         :revealed-cards {:hand 1}
+                         :actions        1}]})))))
 
 (deftest wandering-minstrel-test
   (let [wandering-minstrel (assoc wandering-minstrel :id 0)]

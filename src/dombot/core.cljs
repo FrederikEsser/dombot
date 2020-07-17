@@ -58,6 +58,7 @@
           :border-color     (cond
                               (zero? number-of-cards) :red
                               (:curse types) "#9F76B8"
+                              (:shelter types) "#E76F59"
                               (:victory types) "#6DB954"
                               (:treasure types) "#EFD34E"
                               (:reaction types) "#6295CE"

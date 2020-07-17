@@ -52,16 +52,17 @@
 
 (effects/register {::counterfeit-treasure counterfeit-treasure})
 
-(def counterfeit {:name       :counterfeit
-                  :set        :dark-ages
-                  :types      #{:treasure}
-                  :cost       5
-                  :coin-value 1
-                  :effects    [[:give-buys 1]
-                               [:give-choice {:text    "You may play a Treasure from your hand twice."
-                                              :choice  ::counterfeit-treasure
-                                              :options [:player :hand {:type :treasure}]
-                                              :max     1}]]})
+(def counterfeit {:name            :counterfeit
+                  :set             :dark-ages
+                  :types           #{:treasure}
+                  :cost            5
+                  :coin-value      1
+                  :effects         [[:give-buys 1]
+                                    [:give-choice {:text    "You may play a Treasure from your hand twice."
+                                                   :choice  ::counterfeit-treasure
+                                                   :options [:player :hand {:type :treasure}]
+                                                   :max     1}]]
+                  :auto-play-index -1})
 
 (defn feodum-victory-points [cards]
   (quot (->> cards
@@ -105,7 +106,7 @@
                                        :max     1}]
                         [::forager-give-coins]]})
 
-(defn- fortress-trashed [game {:keys [player-no card-id] :as args}]
+(defn- fortress-trashed [game {:keys [player-no card-id]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:move-card {:move-card-id card-id
                                                     :from         :trash
@@ -211,3 +212,37 @@
                     squire
                     vagrant
                     wandering-minstrel])
+
+(defn- hovel-on-buy [game {:keys [player-no card]}]
+  (let [types (ut/get-types game card)]
+    (cond-> game
+            (:victory types) (give-choice {:player-no player-no
+                                           :text      "You may trash a Hovel from your hand."
+                                           :choice    :trash-from-hand
+                                           :options   [:player :hand {:name :hovel}]
+                                           :max       1}))))
+
+(effects/register {::hovel-on-buy hovel-on-buy})
+
+(def hovel {:name     :hovel
+            :set      :dark-ages
+            :types    #{:reaction :shelter}
+            :cost     1
+            :reaction {:on-buy [[::hovel-on-buy]]}})
+
+(def necropolis {:name    :necropolis
+                 :set     :dark-ages
+                 :types   #{:action :shelter}
+                 :cost    1
+                 :effects [[:give-actions 2]]})
+
+(def overgrown-estate {:name     :overgrown-estate
+                       :set      :dark-ages
+                       :types    #{:victory :shelter}
+                       :cost     1
+                       :on-trash [[:draw 1]]})
+
+
+(def shelters [hovel
+               necropolis
+               overgrown-estate])

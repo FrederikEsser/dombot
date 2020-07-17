@@ -101,12 +101,13 @@
    :number-of-turns     0
    :phase               :out-of-turn})
 
-(defn prepare-cards [heirlooms game player-no]
+(defn prepare-cards [shelters? heirlooms game player-no]
   (-> game
       (ut/redupeat (- 7 (count heirlooms)) op/gain {:player-no player-no
                                                     :card-name :copper})
-      (ut/redupeat 3 op/gain {:player-no player-no
+      (cond-> (not shelters?) (ut/redupeat 3 op/gain {:player-no player-no
                               :card-name :estate})
+              shelters? (update-in [:players player-no :discard] concat (map ut/give-id! dark-ages/shelters)))
       (update-in [:players player-no :discard] concat (map ut/give-id! heirlooms))
       (op/draw {:player-no player-no :arg 5})))
 
@@ -149,7 +150,8 @@
                                       [name project]))
                                (into {}))
         heirlooms         (->> kingdom
-                               (keep :heirloom))]
+                               (keep :heirloom))
+        shelters?         (-> kingdom second :set #{:dark-ages})]
     (ut/reset-ids!)
     (as-> (merge
             {:mode                  mode
@@ -167,7 +169,7 @@
               {:landmarks landmarks})
             (when (not-empty projects)
               {:projects projects})) game
-          (-> (reduce (partial prepare-cards heirlooms) game (range number-of-players))
+          (-> (reduce (partial prepare-cards shelters? heirlooms) game (range number-of-players))
               setup-game))))
 
 (defn random-sets [required & [num-sets]]
