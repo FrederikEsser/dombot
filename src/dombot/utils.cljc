@@ -410,11 +410,13 @@
 
 (effects/register-options {:overpay options-from-overbuy})
 
-(defn options-from-trash [{:keys [trash] :as game} player-no card-id {:keys [type not-type face]}]
+(defn options-from-trash [{:keys [trash] :as game} player-no card-id {:keys [type not-type face min-cost max-cost]}]
   (cond->> trash
            type (filter (comp type (partial get-types game)))
            not-type (remove (comp not-type (partial get-types game)))
            (= :up face) (remove (comp #{:down} :face))
+           min-cost (filter (comp (partial costs-at-least min-cost) (partial get-cost game)))
+           max-cost (filter (comp (partial costs-up-to max-cost) (partial get-cost game)))
            :always (map :name)))
 
 (effects/register-options {:trash options-from-trash})

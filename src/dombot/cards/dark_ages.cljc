@@ -177,6 +177,37 @@
                            [:reveal-hand]
                            [::poor-house-lose-coins]]})
 
+(defn- rogue-gain-or-attack [game {:keys [player-no]}]
+  (let [cards-in-trash? (->> game
+                             :trash
+                             (filter (comp (partial ut/costs-between 3 6) (partial ut/get-cost game)))
+                             not-empty)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (if cards-in-trash?
+                                          [[:give-choice {:text    "Gain a card costing from $3 to $6 from the trash."
+                                                          :choice  :gain-from-trash
+                                                          :options [:trash {:min-cost 3
+                                                                            :max-cost 6}]
+                                                          :min     1
+                                                          :max     1}]]
+                                          [[:attack {:effects [[:reveal-from-deck 2]
+                                                               [:give-choice {:text    "Trash a revealed card costing from $3 to $6."
+                                                                              :choice  :trash-from-revealed
+                                                                              :options [:player :revealed {:min-cost 3
+                                                                                                           :max-cost 6}]
+                                                                              :min     1
+                                                                              :max     1}]
+                                                               [:discard-all-revealed]]}]])})))
+
+(effects/register {::rogue-gain-or-attack rogue-gain-or-attack})
+
+(def rogue {:name    :rogue
+            :set     :dark-ages
+            :types   #{:action :attack}
+            :cost    5
+            :effects [[:give-coins 2]
+                      [::rogue-gain-or-attack]]})
+
 (defn squire-choice [game {:keys [player-no choice]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [(case choice
@@ -249,6 +280,7 @@
                     fortress
                     hunting-grounds
                     poor-house
+                    rogue
                     squire
                     vagrant
                     wandering-minstrel])

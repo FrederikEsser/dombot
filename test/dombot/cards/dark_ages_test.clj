@@ -503,6 +503,82 @@
                          :actions        0
                          :coins          1}]})))))
 
+(deftest rogue-test
+  (let [rogue  (assoc rogue :id 0)
+        silver (assoc silver :id 1)
+        gold   (assoc gold :id 2)]
+    (testing "rogue"
+      (is (= (-> {:players [{:hand    [rogue]
+                             :actions 1
+                             :coins   0}]
+                  :trash   [silver]}
+                 (play 0 :rogue)
+                 (choose :silver))
+             {:players [{:play-area [rogue]
+                         :discard   [silver]
+                         :actions   0
+                         :coins     2}]}))
+      (is (thrown-with-msg? AssertionError #"Choose error"
+                            (-> {:players [{:hand    [rogue]
+                                            :actions 1
+                                            :coins   0}]
+                                 :trash   [silver province]}
+                                (play 0 :rogue)
+                                (choose :province))))
+      (is (thrown-with-msg? AssertionError #"Choose error"
+                            (-> {:players [{:hand    [rogue]
+                                            :actions 1
+                                            :coins   0}]
+                                 :trash   [gold estate]}
+                                (play 0 :rogue)
+                                (choose :estate))))
+      (is (= (-> {:players [{:hand    [rogue]
+                             :actions 1
+                             :coins   0}
+                            {:deck [copper estate]}]
+                  :trash   [estate province]}
+                 (play 0 :rogue))
+             {:players [{:play-area [rogue]
+                         :actions   0
+                         :coins     2}
+                        {:discard        [copper estate]
+                         :revealed-cards {:discard 2}}]
+              :trash   [estate province]}))
+      (is (= (-> {:players [{:hand    [rogue]
+                             :actions 1
+                             :coins   0}
+                            {:deck [silver gold]}]
+                  :trash   []}
+                 (play 0 :rogue)
+                 (choose :silver))
+             {:players [{:play-area [rogue]
+                         :actions   0
+                         :coins     2}
+                        {:discard        [gold]
+                         :revealed-cards {:discard 1}}]
+              :trash   [silver]}))
+      (is (= (-> {:players [{:hand    [rogue]
+                             :actions 1
+                             :coins   0}
+                            {:deck [estate gold]}]
+                  :trash   []}
+                 (play 0 :rogue)
+                 (choose :gold))
+             {:players [{:play-area [rogue]
+                         :actions   0
+                         :coins     2}
+                        {:discard        [estate]
+                         :revealed-cards {:discard 1}}]
+              :trash   [gold]}))
+      (is (thrown-with-msg? AssertionError #"Choose error"
+                            (-> {:players [{:hand    [rogue]
+                                            :actions 1
+                                            :coins   0}
+                                           {:deck [estate gold]}]
+                                 :trash   []}
+                                (play 0 :rogue)
+                                (choose :estate)))))))
+
 (deftest shelters-test
   (testing "Hovel"
     (let [hovel  (assoc hovel :id 0)
