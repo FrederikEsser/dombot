@@ -502,6 +502,15 @@
 
 (effects/register {:take-from-look-at take-from-look-at})
 
+(defn take-all-from-look-at [game {:keys [player-no]}]
+  (let [look-at (get-in game [:players player-no :look-at])]
+    (move-cards game {:player-no  player-no
+                      :card-names (map :name look-at)
+                      :from       :look-at
+                      :to         :hand})))
+
+(effects/register {:take-all-from-look-at take-all-from-look-at})
+
 (defn return-to-supply [game {:keys [card-name card-names area]
                               :or   {area :supply}
                               :as   args}]

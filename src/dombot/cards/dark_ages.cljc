@@ -57,6 +57,40 @@
                          [:gain-to-topdeck {:card-name :silver}]
                          [:gain {:card-name :silver}]]})
 
+(defn- catacombs-choice [game {:keys [player-no choice]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (case choice
+                                        :take [[:take-all-from-look-at]]
+                                        :discard [[:discard-all-look-at]
+                                                  [:draw 3]])}))
+
+(defn- catacombs-on-trash [game {:keys [player-no card-id]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:trash] {:id card-id})
+        cost (ut/get-cost game card)]
+    (give-choice game {:player-no player-no
+                       :text      (str "Gain a card cheaper than " (ut/format-cost cost) ".")
+                       :choice    :gain
+                       :options   [:supply {:costs-less-than cost}]
+                       :min       1
+                       :max       1})))
+
+(effects/register {::catacombs-choice   catacombs-choice
+                   ::catacombs-on-trash catacombs-on-trash})
+
+(def catacombs {:name     :catacombs
+                :set      :dark-ages
+                :types    #{:action}
+                :cost     5
+                :effects  [[:look-at 3]
+                           [:give-choice {:text    "Choose one:"
+                                          :choice  ::catacombs-choice
+                                          :options [:special
+                                                    {:option :take :text "Put the cards into your hand"}
+                                                    {:option :discard :text "Discard them and +3 Cards"}]
+                                          :min     1
+                                          :max     1}]]
+                :on-trash [[::catacombs-on-trash]]})
+
 (defn- counterfeit-treasure [game {:keys [player-no card-name]}]
   (cond-> game
           card-name (push-effect-stack {:player-no player-no
@@ -371,6 +405,7 @@
                     armory
                     bandit-camp
                     beggar
+                    catacombs
                     counterfeit
                     feodum
                     forager

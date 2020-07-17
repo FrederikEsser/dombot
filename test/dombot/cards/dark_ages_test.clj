@@ -157,6 +157,68 @@
                            :deck    [silver]
                            :discard [beggar silver copper]}]}))))))
 
+(deftest catacombs-test
+  (let [catacombs (assoc catacombs :id 0)]
+    (testing "Catacombs"
+      (is (= (-> {:players [{:hand    [catacombs]
+                             :deck    [copper copper copper copper]
+                             :actions 1}]}
+                 (play 0 :catacombs)
+                 (choose :take))
+             {:players [{:hand      [copper copper copper]
+                         :play-area [catacombs]
+                         :deck      [copper]
+                         :actions   0}]}))
+      (is (= (-> {:players [{:hand    [catacombs]
+                             :deck    [copper copper copper silver silver silver]
+                             :actions 1}]}
+                 (play 0 :catacombs)
+                 (choose :discard))
+             {:players [{:hand      [silver silver silver]
+                         :play-area [catacombs]
+                         :discard   [copper copper copper]
+                         :actions   0}]}))
+      (is (= (-> {:players [{:hand    [catacombs]
+                             :deck    [copper copper village-green silver silver silver]
+                             :actions 1}]}
+                 (play 0 :catacombs)
+                 (choose :discard)
+                 (choose nil))                              ; do not play Village Green
+             {:players [{:hand      [silver silver silver]
+                         :play-area [catacombs]
+                         :discard   [copper copper village-green]
+                         :actions   0}]}))
+      (testing "on trash"
+        (let [feodum (assoc feodum :id 1)]
+          (is (= (-> {:supply  [{:card feodum :pile-size 8}]
+                      :players [{:hand    [forager catacombs]
+                                 :actions 1
+                                 :coins   0
+                                 :buys    1}]}
+                     (play 0 :forager)
+                     (choose :catacombs)
+                     (choose :feodum))
+                 {:supply  [{:card feodum :pile-size 7}]
+                  :players [{:play-area [forager]
+                             :discard   [feodum]
+                             :actions   1
+                             :coins     0
+                             :buys      2}]
+                  :trash   [catacombs]}))
+          (is (= (-> {:supply  [{:card catacombs :pile-size 9}]
+                      :players [{:hand    [forager catacombs]
+                                 :actions 1
+                                 :coins   0
+                                 :buys    1}]}
+                     (play 0 :forager)
+                     (choose :catacombs))
+                 {:supply  [{:card catacombs :pile-size 9}]
+                  :players [{:play-area [forager]
+                             :actions   1
+                             :coins     0
+                             :buys      2}]
+                  :trash   [catacombs]})))))))
+
 (deftest counterfeit-test
   (let [counterfeit (assoc counterfeit :id 0)]
     (testing "Counterfeit"
