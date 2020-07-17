@@ -124,40 +124,115 @@
   (let [counterfeit (assoc counterfeit :id 0)]
     (testing "Counterfeit"
       (is (= (-> {:players [{:hand  [counterfeit]
-                             :coins 0}]}
+                             :coins 0
+                             :buys  1}]}
                  (play 0 :counterfeit))
              {:players [{:play-area [counterfeit]
-                         :coins     1}]}))
+                         :coins     1
+                         :buys      2}]}))
       (is (= (-> {:players [{:hand  [counterfeit copper]
-                             :coins 0}]}
+                             :coins 0
+                             :buys  1}]}
                  (play 0 :counterfeit)
                  (choose nil))
              {:players [{:hand      [copper]
                          :play-area [counterfeit]
-                         :coins     1}]}))
+                         :coins     1
+                         :buys      2}]}))
       (is (= (-> {:players [{:hand  [counterfeit copper]
-                             :coins 0}]}
+                             :coins 0
+                             :buys  1}]}
                  (play 0 :counterfeit)
                  (choose :copper))
              {:players [{:play-area [counterfeit]
-                         :coins     3}]
+                         :coins     3
+                         :buys      2}]
               :trash   [copper]}))
       (is (= (-> {:players [{:hand  [counterfeit silver]
-                             :coins 0}]}
+                             :coins 0
+                             :buys  1}]}
                  (play 0 :counterfeit)
                  (choose :silver))
              {:players [{:play-area [counterfeit]
-                         :coins     5}]
+                         :coins     5
+                         :buys      2}]
               :trash   [silver]}))
       (is (= (-> {:extra-cards [{:card spoils :pile-size 14}]
                   :players     [{:hand  [counterfeit spoils]
-                                 :coins 0}]}
+                                 :coins 0
+                                 :buys  1}]}
                  (play 0 :counterfeit)
                  (choose :spoils))
              {:extra-cards [{:card spoils :pile-size 14}]
               :players     [{:play-area [counterfeit]
-                             :coins     7}]
-              :trash       [spoils]})))))
+                             :coins     7
+                             :buys      2}]
+              :trash       [spoils]}))
+      (is (= (-> {:players [{:hand  [counterfeit counterfeit copper copper]
+                             :coins 0
+                             :buys  1}]}
+                 (play 0 :counterfeit)
+                 (choose :copper)
+                 (play 0 :counterfeit)
+                 (choose :copper))
+             {:players [{:play-area [counterfeit counterfeit]
+                         :coins     6
+                         :buys      3}]
+              :trash   [copper copper]}))
+      (is (= (-> {:players [{:hand  [counterfeit counterfeit copper copper]
+                             :coins 0
+                             :buys  1}]}
+                 (play 0 :counterfeit)
+                 (choose :counterfeit)
+                 (choose :copper)
+                 (choose :copper))
+             {:players [{:play-area [counterfeit]
+                         :coins     7
+                         :buys      4}]
+              :trash   [copper copper counterfeit]})))))
+
+(deftest feodum-test
+  (testing "Feodum"
+    (testing "on trash"
+      (let [feodum (assoc feodum :id 0)
+            silver (assoc silver :id 0)]
+        (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                    :players [{:hand    [forager feodum]
+                               :actions 1
+                               :coins   0
+                               :buys    1}]}
+                   (play 0 :forager)
+                   (choose :feodum))
+               {:supply  [{:card silver :pile-size 37}]
+                :players [{:play-area [forager]
+                           :discard   [silver silver silver]
+                           :actions   1
+                           :coins     0
+                           :buys      2}]
+                :trash   [feodum]}))
+        (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                    :players [{:hand    [warrior]
+                               :actions 1}
+                              {:deck [feodum]}]}
+                   (play 0 :warrior))
+               {:supply  [{:card silver :pile-size 37}]
+                :players [{:play-area [warrior]
+                           :actions   0}
+                          {:discard [silver silver silver]}]
+                :trash   [feodum]}))))
+    (testing "victory points"
+      (is (= (calc-victory-points {:deck (concat [feodum]
+                                                 (repeat 2 silver))})
+             0))
+      (is (= (calc-victory-points {:deck (concat [feodum]
+                                                 (repeat 3 silver))})
+             1))
+      (is (= (calc-victory-points {:deck (concat [feodum feodum]
+                                                 (repeat 5 silver))})
+             2))
+      (is (= (calc-victory-points {:deck (concat [feodum feodum]
+                                                 (repeat 6 silver))})
+             4)))))
 
 (deftest forager-test
   (let [forager (assoc forager :id 0)]

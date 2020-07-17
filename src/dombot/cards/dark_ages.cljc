@@ -57,10 +57,28 @@
                   :types      #{:treasure}
                   :cost       5
                   :coin-value 1
-                  :effects    [[:give-choice {:text    "You may play a Treasure from your hand twice."
+                  :effects    [[:give-buys 1]
+                               [:give-choice {:text    "You may play a Treasure from your hand twice."
                                               :choice  ::counterfeit-treasure
                                               :options [:player :hand {:type :treasure}]
                                               :max     1}]]})
+
+(defn feodum-victory-points [cards]
+  (quot (->> cards
+             (filter (comp #{:silver} :name))
+             count)
+        3))
+
+(effects/register {::feodum-victory-points feodum-victory-points})
+
+(def feodum {:name           :feodum
+             :set            :dark-ages
+             :types          #{:victory}
+             :cost           4
+             :victory-points ::feodum-victory-points
+             :on-trash       [[:gain {:card-name :silver}]
+                              [:gain {:card-name :silver}]
+                              [:gain {:card-name :silver}]]})
 
 (defn- forager-give-coins [game {:keys [player-no]}]
   (let [different-treasures (->> game
@@ -88,7 +106,6 @@
                         [::forager-give-coins]]})
 
 (defn- fortress-trashed [game {:keys [player-no card-id] :as args}]
-  (prn "fortress-trashed" args)
   (push-effect-stack game {:player-no player-no
                            :effects   [[:move-card {:move-card-id card-id
                                                     :from         :trash
@@ -187,6 +204,7 @@
                     bandit-camp
                     beggar
                     counterfeit
+                    feodum
                     forager
                     fortress
                     poor-house
