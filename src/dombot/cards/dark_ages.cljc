@@ -91,6 +91,54 @@
                                           :max     1}]]
                 :on-trash [[::catacombs-on-trash]]})
 
+(defn count-bad-choice [game {:keys [player-no choice]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [(case choice
+                                         :discard [:give-choice {:text    "Discard 2 cards."
+                                                                 :choice  :discard-from-hand
+                                                                 :options [:player :hand]
+                                                                 :min     2
+                                                                 :max     2}]
+                                         :topdeck [:give-choice {:text    "Put a card from your hand onto your deck."
+                                                                 :choice  :topdeck-from-hand
+                                                                 :options [:player :hand]
+                                                                 :min     1
+                                                                 :max     1}]
+                                         :copper [:gain {:card-name :copper}])]}))
+
+(defn count-good-choice [game {:keys [player-no choice]}]
+  (let [hand (->> (get-in game [:players player-no :hand])
+                  (map :name))]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [(case choice
+                                           :coins [:give-coins 3]
+                                           :trash [:trash-from-hand {:card-names hand}]
+                                           :duchy [:gain {:card-name :duchy}])]})))
+
+(effects/register {::count-bad-choice  count-bad-choice
+                   ::count-good-choice count-good-choice})
+
+(def count' {:name    :count
+             :set     :dark-ages
+             :types   #{:action}
+             :cost    5
+             :effects [[:give-choice {:text    "Choose one:"
+                                      :choice  ::count-bad-choice
+                                      :options [:special
+                                                {:option :discard :text "Discard 2 cards"}
+                                                {:option :topdeck :text "Topdeck a card"}
+                                                {:option :copper :text "Gain a Copper"}]
+                                      :min     1
+                                      :max     1}]
+                       [:give-choice {:text    "Choose one:"
+                                      :choice  ::count-good-choice
+                                      :options [:special
+                                                {:option :coins :text "+$3"}
+                                                {:option :trash :text "Trash your hand"}
+                                                {:option :duchy :text "Gain a Duchy"}]
+                                      :min     1
+                                      :max     1}]]})
+
 (defn- counterfeit-treasure [game {:keys [player-no card-name]}]
   (cond-> game
           card-name (push-effect-stack {:player-no player-no
@@ -434,6 +482,7 @@
                     bandit-camp
                     beggar
                     catacombs
+                    count'
                     counterfeit
                     feodum
                     forager

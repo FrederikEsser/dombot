@@ -219,6 +219,75 @@
                              :buys      2}]
                   :trash   [catacombs]})))))))
 
+(deftest count-test
+  (let [count' (assoc count' :id 0)
+        copper (assoc copper :id 1)
+        duchy  (assoc duchy :id 2)]
+    (testing "Count"
+      (is (= (-> {:players [{:hand    [count' copper copper silver]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :count)
+                 (choose :discard)
+                 (choose [:copper :copper])
+                 (choose :coins))
+             {:players [{:hand      [silver]
+                         :play-area [count']
+                         :discard   [copper copper]
+                         :actions   0
+                         :coins     3}]}))
+      (is (= (-> {:players [{:hand    [count' copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :count)
+                 (choose :discard)
+                 (choose :copper)
+                 (choose :coins))
+             {:players [{:play-area [count']
+                         :discard   [copper]
+                         :actions   0
+                         :coins     3}]}))
+      (is (= (-> {:players [{:hand    [count']
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :count)
+                 (choose :discard)
+                 (choose :coins))
+             {:players [{:play-area [count']
+                         :actions   0
+                         :coins     3}]}))
+      (is (= (-> {:players [{:hand    [count']
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :count)
+                 (choose :topdeck)
+                 (choose :coins))
+             {:players [{:play-area [count']
+                         :actions   0
+                         :coins     3}]}))
+      (is (= (-> {:players [{:hand    [count' copper copper estate silver]
+                             :actions 1}]}
+                 (play 0 :count)
+                 (choose :topdeck)
+                 (choose :silver)
+                 (choose :trash))
+             {:players [{:play-area [count']
+                         :deck      [silver]
+                         :actions   0}]
+              :trash   [copper copper estate]}))
+      (is (= (-> {:supply  [{:card copper :pile-size 46}
+                            {:card duchy :pile-size 8}]
+                  :players [{:hand    [count']
+                             :actions 1}]}
+                 (play 0 :count)
+                 (choose :copper)
+                 (choose :duchy))
+             {:supply  [{:card copper :pile-size 45}
+                        {:card duchy :pile-size 7}]
+              :players [{:play-area [count']
+                         :discard   [copper duchy]
+                         :actions   0}]})))))
+
 (deftest counterfeit-test
   (let [counterfeit (assoc counterfeit :id 0)]
     (testing "Counterfeit"
@@ -586,12 +655,12 @@
                          :actions   1
                          :coins     1}]}))
       (is (= (-> {:players [{:hand    [ironmonger]
-                               :deck    [copper]
-                               :actions 1}]}
-                   (play 0 :ironmonger))
-               {:players [{:hand      [copper]
-                           :play-area [ironmonger]
-                           :actions   1}]})))))
+                             :deck    [copper]
+                             :actions 1}]}
+                 (play 0 :ironmonger))
+             {:players [{:hand      [copper]
+                         :play-area [ironmonger]
+                         :actions   1}]})))))
 
 (deftest junk-dealer-test
   (let [junk-dealer (assoc junk-dealer :id 0)]
