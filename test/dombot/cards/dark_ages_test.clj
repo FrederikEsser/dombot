@@ -517,6 +517,82 @@
                          :buys      2}]
               :trash   [hunting-grounds]})))))
 
+(deftest ironmonger-test
+  (let [ironmonger (assoc ironmonger :id 0)]
+    (testing "ironmonger"
+      (is (= (-> {:players [{:hand    [ironmonger]
+                             :deck    [copper copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :ironmonger)
+                 (choose :copper))
+             {:players [{:hand           [copper]
+                         :play-area      [ironmonger]
+                         :discard        [copper]
+                         :revealed-cards {:discard 1}
+                         :actions        1
+                         :coins          1}]}))
+      (is (= (-> {:players [{:hand    [ironmonger]
+                             :deck    [copper gold]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :ironmonger)
+                 (choose nil))
+             {:players [{:hand           [copper]
+                         :play-area      [ironmonger]
+                         :deck           [gold]
+                         :revealed-cards {:deck 1}
+                         :actions        1
+                         :coins          1}]}))
+      (is (= (-> {:players [{:hand    [ironmonger]
+                             :deck    [copper necropolis]
+                             :actions 1}]}
+                 (play 0 :ironmonger)
+                 (choose :necropolis))
+             {:players [{:hand           [copper]
+                         :play-area      [ironmonger]
+                         :discard        [necropolis]
+                         :revealed-cards {:discard 1}
+                         :actions        2}]}))
+      (is (= (-> {:players [{:hand    [ironmonger]
+                             :deck    [copper ironmonger]
+                             :actions 1}]}
+                 (play 0 :ironmonger)
+                 (choose nil))
+             {:players [{:hand           [copper]
+                         :play-area      [ironmonger]
+                         :deck           [ironmonger]
+                         :revealed-cards {:deck 1}
+                         :actions        2}]}))
+      (is (= (-> {:players [{:hand    [ironmonger]
+                             :deck    [copper estate silver]
+                             :actions 1}]}
+                 (play 0 :ironmonger)
+                 (choose :estate))
+             {:players [{:hand           [copper silver]
+                         :play-area      [ironmonger]
+                         :discard        [estate]
+                         :revealed-cards {:discard 1}
+                         :actions        1}]}))
+      (is (= (-> {:players [{:hand    [ironmonger]
+                             :deck    [copper harem silver]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :ironmonger)
+                 (choose nil))
+             {:players [{:hand      [copper harem]
+                         :play-area [ironmonger]
+                         :deck      [silver]
+                         :actions   1
+                         :coins     1}]}))
+      (is (= (-> {:players [{:hand    [ironmonger]
+                               :deck    [copper]
+                               :actions 1}]}
+                   (play 0 :ironmonger))
+               {:players [{:hand      [copper]
+                           :play-area [ironmonger]
+                           :actions   1}]})))))
+
 (deftest junk-dealer-test
   (let [junk-dealer (assoc junk-dealer :id 0)]
     (testing "Junk Dealer"

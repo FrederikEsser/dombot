@@ -147,9 +147,11 @@
 
 (effects/register {:discard-all-revealed discard-all-revealed})
 
-(defn discard-from-revealed [game args]
-  (move-cards game (merge args {:from :revealed
-                                :to   :discard})))
+(defn discard-from-revealed [game {:keys [card-name card-names] :as args}]
+  (cond-> game
+          (or card-name
+              (not-empty card-names)) (move-cards (merge args {:from :revealed
+                                                               :to   :discard}))))
 
 (effects/register {:discard-from-revealed discard-from-revealed})
 

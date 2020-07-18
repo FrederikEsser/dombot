@@ -193,6 +193,34 @@
                                                 :min     1
                                                 :max     1}]]})
 
+(defn- ironmonger-check-revealed [game {:keys [player-no]}]
+  (let [{:keys [name] :as card} (last (get-in game [:players player-no :revealed]))
+        types (ut/get-types game card)]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:give-choice {:text    (str "You may discard the revealed " (ut/format-name name) ".")
+                                                                :choice  :discard-from-revealed
+                                                                :options [:player :revealed]
+                                                                :max     1}]
+                                                 [:topdeck-all-revealed]
+                                                 (when (:action types)
+                                                   [:give-actions 1])
+                                                 (when (:treasure types)
+                                                   [:give-coins 1])
+                                                 (when (:victory types)
+                                                   [:draw 1])]}))))
+
+(effects/register {::ironmonger-check-revealed ironmonger-check-revealed})
+
+(def ironmonger {:name    :ironmonger
+                 :set     :dark-ages
+                 :types   #{:action}
+                 :cost    4
+                 :effects [[:draw 1]
+                           [:give-actions 1]
+                           [:reveal-from-deck 1]
+                           [::ironmonger-check-revealed]]})
+
 (def junk-dealer {:name    :junk-dealer
                   :set     :dark-ages
                   :types   #{:action}
@@ -411,6 +439,7 @@
                     forager
                     fortress
                     hunting-grounds
+                    ironmonger
                     junk-dealer
                     pillage
                     poor-house
