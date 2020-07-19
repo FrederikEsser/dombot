@@ -33,7 +33,9 @@
   (swap! state update :selection remove-idx idx))
 
 (defn button-style [& [disabled types number-of-cards]]
-  (merge {:color            (cond disabled :grey
+  (merge {:color            (cond (and (:ruins types)
+                                       disabled) "#7B3610"
+                                  disabled :grey
                                   (:night types) :white
                                   (:landmark types) "#256A3D"
                                   (:hex types) "#5A487A"
@@ -44,6 +46,7 @@
                               (:duration types) "#FF9E37"
                               (:reaction types) "#A8BFD3"
                               (:reserve types) "#D3B86B"
+                              (:ruins types) "#B06B24"
                               (:action types) "#F3EEDF"
                               (:treasure types) "#FFE64F"
                               (:victory types) "#9FD688"
@@ -64,6 +67,7 @@
                               (:reaction types) "#6295CE"
                               (:reserve types) "#C6A85C"
                               (:duration types) "#F1820E"
+                              (:ruins types) "#7B3610"
                               (:attack types) "#B40000"
                               (:action types) "#DED7C4"
                               (:night types) "#413B3B"
@@ -285,13 +289,15 @@
        [:div "Supply"
         (let [supply     (-> (:game @state) :supply)
               properity? (-> (:game @state) :prosperity?)
+              ruins?     (-> (:game @state) :ruins?)
               [row1 supply] (split-at (if properity? 5 4) supply)
-              [row2 supply] (split-at (if properity? 4 3) supply)
+              [row2 supply] (split-at (cond-> 3 properity? inc ruins? inc) supply)
               [row3 row4] (split-at 5 supply)]
           [:table
            [:tbody
             (view-row row1)
-            (view-row (concat [nil] row2))
+            (view-row (cond->> row2
+                               (not ruins?) (concat [nil])))
             (view-row row3)
             (view-row row4)]])]
        (when (get-in @state [:game :druid-boons])

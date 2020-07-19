@@ -825,6 +825,49 @@
                 :players [{:play-area [dame-natalie]
                            :actions   0}]}))))))
 
+(deftest marauder-test
+  (let [marauder      (assoc marauder :id 0)
+        spoils        (assoc spoils :id 1)
+        ruined-market (assoc ruined-market :id 2)]
+    (testing "Marauder"
+      (is (= (-> {:extra-cards [{:card spoils :pile-size 15}]
+                  :supply      [{:split-pile [{:card ruined-market :pile-size 1}
+                                              {:card ruined-library :pile-size 1}
+                                              {:card {:name :ruins} :pile-size 0}]}]
+                  :players     [{:hand    [marauder]
+                                 :actions 1}
+                                {}]}
+                 (play 0 :marauder))
+             {:extra-cards [{:card spoils :pile-size 14}]
+              :supply      [{:split-pile [{:card ruined-market :pile-size 0}
+                                          {:card ruined-library :pile-size 1}
+                                          {:card {:name :ruins} :pile-size 0}]}]
+              :players     [{:play-area [marauder]
+                             :discard   [spoils]
+                             :actions   0}
+                            {:discard [ruined-market]}]}))
+      (is (= (-> {:extra-cards [{:card spoils :pile-size 1}]
+                  :supply      [{:split-pile [{:card ruined-market :pile-size 0}
+                                              {:card ruined-library :pile-size 0}
+                                              {:card {:name :ruins} :pile-size 0}]}]
+                  :players     [{:hand    [marauder]
+                                 :actions 1}
+                                {}]}
+                 (play 0 :marauder))
+             {:extra-cards [{:card spoils :pile-size 0}]
+              :supply      [{:split-pile [{:card ruined-market :pile-size 0}
+                                          {:card ruined-library :pile-size 0}
+                                          {:card {:name :ruins} :pile-size 0}]}]
+              :players     [{:play-area [marauder]
+                             :discard   [spoils]
+                             :actions   0}
+                            {}]}))
+      (testing "setup"
+        (let [game (setup-game {:supply  [{:card marauder :pile-size 10}]
+                                :players [{}
+                                          {}]})]
+          (is (ut/get-pile-idx game :supply :ruins #{:include-empty-split-piles})))))))
+
 (deftest pillage-test
   (let [pillage (assoc pillage :id 0)]
     (testing "Pillage"
@@ -1046,6 +1089,76 @@
                                  :trash   []}
                                 (play 0 :rogue)
                                 (choose :estate)))))))
+
+(deftest ruins-test
+  (testing "Ruins"
+    (is (= (-> {:players [{:hand    [abandoned-mine]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :abandoned-mine))
+           {:players [{:play-area [abandoned-mine]
+                       :actions   0
+                       :coins     1}]}))
+    (is (= (-> {:players [{:hand    [ruined-library]
+                           :deck    [copper copper]
+                           :actions 1}]}
+               (play 0 :ruined-library))
+           {:players [{:hand      [copper]
+                       :play-area [ruined-library]
+                       :deck      [copper]
+                       :actions   0}]}))
+    (is (= (-> {:players [{:hand    [ruined-market]
+                           :actions 1
+                           :buys    1}]}
+               (play 0 :ruined-market))
+           {:players [{:play-area [ruined-market]
+                       :actions   0
+                       :buys      2}]}))
+    (is (= (-> {:players [{:hand    [ruined-village]
+                           :actions 1}]}
+               (play 0 :ruined-village))
+           {:players [{:play-area [ruined-village]
+                       :actions   1}]}))
+    (is (= (-> {:players [{:hand    [survivors]
+                           :deck    [copper copper copper]
+                           :actions 1}]}
+               (play 0 :survivors)
+               (choose :discard))
+           {:players [{:play-area [survivors]
+                       :deck      [copper]
+                       :discard   [copper copper]
+                       :actions   0}]}))
+    (is (= (-> {:players [{:hand    [survivors]
+                           :deck    [copper gold copper]
+                           :actions 1}]}
+               (play 0 :survivors)
+               (choose :topdeck)
+               (choose [:copper :gold]))
+           {:players [{:play-area [survivors]
+                       :deck      [gold copper copper]
+                       :actions   0}]}))
+    (is (= (-> {:players [{:hand    [survivors]
+                           :deck    [estate]
+                           :actions 1}]}
+               (play 0 :survivors)
+               (choose :discard))
+           {:players [{:play-area [survivors]
+                       :discard   [estate]
+                       :actions   0}]}))
+    (is (= (-> {:players [{:hand    [survivors]
+                           :deck    [gold]
+                           :actions 1}]}
+               (play 0 :survivors)
+               (choose :topdeck)
+               (choose :gold))
+           {:players [{:play-area [survivors]
+                       :deck      [gold]
+                       :actions   0}]}))
+    (is (= (-> {:players [{:hand    [survivors]
+                           :actions 1}]}
+               (play 0 :survivors))
+           {:players [{:play-area [survivors]
+                       :actions   0}]}))))
 
 (deftest scavenger-test
   (let [scavenger (assoc scavenger :id 0)]

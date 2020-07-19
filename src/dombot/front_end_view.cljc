@@ -6,7 +6,7 @@
 (defn- choice-interaction [name area {:keys [source options max choice-opts]}]
   (let [interaction (if (= 1 (or max (count options)))
                       {:interaction :quick-choosable}
-                      (merge {:interaction    :choosable}
+                      (merge {:interaction :choosable}
                              (when choice-opts
                                {:choice-opts choice-opts})))]
     (cond
@@ -438,6 +438,7 @@
            {:supply      (view-supply (merge game {:player (assoc player :player-no current-player)
                                                    :choice choice}))
             :prosperity? (->> supply (some (comp #{:platinum :colony} :name :card)) boolean)
+            :ruins?      (->> supply (some (comp #{:ruins} :name :card last :split-pile)) boolean)
             :players     (->> players
                               (map-indexed (fn [idx player]
                                              (let [active-player? (and (= idx current-player)

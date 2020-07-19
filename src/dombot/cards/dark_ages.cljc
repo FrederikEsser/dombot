@@ -1,8 +1,100 @@
 (ns dombot.cards.dark-ages
-  (:require [dombot.operations :refer [push-effect-stack give-choice]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice gain]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]
             [clojure.set :refer [intersection]]))
+
+(def abandoned-mine {:name    :abandoned-mine
+                     :set     :dark-ages
+                     :types   #{:action :ruins}
+                     :cost    0
+                     :effects [[:give-coins 1]]})
+
+(def ruined-library {:name    :ruined-library
+                     :set     :dark-ages
+                     :types   #{:action :ruins}
+                     :cost    0
+                     :effects [[:draw 1]]})
+
+(def ruined-market {:name    :ruined-market
+                    :set     :dark-ages
+                    :types   #{:action :ruins}
+                    :cost    0
+                    :effects [[:give-buys 1]]})
+
+(def ruined-village {:name    :ruined-village
+                     :set     :dark-ages
+                     :types   #{:action :ruins}
+                     :cost    0
+                     :effects [[:give-actions 1]]})
+
+(defn- survivors-choice [game {:keys [player-no choice]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (case choice
+                                        :discard [[:discard-all-look-at]]
+                                        :topdeck [[:give-choice {:text    "Put them back in any order."
+                                                                 :choice  :topdeck-from-look-at
+                                                                 :options [:player :look-at]
+                                                                 :min     2
+                                                                 :max     2}]])}))
+
+(defn- survivors-look [game {:keys [player-no]}]
+  (let [look-at (get-in game [:players player-no :look-at])]
+    (cond-> game
+            (not-empty look-at) (push-effect-stack {:player-no player-no
+                                                    :effects   [[:give-choice {:text    "Look at the top 2 cards of your deck."
+                                                                               :choice  ::survivors-choice
+                                                                               :options [:special
+                                                                                         {:option :discard :text "Discard them"}
+                                                                                         {:option :topdeck :text "Put them back"}]
+                                                                               :min     1
+                                                                               :max     1}]]}))))
+
+(effects/register {::survivors-choice survivors-choice
+                   ::survivors-look   survivors-look})
+
+(def survivors {:name    :survivors
+                :set     :dark-ages
+                :types   #{:action :ruins}
+                :cost    0
+                :effects [[:look-at 2]
+                          [::survivors-look]]})
+
+(def ruins [abandoned-mine
+            ruined-library
+            ruined-market
+            ruined-village
+            survivors])
+
+(defn- setup-ruins [{:keys [players] :as game} _]
+  (if (ut/get-pile-idx game :supply :ruins #{:include-empty-split-piles})
+    game
+    (let [split-pile (->> ruins
+                          (mapcat (partial repeat 10))
+                          (map (fn [ruin]
+                                 {:card ruin :pile-size 1}))
+                          shuffle
+                          (take (* 10 (dec (count players)))))
+          ruins-pile {:split-pile (vec (concat split-pile
+                                               [{:card {:name  :ruins
+                                                        :types #{:action :ruins}
+                                                        :cost  0}}]))
+                      :hidden?    true}]
+      (update game :supply (fn insert [supply]
+                             (vec (concat (take-while (comp not #{:copper} :name :card) supply)
+                                          [ruins-pile]
+                                          (drop-while (comp not #{:copper} :name :card) supply))))))))
+
+(defn- gain-ruins [game {:keys [player-no]}]
+  (let [{:keys [idx]} (ut/get-pile-idx game :supply :ruins #{:include-empty-split-piles})
+        {:keys [card pile-size]} (-> (get-in game [:supply idx])
+                                     ut/access-top-card)]
+    (cond-> game
+            (pos? pile-size) (gain {:player-no player-no
+                                    :card-name (:name card)}))))
+
+(effects/register {::setup-ruins setup-ruins
+                   ::gain-ruins  gain-ruins})
 
 (def spoils {:name       :spoils
              :set        :dark-ages
@@ -405,6 +497,15 @@
                    ::knight-attack knight-attack
                    ::knights-pile  knights-pile})
 
+(def marauder {:name    :marauder
+               :set     :dark-ages
+               :types   #{:action :attack :looter}
+               :cost    4
+               :effects [[:gain {:card-name :spoils :from :extra-cards}]
+                         [:attack {:effects [[::gain-ruins]]}]]
+               :setup   [[:setup-extra-cards {:extra-cards [{:card spoils :pile-size 15}]}]
+                         [::setup-ruins]]})
+
 (defn pillage-attack [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])]
     (cond-> game
@@ -614,6 +715,7 @@
                     ironmonger
                     junk-dealer
                     knights
+                    marauder
                     pillage
                     poor-house
                     rats
