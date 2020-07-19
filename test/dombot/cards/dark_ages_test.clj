@@ -359,6 +359,68 @@
                          :buys      4}]
               :trash   [copper copper counterfeit]})))))
 
+(deftest death-cart-test
+  (testing "Death Cart"
+    (let [death-cart    (assoc death-cart :id 0)
+          survivors     (assoc survivors :id 1)
+          ruined-market (assoc ruined-market :id 2)]
+      (is (= (-> {:players [{:hand    [death-cart ruined-market]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :death-cart)
+                 (choose {:area :hand :card-name :ruined-market}))
+             {:players [{:play-area [death-cart]
+                         :actions   0
+                         :coins     5}]
+              :trash   [ruined-market]}))
+      (is (= (-> {:players [{:hand    [death-cart copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :death-cart)
+                 (choose {:area :play-area :card-name :death-cart}))
+             {:players [{:hand    [copper]
+                         :actions 0
+                         :coins   5}]
+              :trash   [death-cart]}))
+      (is (thrown-with-msg? AssertionError #"Choose error"
+                            (-> {:players [{:hand    [death-cart copper]
+                                            :actions 1
+                                            :coins   0}]}
+                                (play 0 :death-cart)
+                                (choose {:area :hand :card-name :copper}))))
+      (is (= (-> {:supply  [{:split-pile [{:card ruined-market :pile-size 1}
+                                          {:card survivors :pile-size 1}
+                                          {:card survivors :pile-size 1}
+                                          {:card {:name :ruins} :pile-size 0}]}
+                            {:card death-cart :pile-size 10}]
+                  :players [{:coins 4
+                             :buys  1}]}
+                 (buy-card 0 :death-cart))
+             {:supply  [{:split-pile [{:card ruined-market :pile-size 0}
+                                      {:card survivors :pile-size 0}
+                                      {:card survivors :pile-size 1}
+                                      {:card {:name :ruins} :pile-size 0}]}
+                        {:card death-cart :pile-size 9}]
+              :players [{:discard [ruined-market survivors death-cart]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:supply  [{:split-pile [{:card ruined-market :pile-size 0}
+                                          {:card survivors :pile-size 0}
+                                          {:card survivors :pile-size 1}
+                                          {:card {:name :ruins} :pile-size 0}]}
+                            {:card death-cart :pile-size 9}]
+                  :players [{:coins 4
+                             :buys  1}]}
+                 (buy-card 0 :death-cart))
+             {:supply  [{:split-pile [{:card ruined-market :pile-size 0}
+                                      {:card survivors :pile-size 0}
+                                      {:card survivors :pile-size 0}
+                                      {:card {:name :ruins} :pile-size 0}]}
+                        {:card death-cart :pile-size 8}]
+              :players [{:discard [survivors death-cart]
+                         :coins   0
+                         :buys    0}]})))))
+
 (deftest feodum-test
   (testing "Feodum"
     (testing "on trash"

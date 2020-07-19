@@ -4,6 +4,39 @@
             [dombot.effects :as effects]
             [clojure.set :refer [intersection]]))
 
+(defn- hovel-on-buy [game {:keys [player-no card]}]
+  (let [types (ut/get-types game card)]
+    (cond-> game
+            (:victory types) (give-choice {:player-no player-no
+                                           :text      "You may trash a Hovel from your hand."
+                                           :choice    :trash-from-hand
+                                           :options   [:player :hand {:name :hovel}]
+                                           :max       1}))))
+
+(effects/register {::hovel-on-buy hovel-on-buy})
+
+(def hovel {:name     :hovel
+            :set      :dark-ages
+            :types    #{:reaction :shelter}
+            :cost     1
+            :reaction {:on-buy [[::hovel-on-buy]]}})
+
+(def necropolis {:name    :necropolis
+                 :set     :dark-ages
+                 :types   #{:action :shelter}
+                 :cost    1
+                 :effects [[:give-actions 2]]})
+
+(def overgrown-estate {:name     :overgrown-estate
+                       :set      :dark-ages
+                       :types    #{:victory :shelter}
+                       :cost     1
+                       :on-trash [[:draw 1]]})
+
+(def shelters [hovel
+               necropolis
+               overgrown-estate])
+
 (def abandoned-mine {:name    :abandoned-mine
                      :set     :dark-ages
                      :types   #{:action :ruins}
@@ -251,6 +284,22 @@
                                                    :options [:player :hand {:type :treasure}]
                                                    :max     1}]]
                   :auto-play-index -1})
+
+(def death-cart {:name    :death-cart
+                 :set     :dark-ages
+                 :types   #{:action :looter}
+                 :cost    4
+                 :effects [[:give-coins 5]
+                           [:give-choice {:text    "Trash an Action card from your hand or the Death Cart."
+                                          :choice  :trash-from-area
+                                          :options [:mixed
+                                                    [:player :hand {:type :action}]
+                                                    [:player :play-area {:this true}]]
+                                          :min     1
+                                          :max     1}]]
+                 :on-gain [[::gain-ruins]
+                           [::gain-ruins]]
+                 :setup   [[::setup-ruins]]})
 
 (defn feodum-victory-points [cards]
   (quot (->> cards
@@ -708,6 +757,7 @@
                     catacombs
                     count'
                     counterfeit
+                    death-cart
                     feodum
                     forager
                     fortress
@@ -724,37 +774,3 @@
                     squire
                     vagrant
                     wandering-minstrel])
-
-(defn- hovel-on-buy [game {:keys [player-no card]}]
-  (let [types (ut/get-types game card)]
-    (cond-> game
-            (:victory types) (give-choice {:player-no player-no
-                                           :text      "You may trash a Hovel from your hand."
-                                           :choice    :trash-from-hand
-                                           :options   [:player :hand {:name :hovel}]
-                                           :max       1}))))
-
-(effects/register {::hovel-on-buy hovel-on-buy})
-
-(def hovel {:name     :hovel
-            :set      :dark-ages
-            :types    #{:reaction :shelter}
-            :cost     1
-            :reaction {:on-buy [[::hovel-on-buy]]}})
-
-(def necropolis {:name    :necropolis
-                 :set     :dark-ages
-                 :types   #{:action :shelter}
-                 :cost    1
-                 :effects [[:give-actions 2]]})
-
-(def overgrown-estate {:name     :overgrown-estate
-                       :set      :dark-ages
-                       :types    #{:victory :shelter}
-                       :cost     1
-                       :on-trash [[:draw 1]]})
-
-
-(def shelters [hovel
-               necropolis
-               overgrown-estate])
