@@ -684,6 +684,147 @@
                          :actions   1
                          :coins     1}]})))))
 
+(deftest knights-test
+  (testing "Knights"
+    (is (= (-> {:players [{:hand    [dame-molly]
+                           :actions 1}
+                          {:deck [copper estate copper]}]}
+               (play 0 :dame-molly))
+           {:players [{:play-area [dame-molly]
+                       :actions   2}
+                      {:deck           [copper]
+                       :discard        [copper estate]
+                       :revealed-cards {:discard 2}}]}))
+    (is (= (-> {:players [{:hand    [dame-sylvia]
+                           :actions 1
+                           :coins   0}
+                          {:deck [estate province copper]}]}
+               (play 0 :dame-sylvia))
+           {:players [{:play-area [dame-sylvia]
+                       :actions   0
+                       :coins     2}
+                      {:deck           [copper]
+                       :discard        [estate province]
+                       :revealed-cards {:discard 2}}]}))
+    (is (= (-> {:players [{:hand    [sir-martin]
+                           :actions 1
+                           :buys    1}
+                          {:deck [silver gold copper]}]}
+               (play 0 :sir-martin)
+               (choose :silver))
+           {:players [{:play-area [sir-martin]
+                       :actions   0
+                       :buys      3}
+                      {:deck           [copper]
+                       :discard        [gold]
+                       :revealed-cards {:discard 1}}]
+            :trash   [silver]}))
+    (is (= (-> {:players [{:hand    [dame-josephine]
+                           :actions 1}
+                          {:deck [copper gold copper]}]}
+               (play 0 :dame-josephine)
+               (choose :gold))
+           {:players [{:play-area [dame-josephine]
+                       :actions   0}
+                      {:deck           [copper]
+                       :discard        [copper]
+                       :revealed-cards {:discard 1}}]
+            :trash   [gold]}))
+    (is (= (calc-victory-points {:deck [dame-josephine]})
+           2))
+    (let [sir-vander (assoc sir-vander :id 0)
+          sir-bailey (assoc sir-bailey :id 1)
+          gold       (assoc gold :id 2)]
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [sir-vander]
+                             :actions 1}
+                            {:deck [estate sir-bailey copper]}]}
+                 (play 0 :sir-vander)
+                 (choose :sir-bailey))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:discard [gold]
+                         :actions 0}
+                        {:deck           [copper]
+                         :discard        [estate]
+                         :revealed-cards {:discard 1}}]
+              :trash   [sir-vander sir-bailey]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [sir-bailey]
+                             :deck    [silver silver]
+                             :actions 1}
+                            {:deck [sir-vander gold copper]}]}
+                 (play 0 :sir-bailey)
+                 (choose :sir-vander))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:hand    [silver]
+                         :deck    [silver]
+                         :actions 1}
+                        {:deck    [copper]
+                         :discard [gold gold]}]
+              :trash   [sir-bailey sir-vander]}))
+      (is (= (-> {:players [{:hand    [sir-michael]
+                             :actions 1}
+                            {:hand [copper copper copper copper copper]
+                             :deck [silver silver copper]}]}
+                 (play 0 :sir-michael)
+                 (choose [:copper :copper])
+                 (choose :silver))
+             {:players [{:play-area [sir-michael]
+                         :actions   0}
+                        {:hand           [copper copper copper]
+                         :deck           [copper]
+                         :discard        [copper copper silver]
+                         :revealed-cards {:discard 1}}]
+              :trash   [silver]}))
+      (is (= (-> {:players [{:hand    [dame-anna estate copper silver gold]
+                             :actions 1}]}
+                 (play 0 :dame-anna)
+                 (choose [:copper :estate]))
+             {:players [{:hand      [silver gold]
+                         :play-area [dame-anna]
+                         :actions   0}]
+              :trash   [copper estate]}))
+      (is (= (-> {:players [{:hand    [dame-anna estate copper silver gold]
+                             :actions 1}]}
+                 (play 0 :dame-anna)
+                 (choose nil))
+             {:players [{:hand      [estate copper silver gold]
+                         :play-area [dame-anna]
+                         :actions   0}]}))
+      (is (= (-> {:players [{:hand    [sir-destry]
+                             :deck    [copper copper copper]
+                             :actions 1}]}
+                 (play 0 :sir-destry))
+             {:players [{:hand      [copper copper]
+                         :play-area [sir-destry]
+                         :deck      [copper]
+                         :actions   0}]}))
+      (let [silver (assoc silver :id 1)]
+        (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                    :players [{:hand    [dame-natalie]
+                               :actions 1}]}
+                   (play 0 :dame-natalie)
+                   (choose nil))
+               {:supply  [{:card silver :pile-size 40}]
+                :players [{:play-area [dame-natalie]
+                           :actions   0}]}))
+        (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                    :players [{:hand    [dame-natalie]
+                               :actions 1}]}
+                   (play 0 :dame-natalie)
+                   (choose :silver))
+               {:supply  [{:card silver :pile-size 39}]
+                :players [{:play-area [dame-natalie]
+                           :discard   [silver]
+                           :actions   0}]}))
+        (is (= (-> {:supply  [{:card armory :pile-size 10}]
+                    :players [{:hand    [dame-natalie]
+                               :actions 1}]}
+                   (play 0 :dame-natalie))
+               {:supply  [{:card armory :pile-size 10}]
+                :players [{:play-area [dame-natalie]
+                           :actions   0}]}))))))
+
 (deftest pillage-test
   (let [pillage (assoc pillage :id 0)]
     (testing "Pillage"

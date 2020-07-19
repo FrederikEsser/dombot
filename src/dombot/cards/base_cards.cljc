@@ -16,9 +16,10 @@
 (defn make-pile [card pile-size]
   {:card card :pile-size pile-size})
 
-(defn supply [number-of-players victory-pile-size & [{:keys [prosperity?]}]]
+(defn supply [number-of-players victory-pile-size & [{:keys [prosperity? shelters?]}]]
   (->> [(make-pile curse (* 10 (dec number-of-players)) #_#_:category :base-cards)
-        (make-pile estate (+ victory-pile-size (* 3 number-of-players)))
+        (make-pile estate (cond-> victory-pile-size
+                                  (not shelters?) (+ (* 3 number-of-players))))
         (make-pile duchy victory-pile-size)
         (make-pile province victory-pile-size)
         (when prosperity?

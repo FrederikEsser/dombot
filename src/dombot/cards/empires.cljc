@@ -100,11 +100,6 @@
               :at-clean-up  [[::capital-give-debt]]
               :trigger-mode :auto})
 
-(def castles {:name       :castles
-              :set        :empires
-              :cost       3
-              :split-pile ::castles-pile})
-
 (defn humble-castle-victory-points [cards]
   (->> cards
        (filter (comp :castle :types))
@@ -235,6 +230,12 @@
                    :cost           10
                    :victory-points ::kings-castle-victory-points})
 
+(def castles {:name       :castles
+              :set        :empires
+              :types      #{:victory}
+              :cost       3
+              :split-pile ::castles-pile})
+
 (defn castles-pile [player-count]
   (let [one-or-two (if (> player-count 2) 2 1)]
     {:split-pile [{:card humble-castle :pile-size one-or-two}
@@ -244,7 +245,8 @@
                   {:card opulent-castle :pile-size one-or-two}
                   {:card sprawling-castle :pile-size 1}
                   {:card grand-castle :pile-size 1}
-                  {:card kings-castle :pile-size one-or-two}]}))
+                  {:card kings-castle :pile-size one-or-two}
+                  {:card castles :pile-size 0}]}))
 
 (effects/register {::humble-castle-victory-points   humble-castle-victory-points
                    ::small-castle-trash-from-area   small-castle-trash-from-area

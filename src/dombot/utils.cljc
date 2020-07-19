@@ -99,16 +99,19 @@
 (defn count-as-coll [data]
   (-> data ensure-coll count))
 
-(defn access-top-card [{:keys [split-pile] :as pile}]
+(defn access-top-card [{:keys [split-pile hidden?] :as pile}]
   (if split-pile
-    (merge (or (->> split-pile
-                    (filter (comp pos? :pile-size))
-                    first)
-               (last split-pile))
-           {:total-pile-size (->> split-pile
-                                  (map :pile-size)
-                                  (apply +))}
-           (select-keys pile [:tokens]))
+    (let [total-pile-size (->> split-pile
+                               (map :pile-size)
+                               (apply +))]
+      (merge (or (->> split-pile
+                      (filter (comp pos? :pile-size))
+                      first)
+                 (last split-pile))
+             (if hidden?
+               {:pile-size total-pile-size}
+               {:total-pile-size total-pile-size})
+             (select-keys pile [:tokens])))
     pile))
 
 (defn access-card [card-name {:keys [split-pile] :as pile}]

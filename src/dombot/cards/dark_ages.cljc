@@ -282,6 +282,129 @@
                                            :min     1
                                            :max     1}]]})
 
+(defn- knight-trash [game {:keys [player-no card-name attacking-player-no attacking-knight-id]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :revealed] {:name card-name})
+        types (ut/get-types game card)]
+    (-> game
+        (push-effect-stack {:player-no player-no
+                            :effects   [[:trash-from-revealed {:card-name card-name}]]})
+        (cond-> (:knight types) (push-effect-stack {:player-no attacking-player-no
+                                                    :effects   [[:trash-from-play-area {:trash-card-id attacking-knight-id}]]})))))
+
+(defn- knight-attack [game {:keys [player-no attacking-player-no card-id]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:reveal-from-deck 2]
+                                       [:give-choice {:text    "Trash a revealed card costing from $3 to $6."
+                                                      :choice  [::knight-trash {:attacking-player-no attacking-player-no
+                                                                                :attacking-knight-id card-id}]
+                                                      :options [:player :revealed {:min-cost 3
+                                                                                   :max-cost 6}]
+                                                      :min     1
+                                                      :max     1}]
+                                       [:discard-all-revealed]]}))
+
+(def dame-anna {:name    :dame-anna
+                :set     :dark-ages
+                :types   #{:action :attack :knight}
+                :cost    5
+                :effects [[:give-choice {:text    "You may trash up to 2 cards from your hand."
+                                         :choice  :trash-from-hand
+                                         :options [:player :hand]
+                                         :max     2}]
+                          [:attack {:effects [[::knight-attack]]}]]})
+
+(def dame-josephine {:name           :dame-josephine
+                     :set            :dark-ages
+                     :types          #{:action :attack :knight :victory}
+                     :victory-points 2
+                     :cost           5
+                     :effects        [[:attack {:effects [[::knight-attack]]}]]})
+
+(def dame-molly {:name    :dame-molly
+                 :set     :dark-ages
+                 :types   #{:action :attack :knight}
+                 :cost    5
+                 :effects [[:give-actions 2]
+                           [:attack {:effects [[::knight-attack]]}]]})
+
+(def dame-natalie {:name    :dame-natalie
+                   :set     :dark-ages
+                   :types   #{:action :attack :knight}
+                   :cost    5
+                   :effects [[:give-choice {:text    "You may gain a card costing up to $3."
+                                            :choice  :gain
+                                            :options [:supply {:max-cost 3}]
+                                            :max     1}]
+                             [:attack {:effects [[::knight-attack]]}]]})
+
+(def dame-sylvia {:name    :dame-sylvia
+                  :set     :dark-ages
+                  :types   #{:action :attack :knight}
+                  :cost    5
+                  :effects [[:give-coins 2]
+                            [:attack {:effects [[::knight-attack]]}]]})
+
+(def sir-bailey {:name    :sir-bailey
+                 :set     :dark-ages
+                 :types   #{:action :attack :knight}
+                 :cost    5
+                 :effects [[:draw 1]
+                           [:give-actions 1]
+                           [:attack {:effects [[::knight-attack]]}]]})
+
+(def sir-destry {:name    :sir-destry
+                 :set     :dark-ages
+                 :types   #{:action :attack :knight}
+                 :cost    5
+                 :effects [[:draw 2]
+                           [:attack {:effects [[::knight-attack]]}]]})
+
+(def sir-martin {:name    :sir-martin
+                 :set     :dark-ages
+                 :types   #{:action :attack :knight}
+                 :cost    4
+                 :effects [[:give-buys 2]
+                           [:attack {:effects [[::knight-attack]]}]]})
+
+(def sir-michael {:name    :sir-michael
+                  :set     :dark-ages
+                  :types   #{:action :attack :knight}
+                  :cost    5
+                  :effects [[:attack {:effects [[:discard-down-to 3]]}]
+                            [:attack {:effects [[::knight-attack]]}]]})
+
+(def sir-vander {:name     :sir-vander
+                 :set      :dark-ages
+                 :types    #{:action :attack :knight}
+                 :cost     5
+                 :effects  [[:attack {:effects [[::knight-attack]]}]]
+                 :on-trash [[:gain {:card-name :gold}]]})
+
+(def knights {:name       :knights
+              :set        :dark-ages
+              :types      #{:action :attack :knight}
+              :cost       5
+              :split-pile ::knights-pile})
+
+(defn knights-pile [_]
+  {:split-pile (-> (shuffle [{:card dame-anna :pile-size 1}
+                             {:card dame-josephine :pile-size 1}
+                             {:card dame-molly :pile-size 1}
+                             {:card dame-natalie :pile-size 1}
+                             {:card dame-sylvia :pile-size 1}
+                             {:card sir-bailey :pile-size 1}
+                             {:card sir-destry :pile-size 1}
+                             {:card sir-martin :pile-size 1}
+                             {:card sir-michael :pile-size 1}
+                             {:card sir-vander :pile-size 1}])
+                   (concat [{:card knights :pile-size 0}])
+                   vec)
+   :hidden?    true})
+
+(effects/register {::knight-trash  knight-trash
+                   ::knight-attack knight-attack
+                   ::knights-pile  knights-pile})
+
 (defn pillage-attack [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])]
     (cond-> game
@@ -490,6 +613,7 @@
                     hunting-grounds
                     ironmonger
                     junk-dealer
+                    knights
                     pillage
                     poor-house
                     rats

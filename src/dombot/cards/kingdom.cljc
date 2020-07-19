@@ -156,7 +156,8 @@
     (as-> (merge
             {:mode                  mode
              :supply                (vec (concat (base/supply number-of-players (get-victory-pile-size number-of-players)
-                                                              {:prosperity? (-> kingdom first :set #{:prosperity})})
+                                                              {:prosperity? (-> kingdom first :set #{:prosperity})
+                                                               :shelters?   shelters?})
                                                  (create-kingdom-supply kingdom number-of-players)))
              :players               (vec (map create-player player-names))
              :track-gained-cards?   true
