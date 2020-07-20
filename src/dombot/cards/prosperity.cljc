@@ -369,20 +369,14 @@
                                            :max     1}]]
                   :setup   [[::trade-route-setup]]})
 
-(defn- vault-discard [game {:keys [player-no card-names]}]
-  (push-effect-stack game {:player-no player-no
-                           :effects   [[:discard-from-hand {:card-names card-names}]
-                                       [:give-coins (count card-names)]]}))
-
-(defn- vault-discard-2 [game {:keys [player-no card-names] :as args}]
+(defn- vault-discard [game {:keys [player-no card-names] :as args}]
   (-> game
       (push-effect-stack {:player-no player-no
                           :effects   (concat [[:discard-from-hand args]]
                                              (when (= 2 (count card-names))
                                                [[:draw 1]]))})))
 
-(effects/register {::vault-discard   vault-discard
-                   ::vault-discard-2 vault-discard-2})
+(effects/register {::vault-discard vault-discard})
 
 (def vault {:name    :vault
             :set     :prosperity
@@ -390,10 +384,10 @@
             :cost    5
             :effects [[:draw 2]
                       [:give-choice {:text    "Discard any number of cards for +$1 each."
-                                     :choice  ::vault-discard
+                                     :choice  :discard-for-coins
                                      :options [:player :hand]}]
                       [:other-players {:effects [[:give-choice {:text      "You may discard 2 cards, to draw a card."
-                                                                :choice    ::vault-discard-2
+                                                                :choice    ::vault-discard
                                                                 :options   [:player :hand]
                                                                 :min       2
                                                                 :max       2

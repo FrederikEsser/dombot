@@ -1447,6 +1447,65 @@
                              :buys      2}]
                   :trash   [squire]})))))))
 
+(deftest storeroom-test
+  (let [storeroom (assoc storeroom :id 0)]
+    (testing "Storeroom"
+      (is (= (-> {:players [{:hand    [storeroom estate estate copper]
+                             :deck    [silver copper gold copper]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :storeroom)
+                 (choose [:estate :estate :copper])
+                 (choose nil))
+             {:players [{:hand      [silver copper gold]
+                         :play-area [storeroom]
+                         :deck      [copper]
+                         :discard   [estate estate copper]
+                         :actions   0
+                         :coins     0
+                         :buys      2}]}))
+      (is (= (-> {:players [{:hand    [storeroom estate estate copper]
+                             :deck    [estate estate gold copper]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :storeroom)
+                 (choose [:estate :estate :copper])
+                 (choose [:estate :estate]))
+             {:players [{:hand      [gold]
+                         :play-area [storeroom]
+                         :deck      [copper]
+                         :discard   [estate estate copper estate estate]
+                         :actions   0
+                         :coins     2
+                         :buys      2}]}))
+      (is (= (-> {:players [{:hand    [storeroom gold]
+                             :deck    [copper]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :storeroom)
+                 (choose nil)
+                 (choose nil))
+             {:players [{:hand      [gold]
+                         :play-area [storeroom]
+                         :deck      [copper]
+                         :actions   0
+                         :coins     0
+                         :buys      2}]}))
+      (is (= (-> {:players [{:hand    [storeroom]
+                             :deck    [gold]
+                             :actions 1
+                             :coins   0
+                             :buys    1}]}
+                 (play 0 :storeroom))
+             {:players [{:play-area [storeroom]
+                         :deck      [gold]
+                         :actions   0
+                         :coins     0
+                         :buys      2}]})))))
+
 (deftest vagrant-test
   (let [vagrant (assoc vagrant :id 0)]
     (testing "Vagrant"

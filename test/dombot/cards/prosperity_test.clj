@@ -1170,12 +1170,12 @@
                             :actions   0}]
             :effect-stack [{:text      "Discard any number of cards for +$1 each."
                             :player-no 0
-                            :choice    ::prosperity/vault-discard
+                            :choice    :discard-for-coins
                             :source    :hand
                             :options   [:copper :copper :estate :estate :copper :estate]}
                            {:player-no 0
                             :effect    [:other-players {:effects [[:give-choice {:text      "You may discard 2 cards, to draw a card."
-                                                                                 :choice    ::prosperity/vault-discard-2
+                                                                                 :choice    ::prosperity/vault-discard
                                                                                  :options   [:player :hand]
                                                                                  :min       2
                                                                                  :max       2
@@ -1208,7 +1208,7 @@
                           :deck [copper copper]}]
           :effect-stack [{:text      "You may discard 2 cards, to draw a card."
                           :player-no 1
-                          :choice    ::prosperity/vault-discard-2
+                          :choice    ::prosperity/vault-discard
                           :source    :hand
                           :options   [:estate :estate :copper]
                           :min       2

@@ -126,6 +126,13 @@
 
 (effects/register {:discard-from-hand discard-from-hand})
 
+(defn discard-for-coins [game {:keys [player-no card-names]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:discard-from-hand {:card-names card-names}]
+                                       [:give-coins (count card-names)]]}))
+
+(effects/register {:discard-for-coins discard-for-coins})
+
 (defn discard-down-to [game {:keys [player-no arg]}]
   (let [hand (get-in game [:players player-no :hand])]
     (cond-> game

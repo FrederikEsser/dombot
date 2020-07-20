@@ -716,6 +716,25 @@
                                        :min     1
                                        :max     1}]]})
 
+(defn storeroom-sift [game {:keys [player-no card-names]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:discard-from-hand {:card-names card-names}]
+                                       [:draw (count card-names)]
+                                       [:give-choice {:text    "Discard any number of cards for +$1 each."
+                                                      :choice  :discard-for-coins
+                                                      :options [:player :hand]}]]}))
+
+(effects/register {::storeroom-sift storeroom-sift})
+
+(def storeroom {:name    :storeroom
+                :set     :dark-ages
+                :types   #{:action}
+                :cost    3
+                :effects [[:give-buys 1]
+                          [:give-choice {:text    "Discard any number of cards, then draw that many."
+                                         :choice  ::storeroom-sift
+                                         :options [:player :hand]}]]})
+
 (defn- vagrant-check-revealed [game {:keys [player-no]}]
   (let [{:keys [name] :as card} (last (get-in game [:players player-no :revealed]))
         take-card? (->> (ut/get-types game card)
@@ -772,5 +791,6 @@
                     rogue
                     scavenger
                     squire
+                    storeroom
                     vagrant
                     wandering-minstrel])
