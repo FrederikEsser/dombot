@@ -48,13 +48,6 @@
                       [::ghost-reveal]
                       [:discard-all-revealed]]})
 
-(defn- imp-play-action [game {:keys [player-no card-name]}]
-  (let [{card :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
-    (cond-> game
-            card (push-effect-stack {:player-no player-no
-                                     :effects   [[:play-from-hand {:card-name card-name}]
-                                                 [:card-effect {:card card}]]}))))
-
 (defn- imp-give-choice [game {:keys [player-no]}]
   (let [actions-in-play (->> (get-in game [:players player-no :play-area])
                              (filter (comp :action :types))
@@ -62,13 +55,12 @@
                              set)]
     (give-choice game {:player-no player-no
                        :text      "You may play an Action card from your hand that you don't have a copy of in play."
-                       :choice    ::imp-play-action
+                       :choice    :play-from-hand
                        :options   [:player :hand {:type      :action
                                                   :not-names actions-in-play}]
                        :max       1})))
 
-(effects/register {::imp-play-action imp-play-action
-                   ::imp-give-choice imp-give-choice})
+(effects/register {::imp-give-choice imp-give-choice})
 
 
 (def imp {:name    :imp
@@ -733,7 +725,6 @@
     (cond-> game
             card (push-effect-stack {:player-no player-no
                                      :effects   [[:play-from-hand {:card-name card-name}]
-                                                 [:card-effect {:card card}]
                                                  [:give-actions 1]]}))))
 
 (defn- conclave-give-choice [game {:keys [player-no]}]

@@ -99,14 +99,6 @@
                                          :choice  ::artificer-discard
                                          :options [:player :hand]}]]})
 
-(defn- caravan-guard-play [game {:keys [player-no card-id]}]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:id card-id})]
-    (push-effect-stack game {:player-no player-no
-                             :effects   [[:play-from-hand {:card-name :caravan-guard}]
-                                         [:card-effect {:card card}]]})))
-
-(effects/register {::caravan-guard-play caravan-guard-play})
-
 (def caravan-guard {:name      :caravan-guard
                     :set       :adventures
                     :types     #{:action :duration :reaction}
@@ -118,7 +110,7 @@
                                 :mode     :auto
                                 :effects  [[:give-coins 1]]}
                     :reacts-to :attack
-                    :reaction  [[::caravan-guard-play]]})
+                    :reaction  [[:play-from-hand {:card-name :caravan-guard}]]})
 
 (defn- distant-lands-victory-points [game {:keys [player-no card-id]}]
   (ut/update-in-vec game [:players player-no :tavern-mat] {:id card-id}

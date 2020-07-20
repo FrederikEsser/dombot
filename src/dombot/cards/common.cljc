@@ -70,11 +70,21 @@
 
 (effects/register {:gain-from-trash-to-hand gain-from-trash-to-hand})
 
-(defn play-from-hand [game {:keys [card-name] :as args}]
+(defn put-in-play [game {:keys [player-no card-name]}]
   (cond-> game
-          card-name (move-card (merge args {:from :hand
-                                            :to   :play-area}))))
+          card-name (move-card {:player-no player-no
+                                :card-name card-name
+                                :from      :hand
+                                :to        :play-area})))
 
+(effects/register {:put-in-play put-in-play})
+
+(defn play-from-hand [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
+    (cond-> game
+            card-name (push-effect-stack {:player-no player-no
+                                          :effects   [[:put-in-play {:card-name card-name}]
+                                                      [:card-effect {:card card}]]}))))
 
 (effects/register {:play-from-hand play-from-hand})
 
@@ -105,7 +115,7 @@
             card (push-effect-stack {:player-no player-no
                                      :card-id   card-id
                                      :effects   (concat
-                                                  [[:play-from-hand {:card-name card-name}]]
+                                                  [[:put-in-play {:card-name card-name}]]
                                                   (repeat times [:card-effect {:card card}])
                                                   [[:register-repeated-play {:target-id (:id card)}]])}))))
 

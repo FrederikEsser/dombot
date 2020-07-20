@@ -360,6 +360,79 @@
                          :buys      4}]
               :trash   [copper copper counterfeit]})))))
 
+(deftest cultist-test
+  (let [cultist        (assoc cultist :id 0)
+        ruined-market  (assoc ruined-market :id 1)
+        ruined-library (assoc ruined-library :id 1)]
+    (testing "Cultist"
+      (is (= (-> {:supply  [{:split-pile [{:card ruined-market :pile-size 1}
+                                          {:card ruined-library :pile-size 1}
+                                          {:card {:name :ruins} :pile-size 0}]}]
+                  :players [{:hand    [cultist]
+                             :deck    [copper copper copper]
+                             :actions 1}
+                            {}]}
+                 (play 0 :cultist))
+             {:supply  [{:split-pile [{:card ruined-market :pile-size 0}
+                                      {:card ruined-library :pile-size 1}
+                                      {:card {:name :ruins} :pile-size 0}]}]
+              :players [{:hand      [copper copper]
+                         :play-area [cultist]
+                         :deck      [copper]
+                         :actions   0}
+                        {:discard [ruined-market]}]}))
+      (is (= (-> {:supply  [{:split-pile [{:card ruined-market :pile-size 1}
+                                          {:card ruined-library :pile-size 1}
+                                          {:card {:name :ruins} :pile-size 0}]}]
+                  :players [{:hand    [cultist]
+                             :deck    [copper cultist copper copper]
+                             :actions 1}
+                            {}]}
+                 (play 0 :cultist)
+                 (choose :cultist))
+             {:supply  [{:split-pile [{:card ruined-market :pile-size 0}
+                                      {:card ruined-library :pile-size 0}
+                                      {:card {:name :ruins} :pile-size 0}]}]
+              :players [{:hand      [copper copper copper]
+                         :play-area [cultist cultist]
+                         :actions   0}
+                        {:discard [ruined-market ruined-library]}]}))
+      (is (= (-> {:supply  [{:split-pile [{:card ruined-market :pile-size 1}
+                                          {:card ruined-library :pile-size 1}
+                                          {:card {:name :ruins} :pile-size 0}]}]
+                  :players [{:hand    [cultist]
+                             :deck    [copper cultist copper copper]
+                             :actions 1}
+                            {}]}
+                 (play 0 :cultist)
+                 (choose nil))
+             {:supply  [{:split-pile [{:card ruined-market :pile-size 0}
+                                      {:card ruined-library :pile-size 1}
+                                      {:card {:name :ruins} :pile-size 0}]}]
+              :players [{:hand      [copper cultist]
+                         :play-area [cultist]
+                         :deck      [copper copper]
+                         :actions   0}
+                        {:discard [ruined-market]}]}))
+      (testing "on-trash"
+        (is (= (-> {:players [{:hand    [junk-dealer cultist]
+                               :deck    [province copper copper gold copper]
+                               :actions 1
+                               :coins   0}]}
+                   (play 0 :junk-dealer)
+                   (choose :cultist))
+               {:players [{:hand      [province copper copper gold]
+                           :play-area [junk-dealer]
+                           :deck      [copper]
+                           :actions   1
+                           :coins     1}]
+                :trash   [cultist]})))
+      (testing "setup"
+        (let [game (setup-game {:supply  [{:card cultist :pile-size 10}]
+                                :players [{}
+                                          {}]})]
+          (is (ut/get-pile-idx game :supply :ruins #{:include-empty-split-piles})))))))
+
 (deftest death-cart-test
   (testing "Death Cart"
     (let [death-cart    (assoc death-cart :id 0)

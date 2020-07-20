@@ -176,7 +176,7 @@
                                                :min     2
                                                :max     2}]]
                     :reacts-to :attack
-                    :reaction  [[:play-from-hand {:card-name :horse-traders}]
+                    :reaction  [[:put-in-play {:card-name :horse-traders}]
                                 [::horse-traders-set-start-of-turn]]})
 
 (defn- hunting-party-reveal [game {:keys [player-no]}]

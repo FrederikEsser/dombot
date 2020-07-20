@@ -285,6 +285,19 @@
                                                    :max     1}]]
                   :auto-play-index -1})
 
+(def cultist {:name     :cultist
+              :set      :dark-ages
+              :types    #{:action :attack :looter}
+              :cost     5
+              :effects  [[:draw 2]
+                         [:attack {:effects [[::gain-ruins]]}]
+                         [:give-choice {:text    "You may play a Cultist from your hand."
+                                        :choice  :play-from-hand
+                                        :options [:player :hand {:name :cultist}]
+                                        :max     1}]]
+              :on-trash [[:draw 3]]
+              :setup    [[::setup-ruins]]})
+
 (def death-cart {:name    :death-cart
                  :set     :dark-ages
                  :types   #{:action :looter}
@@ -817,6 +830,7 @@
                     catacombs
                     count'
                     counterfeit
+                    cultist
                     death-cart
                     feodum
                     forager

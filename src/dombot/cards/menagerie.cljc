@@ -656,22 +656,13 @@
                :on-buy [[::stampeding-horses]]
                :setup  [[:setup-extra-cards {:extra-cards [{:card horse :pile-size 30}]}]]})
 
-(defn- toil-play-action [game {:keys [player-no card-name]}]
-  (let [{card :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
-    (cond-> game
-            card (push-effect-stack {:player-no player-no
-                                     :effects   [[:play-from-hand {:card-name card-name}]
-                                                 [:card-effect {:card card}]]}))))
-
-(effects/register {::toil-play-action toil-play-action})
-
 (def toil {:name   :toil
            :set    :menagerie
            :type   :event
            :cost   2
            :on-buy [[:give-buys 1]
                     [:give-choice {:text    "You may play an Action card from your hand."
-                                   :choice  ::toil-play-action
+                                   :choice  :play-from-hand
                                    :options [:player :hand {:type :action}]
                                    :max     1}]]})
 
