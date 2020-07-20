@@ -789,6 +789,50 @@
                                          :choice  ::storeroom-sift
                                          :options [:player :hand]}]]})
 
+(defn- mercenary-trash [game {:keys [player-no card-name card-names] :as args}]
+  (cond-> game
+          (or card-name card-names) (push-effect-stack {:player-no player-no
+                                                        :effects   (concat [[:trash-from-hand args]]
+                                                                           (when (= 2 (count card-names))
+                                                                             [[:draw 2]
+                                                                              [:give-coins 2]
+                                                                              [:attack {:effects [[:discard-down-to 3]]}]]))})))
+
+(effects/register {::mercenary-trash mercenary-trash})
+
+(def mercenary {:name    :mercenary
+                :set     :dark-ages
+                :types   #{:action :attack}
+                :cost    0
+                :effects [[:give-choice {:text      "You may trash 2 cards from your hand"
+                                         :choice    ::mercenary-trash
+                                         :options   [:player :hand]
+                                         :min       2
+                                         :max       2
+                                         :optional? true}]]})
+
+(defn- urchin-trash [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:trash-from-play-area {:card-name :urchin}]
+                                                    [:gain {:card-name :mercenary
+                                                            :from      :extra-cards}]]})))
+
+(effects/register {::urchin-trash urchin-trash})
+
+(def urchin {:name          :urchin
+             :set           :dark-ages
+             :types         #{:action :attack}
+             :cost          3
+             :effects       [[:draw 1]
+                             [:give-actions 1]
+                             [:attack {:effects [[:discard-down-to 4]]}]]
+             :while-in-play {:play-attack [[:give-choice {:text    "You may trash an Urchin to gain a Mercenary."
+                                                          :choice  ::urchin-trash
+                                                          :options [:player :play-area {:name :urchin}]
+                                                          :max     1}]]}
+             :setup         [[:setup-extra-cards {:extra-cards [{:card mercenary :pile-size 10}]}]]})
+
 (defn- vagrant-check-revealed [game {:keys [player-no]}]
   (let [{:keys [name] :as card} (last (get-in game [:players player-no :revealed]))
         take-card? (->> (ut/get-types game card)
@@ -849,5 +893,6 @@
                     scavenger
                     squire
                     storeroom
+                    urchin
                     vagrant
                     wandering-minstrel])

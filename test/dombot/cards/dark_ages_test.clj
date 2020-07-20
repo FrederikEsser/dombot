@@ -5,7 +5,7 @@
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.common :refer :all]
             [dombot.cards.dark-ages :as dark-ages :refer :all]
-            [dombot.cards.dominion :refer [militia]]
+            [dombot.cards.dominion :refer [militia throne-room]]
             [dombot.cards.intrigue :refer [harem lurker]]
             [dombot.cards.adventures :refer [warrior]]
             [dombot.cards.empires :refer [engineer fortune]]
@@ -1672,6 +1672,140 @@
                          :coins     0
                          :buys      2}]})))))
 
+(deftest urchin-test
+  (let [urchin    (assoc urchin :id 0)
+        mercenary (assoc mercenary :id 1)
+        urchin-2  (assoc urchin :id 2)]
+    (testing "Urchin"
+      (is (= (-> {:players [{:hand    [urchin]
+                             :deck    [copper copper]
+                             :actions 1}
+                            {:hand [copper copper copper copper copper]}]}
+                 (play 0 :urchin)
+                 (choose [:copper]))
+             {:players [{:hand      [copper]
+                         :play-area [urchin]
+                         :deck      [copper]
+                         :actions   1}
+                        {:hand    [copper copper copper copper]
+                         :discard [copper]}]}))
+      (is (= (-> {:extra-cards [{:card mercenary :pile-size 10}]
+                  :players     [{:hand    [urchin]
+                                 :deck    [urchin-2 copper]
+                                 :actions 1}
+                                {:hand [copper copper copper copper copper]}]}
+                 (play 0 :urchin)
+                 (choose [:copper])
+                 (play 0 :urchin)
+                 (choose nil))
+             {:extra-cards [{:card mercenary :pile-size 10}]
+              :players     [{:hand      [copper]
+                             :play-area [urchin urchin-2]
+                             :actions   1}
+                            {:hand    [copper copper copper copper]
+                             :discard [copper]}]}))
+      (is (= (-> {:extra-cards [{:card mercenary :pile-size 10}]
+                  :players     [{:hand    [urchin]
+                                 :deck    [urchin-2 copper]
+                                 :actions 1}]}
+                 (play 0 :urchin)
+                 (play 0 :urchin)
+                 (choose :urchin))
+             {:extra-cards [{:card mercenary :pile-size 9}]
+              :players     [{:hand      [copper]
+                             :play-area [urchin-2]
+                             :discard   [mercenary]
+                             :actions   1}]
+              :trash       [urchin]}))
+      (is (= (-> {:extra-cards [{:card mercenary :pile-size 10}]
+                  :players     [{:hand    [throne-room urchin]
+                                 :deck    [copper copper]
+                                 :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :urchin))
+             {:extra-cards [{:card mercenary :pile-size 10}]
+              :players     [{:hand      [copper copper]
+                             :play-area [throne-room urchin]
+                             :actions   2}]}))))
+  (testing "setup"
+    (is (= (-> {:supply [{:card urchin :pile-size 10}]}
+               setup-game)
+           {:extra-cards [{:card mercenary :pile-size 10}]
+            :supply      [{:card urchin :pile-size 10}]}))))
+
+(deftest mercenary-test
+  (let [mercenary (assoc mercenary :id 0)]
+    (testing "mercenary"
+      (is (= (-> {:players [{:hand    [mercenary estate estate]
+                             :deck    [silver silver copper]
+                             :actions 1
+                             :coins   0}
+                            {:hand [copper copper copper copper copper]}]}
+                 (play 0 :mercenary)
+                 (choose [:estate :estate])
+                 (choose [:copper :copper]))
+             {:players [{:hand      [silver silver]
+                         :play-area [mercenary]
+                         :deck      [copper]
+                         :actions   0
+                         :coins     2}
+                        {:hand    [copper copper copper]
+                         :discard [copper copper]}]
+              :trash   [estate estate]}))
+      (is (thrown-with-msg? AssertionError #"Choose error"
+                            (-> {:players [{:hand    [mercenary estate gold]
+                                            :deck    [silver silver copper]
+                                            :actions 1
+                                            :coins   0}
+                                           {:hand [copper copper copper copper copper]}]}
+                                (play 0 :mercenary)
+                                (choose :estate))))
+      (is (thrown-with-msg? AssertionError #"Choose error"
+                            (-> {:players [{:hand    [mercenary estate estate copper]
+                                            :deck    [silver silver copper]
+                                            :actions 1
+                                            :coins   0}
+                                           {:hand [copper copper copper copper copper]}]}
+                                (play 0 :mercenary)
+                                (choose [:estate :estate :copper]))))
+      (is (= (-> {:players [{:hand    [mercenary estate]
+                             :deck    [silver silver copper]
+                             :actions 1
+                             :coins   0}
+                            {:hand [copper copper copper copper copper]}]}
+                 (play 0 :mercenary)
+                 (choose :estate))
+             {:players [{:play-area [mercenary]
+                         :deck      [silver silver copper]
+                         :actions   0
+                         :coins     0}
+                        {:hand [copper copper copper copper copper]}]
+              :trash   [estate]}))
+      (is (= (-> {:players [{:hand    [mercenary gold]
+                             :deck    [silver silver copper]
+                             :actions 1
+                             :coins   0}
+                            {:hand [copper copper copper copper copper]}]}
+                 (play 0 :mercenary)
+                 (choose nil))
+             {:players [{:hand      [gold]
+                         :play-area [mercenary]
+                         :deck      [silver silver copper]
+                         :actions   0
+                         :coins     0}
+                        {:hand [copper copper copper copper copper]}]}))
+      (is (= (-> {:players [{:hand    [mercenary]
+                             :deck    [silver silver copper]
+                             :actions 1
+                             :coins   0}
+                            {:hand [copper copper copper copper copper]}]}
+                 (play 0 :mercenary))
+             {:players [{:play-area [mercenary]
+                         :deck      [silver silver copper]
+                         :actions   0
+                         :coins     0}
+                        {:hand [copper copper copper copper copper]}]})))))
+
 (deftest vagrant-test
   (let [vagrant (assoc vagrant :id 0)]
     (testing "Vagrant"
@@ -1717,14 +1851,14 @@
                          :play-area      [vagrant]
                          :revealed-cards {:hand 1}
                          :actions        1}]}))
-      #_(is (= (-> {:players [{:hand    [vagrant]
-                               :deck    [copper ruined-market]
-                               :actions 1}]}
-                   (play 0 :vagrant))
-               {:players [{:hand           [copper ruined-market]
-                           :play-area      [vagrant]
-                           :revealed-cards {:hand 1}
-                           :actions        1}]}))
+      (is (= (-> {:players [{:hand    [vagrant]
+                             :deck    [copper ruined-market]
+                             :actions 1}]}
+                 (play 0 :vagrant))
+             {:players [{:hand           [copper ruined-market]
+                         :play-area      [vagrant]
+                         :revealed-cards {:hand 1}
+                         :actions        1}]}))
       (is (= (-> {:players [{:hand    [vagrant]
                              :deck    [copper necropolis]
                              :actions 1}]}

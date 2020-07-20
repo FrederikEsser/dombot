@@ -929,13 +929,18 @@
 
 (defn card-effect [{:keys [current-player track-played-actions?] :as game} {:keys [player-no card]}]
   (let [{:keys [id name effects coin-value trigger]} card
-        types                (ut/get-types game card)
+        types                 (ut/get-types game card)
         {:keys [actions-played triggers]} (get-in game [:players player-no])
-        first-action-played? (and (= current-player player-no)
-                                  (:action types)
-                                  (empty? actions-played))
-        special-card-effects (when first-action-played?
-                               (get-play-triggers :instead-of-first-action card triggers))]
+        while-in-play-effects (when (:attack types)
+                                (->> (get-in game [:players player-no :play-area])
+                                     (remove (comp #{id} :id))
+                                     (mapcat (comp :play-attack :while-in-play))
+                                     #_(map (partial ut/add-effect-args {:attack-card-id id}))))
+        first-action-played?  (and (= current-player player-no)
+                                   (:action types)
+                                   (empty? actions-played))
+        special-card-effects  (when first-action-played?
+                                (get-play-triggers :instead-of-first-action card triggers))]
     (cond-> game
             (and (:action types)
                  track-played-actions?) (update-in [:players player-no :actions-played] concat [id])
@@ -943,7 +948,8 @@
                                                    :effects   [[:clear-unaffected {:works :once}]]})
             :always (push-effect-stack {:player-no player-no
                                         :card-id   id
-                                        :effects   (concat (or special-card-effects
+                                        :effects   (concat while-in-play-effects
+                                                           (or special-card-effects
                                                                (concat (when coin-value
                                                                          [[:give-coins coin-value]])
                                                                        effects))
