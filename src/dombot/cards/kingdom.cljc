@@ -125,8 +125,9 @@
         kingdom           (random-kingdom sets #{})
         landscape         (->> kingdom
                                (take 10)
-                               (drop 2)
-                               (split-at 4)
+                               (drop 4)
+                               (split-at 3)
+                               (take 2)
                                (keep (fn [cards]
                                        (->> cards
                                             (keep (comp #{:adventures :empires :renaissance :menagerie} :set))

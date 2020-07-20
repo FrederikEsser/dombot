@@ -8,8 +8,9 @@
             [dombot.cards.dominion :refer [militia]]
             [dombot.cards.intrigue :refer [harem lurker]]
             [dombot.cards.adventures :refer [warrior]]
-            [dombot.cards.kingdom :refer [setup-game]]
+            [dombot.cards.empires :refer [engineer fortune]]
             [dombot.cards.menagerie :refer [village-green]]
+            [dombot.cards.kingdom :refer [setup-game]]
             [dombot.utils :as ut]))
 
 (defn fixture [f]
@@ -1221,6 +1222,55 @@
                (play 0 :survivors))
            {:players [{:play-area [survivors]
                        :actions   0}]}))))
+
+(deftest sage-test
+  (let [sage (assoc sage :id 0)]
+    (testing "Sage"
+      (is (= (-> {:players [{:hand    [sage]
+                             :deck    [sage copper]
+                             :actions 1}]}
+                 (play 0 :sage))
+             {:players [{:hand           [sage]
+                         :play-area      [sage]
+                         :deck           [copper]
+                         :revealed-cards {:hand 1}
+                         :actions        1}]}))
+      (is (= (-> {:players [{:hand    [sage]
+                             :deck    [estate fortune copper]
+                             :actions 1}]}
+                 (play 0 :sage))
+             {:players [{:hand           [fortune]
+                         :play-area      [sage]
+                         :deck           [copper]
+                         :discard        [estate]
+                         :revealed-cards {:hand    1
+                                          :discard 1}
+                         :actions        1}]}))
+      (is (= (-> {:players [{:hand    [sage]
+                             :deck    [estate engineer]
+                             :discard [sage]
+                             :actions 1}]}
+                 (play 0 :sage))
+             {:players [{:hand           [sage]
+                         :play-area      [sage]
+                         :discard        [estate engineer]
+                         :revealed-cards {:hand    1
+                                          :discard 2}
+                         :actions        1}]}))
+      (is (= (-> {:players [{:hand    [sage]
+                             :deck    [estate estate]
+                             :discard [copper copper]
+                             :actions 1}]}
+                 (play 0 :sage))
+             {:players [{:play-area      [sage]
+                         :discard        [estate estate copper copper]
+                         :revealed-cards {:discard 4}
+                         :actions        1}]}))
+      (is (= (-> {:players [{:hand    [sage]
+                             :actions 1}]}
+                 (play 0 :sage))
+             {:players [{:play-area [sage]
+                         :actions   1}]})))))
 
 (deftest scavenger-test
   (let [scavenger (assoc scavenger :id 0)]

@@ -656,6 +656,27 @@
             :effects [[:give-coins 2]
                       [::rogue-gain-or-attack]]})
 
+(defn- sage-reveal [game {:keys [player-no]}]
+  (let [{:keys [revealed deck discard]} (get-in game [:players player-no])
+        {:keys [name] :as card} (last revealed)
+        cost (ut/get-cost game card)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (cond
+                                          (ut/costs-at-least 3 cost) [[:take-from-revealed {:card-name name}]]
+                                          (not-empty (concat deck discard)) [[:reveal-from-deck 1]
+                                                                             [::sage-reveal]])})))
+
+(effects/register {::sage-reveal sage-reveal})
+
+(def sage {:name    :sage
+           :set     :dark-ages
+           :types   #{:action}
+           :cost    3
+           :effects [[:give-actions 1]
+                     [:reveal-from-deck 1]
+                     [::sage-reveal]
+                     [:discard-all-revealed]]})
+
 (defn- scavenger-discard [game {:keys [player-no choice]}]
   (cond-> game
           (= :yes choice) (push-effect-stack {:player-no player-no
@@ -789,6 +810,7 @@
                     poor-house
                     rats
                     rogue
+                    sage
                     scavenger
                     squire
                     storeroom
