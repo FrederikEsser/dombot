@@ -931,6 +931,49 @@
                                           {}]})]
           (is (ut/get-pile-idx game :supply :ruins #{:include-empty-split-piles})))))))
 
+(deftest market-square-test
+  (let [market-square (assoc market-square :id 0)
+        gold          (assoc gold :id 1)]
+    (testing "Market Square"
+      (is (= (-> {:players [{:hand    [market-square]
+                             :deck    [copper copper]
+                             :actions 1
+                             :buys    1}]}
+                 (play 0 :market-square))
+             {:players [{:hand      [copper]
+                         :play-area [market-square]
+                         :deck      [copper]
+                         :actions   1
+                         :buys      2}]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [market-square junk-dealer]
+                             :deck    [estate]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :junk-dealer)
+                 (choose :estate)                           ; trash estate
+                 (choose :market-square))                   ; discard market-square for gold
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:play-area [junk-dealer]
+                         :discard   [market-square gold]
+                         :actions   1
+                         :coins     1}]
+              :trash   [estate]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [market-square junk-dealer]
+                             :deck    [estate]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :junk-dealer)
+                 (choose :estate)                           ; trash estate
+                 (choose nil))                              ; don't discard market-square for gold
+             {:supply  [{:card gold :pile-size 30}]
+              :players [{:hand      [market-square]
+                         :play-area [junk-dealer]
+                         :actions   1
+                         :coins     1}]
+              :trash   [estate]})))))
+
 (deftest pillage-test
   (let [pillage (assoc pillage :id 0)]
     (testing "Pillage"

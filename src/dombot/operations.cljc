@@ -657,7 +657,10 @@
                                (filter (comp #{:on-trash} :event))
                                (mapcat :effects)
                                (map (partial ut/add-effect-args args)))
-        on-trash-effects  (concat on-trash-triggers on-trash)]
+        reaction-effects  (->> (get-in game [:players player-no :hand])
+                               (mapcat (comp :on-trash :reaction))
+                               (map (partial ut/add-effect-args args)))
+        on-trash-effects  (concat on-trash-triggers reaction-effects on-trash)]
     (cond-> game
             (not-empty on-trash-effects) (push-effect-stack (merge args {:effects on-trash-effects})))))
 

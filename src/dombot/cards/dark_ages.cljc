@@ -555,6 +555,26 @@
                :setup   [[:setup-extra-cards {:extra-cards [{:card spoils :pile-size 15}]}]
                          [::setup-ruins]]})
 
+(defn- market-square-discard [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:discard-from-hand {:card-name :market-square}]
+                                                    [:gain {:card-name :gold}]]})))
+
+(effects/register {::market-square-discard market-square-discard})
+
+(def market-square {:name     :market-square
+                    :set      :dark-ages
+                    :types    #{:action :reaction}
+                    :cost     3
+                    :effects  [[:draw 1]
+                               [:give-actions 1]
+                               [:give-buys 1]]
+                    :reaction {:on-trash [[:give-choice {:text    "You may discard a Market Square to gain a Gold."
+                                                         :choice  ::market-square-discard
+                                                         :options [:player :hand {:name :market-square}]
+                                                         :max     1}]]}})
+
 (defn pillage-attack [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])]
     (cond-> game
@@ -806,6 +826,7 @@
                     junk-dealer
                     knights
                     marauder
+                    market-square
                     pillage
                     poor-house
                     rats
