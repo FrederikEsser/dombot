@@ -641,6 +641,172 @@
                            :play-area [lurker]
                            :actions   1}]}))))))
 
+(deftest hermit-test
+  (let [hermit (assoc hermit :id 0)
+        madman (assoc madman :id 1)
+        silver (assoc silver :id 2)]
+    (testing "Hermit"
+      (is (= (-> {:supply  [{:card hermit :pile-size 9}]
+                  :players [{:hand    [hermit copper hovel]
+                             :discard [copper estate copper]
+                             :actions 1}]}
+                 (play 0 :hermit)
+                 (choose {:area :hand :card-name :hovel})
+                 (choose :hermit))
+             {:supply  [{:card hermit :pile-size 8}]
+              :players [{:hand      [copper]
+                         :play-area [hermit]
+                         :discard   [copper estate copper hermit]
+                         :actions   0}]
+              :trash   [hovel]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 30}]
+                  :players [{:hand    [hermit copper hovel]
+                             :discard [copper estate copper]
+                             :actions 1}]}
+                 (play 0 :hermit)
+                 (choose {:area :discard :card-name :estate})
+                 (choose :silver))
+             {:supply  [{:card silver :pile-size 29}]
+              :players [{:hand      [copper hovel]
+                         :play-area [hermit]
+                         :discard   [copper copper silver]
+                         :actions   0}]
+              :trash   [estate]}))
+      (is (= (-> {:supply  [{:card armory :pile-size 10}]
+                  :players [{:hand    [hermit copper hovel]
+                             :discard [copper estate copper]
+                             :actions 1}]}
+                 (play 0 :hermit)
+                 (choose nil))                              ; trash nothing
+             {:supply  [{:card armory :pile-size 10}]
+              :players [{:hand           [copper hovel]
+                         :play-area      [hermit]
+                         :discard        [copper estate copper]
+                         :revealed-cards {:discard 3}
+                         :actions        0}]}))
+      (is (= (-> {:players [{:hand    [hermit copper]
+                             :discard [copper silver]
+                             :actions 1}]}
+                 (play 0 :hermit))
+             {:players [{:hand           [copper]
+                         :play-area      [hermit]
+                         :discard        [copper silver]
+                         :revealed-cards {:discard 2}
+                         :actions        0}]}))
+      (is (= (-> {:supply  [{:card hermit :pile-size 1}]
+                  :players [{:hand    [throne-room hermit hovel estate]
+                             :discard [copper estate copper]
+                             :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :hermit)
+                 (choose {:area :hand :card-name :hovel})
+                 (choose :hermit)
+                 (choose {:area :hand :card-name :estate}))
+             {:supply  [{:card hermit :pile-size 0}]
+              :players [{:play-area      [throne-room hermit]
+                         :discard        [copper estate copper hermit]
+                         :revealed-cards {:discard 4}
+                         :actions        0}]
+              :trash   [hovel estate]}))
+      (is (= (-> {:track-gained-cards? true
+                  :extra-cards         [{:card madman :pile-size 10}]
+                  :supply              [{:card hermit :pile-size 9}]
+                  :players             [{:hand    [hermit]
+                                         :actions 1
+                                         :coins   3
+                                         :buys    1
+                                         :phase   :action}]}
+                 (play 0 :hermit)
+                 (choose :hermit)
+                 (buy-card 0 :hermit)
+                 (clean-up {:player-no 0}))
+             {:track-gained-cards? true
+              :extra-cards         [{:card madman :pile-size 10}]
+              :supply              [{:card hermit :pile-size 7}]
+              :players             [{:hand         [hermit hermit hermit]
+                                     :gained-cards [{:name  :hermit
+                                                     :types #{:action}
+                                                     :cost  3}
+                                                    {:name   :hermit
+                                                     :types  #{:action}
+                                                     :cost   3
+                                                     :bought true}]
+
+                                     :actions      0
+                                     :coins        0
+                                     :buys         0
+                                     :phase        :out-of-turn}]}))
+      (is (= (-> {:track-gained-cards? true
+                  :extra-cards         [{:card madman :pile-size 10}]
+                  :supply              [{:card hermit :pile-size 9}]
+                  :players             [{:hand    [hermit]
+                                         :actions 1
+                                         :phase   :action}]}
+                 (play 0 :hermit)
+                 (choose :hermit)
+                 (clean-up {:player-no 0}))
+             {:track-gained-cards? true
+              :extra-cards         [{:card madman :pile-size 9}]
+              :supply              [{:card hermit :pile-size 8}]
+              :players             [{:hand         [madman hermit]
+                                     :gained-cards [{:name  :hermit
+                                                     :types #{:action}
+                                                     :cost  3}
+                                                    {:name  :madman
+                                                     :types #{:action}
+                                                     :cost  0}]
+                                     :actions      0
+                                     :coins        0
+                                     :buys         0
+                                     :phase        :out-of-turn}]
+              :trash               [hermit]}))))
+  (testing "setup"
+    (is (= (-> {:supply [{:card hermit :pile-size 10}]}
+               setup-game)
+           {:extra-cards [{:card madman :pile-size 10}]
+            :supply      [{:card hermit :pile-size 10}]}))))
+
+(deftest madman-test
+  (let [madman (assoc madman :id 0)]
+    (testing "Madman"
+      (is (= (-> {:extra-cards [{:card madman :pile-size 9}]
+                  :players     [{:hand    [madman copper copper copper copper]
+                                 :deck    [silver silver silver silver silver]
+                                 :actions 1}]}
+                 (play 0 :madman))
+             {:extra-cards [{:card madman :pile-size 10}]
+              :players     [{:hand    [copper copper copper copper silver silver silver silver]
+                             :deck    [silver]
+                             :actions 2}]}))
+      (is (= (-> {:extra-cards [{:card madman :pile-size 9}]
+                  :players     [{:hand    [madman copper]
+                                 :deck    [silver silver]
+                                 :actions 1}]}
+                 (play 0 :madman))
+             {:extra-cards [{:card madman :pile-size 10}]
+              :players     [{:hand    [copper silver]
+                             :deck    [silver]
+                             :actions 2}]}))
+      (is (= (-> {:extra-cards [{:card madman :pile-size 9}]
+                  :players     [{:hand    [madman]
+                                 :deck    [silver silver]
+                                 :actions 1}]}
+                 (play 0 :madman))
+             {:extra-cards [{:card madman :pile-size 10}]
+              :players     [{:deck    [silver silver]
+                             :actions 2}]}))
+      (is (= (-> {:extra-cards [{:card madman :pile-size 9}]
+                  :players     [{:hand    [throne-room madman copper copper copper]
+                                 :deck    [silver silver silver estate estate estate]
+                                 :actions 1}]}
+                 (play 0 :throne-room)
+                 (choose :madman))
+             {:extra-cards [{:card madman :pile-size 10}]
+              :players     [{:hand      [copper copper copper silver silver silver]
+                             :play-area [throne-room]
+                             :deck      [estate estate estate]
+                             :actions   4}]})))))
+
 (deftest hunting-grounds-test
   (let [hunting-grounds (assoc hunting-grounds :id 0)
         estate          (assoc estate :id 1)

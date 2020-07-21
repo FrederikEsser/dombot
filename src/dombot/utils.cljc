@@ -342,7 +342,7 @@
     (merge-with + card-cost added-cost)))
 
 (defn options-from-player
-  ([game player-no card-id area & [{:keys [last this id ids name names not-names type types reacts-to min-cost max-cost leaves-play]}]]
+  ([game player-no card-id area & [{:keys [last this id ids name names not-names type types not-type reacts-to min-cost max-cost leaves-play]}]]
    (cond->> (get-in game [:players player-no area])
             last (take-last 1)                              ; it's important that 'last' is evaluated first
             this (filter (comp #{card-id} :id))
@@ -352,6 +352,7 @@
             not-names (remove (comp not-names :name))
             type (filter (comp type (partial get-types game)))
             types (filter (partial types-match game types))
+            not-type (remove (comp not-type (partial get-types game)))
             reacts-to (filter (every-pred (comp #{reacts-to} :reacts-to)
                                           (partial can-react? game player-no)))
             min-cost (filter (comp (partial costs-at-least min-cost) (partial get-cost game)))
@@ -434,13 +435,17 @@
 
 (effects/register-options {:special special-options})
 
-(defn get-source [[name arg & [{:keys [id last]}]]]
-  (if (= :player name)
-    (merge {:source arg}
-           (when (and (= :discard arg)
-                      (not (or id last)))
-             {:reveal-discard? true}))
-    {:source name}))
+(defn get-source [[name & args]]
+  (cond
+    (= :player name) (let [[arg & [{:keys [id last]}]] args]
+                       (merge {:source arg}
+                              (when (and (= :discard arg)
+                                         (not (or id last)))
+                                {:reveal-discard? true})))
+    (= :mixed name) (merge {:source :mixed}
+                           (when (some (comp #{[:player :discard]} (partial take 2)) args)
+                             {:reveal-discard? true}))
+    :else {:source name}))
 
 (defn mixed-options [game player-no card-id & options]
   (->> options

@@ -372,6 +372,61 @@
                           [:give-actions 2]]
                :on-trash [[::fortress-trashed]]})
 
+(defn- madman-return [game {:keys [player-no card-id]}]
+  (let [madman-in-play (ut/get-card-idx game [:players player-no :play-area] {:id card-id})
+        cards-in-hand  (->> (get-in game [:players player-no :hand])
+                            count)]
+    (cond-> game
+            madman-in-play (push-effect-stack {:player-no player-no
+                                               :effects   [[:return-this-to-supply {:card-id card-id
+                                                                                    :area    :extra-cards}]
+                                                           [:draw cards-in-hand]]}))))
+
+(effects/register {::madman-return madman-return})
+
+(def madman {:name    :madman
+             :set     :dark-ages
+             :types   #{:action}
+             :cost    0
+             :effects [[:give-actions 2]
+                       [::madman-return]]})
+
+(defn- hermit-trash [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:trash-from-play-area {:card-name :hermit}]
+                                                    [:gain {:card-name :madman
+                                                            :from      :extra-cards}]]})))
+
+(defn bought-no-cards? [game player-no]
+  (->> (get-in game [:players player-no :gained-cards])
+       (filter :bought)
+       empty?))
+
+(effects/register {::hermit-trash     hermit-trash
+                   ::bought-no-cards? bought-no-cards?})
+
+(def hermit {:name              :hermit
+             :set               :dark-ages
+             :types             #{:action}
+             :cost              3
+             :effects           [[:give-choice {:text    "You may trash a non-Treasure card from your discard pile or hand."
+                                                :choice  :trash-from-area
+                                                :options [:mixed
+                                                          [:player :hand {:not-type :treasure}]
+                                                          [:player :discard {:not-type :treasure}]]
+                                                :max     1}]
+                                 [:give-choice {:text    "Gain a card costing up to $3."
+                                                :choice  :gain
+                                                :options [:supply {:max-cost 3}]
+                                                :min     1
+                                                :max     1}]]
+             :trigger-condition ::bought-no-cards?
+             :trigger-mode      :auto
+             :at-clean-up       [[:trash-this]
+                                 [:gain {:card-name :madman :from :extra-cards}]]
+             :setup             [[:setup-extra-cards {:extra-cards [{:card madman :pile-size 10}]}]]})
+
 (defn- hunting-grounds-choice [game {:keys [player-no choice]}]
   (push-effect-stack game {:player-no player-no
                            :effects   (case choice
@@ -879,6 +934,7 @@
                     feodum
                     forager
                     fortress
+                    hermit
                     hunting-grounds
                     ironmonger
                     junk-dealer
