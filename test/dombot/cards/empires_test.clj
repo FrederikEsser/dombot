@@ -1545,7 +1545,7 @@
                  (clean-up {:player-no 0}))
              {:supply  [{:split-pile [{:card encampment :pile-size 1}
                                       {:card plunder :pile-size 3}]}]
-              :players [{:hand    [plunder copper copper plunder]
+              :players [{:hand    [plunder plunder copper copper]
                          :actions 0
                          :coins   0
                          :buys    0
@@ -2876,7 +2876,7 @@
                  (choose (repeat 5 :estate)))
              {:events  {:annex annex}
               :supply  [{:card duchy :pile-size 7}]
-              :players [{:deck    [silver estate silver copper gold gold copper]
+              :players [{:deck    [estate silver copper copper silver gold gold]
                          :discard (concat (repeat 5 estate) [duchy])
                          :coins   0
                          :debt    8

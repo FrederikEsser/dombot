@@ -49,7 +49,7 @@
                       :card-name :province}))
            {:supply  [{:card {:name :province} :pile-size 7}]
             :players [{:discard             [{:name :copper} {:name :copper} {:name :province :id 3}]
-                       :approx-discard-size 3}]}))))
+                       :approx-discard-size 2}]}))))
 
 (deftest buy-test
   (testing "Buying a card"

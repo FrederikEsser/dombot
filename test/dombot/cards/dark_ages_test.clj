@@ -895,8 +895,9 @@
               :players [{:hand    [silver]
                          :deck    [silver]
                          :actions 1}
-                        {:deck    [copper]
-                         :discard [gold gold]}]
+                        {:deck           [copper]
+                         :discard        [gold gold]
+                         :revealed-cards {:discard 1}}]
               :trash   [sir-bailey sir-vander]}))
       (is (= (-> {:players [{:hand    [sir-michael]
                              :actions 1}

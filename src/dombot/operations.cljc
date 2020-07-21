@@ -430,12 +430,11 @@
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
         to (or to (:gain-to card) :discard)]
     (cond-> game
-            card (-> (move-card {:player-no    player-no
-                                 :move-card-id gained-card-id
-                                 :from         :gaining
-                                 :to           to
-                                 :to-position  to-position})
-                     (state-maintenance player-no :gaining to)))))
+            card (move-card {:player-no    player-no
+                             :move-card-id gained-card-id
+                             :from         :gaining
+                             :to           to
+                             :to-position  to-position}))))
 
 (defn gain [game {:keys [player-no card-name from to]
                   :or   {from :supply

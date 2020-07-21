@@ -518,12 +518,12 @@
                                 :phase   :action}]})))
     (testing "Famine"
       (is (= (-> {:hexes   {:deck [famine]}
-                  :players [{:deck [estate copper copper copper]}]}
+                  :players [{:deck [copper estate copper copper]}]}
                  (receive-hex {:player-no 0}))
              {:hexes   {:discard [famine]}
               :players [{:deck [copper copper copper estate]}]}))
       (is (= (-> {:hexes   {:deck [famine]}
-                  :players [{:deck [estate skulk copper copper]}]}
+                  :players [{:deck [estate copper skulk copper]}]}
                  (receive-hex {:player-no 0}))
              {:hexes   {:discard [famine]}
               :players [{:deck           [estate copper copper]
@@ -533,7 +533,7 @@
                   :players [{:deck [skulk skulk monastery skulk]}]}
                  (receive-hex {:player-no 0}))
              {:hexes   {:discard [famine]}
-              :players [{:deck           [skulk monastery]
+              :players [{:deck           [monastery skulk]
                          :discard        [skulk skulk]
                          :revealed-cards {:discard 2}}]}))
       (is (= (-> {:hexes   {:deck [famine]}
@@ -2060,6 +2060,38 @@
                                         :event    :at-clean-up
                                         :duration :once
                                         :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]}))
+      (ut/reset-ids!)
+      (let [silver (assoc silver :id 2)]
+        (is (= (-> {:mode      :swift,
+                    :boons     {:deck [field-gift mountain-gift moon-gift]}
+                    :artifacts {:lost-in-the-woods lost-in-the-woods}
+                    :supply    [{:card silver :pile-size 40}]
+                    :players   [{:hand    [fool]
+                                 :discard [gold estate]
+                                 ;:approx-discard-size 2
+                                 :actions 1
+                                 :coins   0}]}
+                   (play 0 :fool)
+                   (choose :the-field's-gift)
+                   (choose :the-mountain's-gift)
+                   (choose nil))                            ; topdeck nothing
+               {:mode      :swift,
+                :boons     {:discard [mountain-gift moon-gift]}
+                :artifacts {:lost-in-the-woods (assoc lost-in-the-woods :owner 0)}
+                :supply    [{:card silver :pile-size 39}]
+                :players   [{:play-area      [fool]
+                             :discard        [gold estate silver]
+                             :revealed-cards {:discard 3}
+                             :actions        1
+                             :coins          1
+                             :boons          [field-gift]
+                             :triggers       [(merge (get-trigger lost-in-the-woods)
+                                                     {:duration :lost-in-the-woods})
+                                              {:id       2
+                                               :name     :the-field's-gift
+                                               :event    :at-clean-up
+                                               :duration :once
+                                               :effects  [[:return-boon {:boon-name :the-field's-gift}]]}]}]})))
       (testing "Lost in the Woods"
         (is (= (-> {:boons   {:deck [sea-gift]}
                     :players [{:deck     (repeat 7 copper)

@@ -35,7 +35,6 @@
 ; unit tests for affect-other-players, give-choice, choose, calc-victory-points, ...
 
 ; Front End:
-; fix Fool choosing Moon's Gift last (after Earth's or Mountain's)
 ; show Actions as unbuyable when Deluded (and in action phase)
 ; make extra-cards (Prizes, Spirits, etc.) and unique cards (Zombies & Heirlooms) visible/choosable for Wishing Well / Doctor / Journeyman / Pursue
 ; hide revealed cards on any movement (Border Guard)
