@@ -641,6 +641,81 @@
                            :play-area [lurker]
                            :actions   1}]}))))))
 
+(deftest graverobber-test
+  (let [graverobber (assoc graverobber :id 0)
+        silver      (assoc silver :id 1)
+        gold        (assoc gold :id 2)
+        province    (assoc province :id 3)]
+    (testing "Graverobber"
+      (is (= (-> {:players [{:hand    [graverobber]
+                             :actions 1}]
+                  :trash   [silver]}
+                 (play 0 :graverobber)
+                 (choose :gain)
+                 (choose :silver))
+             {:players [{:play-area [graverobber]
+                         :deck      [silver]
+                         :actions   0}]}))
+      (is (= (-> {:players [{:hand    [graverobber]
+                             :actions 1}]
+                  :trash   [gold]}
+                 (play 0 :graverobber)
+                 (choose :gain)
+                 (choose :gold))
+             {:players [{:play-area [graverobber]
+                         :deck      [gold]
+                         :actions   0}]}))
+      (is (= (-> {:players [{:hand    [graverobber]
+                             :actions 1}]
+                  :trash   [estate copper province]}
+                 (play 0 :graverobber)
+                 (choose :gain))
+             {:players [{:play-area [graverobber]
+                         :actions   0}]
+              :trash   [estate copper province]}))
+      (is (= (-> {:supply  [{:card gold :pile-size 30}]
+                  :players [{:hand    [graverobber armory]
+                             :actions 1}]}
+                 (play 0 :graverobber)
+                 (choose :upgrade)
+                 (choose :armory)
+                 (choose :gold))
+             {:supply  [{:card gold :pile-size 29}]
+              :players [{:play-area [graverobber]
+                         :discard   [gold]
+                         :actions   0}]
+              :trash   [armory]}))
+      (is (thrown-with-msg? AssertionError #"Choose error"
+                            (-> {:supply  [{:card gold :pile-size 30}
+                                           {:card province :pile-size 8}]
+                                 :players [{:hand    [graverobber armory]
+                                            :actions 1}]}
+                                (play 0 :graverobber)
+                                (choose :upgrade)
+                                (choose :armory)
+                                (choose :province))))
+      (is (= (-> {:supply  [{:card province :pile-size 8}]
+                  :players [{:hand    [graverobber graverobber]
+                             :actions 1}]}
+                 (play 0 :graverobber)
+                 (choose :upgrade)
+                 (choose :graverobber)
+                 (choose :province))
+             {:supply  [{:card province :pile-size 7}]
+              :players [{:play-area [graverobber]
+                         :discard   [province]
+                         :actions   0}]
+              :trash   [graverobber]}))
+      (is (= (-> {:supply  [{:card province :pile-size 8}]
+                  :players [{:hand    [graverobber curse copper estate duchy gold]
+                             :actions 1}]}
+                 (play 0 :graverobber)
+                 (choose :upgrade))
+             {:supply  [{:card province :pile-size 8}]
+              :players [{:hand      [curse copper estate duchy gold]
+                         :play-area [graverobber]
+                         :actions   0}]})))))
+
 (deftest hermit-test
   (let [hermit (assoc hermit :id 0)
         madman (assoc madman :id 1)

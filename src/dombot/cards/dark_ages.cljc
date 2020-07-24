@@ -372,6 +372,37 @@
                           [:give-actions 2]]
                :on-trash [[::fortress-trashed]]})
 
+(defn- graverobber-choice [game {:keys [player-no choice]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (case choice
+                                        :gain [[:give-choice {:text    "Gain a card from the trash costing from $3 to $6, onto your deck."
+                                                              :choice  [:gain-from-trash {:to          :deck
+                                                                                          :to-position :top}]
+                                                              :options [:trash {:min-cost 3
+                                                                                :max-cost 6}]
+                                                              :min     1
+                                                              :max     1}]]
+                                        :upgrade [[:give-choice {:text    "Trash an Action card from your hand and gain a card costing up to $3 more than it."
+                                                                 :choice  [:trash-and-gain {:extra-cost 3}]
+                                                                 :options [:player :hand {:type :action}]
+                                                                 :min     1
+                                                                 :max     1}]])}))
+
+(effects/register {::graverobber-choice graverobber-choice})
+
+(def graverobber {:name    :graverobber
+                  :set     :dark-ages
+                  :types   #{:action}
+                  :cost    5
+                  :effects [[:give-choice {:text    (str "Choose one: Gain a card from the trash costing from $3 to $6, onto your deck; "
+                                                         "or trash an Action card from your hand and gain a card costing up to $3 more than it.")
+                                           :choice  ::graverobber-choice
+                                           :options [:special
+                                                     {:option :gain :text "Gain from Trash"}
+                                                     {:option :upgrade :text "Trash an Action"}]
+                                           :min     1
+                                           :max     1}]]})
+
 (defn- madman-return [game {:keys [player-no card-id]}]
   (let [madman-in-play (ut/get-card-idx game [:players player-no :play-area] {:id card-id})
         cards-in-hand  (->> (get-in game [:players player-no :hand])
@@ -934,6 +965,7 @@
                     feodum
                     forager
                     fortress
+                    graverobber
                     hermit
                     hunting-grounds
                     ironmonger
