@@ -78,15 +78,16 @@
                       :from       :revealed
                       :to         :trash})))
 
-(defn- doctor-reveal [game {:keys [player-no card-name]}]
-  (push-effect-stack game {:player-no player-no
-                           :effects   [[:reveal-from-deck 3]
-                                       [::doctor-trash {:card-name card-name}]
-                                       [:give-choice {:text    "Put the revealed cards back onto your deck in any order."
-                                                      :choice  :topdeck-from-revealed
-                                                      :options [:player :revealed]
-                                                      :min     3
-                                                      :max     3}]]}))
+(defn- doctor-reveal [game {:keys [player-no choice]}]
+  (let [{:keys [card-name]} choice]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:reveal-from-deck 3]
+                                         [::doctor-trash {:card-name card-name}]
+                                         [:give-choice {:text    "Put the revealed cards back onto your deck in any order."
+                                                        :choice  :topdeck-from-revealed
+                                                        :options [:player :revealed]
+                                                        :min     3
+                                                        :max     3}]]})))
 
 (defn- doctor-choice [game {:keys [player-no choice]}]
   (let [[{:keys [name]}] (get-in game [:players player-no :look-at])]
@@ -128,7 +129,9 @@
              :cost    3
              :effects [[:give-choice {:text    "Name a card."
                                       :choice  ::doctor-reveal
-                                      :options [:supply {:all true}]
+                                      :options [:mixed
+                                                [:supply {:all true}]
+                                                [:extra-cards {:all true}]]
                                       :min     1
                                       :max     1}]]
              :overpay ::doctor-overpay})
@@ -162,8 +165,9 @@
                        [::herald-play-action]]
              :overpay ::herald-overpay})
 
-(defn journeyman-reveal [game {:keys [player-no card-name]}]
-  (let [{:keys [revealed deck discard]} (get-in game [:players player-no])
+(defn journeyman-reveal [game {:keys [player-no choice]}]
+  (let [{:keys [card-name]} choice
+        {:keys [revealed deck discard]} (get-in game [:players player-no])
         card-names (->> revealed
                         (map :name)
                         (remove #{card-name}))]
@@ -171,7 +175,7 @@
              (not-empty (concat deck discard)))
       (push-effect-stack game {:player-no player-no
                                :effects   [[:reveal-from-deck 1]
-                                           [::journeyman-reveal {:card-name card-name}]]})
+                                           [::journeyman-reveal {:choice choice}]]})
       (push-effect-stack game {:player-no player-no
                                :effects   [[:take-from-revealed {:card-names card-names}]
                                            [:discard-all-revealed]]}))))
@@ -184,7 +188,9 @@
                  :cost    5
                  :effects [[:give-choice {:text    "Name a card."
                                           :choice  ::journeyman-reveal
-                                          :options [:supply {:all true}]
+                                          :options [:mixed
+                                                    [:supply {:all true}]
+                                                    [:extra-cards {:all true}]]
                                           :min     1
                                           :max     1}]]})
 

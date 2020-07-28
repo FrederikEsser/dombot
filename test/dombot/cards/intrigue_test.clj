@@ -5,7 +5,8 @@
             [dombot.cards.base-cards :as base :refer :all]
             [dombot.cards.dominion :refer [moat throne-room]]
             [dombot.cards.common :refer :all]
-            [dombot.cards.intrigue :as intrigue :refer :all])
+            [dombot.cards.intrigue :as intrigue :refer :all]
+            [dombot.cards.nocturne :refer [will-o-wisp]])
   (:refer-clojure :exclude [replace]))
 
 (defn fixture [f]
@@ -1950,25 +1951,8 @@
                 :players [{:hand    [wishing-well]
                            :deck    [silver copper]
                            :actions 1}]}
-               (play 0 :wishing-well))
-           {:supply       (base/supply 2 8)
-            :players      [{:hand      [silver]
-                            :play-area [wishing-well]
-                            :deck      [copper]
-                            :actions   1}]
-            :effect-stack [{:text      "Name a card."
-                            :player-no 0
-                            :choice    ::intrigue/wishing-well-guess
-                            :source    :supply
-                            :options   [:curse :estate :duchy :province :copper :silver :gold]
-                            :min       1
-                            :max       1}]}))
-    (is (= (-> {:supply  (base/supply 2 8)
-                :players [{:hand    [wishing-well]
-                           :deck    [silver copper]
-                           :actions 1}]}
                (play 0 :wishing-well)
-               (choose :copper))
+               (choose {:area :supply :card-name :copper}))
            {:supply  (base/supply 2 8)
             :players [{:hand           [silver copper]
                        :play-area      [wishing-well]
@@ -1979,20 +1963,33 @@
                            :deck    [silver copper]
                            :actions 1}]}
                (play 0 :wishing-well)
-               (choose :gold))
+               (choose {:area :supply :card-name :gold}))
            {:supply  (base/supply 2 8)
             :players [{:hand           [silver]
                        :play-area      [wishing-well]
                        :deck           [copper]
                        :actions        1
                        :revealed-cards {:deck 1}}]}))
+    (is (= (-> {:extra-cards [{:card will-o-wisp :pile-size 12}]
+                :supply      (base/supply 2 8)
+                :players     [{:hand    [wishing-well]
+                               :deck    [silver will-o-wisp]
+                               :actions 1}]}
+               (play 0 :wishing-well)
+               (choose {:area :extra-cards :card-name :will-o'-wisp}))
+           {:extra-cards [{:card will-o-wisp :pile-size 12}]
+            :supply      (base/supply 2 8)
+            :players     [{:hand           [silver will-o-wisp]
+                           :play-area      [wishing-well]
+                           :actions        1
+                           :revealed-cards {:hand 1}}]}))
     (is (= (-> {:supply  (base/supply 2 8)
                 :players [{:hand    [wishing-well]
                            :deck    [silver]
                            :discard [silver copper]
                            :actions 1}]}
                (play 0 :wishing-well)
-               (choose :copper))
+               (choose {:area :supply :card-name :copper}))
            {:supply  (base/supply 2 8)
             :players [{:hand           [silver]
                        :play-area      [wishing-well]
@@ -2005,7 +2002,7 @@
                            :discard [silver copper]
                            :actions 1}]}
                (play 0 :wishing-well)
-               (choose :copper))
+               (choose {:area :supply :card-name :copper}))
            {:supply  (base/supply 2 8)
             :players [{:hand           [silver copper]
                        :play-area      [wishing-well]
@@ -2016,19 +2013,14 @@
                 :players [{:hand    [wishing-well]
                            :deck    [silver copper]
                            :actions 1}]}
-               (play 0 :wishing-well))
-           {:supply       [{:card wishing-well :pile-size 0}]
-            :players      [{:hand      [silver]
-                            :play-area [wishing-well]
-                            :deck      [copper]
-                            :actions   1}]
-            :effect-stack [{:text      "Name a card."
-                            :player-no 0
-                            :choice    ::intrigue/wishing-well-guess
-                            :source    :supply
-                            :options   [:wishing-well]
-                            :min       1
-                            :max       1}]})))
+               (play 0 :wishing-well)
+               (choose {:area :supply :card-name :wishing-well}))
+           {:supply  [{:card wishing-well :pile-size 0}]
+            :players [{:hand           [silver]
+                       :play-area      [wishing-well]
+                       :deck           [copper]
+                       :revealed-cards {:deck 1}
+                       :actions        1}]})))
   (is (= (-> {:supply  (base/supply 2 8)
               :players [{:hand    [wishing-well]
                          :deck    [silver]

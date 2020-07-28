@@ -567,8 +567,9 @@
                         [:give-actions 1]
                         [:upgrade-give-choice]]})
 
-(defn wishing-well-guess [game {:keys [player-no card-name]}]
-  (let [{[{:keys [name] :as card}] :deck
+(defn wishing-well-guess [game {:keys [player-no choice]}]
+  (let [{:keys [card-name]} choice
+        {[{:keys [name] :as card}] :deck
          discard                   :discard} (get-in game [:players player-no])]
     (assert (or name (empty? discard)) "Discard was not properly shuffled for Wishing Well.")
     (cond-> game
@@ -584,7 +585,9 @@
             card (give-choice {:player-no player-no
                                :text      "Name a card."
                                :choice    ::wishing-well-guess
-                               :options   [:supply {:all true}]
+                               :options   [:mixed
+                                           [:supply {:all true}]
+                                           [:extra-cards {:all true}]]
                                :min       1
                                :max       1}))))
 

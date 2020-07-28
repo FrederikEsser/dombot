@@ -466,18 +466,26 @@
                                                   [:gain {:card-name :estate}]
                                                   [:gain {:card-name :estate}]])}))
 
-(effects/register {::hunting-grounds-choice hunting-grounds-choice})
+(defn- hunting-grounds-gain [game {:keys [player-no card-name]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (case card-name
+                                        :duchy [[:gain {:card-name :duchy}]]
+                                        :estate (repeat 3 [:gain {:card-name :estate}]))}))
+
+
+
+(effects/register {::hunting-grounds-gain   hunting-grounds-gain
+                   ::hunting-grounds-choice hunting-grounds-choice})
 
 (def hunting-grounds {:name     :hunting-grounds
                       :set      :dark-ages
                       :types    #{:action}
                       :cost     6
                       :effects  [[:draw 4]]
-                      :on-trash [[:give-choice {:text    "Gain"
-                                                :choice  ::hunting-grounds-choice
-                                                :options [:special
-                                                          {:option :duchy :text "a Duchy"}
-                                                          {:option :estates :text "3 Estates"}]
+                      :on-trash [[:give-choice {:text    "Gain a Duchy or 3 Estates."
+                                                :choice  ::hunting-grounds-gain
+                                                :options [:supply {:names #{:duchy :estate}
+                                                                   :all   true}]
                                                 :min     1
                                                 :max     1}]]})
 

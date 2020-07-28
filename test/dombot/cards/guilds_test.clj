@@ -141,7 +141,7 @@
                              :deck    [copper copper copper copper]
                              :actions 1}]}
                  (play 0 :doctor)
-                 (choose :estate)
+                 (choose {:area :supply :card-name :estate})
                  (choose [:copper :copper :copper]))
              {:supply  (base/supply 2 8)
               :players [{:play-area      [doctor]
@@ -153,7 +153,7 @@
                              :deck    [copper copper copper copper]
                              :actions 1}]}
                  (play 0 :doctor)
-                 (choose :copper))
+                 (choose {:area :supply :card-name :copper}))
              {:supply  (base/supply 2 8)
               :players [{:play-area [doctor]
                          :deck      [copper]
@@ -164,7 +164,7 @@
                              :deck    [silver estate copper copper]
                              :actions 1}]}
                  (play 0 :doctor)
-                 (choose :estate)
+                 (choose {:area :supply :card-name :estate})
                  (choose [:silver :copper]))
              {:supply  (base/supply 2 8)
               :players [{:play-area      [doctor]
@@ -319,7 +319,7 @@
                            :deck    [copper estate silver estate gold]
                            :actions 1}]}
                (play 0 :journeyman)
-               (choose :province))
+               (choose {:area :supply :card-name :province}))
            {:supply  (base/supply 2 8)
             :players [{:hand           [copper estate silver]
                        :play-area      [journeyman]
@@ -331,7 +331,7 @@
                            :deck    [copper estate silver estate gold]
                            :actions 1}]}
                (play 0 :journeyman)
-               (choose :copper))
+               (choose {:area :supply :card-name :copper}))
            {:supply  (base/supply 2 8)
             :players [{:hand           [estate silver estate]
                        :play-area      [journeyman]
@@ -345,7 +345,7 @@
                            :deck    [copper estate silver estate gold copper]
                            :actions 1}]}
                (play 0 :journeyman)
-               (choose :estate))
+               (choose {:area :supply :card-name :estate}))
            {:supply  (base/supply 2 8)
             :players [{:hand           [copper silver gold]
                        :play-area      [journeyman]
@@ -359,7 +359,7 @@
                            :deck    [copper estate silver estate]
                            :actions 1}]}
                (play 0 :journeyman)
-               (choose :estate))
+               (choose {:area :supply :card-name :estate}))
            {:supply  (base/supply 2 8)
             :players [{:hand           [copper silver]
                        :play-area      [journeyman]

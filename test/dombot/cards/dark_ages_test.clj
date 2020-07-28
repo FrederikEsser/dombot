@@ -936,7 +936,7 @@
                              :buys    1}]}
                  (play 0 :forager)
                  (choose :hunting-grounds)
-                 (choose :estates))
+                 (choose :estate))
              {:supply  [{:card estate :pile-size 5}
                         {:card duchy :pile-size 8}]
               :players [{:play-area [forager]
@@ -953,7 +953,7 @@
                              :buys    1}]}
                  (play 0 :forager)
                  (choose :hunting-grounds)
-                 (choose :estates))
+                 (choose :estate))
              {:supply  [{:card estate :pile-size 0}
                         {:card duchy :pile-size 8}]
               :players [{:play-area [forager]
