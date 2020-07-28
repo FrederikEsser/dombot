@@ -204,16 +204,33 @@
 (defn map-tag [tag coll]
   (mapk (fn [x] [tag x]) coll))
 
-(defn view-row [row]
-  [:tr (->> row
-            (map view-card)
-            (mapk (fn [card] [:td card])))])
-
-(defn view-pile [pile max]
+(defn view-player-pile [pile max]
   [:div
    (mapk (partial view-card max) (:visible-cards pile))
    (when (:number-of-cards pile)
      (str (:number-of-cards pile) " Cards"))])
+
+(defn view-expandable-pile [key {:keys [card cards]}]
+  (let [expanded? (get-in @state [:expanded? key])]
+    [:table
+     [:tbody {:style {:border :none}}
+      [:tr {:style {:border :none}}
+       [:td {:style {:border :none}}
+        (if expanded?
+          (mapk view-card cards)
+          (view-card card))]
+       [:td {:style {:border         :none
+                     :vertical-align :top}}
+        [:button {:on-click (fn [] (swap! state update-in [:expanded? key] not))}
+         (if expanded? "-" "+")]]]]]))
+
+(defn view-kingdom-card [{:keys [card]}]
+  (view-card card))
+
+(defn view-row [row]
+  [:tr (->> row
+            (map view-kingdom-card)
+            (mapk (fn [card] [:td card])))])
 
 (defn set-selector []
   (fn [sets set-name]
@@ -384,7 +401,7 @@
                                         :width 20
                                         :align :top}]])]
                         [:td (if (:number-of-cards hand)
-                               (view-pile hand max)
+                               (view-player-pile hand max)
                                (mapk (partial view-card max) hand))]
                         [:td (mapk (partial view-card max) (as-> (group-by (comp boolean :stay-in-play) play-area) grouped-cards
                                                                  (if (< 1 (count grouped-cards))
@@ -392,8 +409,8 @@
                                                                            [[:hr]]
                                                                            (get grouped-cards false))
                                                                    (-> grouped-cards vals first))))]
-                        [:td (view-pile deck max)]
-                        [:td (view-pile discard max)]
+                        [:td (view-player-pile deck max)]
+                        [:td (view-player-pile discard max)]
                         [:td (if victory-points
                                [:div
                                 (when winner? [:div "WINNER!"])
@@ -517,17 +534,10 @@
                           [:td
                            [:div "Native Village"]
                            [:div (if (:number-of-cards native-village-mat)
-                                   (view-pile native-village-mat max)
+                                   (view-player-pile native-village-mat max)
                                    (mapk view-card native-village-mat))]])])))]]]
-       (let [{:keys [compact full]} (get-in @state [:game :trash])]
-         [:div "Trash " [:button {:on-click (fn [] (swap! state update :trash-unfolded? not))}
-                         (if trash-unfolded? "Hide" "Show")]
-          [:table
-           [:tbody
-            (if trash-unfolded?
-              [:tr [:td (mapk view-card full)]]
-              [:tr
-               [:td (view-pile compact nil)]])]]])])))
+       [:div (str "Trash (" (get-in @state [:game :trash :number-of-cards]) " cards)")
+        [view-expandable-pile :trash (get-in @state [:game :trash])]]])))
 
 ;; -------------------------
 ;; Initialize app

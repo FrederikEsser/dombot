@@ -19,65 +19,65 @@
                          :player {:coins 2
                                   :buys  1
                                   :phase :buy}})
-           [{:name            :copper
-             :name-ui         "Copper"
-             :types           #{:treasure}
-             :mixed-cost      {:coin-cost 0}
-             :number-of-cards 46
-             :interaction     :buyable}
-            {:name            :silver
-             :name-ui         "Silver"
-             :types           #{:treasure}
-             :mixed-cost      {:coin-cost 3}
-             :number-of-cards 40}
-            {:name            :estate
-             :name-ui         "Estate"
-             :types           #{:victory}
-             :mixed-cost      {:coin-cost 2}
-             :number-of-cards 8
-             :interaction     :buyable}]))
+           [{:card {:name            :copper
+                    :name-ui         "Copper"
+                    :types           #{:treasure}
+                    :mixed-cost      {:coin-cost 0}
+                    :number-of-cards 46
+                    :interaction     :buyable}}
+            {:card {:name            :silver
+                    :name-ui         "Silver"
+                    :types           #{:treasure}
+                    :mixed-cost      {:coin-cost 3}
+                    :number-of-cards 40}}
+            {:card {:name            :estate
+                    :name-ui         "Estate"
+                    :types           #{:victory}
+                    :mixed-cost      {:coin-cost 2}
+                    :number-of-cards 8
+                    :interaction     :buyable}}]))
     (is (= (view-supply {:supply [{:card copper :pile-size 46}
                                   {:card silver :pile-size 40}
                                   {:card estate :pile-size 8}]
                          :player {:coins 2
                                   :buys  0}})
-           [{:name            :copper
-             :name-ui         "Copper"
-             :types           #{:treasure}
-             :mixed-cost      {:coin-cost 0}
-             :number-of-cards 46}
-            {:name            :silver
-             :name-ui         "Silver"
-             :types           #{:treasure}
-             :mixed-cost      {:coin-cost 3}
-             :number-of-cards 40}
-            {:name            :estate
-             :name-ui         "Estate"
-             :types           #{:victory}
-             :mixed-cost      {:coin-cost 2}
-             :number-of-cards 8}]))
+           [{:card {:name            :copper
+                    :name-ui         "Copper"
+                    :types           #{:treasure}
+                    :mixed-cost      {:coin-cost 0}
+                    :number-of-cards 46}}
+            {:card {:name            :silver
+                    :name-ui         "Silver"
+                    :types           #{:treasure}
+                    :mixed-cost      {:coin-cost 3}
+                    :number-of-cards 40}}
+            {:card {:name            :estate
+                    :name-ui         "Estate"
+                    :types           #{:victory}
+                    :mixed-cost      {:coin-cost 2}
+                    :number-of-cards 8}}]))
     (is (= (view-supply {:supply [{:card copper :pile-size 0}
                                   {:card silver :pile-size 40}
                                   {:card estate :pile-size 8}]
                          :player {:coins 2
                                   :buys  1
                                   :phase :buy}})
-           [{:name            :copper
-             :name-ui         "Copper"
-             :types           #{:treasure}
-             :mixed-cost      {:coin-cost 0}
-             :number-of-cards 0}
-            {:name            :silver
-             :name-ui         "Silver"
-             :types           #{:treasure}
-             :mixed-cost      {:coin-cost 3}
-             :number-of-cards 40}
-            {:name            :estate
-             :name-ui         "Estate"
-             :types           #{:victory}
-             :mixed-cost      {:coin-cost 2}
-             :number-of-cards 8
-             :interaction     :buyable}]))
+           [{:card {:name            :copper
+                    :name-ui         "Copper"
+                    :types           #{:treasure}
+                    :mixed-cost      {:coin-cost 0}
+                    :number-of-cards 0}}
+            {:card {:name            :silver
+                    :name-ui         "Silver"
+                    :types           #{:treasure}
+                    :mixed-cost      {:coin-cost 3}
+                    :number-of-cards 40}}
+            {:card {:name            :estate
+                    :name-ui         "Estate"
+                    :types           #{:victory}
+                    :mixed-cost      {:coin-cost 2}
+                    :number-of-cards 8
+                    :interaction     :buyable}}]))
     (testing "with choice"
       (is (= (view-supply {:supply [{:card copper :pile-size 46}
                                     {:card silver :pile-size 40}
@@ -85,21 +85,21 @@
                            :player {:coins 2
                                     :buys  1}
                            :choice {:source :hand}})
-             [{:name            :copper
-               :name-ui         "Copper"
-               :types           #{:treasure}
-               :mixed-cost      {:coin-cost 0}
-               :number-of-cards 46}
-              {:name            :silver
-               :name-ui         "Silver"
-               :types           #{:treasure}
-               :mixed-cost      {:coin-cost 3}
-               :number-of-cards 40}
-              {:name            :estate
-               :name-ui         "Estate"
-               :types           #{:victory}
-               :mixed-cost      {:coin-cost 2}
-               :number-of-cards 8}]))
+             [{:card {:name            :copper
+                      :name-ui         "Copper"
+                      :types           #{:treasure}
+                      :mixed-cost      {:coin-cost 0}
+                      :number-of-cards 46}}
+              {:card {:name            :silver
+                      :name-ui         "Silver"
+                      :types           #{:treasure}
+                      :mixed-cost      {:coin-cost 3}
+                      :number-of-cards 40}}
+              {:card {:name            :estate
+                      :name-ui         "Estate"
+                      :types           #{:victory}
+                      :mixed-cost      {:coin-cost 2}
+                      :number-of-cards 8}}]))
       (is (= (view-supply {:supply [{:card copper :pile-size 46}
                                     {:card silver :pile-size 40}
                                     {:card estate :pile-size 8}]
@@ -107,23 +107,23 @@
                                     :buys  1}
                            :choice {:source  :supply
                                     :options [:silver :estate]}})
-             [{:name            :copper
-               :name-ui         "Copper"
-               :types           #{:treasure}
-               :mixed-cost      {:coin-cost 0}
-               :number-of-cards 46}
-              {:name            :silver
-               :name-ui         "Silver"
-               :types           #{:treasure}
-               :mixed-cost      {:coin-cost 3}
-               :number-of-cards 40
-               :interaction     :choosable}
-              {:name            :estate
-               :name-ui         "Estate"
-               :types           #{:victory}
-               :mixed-cost      {:coin-cost 2}
-               :number-of-cards 8
-               :interaction     :choosable}])))
+             [{:card {:name            :copper
+                      :name-ui         "Copper"
+                      :types           #{:treasure}
+                      :mixed-cost      {:coin-cost 0}
+                      :number-of-cards 46}}
+              {:card {:name            :silver
+                      :name-ui         "Silver"
+                      :types           #{:treasure}
+                      :mixed-cost      {:coin-cost 3}
+                      :number-of-cards 40
+                      :interaction     :choosable}}
+              {:card {:name            :estate
+                      :name-ui         "Estate"
+                      :types           #{:victory}
+                      :mixed-cost      {:coin-cost 2}
+                      :number-of-cards 8
+                      :interaction     :choosable}}])))
     (testing "with cost reduction"
       (is (= (view-supply {:supply          [{:card copper :pile-size 46}
                                              {:card silver :pile-size 40}
@@ -132,24 +132,24 @@
                            :player          {:coins 2
                                              :buys  1
                                              :phase :buy}})
-             [{:name            :copper
-               :name-ui         "Copper"
-               :types           #{:treasure}
-               :mixed-cost      {:coin-cost 0}
-               :number-of-cards 46
-               :interaction     :buyable}
-              {:name            :silver
-               :name-ui         "Silver"
-               :types           #{:treasure}
-               :mixed-cost      {:coin-cost 2}
-               :number-of-cards 40
-               :interaction     :buyable}
-              {:name            :estate
-               :name-ui         "Estate"
-               :types           #{:victory}
-               :mixed-cost      {:coin-cost 1}
-               :number-of-cards 8
-               :interaction     :buyable}])))))
+             [{:card {:name            :copper
+                      :name-ui         "Copper"
+                      :types           #{:treasure}
+                      :mixed-cost      {:coin-cost 0}
+                      :number-of-cards 46
+                      :interaction     :buyable}}
+              {:card {:name            :silver
+                      :name-ui         "Silver"
+                      :types           #{:treasure}
+                      :mixed-cost      {:coin-cost 2}
+                      :number-of-cards 40
+                      :interaction     :buyable}}
+              {:card {:name            :estate
+                      :name-ui         "Estate"
+                      :types           #{:victory}
+                      :mixed-cost      {:coin-cost 1}
+                      :number-of-cards 8
+                      :interaction     :buyable}}])))))
 
 (deftest deck-test
   (testing "Deck view"
@@ -885,20 +885,18 @@
 
 (deftest trash-view-test
   (testing "Trash view"
-    (is (= (view-trash {:trash []} :full)
-           []))
-    (is (= (view-trash {:trash []} :compact)
-           {}))
-    (is (= (view-trash {:trash [copper copper estate]} :full)
-           [{:name            :copper
-             :name-ui         "Copper"
-             :types           #{:treasure}
-             :number-of-cards 2}
-            {:name    :estate
-             :name-ui "Estate"
-             :types   #{:victory}}]))
-    (is (= (view-trash {:trash [copper copper estate]} :compact)
-           {:visible-cards   [{:name    :estate
+    (is (= (view-trash {:trash []})
+           {:cards           []
+            :number-of-cards 0}))
+    (is (= (view-trash {:trash [copper copper estate]})
+           {:card            {:name    :estate
+                              :name-ui "Estate"
+                              :types   #{:victory}}
+            :cards           [{:name            :copper
+                               :name-ui         "Copper"
+                               :types           #{:treasure}
+                               :number-of-cards 2}
+                              {:name    :estate
                                :name-ui "Estate"
                                :types   #{:victory}}]
             :number-of-cards 3}))
@@ -906,22 +904,16 @@
       (is (= (view-trash {:trash  [copper estate copper]
                           :choice {:source  :trash
                                    :options [:copper]
-                                   :max     1}}
-                         :full)
-             [{:name            :copper
-               :name-ui         "Copper"
-               :types           #{:treasure}
-               :number-of-cards 2
-               :interaction     :quick-choosable}
-              {:name    :estate
-               :name-ui "Estate"
-               :types   #{:victory}}]))
-      (is (= (view-trash {:trash  [copper estate copper]
-                          :choice {:source  :trash
-                                   :options [:copper]
-                                   :max     1}}
-                         :compact)
-             {:visible-cards   [{:name    :copper
-                                 :name-ui "Copper"
-                                 :types   #{:treasure}}]
+                                   :max     1}})
+             {:card            {:name    :copper
+                                :name-ui "Copper"
+                                :types   #{:treasure}}
+              :cards           [{:name            :copper
+                                 :name-ui         "Copper"
+                                 :types           #{:treasure}
+                                 :number-of-cards 2
+                                 :interaction     :quick-choosable}
+                                {:name    :estate
+                                 :name-ui "Estate"
+                                 :types   #{:victory}}]
               :number-of-cards 3})))))

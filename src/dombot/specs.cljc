@@ -57,9 +57,12 @@
 
 (s/def ::cards (s/coll-of ::card))
 
-(s/def ::supply ::cards)
+(s/def ::kingdom-card (s/keys :req-un [::card]
+                              :opt-un [::cards]))
 
-(s/def ::extra-cards ::cards)
+(s/def ::supply (s/coll-of ::kingdom-card))
+
+(s/def ::extra-cards (s/coll-of ::kingdom-card))
 
 (s/def ::participants (s/coll-of string?))
 
@@ -237,12 +240,9 @@
 
 (s/def ::players (s/coll-of ::player))
 
-(s/def ::compact ::pile)
-
-(s/def ::full ::cards)
-
-(s/def ::trash (s/keys :req-un [::compact
-                                ::full]))
+(s/def ::trash (s/keys :req-un [::cards
+                                ::number-of-cards]
+                       :opt-un [::card]))
 
 (s/def ::can-undo? boolean?)
 

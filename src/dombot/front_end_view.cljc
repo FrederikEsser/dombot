@@ -38,32 +38,32 @@
                 (let [types (ut/get-types game card)
                       cost  (ut/get-cost game card)
                       {:keys [coin-cost] :as buy-cost} (ut/get-buy-cost game player-no card)]
-                  (merge {:name            name
-                          :name-ui         (ut/format-name name)
-                          :types           types
-                          :mixed-cost      cost
-                          :number-of-cards pile-size}
-                         (when (and total-pile-size
-                                    (> total-pile-size pile-size))
-                           {:total-number-of-cards total-pile-size})
-                         (when (not= cost buy-cost)
-                           {:buy-cost buy-cost})
-                         (when (and (#{:action :pay :buy} phase)
-                                    (not choice)
-                                    (pos? pile-size)
-                                    buys (pos? buys)
-                                    coins (>= coins coin-cost)
-                                    (not debt)
-                                    (ut/card-buyable? game player-no card))
-                           {:interaction :buyable})
-                         (choice-interaction name :supply choice)
-                         (when tokens
-                           {:tokens (->> tokens
-                                         (map (fn [[token {:keys [number-of-tokens]}]]
-                                                {:token-type       token
-                                                 :number-of-tokens number-of-tokens})))})
-                         (when bane?
-                           {:bane? true}))))))))
+                  {:card (merge {:name            name
+                                 :name-ui         (ut/format-name name)
+                                 :types           types
+                                 :mixed-cost      cost
+                                 :number-of-cards pile-size}
+                                (when (and total-pile-size
+                                           (> total-pile-size pile-size))
+                                  {:total-number-of-cards total-pile-size})
+                                (when (not= cost buy-cost)
+                                  {:buy-cost buy-cost})
+                                (when (and (#{:action :pay :buy} phase)
+                                           (not choice)
+                                           (pos? pile-size)
+                                           buys (pos? buys)
+                                           coins (>= coins coin-cost)
+                                           (not debt)
+                                           (ut/card-buyable? game player-no card))
+                                  {:interaction :buyable})
+                                (choice-interaction name :supply choice)
+                                (when tokens
+                                  {:tokens (->> tokens
+                                                (map (fn [[token {:keys [number-of-tokens]}]]
+                                                       {:token-type       token
+                                                        :number-of-tokens number-of-tokens})))})
+                                (when bane?
+                                  {:bane? true}))}))))))
 
 (defn view-extra-cards [{extra-cards :extra-cards
                          choice      :choice
@@ -73,12 +73,12 @@
                   number-of-cards         :pile-size}]
               (let [types (ut/get-types game card)
                     cost  (ut/get-cost game card)]
-                (merge {:name            name
-                        :name-ui         (ut/format-name name)
-                        :types           types
-                        :mixed-cost      cost
-                        :number-of-cards number-of-cards}
-                       (choice-interaction name :extra-cards choice)))))))
+                {:card (merge {:name            name
+                               :name-ui         (ut/format-name name)
+                               :types           types
+                               :mixed-cost      cost
+                               :number-of-cards number-of-cards}
+                              (choice-interaction name :extra-cards choice))})))))
 
 (defn view-events [{events         :events
                     {:keys [buys phase bought-events]
@@ -377,31 +377,30 @@
          (when-not (nil? winner)
            {:winner? winner})))
 
-(defn view-trash [{:keys [trash choice] :as game} mode]
-  (case mode
-    :compact (if (empty? trash)
-               {}
-               (let [{:keys [name] :as card} (last trash)
-                     types (ut/get-types game card)]
-                 {:visible-cards   [{:name    name
-                                     :name-ui (ut/format-name name)
-                                     :types   types}]
-                  :number-of-cards (count trash)}))
-    :full (if (empty? trash)
-            []
-            (->> trash
-                 (map (fn [{:keys [name] :as card}]
-                        (let [types (ut/get-types game card)]
-                          (merge {:name    name
-                                  :name-ui (ut/format-name name)
-                                  :types   types}
-                                 (choice-interaction name :trash choice)))))
-                 frequencies
-                 (map (fn [[card number-of-cards]]
-                        (cond-> card
-                                (< 1 number-of-cards) (assoc :number-of-cards number-of-cards))))))))
+(defn view-trash [{:keys [trash choice] :as game}]
+  (merge
+    (when (not-empty trash)
+      {:card (let [{:keys [name] :as card} (last trash)
+                   types (ut/get-types game card)]
+               {:name    name
+                :name-ui (ut/format-name name)
+                :types   types})})
+    {:cards           (if (empty? trash)
+                        []
+                        (->> trash
+                             (map (fn [{:keys [name] :as card}]
+                                    (let [types (ut/get-types game card)]
+                                      (merge {:name    name
+                                              :name-ui (ut/format-name name)
+                                              :types   types}
+                                             (choice-interaction name :trash choice)))))
+                             frequencies
+                             (map (fn [[card number-of-cards]]
+                                    (cond-> card
+                                            (< 1 number-of-cards) (assoc :number-of-cards number-of-cards))))))
+     :number-of-cards (count trash)}))
 
-(defn view-commands [{:keys [supply players effect-stack current-player can-undo?] :as game}]
+(defn view-commands [{:keys [players effect-stack current-player can-undo?] :as game}]
   (let [{:keys [hand phase actions coins debt buys]} (get players current-player)
         [choice] effect-stack
         can-play-treasures? (boolean (and (not choice)
@@ -450,8 +449,7 @@
                                                                          :artifacts      (->> artifacts vals (filter (comp #{idx} :owner)))}
                                                                    (when (= idx player-no)
                                                                      {:choice choice})))))))
-            :trash       {:compact (view-trash (merge game {:choice choice}) :compact)
-                          :full    (view-trash (merge game {:choice choice}) :full)}
+            :trash       (view-trash (merge game {:choice choice}))
             :commands    (view-commands game)}
            (when extra-cards
              {:extra-cards (view-extra-cards (merge game {:player (assoc player :player-no current-player)
