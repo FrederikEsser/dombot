@@ -6,6 +6,7 @@
             [dombot.cards.dominion :refer [moat throne-room]]
             [dombot.cards.common :refer :all]
             [dombot.cards.intrigue :as intrigue :refer :all]
+            [dombot.cards.empires :refer [patrician emporium]]
             [dombot.cards.nocturne :refer [will-o-wisp]])
   (:refer-clojure :exclude [replace]))
 
@@ -1983,6 +1984,58 @@
                            :play-area      [wishing-well]
                            :actions        1
                            :revealed-cards {:hand 1}}]}))
+    (is (= (-> {:supply  [{:split-pile [{:card patrician :pile-size 5}
+                                        {:card emporium :pile-size 5}]}]
+                :players [{:hand    [wishing-well]
+                           :deck    [silver patrician]
+                           :actions 1}]}
+               (play 0 :wishing-well)
+               (choose {:area :supply :card-name :patrician}))
+           {:supply  [{:split-pile [{:card patrician :pile-size 5}
+                                    {:card emporium :pile-size 5}]}]
+            :players [{:hand           [silver patrician]
+                       :play-area      [wishing-well]
+                       :actions        1
+                       :revealed-cards {:hand 1}}]}))
+    (is (= (-> {:supply  [{:split-pile [{:card patrician :pile-size 0}
+                                        {:card emporium :pile-size 5}]}]
+                :players [{:hand    [wishing-well]
+                           :deck    [silver emporium]
+                           :actions 1}]}
+               (play 0 :wishing-well)
+               (choose {:area :supply :card-name :emporium}))
+           {:supply  [{:split-pile [{:card patrician :pile-size 0}
+                                    {:card emporium :pile-size 5}]}]
+            :players [{:hand           [silver emporium]
+                       :play-area      [wishing-well]
+                       :actions        1
+                       :revealed-cards {:hand 1}}]}))
+    (is (= (-> {:supply  [{:split-pile [{:card patrician :pile-size 0}
+                                        {:card emporium :pile-size 5}]}]
+                :players [{:hand    [wishing-well]
+                           :deck    [silver patrician]
+                           :actions 1}]}
+               (play 0 :wishing-well)
+               (choose {:area :supply :card-name :patrician}))
+           {:supply  [{:split-pile [{:card patrician :pile-size 0}
+                                    {:card emporium :pile-size 5}]}]
+            :players [{:hand           [silver patrician]
+                       :play-area      [wishing-well]
+                       :actions        1
+                       :revealed-cards {:hand 1}}]}))
+    (is (= (-> {:supply  [{:split-pile [{:card patrician :pile-size 1}
+                                        {:card emporium :pile-size 0}]}]
+                :players [{:hand    [wishing-well]
+                           :deck    [silver emporium]
+                           :actions 1}]}
+               (play 0 :wishing-well)
+               (choose {:area :supply :card-name :emporium}))
+           {:supply  [{:split-pile [{:card patrician :pile-size 1}
+                                    {:card emporium :pile-size 0}]}]
+            :players [{:hand           [silver emporium]
+                       :play-area      [wishing-well]
+                       :actions        1
+                       :revealed-cards {:hand 1}}]}))
     (is (= (-> {:supply  (base/supply 2 8)
                 :players [{:hand    [wishing-well]
                            :deck    [silver]

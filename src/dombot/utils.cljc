@@ -116,6 +116,10 @@
              (select-keys pile [:tokens])))
     pile))
 
+(defn access-pile [{:keys [split-pile] :as pile}]
+  (or split-pile
+      [pile]))
+
 (defn access-card [card-name {:keys [split-pile] :as pile}]
   (if split-pile
     (merge (or (->> split-pile
@@ -367,17 +371,20 @@
 (effects/register-options {:player options-from-player})
 
 (defn options-from-supply [{:keys [supply] :as game} player-no card-id & [{:keys [max-cost costs-less-than cost type types not-type names not-names all]}]]
-  (cond->> (map access-top-card supply)
-           max-cost (filter (comp (partial costs-up-to max-cost) (partial get-cost game) :card))
-           costs-less-than (filter (comp (partial costs-less costs-less-than) (partial get-cost game) :card))
-           cost (filter (comp (partial costs-exactly cost) (partial get-cost game) :card))
-           type (filter (comp type (partial get-types game) :card))
-           types (filter (comp (partial types-match game types) :card))
-           not-type (remove (comp not-type (partial get-types game) :card))
-           names (filter (comp names :name :card))
-           not-names (remove (comp not-names :name :card))
-           (not all) (filter (comp pos? :pile-size))
-           :always (map (comp :name :card))))
+  (let [supply-piles (if all
+                       (mapcat access-pile supply)
+                       (map access-top-card supply))]
+    (cond->> supply-piles
+             max-cost (filter (comp (partial costs-up-to max-cost) (partial get-cost game) :card))
+             costs-less-than (filter (comp (partial costs-less costs-less-than) (partial get-cost game) :card))
+             cost (filter (comp (partial costs-exactly cost) (partial get-cost game) :card))
+             type (filter (comp type (partial get-types game) :card))
+             types (filter (comp (partial types-match game types) :card))
+             not-type (remove (comp not-type (partial get-types game) :card))
+             names (filter (comp names :name :card))
+             not-names (remove (comp not-names :name :card))
+             (not all) (filter (comp pos? :pile-size))
+             :always (map (comp :name :card)))))
 
 (effects/register-options {:supply options-from-supply})
 
