@@ -682,6 +682,15 @@
                                                          :options [:player :hand {:name :market-square}]
                                                          :max     1}]]}})
 
+(def mystic {:name    :mystic
+             :set     :dark-ages
+             :types   #{:action}
+             :cost    5
+             :effects [[:give-actions 1]
+                       [:give-coins 2]
+                       [:peek-deck 1]
+                       [:name-a-card {:effect :draw-named-card}]]})
+
 (defn pillage-attack [game {:keys [player-no]}]
   (let [hand (get-in game [:players player-no :hand])]
     (cond-> game
@@ -981,6 +990,7 @@
                     knights
                     marauder
                     market-square
+                    mystic
                     pillage
                     poor-house
                     rats

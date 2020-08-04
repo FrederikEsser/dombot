@@ -2073,13 +2073,13 @@
                        :play-area      [wishing-well]
                        :deck           [copper]
                        :revealed-cards {:deck 1}
-                       :actions        1}]})))
-  (is (= (-> {:supply  (base/supply 2 8)
-              :players [{:hand    [wishing-well]
-                         :deck    [silver]
-                         :actions 1}]}
-             (play 0 :wishing-well))
-         {:supply  (base/supply 2 8)
-          :players [{:hand      [silver]
-                     :play-area [wishing-well]
-                     :actions   1}]})))
+                       :actions        1}]}))
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand    [wishing-well]
+                           :deck    [silver]
+                           :actions 1}]}
+               (play 0 :wishing-well))
+           {:supply  (base/supply 2 8)
+            :players [{:hand      [silver]
+                       :play-area [wishing-well]
+                       :actions   1}]}))))

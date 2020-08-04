@@ -567,33 +567,6 @@
                         [:give-actions 1]
                         [:upgrade-give-choice]]})
 
-(defn wishing-well-guess [game {:keys [player-no choice]}]
-  (let [{:keys [card-name]} choice
-        {[{:keys [name] :as card}] :deck
-         discard                   :discard} (get-in game [:players player-no])]
-    (assert (or name (empty? discard)) "Discard was not properly shuffled for Wishing Well.")
-    (cond-> game
-            card (push-effect-stack {:player-no player-no
-                                     :effects   [[:reveal-from-deck 1]
-                                                 (if (= card-name name)
-                                                   [:put-revealed-into-hand {:card-name card-name}]
-                                                   [:topdeck-from-revealed {:card-name name}])]}))))
-
-(defn wishing-well-make-wish [game {:keys [player-no]}]
-  (let [[card] (get-in game [:players player-no :deck])]
-    (cond-> game
-            card (give-choice {:player-no player-no
-                               :text      "Name a card."
-                               :choice    ::wishing-well-guess
-                               :options   [:mixed
-                                           [:supply {:all true}]
-                                           [:extra-cards {:all true}]]
-                               :min       1
-                               :max       1}))))
-
-(effects/register {::wishing-well-guess     wishing-well-guess
-                   ::wishing-well-make-wish wishing-well-make-wish})
-
 (def wishing-well {:name    :wishing-well
                    :set     :intrigue
                    :types   #{:action}
@@ -601,7 +574,7 @@
                    :effects [[:draw 1]
                              [:give-actions 1]
                              [:peek-deck 1]
-                             [::wishing-well-make-wish]]})
+                             [:name-a-card {:effect :draw-named-card}]]})
 
 (def kingdom-cards [baron
                     bridge

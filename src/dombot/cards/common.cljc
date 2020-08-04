@@ -619,6 +619,33 @@
 (effects/register {:topdeck-from-gained   topdeck-from-gained
                    :topdeck-gained-choice topdeck-gained-choice})
 
+(defn draw-named-card [game {:keys [player-no choice]}]
+  (let [{:keys [card-name]} choice
+        {[{:keys [name] :as card}] :deck
+         discard                   :discard} (get-in game [:players player-no])]
+    (assert (or name (empty? discard)) "Discard was not properly shuffled when naming a card.")
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:reveal-from-deck 1]
+                                                 (if (= card-name name)
+                                                   [:put-revealed-into-hand {:card-name card-name}]
+                                                   [:topdeck-from-revealed {:card-name name}])]}))))
+
+(defn name-a-card [game {:keys [player-no effect]}]
+  (let [[card] (get-in game [:players player-no :deck])]
+    (cond-> game
+            card (give-choice {:player-no player-no
+                               :text      "Name a card."
+                               :choice    effect
+                               :options   [:mixed
+                                           [:supply {:all true}]
+                                           [:extra-cards {:all true}]]
+                               :min       1
+                               :max       1}))))
+
+(effects/register {:draw-named-card draw-named-card
+                   :name-a-card     name-a-card})
+
 (defn mark-unbuyable [game {:keys [card-name type]}]
   (cond-> game
           card-name (update :unbuyable-cards (comp set conj) card-name)

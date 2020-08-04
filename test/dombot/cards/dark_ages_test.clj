@@ -1289,6 +1289,36 @@
                          :coins     1}]
               :trash   [estate]})))))
 
+(deftest mystic-test
+  (testing "Mystic"
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand    [mystic]
+                           :deck    [copper silver]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :mystic)
+               (choose {:area :supply :card-name :copper}))
+           {:supply  (base/supply 2 8)
+            :players [{:hand           [copper]
+                       :play-area      [mystic]
+                       :deck           [silver]
+                       :revealed-cards {:hand 1}
+                       :actions        1
+                       :coins          2}]}))
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand    [mystic]
+                           :deck    [silver copper]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :mystic)
+               (choose {:area :supply :card-name :gold}))
+           {:supply  (base/supply 2 8)
+            :players [{:play-area      [mystic]
+                       :deck           [silver copper]
+                       :revealed-cards {:deck 1}
+                       :actions        1
+                       :coins          2}]}))))
+
 (deftest pillage-test
   (let [pillage (assoc pillage :id 0)]
     (testing "Pillage"
