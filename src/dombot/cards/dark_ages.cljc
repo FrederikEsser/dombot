@@ -645,7 +645,7 @@
                              {:card sir-martin :pile-size 1}
                              {:card sir-michael :pile-size 1}
                              {:card sir-vander :pile-size 1}])
-                   (concat [{:card knights :pile-size 0}])
+                   (concat [{:card knights}])
                    vec)
    :hidden?    true})
 

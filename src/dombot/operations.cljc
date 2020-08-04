@@ -1052,18 +1052,18 @@
   (let [update-fn (fn [{:keys [hand vp-tokens states] :as player}]
                     (let [vp-from-cards     (->> hand
                                                  (filter :victory-points)
-                                                 (map (partial get-victory-points hand))
-                                                 (apply + 0))
+                                                 (keep (partial get-victory-points hand))
+                                                 (apply +))
                           vp-from-tokens    (or vp-tokens 0)
                           vp-from-landmarks (->> landmarks
                                                  vals
                                                  (keep (fn [{:keys [when-scoring]}]
                                                          (when-let [scoring-fn (when when-scoring (effects/get-effect when-scoring))]
                                                            (scoring-fn hand game))))
-                                                 (apply + 0))
+                                                 (apply +))
                           vp-from-states    (->> states
                                                  (keep :victory-points)
-                                                 (apply + 0))]
+                                                 (apply +))]
                       (assoc player :victory-points (+ vp-from-cards vp-from-tokens vp-from-landmarks vp-from-states))))]
     (update game :players (partial mapv update-fn))))
 

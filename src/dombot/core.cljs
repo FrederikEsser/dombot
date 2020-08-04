@@ -16,7 +16,6 @@
 (defonce state (r/atom {:sets            all-sets
                         :setup-game?     true
                         :selection       []
-                        :trash-unfolded? false
                         :num-players     2
                         :players         ["Big Johnny" "Ivor the Engine Driver" "Dirty Maggie Mae"]}))
 
@@ -224,8 +223,10 @@
         [:button {:on-click (fn [] (swap! state update-in [:expanded? key] not))}
          (if expanded? "-" "+")]]]]]))
 
-(defn view-kingdom-card [{:keys [card]}]
-  (view-card card))
+(defn view-kingdom-card [{:keys [card cards] :as pile}]
+  (if cards
+    (view-expandable-pile (->> cards last :name) pile)
+    (view-card card)))
 
 (defn view-row [row]
   [:tr (->> row
@@ -280,7 +281,7 @@
 
 (defn home-page []
   (fn []
-    (let [{:keys [setup-game? selection trash-unfolded? boons-unfolded? hexes-unfolded?]} @state]
+    (let [{:keys [setup-game? selection boons-unfolded? hexes-unfolded?]} @state]
       [:div [:h2 "Dominion"]
 
        (when setup-game?

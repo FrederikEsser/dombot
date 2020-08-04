@@ -25,45 +25,73 @@
          (when (> debt coins)
            {:debt (- debt coins)})))
 
-(defn view-supply [{supply         :supply
-                    {:keys [buys player-no phase]
-                     :as   player} :player
-                    choice         :choice
-                    :as            game}]
-  (let [{:keys [coins debt]} (get-coins player)]
-    (->> supply
-         (map ut/access-top-card)
-         (map (fn [{{:keys [name bane?] :as card} :card
-                    :keys                         [tokens pile-size total-pile-size]}]
-                (let [types (ut/get-types game card)
-                      cost  (ut/get-cost game card)
-                      {:keys [coin-cost] :as buy-cost} (ut/get-buy-cost game player-no card)]
-                  {:card (merge {:name            name
-                                 :name-ui         (ut/format-name name)
-                                 :types           types
-                                 :mixed-cost      cost
-                                 :number-of-cards pile-size}
-                                (when (and total-pile-size
-                                           (> total-pile-size pile-size))
-                                  {:total-number-of-cards total-pile-size})
-                                (when (not= cost buy-cost)
-                                  {:buy-cost buy-cost})
-                                (when (and (#{:action :pay :buy} phase)
-                                           (not choice)
-                                           (pos? pile-size)
-                                           buys (pos? buys)
-                                           coins (>= coins coin-cost)
-                                           (not debt)
-                                           (ut/card-buyable? game player-no card))
-                                  {:interaction :buyable})
-                                (choice-interaction name :supply choice)
-                                (when tokens
-                                  {:tokens (->> tokens
-                                                (map (fn [[token {:keys [number-of-tokens]}]]
-                                                       {:token-type       token
-                                                        :number-of-tokens number-of-tokens})))})
-                                (when bane?
-                                  {:bane? true}))}))))))
+(defn view-card [{{:keys [buys player-no phase]
+                   :as   player} :player
+                  choice         :choice
+                  :as            game}
+                 {{:keys [name bane?] :as card} :card
+                  :keys                         [tokens pile-size total-pile-size]
+                  :or                           {pile-size 0}}]
+  (let [{:keys [coins debt]} (get-coins player)
+        types (ut/get-types game card)
+        cost  (ut/get-cost game card)
+        {:keys [coin-cost] :as buy-cost} (ut/get-buy-cost game player-no card)]
+    (merge {:name            name
+            :name-ui         (ut/format-name name)
+            :types           types
+            :mixed-cost      cost
+            :number-of-cards pile-size}
+           (when (and total-pile-size
+                      (> total-pile-size pile-size))
+             {:total-number-of-cards total-pile-size})
+           (when (not= cost buy-cost)
+             {:buy-cost buy-cost})
+           (when (and (#{:action :pay :buy} phase)
+                      (not choice)
+                      (pos? pile-size)
+                      buys (pos? buys)
+                      coins (>= coins coin-cost)
+                      (not debt)
+                      (ut/card-buyable? game player-no card))
+             {:interaction :buyable})
+           (choice-interaction name :supply choice)
+           (when tokens
+             {:tokens (->> tokens
+                           (map (fn [[token {:keys [number-of-tokens]}]]
+                                  {:token-type       token
+                                   :number-of-tokens number-of-tokens})))})
+           (when bane?
+             {:bane? true}))))
+
+(defn view-supply [{:keys [supply choice] :as game}]
+  (->> supply
+       (map (fn [{:keys [split-pile hidden?] :as pile}]
+              (let [top-card  (view-card game (ut/access-top-card pile))
+                    all-cards (some->> split-pile
+                                       (filter :pile-size)
+                                       (map (fn [{:keys [card pile-size]
+                                                  :or   {pile-size 0}}]
+                                              (let [{:keys [name bane?]} card
+                                                    types (ut/get-types game card)
+                                                    cost  (ut/get-cost game card)]
+                                                (if (= name (:name top-card))
+                                                  (dissoc top-card
+                                                          :total-number-of-cards
+                                                          (when hidden? :number-of-cards))
+                                                  (merge {:name       name
+                                                          :name-ui    (ut/format-name name)
+                                                          :types      types
+                                                          :mixed-cost cost}
+                                                         (when-not hidden?
+                                                           {:number-of-cards pile-size})
+                                                         (choice-interaction name :supply choice)
+                                                         (when bane?
+                                                           {:bane? true})))))))]
+                (merge {:card top-card}
+                       (when split-pile
+                         {:cards (cond-> all-cards
+                                         hidden? (->> distinct
+                                                      (sort-by :name-ui)))})))))))
 
 (defn view-extra-cards [{extra-cards :extra-cards
                          choice      :choice

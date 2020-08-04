@@ -36,7 +36,7 @@
 
 ; Front End:
 ; show Actions as unbuyable when Deluded (and in action phase)
-; make extra-cards (Prizes, Spirits, etc.) and unique cards (Zombies & Heirlooms) visible/choosable for Wishing Well / Doctor / Journeyman / Pursue
+; make non-pile cards (Zombies, Shelters & Heirlooms) visible/choosable for Wishing Well / Doctor / Journeyman / Mystic / Rebuild / Pursue
 ; hide revealed cards on any movement (Border Guard)
 ; show face-down cards in trash (Necromancer)
 ; make "any order" option for all topdecking (Sentry, Navigator, Rabble, Doctor, Seer, Night Watchman)

@@ -246,7 +246,7 @@
                   {:card sprawling-castle :pile-size 1}
                   {:card grand-castle :pile-size 1}
                   {:card kings-castle :pile-size one-or-two}
-                  {:card castles :pile-size 0}]}))
+                  {:card castles}]}))
 
 (effects/register {::humble-castle-victory-points   humble-castle-victory-points
                    ::small-castle-trash-from-area   small-castle-trash-from-area

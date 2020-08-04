@@ -116,8 +116,8 @@
                         (map (fn [card-name]
                                (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
                                  (ut/get-cost game card))))
-                        (map :coin-cost)
-                        (apply + 0))]
+                        (keep :coin-cost)
+                        (apply +))]
     (push-effect-stack game {:player-no player-no
                              :effects   [[:trash-from-hand {:card-names card-names}]
                                          [:give-choice {:text    (str "Gain a card costing exactly $" total-cost ".")

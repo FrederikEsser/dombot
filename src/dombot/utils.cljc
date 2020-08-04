@@ -102,10 +102,12 @@
 (defn access-top-card [{:keys [split-pile hidden?] :as pile}]
   (if split-pile
     (let [total-pile-size (->> split-pile
-                               (map :pile-size)
+                               (keep :pile-size)
                                (apply +))]
       (merge (or (->> split-pile
-                      (filter (comp pos? :pile-size))
+                      (filter (fn [{:keys [pile-size]}]
+                                (and pile-size
+                                     (pos? pile-size))))
                       first)
                  (last split-pile))
              (if hidden?
@@ -227,6 +229,7 @@
                          :pirate-ship :salvager
                          :trade-route :city
                          :harvest :tournament :trusty-steed
+                         :forager :storeroom :ironmonger :mercenary
                          :giant :miser :teacher
                          :chariot-race :farmers'-market :sacrifice} name)))
     (conj types :treasure)
