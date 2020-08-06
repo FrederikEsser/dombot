@@ -7,7 +7,7 @@
             [dombot.cards.common :refer :all]
             [dombot.cards.intrigue :as intrigue :refer :all]
             [dombot.cards.empires :refer [patrician emporium]]
-            [dombot.cards.nocturne :refer [will-o-wisp]])
+            [dombot.cards.nocturne :refer [fool lucky-coin will-o-wisp]])
   (:refer-clojure :exclude [replace]))
 
 (defn fixture [f]
@@ -2036,6 +2036,19 @@
                        :play-area      [wishing-well]
                        :actions        1
                        :revealed-cards {:hand 1}}]}))
+    (is (= (-> {:non-pile-cards [lucky-coin]
+                :supply         (base/supply 2 8)
+                :players        [{:hand    [wishing-well]
+                                  :deck    [fool lucky-coin]
+                                  :actions 1}]}
+               (play 0 :wishing-well)
+               (choose {:area :non-pile-cards :card-name :lucky-coin}))
+           {:non-pile-cards [lucky-coin]
+            :supply         (base/supply 2 8)
+            :players        [{:hand           [fool lucky-coin]
+                              :play-area      [wishing-well]
+                              :actions        1
+                              :revealed-cards {:hand 1}}]}))
     (is (= (-> {:supply  (base/supply 2 8)
                 :players [{:hand    [wishing-well]
                            :deck    [silver]

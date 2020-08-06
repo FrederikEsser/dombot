@@ -592,13 +592,8 @@
              :type   :event
              :cost   2
              :on-buy [[:give-buys 1]
-                      [:give-choice {:text    "Name a card. Reveal the top 4 cards from your deck. Put the matches back and discard the rest."
-                                     :choice  ::pursue-reveal
-                                     :options [:mixed
-                                               [:supply {:all true}]
-                                               [:extra-cards {:all true}]]
-                                     :min     1
-                                     :max     1}]]})
+                      [:name-a-card {:text   "Name a card. Reveal the top 4 cards from your deck. Put the matches back and discard the rest."
+                                     :effect ::pursue-reveal}]]})
 
 (defn- reap-play-gold [game {:keys [player-no set-aside]}]
   (-> game

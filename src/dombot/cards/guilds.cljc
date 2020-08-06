@@ -127,13 +127,7 @@
              :set     :guilds
              :types   #{:action}
              :cost    3
-             :effects [[:give-choice {:text    "Name a card."
-                                      :choice  ::doctor-reveal
-                                      :options [:mixed
-                                                [:supply {:all true}]
-                                                [:extra-cards {:all true}]]
-                                      :min     1
-                                      :max     1}]]
+             :effects [[:name-a-card {:effect ::doctor-reveal}]]
              :overpay ::doctor-overpay})
 
 (defn- herald-play-action [game {:keys [player-no]}]
@@ -186,13 +180,7 @@
                  :set     :guilds
                  :types   #{:action}
                  :cost    5
-                 :effects [[:give-choice {:text    "Name a card."
-                                          :choice  ::journeyman-reveal
-                                          :options [:mixed
-                                                    [:supply {:all true}]
-                                                    [:extra-cards {:all true}]]
-                                          :min     1
-                                          :max     1}]]})
+                 :effects [[:name-a-card {:effect ::journeyman-reveal}]]})
 
 (defn- masterpiece-overpay [game {:keys [player-no amount]}]
   (push-effect-stack game {:player-no player-no

@@ -152,7 +152,11 @@
                                (into {}))
         heirlooms         (->> kingdom
                                (keep :heirloom))
-        shelters?         (-> kingdom second :set #{:dark-ages})]
+        shelters?         (-> kingdom second :set #{:dark-ages})
+        non-pile-cards    (concat heirlooms
+                                  (when shelters?
+                                    dark-ages/shelters)
+                                  (mapcat :non-pile-cards kingdom))]
     (ut/reset-ids!)
     (as-> (merge
             {:mode                  mode
@@ -165,6 +169,8 @@
              :track-played-actions? true
              :current-player        starting-player
              :starting-player       starting-player}
+            (when (not-empty non-pile-cards)
+              {:non-pile-cards (vec non-pile-cards)})
             (when (not-empty events)
               {:events events})
             (when (not-empty landmarks)

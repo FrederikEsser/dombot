@@ -398,6 +398,11 @@
 
 (effects/register-options {:extra-cards options-from-extra-cards})
 
+(defn options-from-non-pile-cards [{:keys [non-pile-cards]} player-no card-id opts]
+  (map :name non-pile-cards))
+
+(effects/register-options {:non-pile-cards options-from-non-pile-cards})
+
 (defn options-from-projects [{:keys [projects] :as game} player-no card-id & [{:keys [names]}]]
   (cond->> (vals projects)
            names (filter (comp names :name))

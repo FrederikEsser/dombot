@@ -1133,27 +1133,30 @@
                               :effects   [[:card-effect {:card card}]]})))
     game))
 
+(def zombies [zombie-apprentice
+              zombie-mason
+              zombie-spy])
+
 (defn- necromancer-setup [game _]
-  (assoc game :trash (->> [zombie-apprentice
-                           zombie-mason
-                           zombie-spy]
+  (assoc game :trash (->> zombies
                           (map ut/give-id!))))
 
 (effects/register {::necromancer-play-action necromancer-play-action
                    ::necromancer-setup       necromancer-setup})
 
-(def necromancer {:name    :necromancer
-                  :set     :nocturne
-                  :types   #{:action}
-                  :cost    4
-                  :effects [[:give-choice {:text    "Play a face up, non-Duration Action card from the Trash."
-                                           :choice  ::necromancer-play-action
-                                           :options [:trash {:face     :up
-                                                             :not-type :duration
-                                                             :type     :action}]
-                                           :min     1
-                                           :max     1}]]
-                  :setup   [[::necromancer-setup]]})
+(def necromancer {:name           :necromancer
+                  :set            :nocturne
+                  :types          #{:action}
+                  :cost           4
+                  :effects        [[:give-choice {:text    "Play a face up, non-Duration Action card from the Trash."
+                                                  :choice  ::necromancer-play-action
+                                                  :options [:trash {:face     :up
+                                                                    :not-type :duration
+                                                                    :type     :action}]
+                                                  :min     1
+                                                  :max     1}]]
+                  :non-pile-cards zombies
+                  :setup          [[::necromancer-setup]]})
 
 (def night-watchman {:name    :night-watchman
                      :set     :nocturne

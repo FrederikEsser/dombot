@@ -631,15 +631,16 @@
                                                    [:put-revealed-into-hand {:card-name card-name}]
                                                    [:topdeck-from-revealed {:card-name name}])]}))))
 
-(defn name-a-card [game {:keys [player-no effect]}]
+(defn name-a-card [game {:keys [player-no text effect]}]
   (let [[card] (get-in game [:players player-no :deck])]
     (cond-> game
             card (give-choice {:player-no player-no
-                               :text      "Name a card."
+                               :text      (or text "Name a card.")
                                :choice    effect
                                :options   [:mixed
                                            [:supply {:all true}]
-                                           [:extra-cards {:all true}]]
+                                           [:extra-cards {:all true}]
+                                           [:non-pile-cards {}]]
                                :min       1
                                :max       1}))))
 

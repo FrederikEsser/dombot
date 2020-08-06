@@ -108,6 +108,19 @@
                                :number-of-cards number-of-cards}
                               (choice-interaction name :extra-cards choice))})))))
 
+(defn view-non-pile-cards [{non-pile-cards :non-pile-cards
+                            choice         :choice
+                            :as            game}]
+  (->> non-pile-cards
+       (map (fn [{:keys [name] :as card}]
+              (let [types (ut/get-types game card)
+                    cost  (ut/get-cost game card)]
+                {:card (merge {:name       name
+                               :name-ui    (ut/format-name name)
+                               :types      types
+                               :mixed-cost cost}
+                              (choice-interaction name :non-pile-cards choice))})))))
+
 (defn view-events [{events         :events
                     {:keys [buys phase bought-events]
                      :as   player} :player
@@ -457,7 +470,7 @@
                                      (<= 3 potential-coins)) "You can buy a card."
                                 (some (comp :night (partial ut/get-types game)) hand) "You can play Night cards.")}))
 
-(defn view-game [{:keys [supply extra-cards artifacts events landmarks projects druid-boons boons hexes
+(defn view-game [{:keys [supply extra-cards non-pile-cards artifacts events landmarks projects druid-boons boons hexes
                          trade-route-mat players effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
@@ -482,6 +495,9 @@
            (when extra-cards
              {:extra-cards (view-extra-cards (merge game {:player (assoc player :player-no current-player)
                                                           :choice choice}))})
+           (when non-pile-cards
+             {:non-pile-cards (view-non-pile-cards (merge game {:player (assoc player :player-no current-player)
+                                                                :choice choice}))})
            (when trade-route-mat
              {:trade-route-mat trade-route-mat})
            (when events
