@@ -16,6 +16,7 @@
 ; choose by trigger id when set aside cards - show different cards
 
 ; Bugs & Testing:
+; 2019 Errata to Embargo and Pillage - http://forum.dominionstrategy.com/index.php?topic=19892.0
 ; Fix Innovation in others' turns (fx Looters / Ambassador)
 ; Fix Demand on Skulk (topdecks gained Gold)
 ; Fix Miser with no Copper in hand

@@ -298,17 +298,23 @@
               :on-trash [[:draw 3]]
               :setup    [[::setup-ruins]]})
 
+(defn death-cart-trash [game {:keys [player-no choice]}]
+  (cond-> game
+          choice (push-effect-stack {:player-no player-no
+                                     :effects   [[:trash-from-area {:choice choice}]
+                                                 [:give-coins 5]]})))
+
+(effects/register {::death-cart-trash death-cart-trash})
+
 (def death-cart {:name    :death-cart
                  :set     :dark-ages
                  :types   #{:action :looter}
                  :cost    4
-                 :effects [[:give-coins 5]
-                           [:give-choice {:text    "Trash an Action card from your hand or the Death Cart."
-                                          :choice  :trash-from-area
+                 :effects [[:give-choice {:text    "You may trash this or an Action card from your hand, for $5."
+                                          :choice  ::death-cart-trash
                                           :options [:mixed
                                                     [:player :hand {:type :action}]
                                                     [:player :play-area {:this true}]]
-                                          :min     1
                                           :max     1}]]
                  :on-gain [[::gain-ruins]
                            [::gain-ruins]]

@@ -456,6 +456,25 @@
                          :actions 0
                          :coins   5}]
               :trash   [death-cart]}))
+      (is (= (-> {:players [{:hand    [death-cart scavenger]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :death-cart)
+                 (choose nil))
+             {:players [{:hand      [scavenger]
+                         :play-area [death-cart]
+                         :actions   0
+                         :coins     0}]}))
+      (is (= (-> {:players [{:hand    [throne-room death-cart]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :throne-room)
+                 (choose :death-cart)
+                 (choose {:area :play-area :card-name :death-cart}))
+             {:players [{:play-area [throne-room]
+                         :actions   0
+                         :coins     5}]
+              :trash   [death-cart]}))
       (is (thrown-with-msg? AssertionError #"Choose error"
                             (-> {:players [{:hand    [death-cart copper]
                                             :actions 1
