@@ -135,9 +135,13 @@
                                            :max     3}]]})
 
 (defn duke-victory-points [cards]
-  (->> cards
-       (filter (comp #{:duchy} :name))
-       count))
+  (let [duchy-count (->> cards
+                         (filter (comp #{:duchy} :name))
+                         count)]
+    {:victory-points duchy-count
+     :notes          (str duchy-count " " (if (= 1 duchy-count)
+                                            "Duchy"
+                                            "Duchies"))}))
 
 (effects/register {::duke-victory-points duke-victory-points})
 

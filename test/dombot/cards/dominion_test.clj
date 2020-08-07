@@ -478,7 +478,34 @@
            10))
     (is (= (calc-victory-points {:deck (concat (repeat 10 gardens)
                                                (repeat 10 copper))})
-           20))))
+           20)))
+  (testing "Gardens"
+    (is (= (calc-score {:deck (repeat 9 gardens)})
+           [{:card            gardens
+             :vp-per-card     0
+             :number-of-cards 9
+             :victory-points  0
+             :notes           "9 cards"}]))
+    (is (= (calc-score {:deck (repeat 10 gardens)})
+           [{:card            gardens
+             :vp-per-card     1
+             :number-of-cards 10
+             :victory-points  10
+             :notes           "10 cards"}]))
+    (is (= (calc-score {:deck (concat (repeat 10 gardens)
+                                      (repeat 9 copper))})
+           [{:card            gardens
+             :vp-per-card     1
+             :number-of-cards 10
+             :victory-points  10
+             :notes           "19 cards"}]))
+    (is (= (calc-score {:deck (concat (repeat 10 gardens)
+                                      (repeat 10 copper))})
+           [{:card            gardens
+             :vp-per-card     2
+             :number-of-cards 10
+             :victory-points  20
+             :notes           "20 cards"}]))))
 
 (deftest harbinger-test
   (testing "Harbinger"

@@ -5,12 +5,14 @@
             [dombot.effects :as effects]))
 
 (defn fairgrounds-victory-points [cards]
-  (-> (->> cards
-           (map :name)
-           set
-           count)
-      (quot 5)
-      (* 2)))
+  (let [different-cards (->> cards
+                             (map :name)
+                             set
+                             count)]
+    {:victory-points (-> different-cards
+                         (quot 5)
+                         (* 2))
+     :notes          (str different-cards " differently named cards")}))
 
 (effects/register {::fairgrounds-victory-points fairgrounds-victory-points})
 

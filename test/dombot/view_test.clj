@@ -819,37 +819,35 @@
                                           :coins          0
                                           :buys           0
                                           :phase          :end-of-game
-                                          :victory-points 21
                                           :winner         true}})
-           {:name-ui        "John Doe"
-            :active?        false
-            :hand           [{:name    :moat
-                              :name-ui "Moat"
-                              :types   #{:action :reaction}}
-                             {:name    :remodel
-                              :name-ui "Remodel"
-                              :types   #{:action}}
-                             {:name            :copper
-                              :name-ui         "Copper"
-                              :types           #{:treasure}
-                              :number-of-cards 2}
-                             {:name    :estate
-                              :name-ui "Estate"
-                              :types   #{:victory}}]
-            :play-area      []
-            :deck           {}
-            :discard        {}
-            :island-mat     [{:name    :island
-                              :name-ui "Island"
-                              :types   #{:action :victory}}
-                             {:name    :estate
-                              :name-ui "Estate"
-                              :types   #{:victory}}]
-            :actions        0
-            :coins          0
-            :buys           0
-            :victory-points 21
-            :winner?        true}))
+           {:name-ui    "John Doe"
+            :active?    false
+            :hand       [{:name    :moat
+                          :name-ui "Moat"
+                          :types   #{:action :reaction}}
+                         {:name    :remodel
+                          :name-ui "Remodel"
+                          :types   #{:action}}
+                         {:name            :copper
+                          :name-ui         "Copper"
+                          :types           #{:treasure}
+                          :number-of-cards 2}
+                         {:name    :estate
+                          :name-ui "Estate"
+                          :types   #{:victory}}]
+            :play-area  []
+            :deck       {}
+            :discard    {}
+            :island-mat [{:name    :island
+                          :name-ui "Island"
+                          :types   #{:action :victory}}
+                         {:name    :estate
+                          :name-ui "Estate"
+                          :types   #{:victory}}]
+            :actions    0
+            :coins      0
+            :buys       0
+            :winner?    true}))
     (is (= (view-player {:active-player? false
                          :player         {:name           "John Doe"
                                           :hand           [copper copper remodel estate moat]
@@ -857,31 +855,29 @@
                                           :coins          0
                                           :buys           0
                                           :phase          :end-of-game
-                                          :victory-points 21
                                           :winner         true}})
-           {:name-ui        "John Doe"
-            :active?        false
-            :hand           [{:name    :moat
-                              :name-ui "Moat"
-                              :types   #{:action :reaction}}
-                             {:name    :remodel
-                              :name-ui "Remodel"
-                              :types   #{:action}}
-                             {:name            :copper
-                              :name-ui         "Copper"
-                              :types           #{:treasure}
-                              :number-of-cards 2}
-                             {:name    :estate
-                              :name-ui "Estate"
-                              :types   #{:victory}}]
-            :play-area      []
-            :deck           {}
-            :discard        {}
-            :actions        0
-            :coins          0
-            :buys           0
-            :victory-points 21
-            :winner?        true}))))
+           {:name-ui   "John Doe"
+            :active?   false
+            :hand      [{:name    :moat
+                         :name-ui "Moat"
+                         :types   #{:action :reaction}}
+                        {:name    :remodel
+                         :name-ui "Remodel"
+                         :types   #{:action}}
+                        {:name            :copper
+                         :name-ui         "Copper"
+                         :types           #{:treasure}
+                         :number-of-cards 2}
+                        {:name    :estate
+                         :name-ui "Estate"
+                         :types   #{:victory}}]
+            :play-area []
+            :deck      {}
+            :discard   {}
+            :actions   0
+            :coins     0
+            :buys      0
+            :winner?   true}))))
 
 (deftest trash-view-test
   (testing "Trash view"

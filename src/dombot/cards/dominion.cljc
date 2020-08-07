@@ -102,7 +102,8 @@
                          [:give-buys 1]]})
 
 (defn gardens-victory-points [cards]
-  (quot (count cards) 10))
+  {:victory-points (quot (count cards) 10)
+   :notes          (str (count cards) " cards")})
 
 (effects/register {::gardens-victory-points gardens-victory-points})
 

@@ -1072,7 +1072,31 @@
            6))
     (is (= (calc-victory-points {:deck [humble-castle crumbling-castle small-castle haunted-castle
                                         opulent-castle sprawling-castle grand-castle kings-castle]})
-           (+ 8 1 2 2 3 4 5 16)))))
+           (+ 8 1 2 2 3 4 5 16))))
+  (testing "Castles scores"
+    (is (= (calc-score {:deck [humble-castle]})
+           [{:card            humble-castle
+             :vp-per-card     1
+             :number-of-cards 1
+             :victory-points  1
+             :notes           "1 Castle"}]))
+    (is (= (calc-score {:deck [kings-castle]})
+           [{:card            kings-castle
+             :vp-per-card     2
+             :number-of-cards 1
+             :victory-points  2
+             :notes           "1 Castle"}]))
+    (is (= (calc-score {:deck [humble-castle kings-castle]})
+           [{:card            humble-castle
+             :vp-per-card     2
+             :number-of-cards 1
+             :victory-points  2
+             :notes           "2 Castles"}
+            {:card            kings-castle
+             :vp-per-card     4
+             :number-of-cards 1
+             :victory-points  4
+             :notes           "2 Castles"}]))))
 
 (deftest catapult-test
   (let [catapult (assoc catapult :id 0)
@@ -3394,393 +3418,6 @@
                          :coins   0
                          :buys    0}]})))))
 
-(deftest landmark-scoring-test-test
-  (testing "Landmark scoring"
-    (is (= (-> {:landmarks {:bandit-ford bandit-ford}
-                :players   [{:hand [copper]}]}
-               calculate-victory-points)
-           {:landmarks {:bandit-ford bandit-ford}
-            :players   [{:hand           [copper]
-                         :victory-points 0}]}))
-    (is (= (-> {:landmarks {:bandit-ford bandit-ford}
-                :players   [{:hand [silver]}]}
-               calculate-victory-points)
-           {:landmarks {:bandit-ford bandit-ford}
-            :players   [{:hand           [silver]
-                         :victory-points -2}]}))
-    (is (= (-> {:landmarks {:bandit-ford bandit-ford}
-                :players   [{:hand [gold]}]}
-               calculate-victory-points)
-           {:landmarks {:bandit-ford bandit-ford}
-            :players   [{:hand           [gold]
-                         :victory-points -2}]}))
-    (is (= (-> {:landmarks {:bandit-ford bandit-ford}
-                :players   [{:hand [silver silver gold province]}]}
-               calculate-victory-points)
-           {:landmarks {:bandit-ford bandit-ford}
-            :players   [{:hand           [silver silver gold province]
-                         :victory-points 0}]}))
-    (is (= (-> {:landmarks {:fountain fountain}
-                :players   [{:hand (repeat 9 copper)}]}
-               calculate-victory-points)
-           {:landmarks {:fountain fountain}
-            :players   [{:hand           (repeat 9 copper)
-                         :victory-points 0}]}))
-    (is (= (-> {:landmarks {:fountain fountain}
-                :players   [{:hand (repeat 10 copper)}]}
-               calculate-victory-points)
-           {:landmarks {:fountain fountain}
-            :players   [{:hand           (repeat 10 copper)
-                         :victory-points 15}]}))
-    (is (= (-> {:landmarks {:fountain fountain}
-                :players   [{:hand (repeat 20 copper)}]}
-               calculate-victory-points)
-           {:landmarks {:fountain fountain}
-            :players   [{:hand           (repeat 20 copper)
-                         :victory-points 15}]}))
-    (is (= (-> {:landmarks {:keep keep-lm}
-                :players   [{:hand [copper]}
-                            {:hand [copper]}]}
-               calculate-victory-points)
-           {:landmarks {:keep keep-lm}
-            :players   [{:hand           [copper]
-                         :victory-points 5}
-                        {:hand           [copper]
-                         :victory-points 5}]}))
-    (is (= (-> {:landmarks {:keep keep-lm}
-                :players   [{:hand [copper]}
-                            {:hand [copper silver]}]}
-               calculate-victory-points)
-           {:landmarks {:keep keep-lm}
-            :players   [{:hand           [copper]
-                         :victory-points 5}
-                        {:hand           [copper silver]
-                         :victory-points 10}]}))
-    (is (= (-> {:landmarks {:keep keep-lm}
-                :players   [{:hand [copper copper]}
-                            {:hand [copper silver]}]}
-               calculate-victory-points)
-           {:landmarks {:keep keep-lm}
-            :players   [{:hand           [copper copper]
-                         :victory-points 5}
-                        {:hand           [copper silver]
-                         :victory-points 5}]}))
-    (is (= (-> {:landmarks {:keep keep-lm}
-                :players   [{:hand [province]}
-                            {:hand [copper silver]}]}
-               calculate-victory-points)
-           {:landmarks {:keep keep-lm}
-            :players   [{:hand           [province]
-                         :victory-points 6}
-                        {:hand           [copper silver]
-                         :victory-points 10}]}))
-    (is (= (-> {:landmarks {:keep keep-lm}
-                :players   [{:hand [archive crown]}
-                            {:hand [copper copper silver]}
-                            {:hand [copper silver silver gold]}]}
-               calculate-victory-points)
-           {:landmarks {:keep keep-lm}
-            :players   [{:hand           [archive crown]
-                         :victory-points 5}
-                        {:hand           [copper copper silver]
-                         :victory-points 5}
-                        {:hand           [copper silver silver gold]
-                         :victory-points 10}]}))
-    (is (= (-> {:landmarks {:museum museum}
-                :players   [{:hand [copper]}]}
-               calculate-victory-points)
-           {:landmarks {:museum museum}
-            :players   [{:hand           [copper]
-                         :victory-points 2}]}))
-    (is (= (-> {:landmarks {:museum museum}
-                :players   [{:hand [copper silver]}]}
-               calculate-victory-points)
-           {:landmarks {:museum museum}
-            :players   [{:hand           [copper silver]
-                         :victory-points 4}]}))
-    (is (= (-> {:landmarks {:museum museum}
-                :players   [{:hand [copper silver gold archive crown]}]}
-               calculate-victory-points)
-           {:landmarks {:museum museum}
-            :players   [{:hand           [copper silver gold archive crown]
-                         :victory-points 10}]}))
-    (is (= (-> {:landmarks {:museum museum}
-                :players   [{:hand [copper silver gold estate duchy province]}]}
-               calculate-victory-points)
-           {:landmarks {:museum museum}
-            :players   [{:hand           [copper silver gold estate duchy province]
-                         :victory-points 22}]}))
-    (is (= (-> {:landmarks {:museum museum}
-                :players   [{:hand (repeat 3 copper)}]}
-               calculate-victory-points)
-           {:landmarks {:museum museum}
-            :players   [{:hand           (repeat 3 copper)
-                         :victory-points 2}]}))
-    (is (= (-> {:landmarks {:museum museum}
-                :players   [{:hand (concat (repeat 3 copper) (repeat 3 estate))}]}
-               calculate-victory-points)
-           {:landmarks {:museum museum}
-            :players   [{:hand           (concat (repeat 3 copper) (repeat 3 estate))
-                         :victory-points 7}]}))
-    (is (= (-> {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:engineer})}
-                :players   [{:hand [engineer]}]}
-               calculate-victory-points)
-           {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:engineer})}
-            :players   [{:hand           [engineer]
-                         :victory-points 2}]}))
-    (testing "Setup"
-      (is (= (-> {:landmarks {:obelisk obelisk}
-                  :supply    [{:card copper :pile-size 46}
-                              {:card silver :pile-size 40}
-                              {:card gold :pile-size 30}
-                              {:card engineer :pile-size 10}]
-                  :players   [{}]}
-                 setup-game)
-             {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:engineer})}
-              :supply    [{:card copper :pile-size 46}
-                          {:card silver :pile-size 40}
-                          {:card gold :pile-size 30}
-                          {:card engineer :pile-size 10}]
-              :players   [{}]})))
-    (is (= (-> {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:settlers :bustling-village})}
-                :players   [{:hand [settlers settlers bustling-village]}]}
-               calculate-victory-points)
-           {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:settlers :bustling-village})}
-            :players   [{:hand           [settlers settlers bustling-village]
-                         :victory-points 6}]}))
-    (is (= (-> {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:engineer})}
-                :players   [{:hand [engineer settlers copper]}]}
-               calculate-victory-points)
-           {:landmarks {:obelisk (assoc obelisk :chosen-cards #{:engineer})}
-            :players   [{:hand           [engineer settlers copper]
-                         :victory-points 2}]}))
-    (is (= (-> {:landmarks {:orchard orchard}
-                :players   [{:hand (concat (repeat 3 copper) (repeat 3 estate))}]}
-               calculate-victory-points)
-           {:landmarks {:orchard orchard}
-            :players   [{:hand           (concat (repeat 3 copper) (repeat 3 estate))
-                         :victory-points 3}]}))
-    (is (= (-> {:landmarks {:orchard orchard}
-                :players   [{:hand (repeat 2 engineer)}]}
-               calculate-victory-points)
-           {:landmarks {:orchard orchard}
-            :players   [{:hand           (repeat 2 engineer)
-                         :victory-points 0}]}))
-    (is (= (-> {:landmarks {:orchard orchard}
-                :players   [{:hand (repeat 3 engineer)}]}
-               calculate-victory-points)
-           {:landmarks {:orchard orchard}
-            :players   [{:hand           (repeat 3 engineer)
-                         :victory-points 4}]}))
-    (is (= (-> {:landmarks {:orchard orchard}
-                :players   [{:hand (concat (repeat 3 engineer) (repeat 3 villa))}]}
-               calculate-victory-points)
-           {:landmarks {:orchard orchard}
-            :players   [{:hand           (concat (repeat 3 engineer) (repeat 3 villa))
-                         :victory-points 8}]}))
-    (is (= (-> {:landmarks {:orchard orchard}
-                :players   [{:hand (repeat 3 mill)}]}
-               calculate-victory-points)
-           {:landmarks {:orchard orchard}
-            :players   [{:hand           (repeat 3 mill)
-                         :victory-points 7}]}))
-    (is (= (-> {:landmarks {:palace palace}
-                :players   [{:hand (repeat 7 copper)}]}
-               calculate-victory-points)
-           {:landmarks {:palace palace}
-            :players   [{:hand           (repeat 7 copper)
-                         :victory-points 0}]}))
-    (is (= (-> {:landmarks {:palace palace}
-                :players   [{:hand (concat (repeat 7 copper)
-                                           (repeat 3 silver)
-                                           (repeat 2 gold))}]}
-               calculate-victory-points)
-           {:landmarks {:palace palace}
-            :players   [{:hand           (concat (repeat 7 copper)
-                                                 (repeat 3 silver)
-                                                 (repeat 2 gold))
-                         :victory-points 6}]}))
-    (is (= (-> {:landmarks {:palace palace}
-                :players   [{:hand (concat (repeat 3 copper)
-                                           (repeat 3 silver)
-                                           (repeat 5 gold))}]}
-               calculate-victory-points)
-           {:landmarks {:palace palace}
-            :players   [{:hand           (concat (repeat 3 copper)
-                                                 (repeat 3 silver)
-                                                 (repeat 5 gold))
-                         :victory-points 9}]}))
-    (is (= (-> {:landmarks {:palace palace}
-                :players   [{:hand (concat (repeat 3 silver)
-                                           (repeat 5 gold))}]}
-               calculate-victory-points)
-           {:landmarks {:palace palace}
-            :players   [{:hand           (concat (repeat 3 silver)
-                                                 (repeat 5 gold))
-                         :victory-points 0}]}))
-    (is (= (-> {:landmarks {:tower tower}
-                :supply    [{:card engineer :pile-size 0}]
-                :players   [{:hand [engineer]}]}
-               calculate-victory-points)
-           {:landmarks {:tower tower}
-            :supply    [{:card engineer :pile-size 0}]
-            :players   [{:hand           [engineer]
-                         :victory-points 1}]}))
-    (is (= (-> {:landmarks {:tower tower}
-                :supply    [{:card engineer :pile-size 0}]
-                :players   [{:hand (repeat 5 engineer)}]}
-               calculate-victory-points)
-           {:landmarks {:tower tower}
-            :supply    [{:card engineer :pile-size 0}]
-            :players   [{:hand           (repeat 5 engineer)
-                         :victory-points 5}]}))
-    (is (= (-> {:landmarks {:tower tower}
-                :supply    [{:card engineer :pile-size 1}]
-                :players   [{:hand (repeat 5 engineer)}]}
-               calculate-victory-points)
-           {:landmarks {:tower tower}
-            :supply    [{:card engineer :pile-size 1}]
-            :players   [{:hand           (repeat 5 engineer)
-                         :victory-points 0}]}))
-    (is (= (-> {:landmarks {:tower tower}
-                :supply    [{:card province :pile-size 0}]
-                :players   [{:hand [province]}]}
-               calculate-victory-points)
-           {:landmarks {:tower tower}
-            :supply    [{:card province :pile-size 0}]
-            :players   [{:hand           [province]
-                         :victory-points 6}]}))
-    (is (= (-> {:landmarks {:tower tower}
-                :supply    [{:card curse :pile-size 0}]
-                :players   [{:hand (repeat 4 curse)}]}
-               calculate-victory-points)
-           {:landmarks {:tower tower}
-            :supply    [{:card curse :pile-size 0}]
-            :players   [{:hand           (repeat 4 curse)
-                         :victory-points 0}]}))
-    (is (= (-> {:landmarks {:tower tower}
-                :supply    [{:split-pile [{:card encampment :pile-size 0}
-                                          {:card plunder :pile-size 0}]}]
-                :players   [{:hand [encampment encampment plunder plunder plunder]}]}
-               calculate-victory-points)
-           {:landmarks {:tower tower}
-            :supply    [{:split-pile [{:card encampment :pile-size 0}
-                                      {:card plunder :pile-size 0}]}]
-            :players   [{:hand           [encampment encampment plunder plunder plunder]
-                         :victory-points 5}]}))
-    (is (= (-> {:landmarks {:tower tower}
-                :supply    [{:split-pile [{:card encampment :pile-size 0}
-                                          {:card plunder :pile-size 1}]}]
-                :players   [{:hand [encampment encampment plunder plunder plunder]}]}
-               calculate-victory-points)
-           {:landmarks {:tower tower}
-            :supply    [{:split-pile [{:card encampment :pile-size 0}
-                                      {:card plunder :pile-size 1}]}]
-            :players   [{:hand           [encampment encampment plunder plunder plunder]
-                         :victory-points 0}]}))
-    (is (= (-> {:landmarks   {:tower tower}
-                :extra-cards [{:card ghost :pile-size 0}]
-                :players     [{:hand [ghost]}]}
-               calculate-victory-points)
-           {:landmarks   {:tower tower}
-            :extra-cards [{:card ghost :pile-size 0}]
-            :players     [{:hand           [ghost]
-                           :victory-points 0}]}))
-    (is (= (-> {:landmarks {:triumphal-arch triumphal-arch}
-                :players   [{:hand [engineer]}]}
-               calculate-victory-points)
-           {:landmarks {:triumphal-arch triumphal-arch}
-            :players   [{:hand           [engineer]
-                         :victory-points 0}]}))
-    (is (= (-> {:landmarks {:triumphal-arch triumphal-arch}
-                :players   [{:hand [engineer villa]}]}
-               calculate-victory-points)
-           {:landmarks {:triumphal-arch triumphal-arch}
-            :players   [{:hand           [engineer villa]
-                         :victory-points 3}]}))
-    (is (= (-> {:landmarks {:triumphal-arch triumphal-arch}
-                :players   [{:hand [engineer engineer engineer villa]}]}
-               calculate-victory-points)
-           {:landmarks {:triumphal-arch triumphal-arch}
-            :players   [{:hand           [engineer engineer engineer villa]
-                         :victory-points 3}]}))
-    (is (= (-> {:landmarks {:triumphal-arch triumphal-arch}
-                :players   [{:hand [engineer engineer villa villa enchantress]}]}
-               calculate-victory-points)
-           {:landmarks {:triumphal-arch triumphal-arch}
-            :players   [{:hand           [engineer engineer villa villa enchantress]
-                         :victory-points 6}]}))
-    (is (= (-> {:landmarks {:triumphal-arch triumphal-arch}
-                :players   [{:hand (concat (repeat 7 copper)
-                                           [engineer engineer villa])}]}
-               calculate-victory-points)
-           {:landmarks {:triumphal-arch triumphal-arch}
-            :players   [{:hand           (concat (repeat 7 copper)
-                                                 [engineer engineer villa])
-                         :victory-points 3}]}))
-    (is (= (-> {:landmarks {:triumphal-arch triumphal-arch}
-                :players   [{:hand (concat (repeat 7 copper)
-                                           (repeat 3 estate)
-                                           [engineer engineer villa])}]}
-               calculate-victory-points)
-           {:landmarks {:triumphal-arch triumphal-arch}
-            :players   [{:hand           (concat (repeat 7 copper)
-                                                 (repeat 3 estate)
-                                                 [engineer engineer villa])
-                         :victory-points 6}]}))
-    (is (= (-> {:landmarks {:triumphal-arch triumphal-arch}
-                :players   [{:hand (concat (repeat 7 copper)
-                                           (repeat 3 mill)
-                                           [engineer engineer villa])}]}
-               calculate-victory-points)
-           {:landmarks {:triumphal-arch triumphal-arch}
-            :players   [{:hand           (concat (repeat 7 copper)
-                                                 (repeat 3 mill)
-                                                 [engineer engineer villa])
-                         :victory-points 9}]}))
-    (is (= (-> {:landmarks {:wall wall}
-                :players   [{:hand (repeat 10 copper)}]}
-               calculate-victory-points)
-           {:landmarks {:wall wall}
-            :players   [{:hand           (repeat 10 copper)
-                         :victory-points 0}]}))
-    (is (= (-> {:landmarks {:wall wall}
-                :players   [{:hand (repeat 15 copper)}]}
-               calculate-victory-points)
-           {:landmarks {:wall wall}
-            :players   [{:hand           (repeat 15 copper)
-                         :victory-points 0}]}))
-    (is (= (-> {:landmarks {:wall wall}
-                :players   [{:hand (repeat 16 copper)}]}
-               calculate-victory-points)
-           {:landmarks {:wall wall}
-            :players   [{:hand           (repeat 16 copper)
-                         :victory-points -1}]}))
-    (is (= (-> {:landmarks {:wall wall}
-                :players   [{:hand (repeat 30 copper)}]}
-               calculate-victory-points)
-           {:landmarks {:wall wall}
-            :players   [{:hand           (repeat 30 copper)
-                         :victory-points -15}]}))
-    (is (= (-> {:landmarks {:wolf-den wolf-den}
-                :players   [{:hand [copper]}]}
-               calculate-victory-points)
-           {:landmarks {:wolf-den wolf-den}
-            :players   [{:hand           [copper]
-                         :victory-points -3}]}))
-    (is (= (-> {:landmarks {:wolf-den wolf-den}
-                :players   [{:hand [copper copper]}]}
-               calculate-victory-points)
-           {:landmarks {:wolf-den wolf-den}
-            :players   [{:hand           [copper copper]
-                         :victory-points 0}]}))
-    (is (= (-> {:landmarks {:wolf-den wolf-den}
-                :players   [{:hand [copper copper duchy]}]}
-               calculate-victory-points)
-           {:landmarks {:wolf-den wolf-den}
-            :players   [{:hand           [copper copper duchy]
-                         :victory-points 0}]}))))
-
 (deftest aqueduct-test
   (let [silver (assoc silver :id 1)
         estate (assoc estate :id 2)]
@@ -3909,6 +3546,54 @@
              {:landmarks {:arena (assoc arena :vp-tokens 12)}
               :players   [{:triggers [(assoc arena-trigger :id 1)]}
                           {:triggers [(assoc arena-trigger :id 2)]}]})))))
+
+(deftest bandit-ford-scoring-test
+  (testing "Bandit Ford"
+    (is (= (calculate-score {:landmarks {:bandit-ford bandit-ford}
+                             :players   [{:hand [copper]}]})
+           {:landmarks {:bandit-ford bandit-ford}
+            :players   [{:hand           [copper]
+                         :score          []
+                         :victory-points 0}]}))
+    (is (= (calculate-score {:landmarks {:bandit-ford bandit-ford}
+                             :players   [{:hand [silver]}]})
+           {:landmarks {:bandit-ford bandit-ford}
+            :players   [{:hand           [silver]
+                         :score          [{:landmark        bandit-ford
+                                           :card            silver
+                                           :vp-per-card     -2
+                                           :number-of-cards 1
+                                           :victory-points  -2}]
+                         :victory-points -2}]}))
+    (is (= (calculate-score {:landmarks {:bandit-ford bandit-ford}
+                             :players   [{:hand [gold]}]})
+           {:landmarks {:bandit-ford bandit-ford}
+            :players   [{:hand           [gold]
+                         :score          [{:landmark        bandit-ford
+                                           :card            gold
+                                           :vp-per-card     -2
+                                           :number-of-cards 1
+                                           :victory-points  -2}]
+                         :victory-points -2}]}))
+    (is (= (calculate-score {:landmarks {:bandit-ford bandit-ford}
+                             :players   [{:hand [silver silver gold province]}]})
+           {:landmarks {:bandit-ford bandit-ford}
+            :players   [{:hand           [silver silver gold province]
+                         :score          [{:landmark        bandit-ford
+                                           :card            gold
+                                           :vp-per-card     -2
+                                           :number-of-cards 1
+                                           :victory-points  -2}
+                                          {:landmark        bandit-ford
+                                           :card            silver
+                                           :vp-per-card     -2
+                                           :number-of-cards 2
+                                           :victory-points  -4}
+                                          {:card            province
+                                           :vp-per-card     6
+                                           :number-of-cards 1
+                                           :victory-points  6}]
+                         :victory-points 0}]}))))
 
 (deftest battlefield-test
   (testing "Battlefield"
@@ -4216,6 +3901,150 @@
              :players   [{:triggers [(assoc defiled-shrine-action-trigger :id 1)
                                      (assoc defiled-shrine-curse-trigger :id 2)]}]})))))
 
+(deftest fountain-scoring-test
+  (testing "Fountain"
+    (is (= (calculate-score {:landmarks {:fountain fountain}
+                             :players   [{}]})
+           {:landmarks {:fountain fountain}
+            :players   [{:score          [{:landmark       fountain
+                                           :victory-points 0
+                                           :notes          "0 Coppers"}]
+                         :victory-points 0}]}))
+    (is (= (calculate-score {:landmarks {:fountain fountain}
+                             :players   [{:hand [copper]}]})
+           {:landmarks {:fountain fountain}
+            :players   [{:hand           [copper]
+                         :score          [{:landmark       fountain
+                                           :victory-points 0
+                                           :notes          "1 Copper"}]
+                         :victory-points 0}]}))
+    (is (= (calculate-score {:landmarks {:fountain fountain}
+                             :players   [{:hand (repeat 9 copper)}]})
+           {:landmarks {:fountain fountain}
+            :players   [{:hand           (repeat 9 copper)
+                         :score          [{:landmark       fountain
+                                           :victory-points 0
+                                           :notes          "9 Coppers"}]
+                         :victory-points 0}]}))
+    (is (= (calculate-score {:landmarks {:fountain fountain}
+                             :players   [{:hand (repeat 10 copper)}]})
+           {:landmarks {:fountain fountain}
+            :players   [{:hand           (repeat 10 copper)
+                         :score          [{:landmark       fountain
+                                           :victory-points 15
+                                           :notes          "10 Coppers"}]
+                         :victory-points 15}]}))
+    (is (= (calculate-score {:landmarks {:fountain fountain}
+                             :players   [{:hand (repeat 20 copper)}]})
+           {:landmarks {:fountain fountain}
+            :players   [{:hand           (repeat 20 copper)
+                         :score          [{:landmark       fountain
+                                           :victory-points 15
+                                           :notes          "20 Coppers"}]
+                         :victory-points 15}]}))))
+
+(deftest keep-scoring-test
+  (testing "Keep"
+    (is (= (calculate-score {:landmarks {:keep keep-lm}
+                             :players   [{:hand [copper]}
+                                         {:hand [copper]}]})
+           {:landmarks {:keep keep-lm}
+            :players   [{:hand           [copper]
+                         :score          [{:landmark        keep-lm
+                                           :card            copper
+                                           :number-of-cards 1
+                                           :victory-points  5}]
+                         :victory-points 5}
+                        {:hand           [copper]
+                         :score          [{:landmark        keep-lm
+                                           :card            copper
+                                           :number-of-cards 1
+                                           :victory-points  5}]
+                         :victory-points 5}]}))
+    (is (= (calculate-score {:landmarks {:keep keep-lm}
+                             :players   [{:hand [copper]}
+                                         {:hand [copper silver]}]})
+           {:landmarks {:keep keep-lm}
+            :players   [{:hand           [copper]
+                         :score          [{:landmark        keep-lm
+                                           :card            copper
+                                           :number-of-cards 1
+                                           :victory-points  5}]
+                         :victory-points 5}
+                        {:hand           [copper silver]
+                         :score          [{:landmark        keep-lm
+                                           :card            copper
+                                           :number-of-cards 1
+                                           :victory-points  5}
+                                          {:landmark        keep-lm
+                                           :card            silver
+                                           :number-of-cards 1
+                                           :victory-points  5}]
+                         :victory-points 10}]}))
+    (is (= (calculate-score {:landmarks {:keep keep-lm}
+                             :players   [{:hand [copper copper]}
+                                         {:hand [copper silver]}]})
+           {:landmarks {:keep keep-lm}
+            :players   [{:hand           [copper copper]
+                         :score          [{:landmark        keep-lm
+                                           :card            copper
+                                           :number-of-cards 2
+                                           :victory-points  5}]
+                         :victory-points 5}
+                        {:hand           [copper silver]
+                         :score          [{:landmark        keep-lm
+                                           :card            silver
+                                           :number-of-cards 1
+                                           :victory-points  5}]
+                         :victory-points 5}]}))
+    (is (= (calculate-score {:landmarks {:keep keep-lm}
+                             :players   [{:hand [province]}
+                                         {:hand [copper silver]}]})
+           {:landmarks {:keep keep-lm}
+            :players   [{:hand           [province]
+                         :score          [{:card            province
+                                           :vp-per-card     6
+                                           :number-of-cards 1
+                                           :victory-points  6}]
+                         :victory-points 6}
+                        {:hand           [copper silver]
+                         :score          [{:landmark        keep-lm
+                                           :card            copper
+                                           :number-of-cards 1
+                                           :victory-points  5}
+                                          {:landmark        keep-lm
+                                           :card            silver
+                                           :number-of-cards 1
+                                           :victory-points  5}]
+                         :victory-points 10}]}))
+    (is (= (calculate-score {:landmarks {:keep keep-lm}
+                             :players   [{:hand [archive crown]}
+                                         {:hand [copper copper silver]}
+                                         {:hand [copper silver silver gold]}]})
+           {:landmarks {:keep keep-lm}
+            :players   [{:hand           [archive crown]
+                         :score          [{:landmark        keep-lm
+                                           :card            crown
+                                           :number-of-cards 1
+                                           :victory-points  5}]
+                         :victory-points 5}
+                        {:hand           [copper copper silver]
+                         :score          [{:landmark        keep-lm
+                                           :card            copper
+                                           :number-of-cards 2
+                                           :victory-points  5}]
+                         :victory-points 5}
+                        {:hand           [copper silver silver gold]
+                         :score          [{:landmark        keep-lm
+                                           :card            gold
+                                           :number-of-cards 1
+                                           :victory-points  5}
+                                          {:landmark        keep-lm
+                                           :card            silver
+                                           :number-of-cards 2
+                                           :victory-points  5}]
+                         :victory-points 10}]}))))
+
 (deftest labyrinth-test
   (testing "Labyrinth"
     (let [silver (assoc silver :id 0)]
@@ -4287,6 +4116,235 @@
                                        :phase        :buy
                                        :triggers     [(assoc labyrinth-trigger :id 1)]}]}))))))
 
+(deftest museum-scoring-test
+  (testing "Museum"
+    (is (= (calculate-score {:landmarks {:museum museum}
+                             :players   [{:hand [copper]}]})
+           {:landmarks {:museum museum}
+            :players   [{:hand           [copper]
+                         :score          [{:landmark        museum
+                                           :vp-per-card     2
+                                           :number-of-cards 1
+                                           :victory-points  2}]
+                         :victory-points 2}]}))
+    (is (= (calculate-score {:landmarks {:museum museum}
+                             :players   [{:hand [copper silver]}]})
+           {:landmarks {:museum museum}
+            :players   [{:hand           [copper silver]
+                         :score          [{:landmark        museum
+                                           :vp-per-card     2
+                                           :number-of-cards 2
+                                           :victory-points  4}]
+                         :victory-points 4}]}))
+    (is (= (calculate-score {:landmarks {:museum museum}
+                             :players   [{:hand [copper silver gold archive crown]}]})
+           {:landmarks {:museum museum}
+            :players   [{:hand           [copper silver gold archive crown]
+                         :score          [{:landmark        museum
+                                           :vp-per-card     2
+                                           :number-of-cards 5
+                                           :victory-points  10}]
+                         :victory-points 10}]}))
+    (is (= (calculate-score {:landmarks {:museum museum}
+                             :players   [{:hand [copper silver gold estate duchy province]}]})
+           {:landmarks {:museum museum}
+            :players   [{:hand           [copper silver gold estate duchy province]
+                         :score          [{:card            estate
+                                           :vp-per-card     1
+                                           :number-of-cards 1
+                                           :victory-points  1}
+                                          {:landmark        museum
+                                           :vp-per-card     2
+                                           :number-of-cards 6
+                                           :victory-points  12}
+                                          {:card            duchy
+                                           :vp-per-card     3
+                                           :number-of-cards 1
+                                           :victory-points  3}
+                                          {:card            province
+                                           :vp-per-card     6
+                                           :number-of-cards 1
+                                           :victory-points  6}]
+                         :victory-points 22}]}))
+    (is (= (calculate-score {:landmarks {:museum museum}
+                             :players   [{:hand (repeat 3 copper)}]})
+           {:landmarks {:museum museum}
+            :players   [{:hand           (repeat 3 copper)
+                         :score          [{:landmark        museum
+                                           :vp-per-card     2
+                                           :number-of-cards 1
+                                           :victory-points  2}]
+                         :victory-points 2}]}))
+    (is (= (calculate-score {:landmarks {:museum museum}
+                             :players   [{:hand (concat (repeat 3 copper) (repeat 3 estate))}]})
+           {:landmarks {:museum museum}
+            :players   [{:hand           (concat (repeat 3 copper) (repeat 3 estate))
+                         :score          [{:card            estate
+                                           :vp-per-card     1
+                                           :number-of-cards 3
+                                           :victory-points  3}
+                                          {:landmark        museum
+                                           :vp-per-card     2
+                                           :number-of-cards 2
+                                           :victory-points  4}]
+                         :victory-points 7}]}))))
+
+(deftest obelisk-test
+  (let [obelisk-of-engineer (assoc obelisk :chosen-cards #{:engineer})
+        obelisk-of-settlers (assoc obelisk :chosen-cards #{:settlers :bustling-village})]
+    (testing "Obelisk"
+      (is (= (calculate-score {:landmarks {:obelisk obelisk-of-engineer}
+                               :players   [{:hand [engineer]}]})
+             {:landmarks {:obelisk obelisk-of-engineer}
+              :players   [{:hand           [engineer]
+                           :score          [{:landmark        obelisk-of-engineer
+                                             :card            engineer
+                                             :vp-per-card     2
+                                             :number-of-cards 1
+                                             :victory-points  2}]
+                           :victory-points 2}]}))
+      (is (= (calculate-score {:landmarks {:obelisk obelisk-of-settlers}
+                               :players   [{:hand [settlers settlers bustling-village]}]})
+             {:landmarks {:obelisk obelisk-of-settlers}
+              :players   [{:hand           [settlers settlers bustling-village]
+                           :score          [{:landmark        obelisk-of-settlers
+                                             :card            bustling-village
+                                             :vp-per-card     2
+                                             :number-of-cards 1
+                                             :victory-points  2}
+                                            {:landmark        obelisk-of-settlers
+                                             :card            settlers
+                                             :vp-per-card     2
+                                             :number-of-cards 2
+                                             :victory-points  4}]
+                           :victory-points 6}]}))
+      (is (= (calculate-score {:landmarks {:obelisk obelisk-of-engineer}
+                               :players   [{:hand [engineer settlers copper]}]})
+             {:landmarks {:obelisk obelisk-of-engineer}
+              :players   [{:hand           [engineer settlers copper]
+                           :score          [{:landmark        obelisk-of-engineer
+                                             :card            engineer
+                                             :vp-per-card     2
+                                             :number-of-cards 1
+                                             :victory-points  2}]
+                           :victory-points 2}]}))
+      (testing "Setup"
+        (is (= (-> {:landmarks {:obelisk obelisk}
+                    :supply    [{:card copper :pile-size 46}
+                                {:card silver :pile-size 40}
+                                {:card gold :pile-size 30}
+                                {:card engineer :pile-size 10}]
+                    :players   [{}]}
+                   setup-game)
+               {:landmarks {:obelisk obelisk-of-engineer}
+                :supply    [{:card copper :pile-size 46}
+                            {:card silver :pile-size 40}
+                            {:card gold :pile-size 30}
+                            {:card engineer :pile-size 10}]
+                :players   [{}]}))))))
+
+(deftest orchard-scoring-test
+  (testing "Orchard"
+    (is (= (calculate-score {:landmarks {:orchard orchard}
+                             :players   [{:hand (concat (repeat 3 copper) (repeat 3 estate))}]})
+           {:landmarks {:orchard orchard}
+            :players   [{:hand           (concat (repeat 3 copper) (repeat 3 estate))
+                         :score          [{:card            estate
+                                           :vp-per-card     1
+                                           :number-of-cards 3
+                                           :victory-points  3}]
+                         :victory-points 3}]}))
+    (is (= (calculate-score {:landmarks {:orchard orchard}
+                             :players   [{:hand (repeat 2 engineer)}]})
+           {:landmarks {:orchard orchard}
+            :players   [{:hand           (repeat 2 engineer)
+                         :score          []
+                         :victory-points 0}]}))
+    (is (= (calculate-score {:landmarks {:orchard orchard}
+                             :players   [{:hand (repeat 3 engineer)}]})
+           {:landmarks {:orchard orchard}
+            :players   [{:hand           (repeat 3 engineer)
+                         :score          [{:landmark        orchard
+                                           :card            engineer
+                                           :number-of-cards 3
+                                           :victory-points  4}]
+                         :victory-points 4}]}))
+    (is (= (calculate-score {:landmarks {:orchard orchard}
+                             :players   [{:hand (concat (repeat 6 engineer) (repeat 3 villa))}]})
+           {:landmarks {:orchard orchard}
+            :players   [{:hand           (concat (repeat 6 engineer) (repeat 3 villa))
+                         :score          [{:landmark        orchard
+                                           :card            engineer
+                                           :number-of-cards 6
+                                           :victory-points  4}
+                                          {:landmark        orchard
+                                           :card            villa
+                                           :number-of-cards 3
+                                           :victory-points  4}]
+                         :victory-points 8}]}))
+    (is (= (calculate-score {:landmarks {:orchard orchard}
+                             :players   [{:hand (repeat 3 mill)}]})
+           {:landmarks {:orchard orchard}
+            :players   [{:hand           (repeat 3 mill)
+                         :score          [{:landmark        orchard
+                                           :card            mill
+                                           :number-of-cards 3
+                                           :victory-points  4}
+                                          {:card            mill
+                                           :vp-per-card     1
+                                           :number-of-cards 3
+                                           :victory-points  3}]
+                         :victory-points 7}]}))))
+
+(deftest palace-scoring-test
+  (testing "Palace"
+    (is (= (calculate-score {:landmarks {:palace palace}
+                             :players   [{:hand (repeat 7 copper)}]})
+           {:landmarks {:palace palace}
+            :players   [{:hand           (repeat 7 copper)
+                         :score          [{:landmark        palace
+                                           :vp-per-card     3
+                                           :number-of-cards 0
+                                           :victory-points  0}]
+                         :victory-points 0}]}))
+    (is (= (calculate-score {:landmarks {:palace palace}
+                             :players   [{:hand (concat (repeat 7 copper)
+                                                        (repeat 3 silver)
+                                                        (repeat 1 gold))}]})
+           {:landmarks {:palace palace}
+            :players   [{:hand           (concat (repeat 7 copper)
+                                                 (repeat 3 silver)
+                                                 (repeat 1 gold))
+                         :score          [{:landmark        palace
+                                           :vp-per-card     3
+                                           :number-of-cards 1
+                                           :victory-points  3}]
+                         :victory-points 3}]}))
+    (is (= (calculate-score {:landmarks {:palace palace}
+                             :players   [{:hand (concat (repeat 3 copper)
+                                                        (repeat 3 silver)
+                                                        (repeat 5 gold))}]})
+           {:landmarks {:palace palace}
+            :players   [{:hand           (concat (repeat 3 copper)
+                                                 (repeat 3 silver)
+                                                 (repeat 5 gold))
+                         :score          [{:landmark        palace
+                                           :vp-per-card     3
+                                           :number-of-cards 3
+                                           :victory-points  9}]
+                         :victory-points 9}]}))
+    (is (= (calculate-score {:landmarks {:palace palace}
+                             :players   [{:hand (concat (repeat 3 silver)
+                                                        (repeat 5 gold))}]})
+           {:landmarks {:palace palace}
+            :players   [{:hand           (concat (repeat 3 silver)
+                                                 (repeat 5 gold))
+                         :score          [{:landmark        palace
+                                           :vp-per-card     3
+                                           :number-of-cards 0
+                                           :victory-points  0}]
+                         :victory-points 0}]}))))
+
 (deftest tomb-test
   (testing "Tomb"
     (is (= (-> {:landmarks {:tomb tomb}
@@ -4317,3 +4375,265 @@
                          :vp-tokens 3
                          :triggers  [(assoc tomb-trigger :id 1)]}]
             :trash     [copper estate]}))))
+
+(deftest tower-scoring-test
+  (testing "Tower"
+    (is (= (calculate-score {:landmarks {:tower tower}
+                             :supply    [{:card engineer :pile-size 0}]
+                             :players   [{:hand [engineer]}]})
+           {:landmarks {:tower tower}
+            :supply    [{:card engineer :pile-size 0}]
+            :players   [{:hand           [engineer]
+                         :score          [{:landmark        tower
+                                           :card            engineer
+                                           :vp-per-card     1
+                                           :number-of-cards 1
+                                           :victory-points  1}]
+                         :victory-points 1}]}))
+    (is (= (calculate-score {:landmarks {:tower tower}
+                             :supply    [{:card engineer :pile-size 0}]
+                             :players   [{:hand (repeat 5 engineer)}]})
+           {:landmarks {:tower tower}
+            :supply    [{:card engineer :pile-size 0}]
+            :players   [{:hand           (repeat 5 engineer)
+                         :score          [{:landmark        tower
+                                           :card            engineer
+                                           :vp-per-card     1
+                                           :number-of-cards 5
+                                           :victory-points  5}]
+                         :victory-points 5}]}))
+    (is (= (calculate-score {:landmarks {:tower tower}
+                             :supply    [{:card engineer :pile-size 1}]
+                             :players   [{:hand (repeat 5 engineer)}]})
+           {:landmarks {:tower tower}
+            :supply    [{:card engineer :pile-size 1}]
+            :players   [{:hand           (repeat 5 engineer)
+                         :score          []
+                         :victory-points 0}]}))
+    (is (= (calculate-score {:landmarks {:tower tower}
+                             :supply    [{:card province :pile-size 0}]
+                             :players   [{:hand [province]}]})
+           {:landmarks {:tower tower}
+            :supply    [{:card province :pile-size 0}]
+            :players   [{:hand           [province]
+                         :score          [{:card            province
+                                           :vp-per-card     6
+                                           :number-of-cards 1
+                                           :victory-points  6}]
+                         :victory-points 6}]}))
+    (is (= (calculate-score {:landmarks {:tower tower}
+                             :supply    [{:card curse :pile-size 0}]
+                             :players   [{:hand (repeat 4 curse)}]})
+           {:landmarks {:tower tower}
+            :supply    [{:card curse :pile-size 0}]
+            :players   [{:hand           (repeat 4 curse)
+                         :score          [{:card            curse
+                                           :vp-per-card     -1
+                                           :number-of-cards 4
+                                           :victory-points  -4}
+                                          {:landmark        tower
+                                           :card            curse
+                                           :vp-per-card     1
+                                           :number-of-cards 4
+                                           :victory-points  4}]
+                         :victory-points 0}]}))
+    (is (= (calculate-score {:landmarks {:tower tower}
+                             :supply    [{:split-pile [{:card encampment :pile-size 0}
+                                                       {:card plunder :pile-size 0}]}]
+                             :players   [{:hand [encampment encampment plunder plunder plunder]}]})
+           {:landmarks {:tower tower}
+            :supply    [{:split-pile [{:card encampment :pile-size 0}
+                                      {:card plunder :pile-size 0}]}]
+            :players   [{:hand           [encampment encampment plunder plunder plunder]
+                         :score          [{:landmark        tower
+                                           :card            encampment
+                                           :vp-per-card     1
+                                           :number-of-cards 2
+                                           :victory-points  2}
+                                          {:landmark        tower
+                                           :card            plunder
+                                           :vp-per-card     1
+                                           :number-of-cards 3
+                                           :victory-points  3}]
+                         :victory-points 5}]}))
+    (is (= (calculate-score {:landmarks {:tower tower}
+                             :supply    [{:split-pile [{:card encampment :pile-size 0}
+                                                       {:card plunder :pile-size 1}]}]
+                             :players   [{:hand [encampment encampment plunder plunder plunder]}]})
+           {:landmarks {:tower tower}
+            :supply    [{:split-pile [{:card encampment :pile-size 0}
+                                      {:card plunder :pile-size 1}]}]
+            :players   [{:hand           [encampment encampment plunder plunder plunder]
+                         :score          []
+                         :victory-points 0}]}))
+    (is (= (calculate-score {:landmarks   {:tower tower}
+                             :extra-cards [{:card ghost :pile-size 0}]
+                             :players     [{:hand [ghost]}]})
+           {:landmarks   {:tower tower}
+            :extra-cards [{:card ghost :pile-size 0}]
+            :players     [{:hand           [ghost]
+                           :score          []
+                           :victory-points 0}]}))))
+
+(deftest triumphal-arch-scoring-test
+  (testing "Triumphal Arch"
+    (is (= (calculate-score {:landmarks {:triumphal-arch triumphal-arch}
+                             :players   [{:hand [engineer]}]})
+           {:landmarks {:triumphal-arch triumphal-arch}
+            :players   [{:hand           [engineer]
+                         :score          []
+                         :victory-points 0}]}))
+    (is (= (calculate-score {:landmarks {:triumphal-arch triumphal-arch}
+                             :players   [{:hand [engineer villa]}]})
+           {:landmarks {:triumphal-arch triumphal-arch}
+            :players   [{:hand           [engineer villa]
+                         :score          [{:landmark        triumphal-arch
+                                           :card            villa
+                                           :vp-per-card     3
+                                           :number-of-cards 1
+                                           :victory-points  3}]
+                         :victory-points 3}]}))
+    (is (= (calculate-score {:landmarks {:triumphal-arch triumphal-arch}
+                             :players   [{:hand [engineer engineer engineer villa]}]})
+           {:landmarks {:triumphal-arch triumphal-arch}
+            :players   [{:hand           [engineer engineer engineer villa]
+                         :score          [{:landmark        triumphal-arch
+                                           :card            villa
+                                           :vp-per-card     3
+                                           :number-of-cards 1
+                                           :victory-points  3}]
+                         :victory-points 3}]}))
+    (is (= (calculate-score {:landmarks {:triumphal-arch triumphal-arch}
+                             :players   [{:hand [engineer engineer villa villa enchantress]}]})
+           {:landmarks {:triumphal-arch triumphal-arch}
+            :players   [{:hand           [engineer engineer villa villa enchantress]
+                         :score          [{:landmark        triumphal-arch
+                                           :card            villa
+                                           :vp-per-card     3
+                                           :number-of-cards 2
+                                           :victory-points  6}]
+                         :victory-points 6}]}))
+    (is (= (calculate-score {:landmarks {:triumphal-arch triumphal-arch}
+                             :players   [{:hand (concat (repeat 7 copper)
+                                                        [engineer engineer villa])}]})
+           {:landmarks {:triumphal-arch triumphal-arch}
+            :players   [{:hand           (concat (repeat 7 copper)
+                                                 [engineer engineer villa])
+                         :score          [{:landmark        triumphal-arch
+                                           :card            villa
+                                           :vp-per-card     3
+                                           :number-of-cards 1
+                                           :victory-points  3}]
+                         :victory-points 3}]}))
+    (is (= (calculate-score {:landmarks {:triumphal-arch triumphal-arch}
+                             :players   [{:hand (concat (repeat 7 copper)
+                                                        (repeat 3 estate)
+                                                        [engineer engineer villa])}]})
+           {:landmarks {:triumphal-arch triumphal-arch}
+            :players   [{:hand           (concat (repeat 7 copper)
+                                                 (repeat 3 estate)
+                                                 [engineer engineer villa])
+                         :score          [{:card            estate
+                                           :vp-per-card     1
+                                           :number-of-cards 3
+                                           :victory-points  3}
+                                          {:landmark        triumphal-arch
+                                           :card            villa
+                                           :vp-per-card     3
+                                           :number-of-cards 1
+                                           :victory-points  3}]
+                         :victory-points 6}]}))
+    (is (= (calculate-score {:landmarks {:triumphal-arch triumphal-arch}
+                             :players   [{:hand (concat (repeat 7 copper)
+                                                        (repeat 3 mill)
+                                                        [engineer engineer villa])}]})
+           {:landmarks {:triumphal-arch triumphal-arch}
+            :players   [{:hand           (concat (repeat 7 copper)
+                                                 (repeat 3 mill)
+                                                 [engineer engineer villa])
+                         :score          [{:card            mill
+                                           :vp-per-card     1
+                                           :number-of-cards 3
+                                           :victory-points  3}
+                                          {:landmark        triumphal-arch
+                                           :card            engineer
+                                           :vp-per-card     3
+                                           :number-of-cards 2
+                                           :victory-points  6}]
+                         :victory-points 9}]}))))
+
+(deftest wall-scoring-test
+  (testing "Wall"
+    (is (= (calculate-score {:landmarks {:wall wall}
+                             :players   [{:hand (repeat 10 copper)}]})
+           {:landmarks {:wall wall}
+            :players   [{:hand           (repeat 10 copper)
+                         :score          [{:landmark        wall
+                                           :vp-per-card     -1
+                                           :number-of-cards 0
+                                           :victory-points  0
+                                           :notes           "10 cards"}]
+                         :victory-points 0}]}))
+    (is (= (calculate-score {:landmarks {:wall wall}
+                             :players   [{:hand (repeat 15 copper)}]})
+           {:landmarks {:wall wall}
+            :players   [{:hand           (repeat 15 copper)
+                         :score          [{:landmark        wall
+                                           :vp-per-card     -1
+                                           :number-of-cards 0
+                                           :victory-points  0
+                                           :notes           "15 cards"}]
+                         :victory-points 0}]}))
+    (is (= (calculate-score {:landmarks {:wall wall}
+                             :players   [{:hand (repeat 16 copper)}]})
+           {:landmarks {:wall wall}
+            :players   [{:hand           (repeat 16 copper)
+                         :score          [{:landmark        wall
+                                           :vp-per-card     -1
+                                           :number-of-cards 1
+                                           :victory-points  -1
+                                           :notes           "16 cards"}]
+                         :victory-points -1}]}))
+    (is (= (calculate-score {:landmarks {:wall wall}
+                             :players   [{:hand (repeat 30 copper)}]})
+           {:landmarks {:wall wall}
+            :players   [{:hand           (repeat 30 copper)
+                         :score          [{:landmark        wall
+                                           :vp-per-card     -1
+                                           :number-of-cards 15
+                                           :victory-points  -15
+                                           :notes           "30 cards"}]
+                         :victory-points -15}]}))))
+
+(deftest wolf-den-scoring-test
+  (testing "Wolf Den"
+    (is (= (calculate-score {:landmarks {:wolf-den wolf-den}
+                             :players   [{:hand [copper]}]})
+           {:landmarks {:wolf-den wolf-den}
+            :players   [{:hand           [copper]
+                         :score          [{:landmark        wolf-den
+                                           :card            copper
+                                           :vp-per-card     -3
+                                           :number-of-cards 1
+                                           :victory-points  -3}]
+                         :victory-points -3}]}))
+    (is (= (calculate-score {:landmarks {:wolf-den wolf-den}
+                             :players   [{:hand [copper copper]}]})
+           {:landmarks {:wolf-den wolf-den}
+            :players   [{:hand           [copper copper]
+                         :score          []
+                         :victory-points 0}]}))
+    (is (= (calculate-score {:landmarks {:wolf-den wolf-den}
+                             :players   [{:hand [copper copper duchy]}]})
+           {:landmarks {:wolf-den wolf-den}
+            :players   [{:hand           [copper copper duchy]
+                         :score          [{:landmark        wolf-den
+                                           :card            duchy
+                                           :vp-per-card     -3
+                                           :number-of-cards 1
+                                           :victory-points  -3}
+                                          {:card            duchy
+                                           :vp-per-card     3
+                                           :number-of-cards 1
+                                           :victory-points  3}]
+                         :victory-points 0}]}))))

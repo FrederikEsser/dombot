@@ -13,11 +13,11 @@
                    (map :set)
                    set))
 
-(defonce state (r/atom {:sets            all-sets
-                        :setup-game?     true
-                        :selection       []
-                        :num-players     2
-                        :players         ["Big Johnny" "Ivor the Engine Driver" "Dirty Maggie Mae"]}))
+(defonce state (r/atom {:sets        all-sets
+                        :setup-game? true
+                        :selection   []
+                        :num-players 2
+                        :players     ["Big Johnny" "Ivor the Engine Driver" "Dirty Maggie Mae"]}))
 
 (defn select! [option]
   (swap! state update :selection conj option))
@@ -200,8 +200,8 @@
                       (with-meta (f i e) {:key (random-uuid)})))
        doall))
 
-(defn map-tag [tag coll]
-  (mapk (fn [x] [tag x]) coll))
+(defn map-tag [tag coll & [style]]
+  (mapk (fn [x] [tag style x]) coll))
 
 (defn view-player-pile [pile max]
   [:div
@@ -384,7 +384,7 @@
                                                 coffers villagers artifacts states
                                                 island-mat native-village-mat pirate-ship-coins
                                                 boons tavern-mat exile-mat journey-token
-                                                vp-tokens active? victory-points winner?]
+                                                vp-tokens active? score victory-points winner?]
                            {:keys [text
                                    options
                                    interval
@@ -417,10 +417,42 @@
                                                                    (-> grouped-cards vals first))))]
                         [:td (view-player-pile deck max)]
                         [:td (view-player-pile discard max)]
-                        [:td (if victory-points
+                        [:td (if score
                                [:div
                                 (when winner? [:div "WINNER!"])
-                                [:div "Victory Points: " victory-points]]
+                                [:table
+                                 [:tbody {:style {:border :none}}
+                                  (->> score
+                                       (mapk (fn [{:keys [card description landmark state
+                                                          vp-per-card number-of-cards victory-points notes]}]
+                                               [:tr {:style {:border :none}}
+                                                [:td {:style {:border :none}}
+                                                 (cond
+                                                   card (view-card card)
+                                                   description description
+                                                   landmark (view-landmark landmark)
+                                                   state (view-card state))]
+                                                [:td {:style {:border     :none
+                                                              :text-align :right}}
+                                                 (when vp-per-card
+                                                   [:nobr (str (when number-of-cards
+                                                           (str number-of-cards " * "))
+                                                         vp-per-card
+                                                         " =")])]
+                                                [:td {:style {:border     :none
+                                                              :text-align :right}}
+                                                 victory-points]
+                                                [:td {:style {:border :none}}
+                                                 (cond
+                                                   notes (str "(" notes ")")
+                                                   (and card landmark) (view-landmark landmark))]])))]
+                                 [:tr
+                                  [:td {:style {:border      :none
+                                                :font-weight :bold}} "Total"]
+                                  [:td {:style {:border :none}}]
+                                  [:td {:style {:border      :none
+                                                :font-weight :bold}} victory-points]
+                                  [:td {:style {:border :none}}]]]]
                                [:div
                                 [:div "Actions: " actions]
                                 (when villagers

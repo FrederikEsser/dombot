@@ -338,6 +338,20 @@
                 {:optional? optional?}))
        (s/assert* ::specs/choice)))
 
+(defn view-score [{:keys [card number-of-cards landmark state] :as score}]
+  (merge
+    (select-keys score [:description :vp-per-card :number-of-cards :victory-points :notes])
+    (when card {:card (merge (select-keys card [:name :types])
+                             {:name-ui (ut/format-name (:name card))}
+                             (when (and number-of-cards
+                                        (< 1 number-of-cards))
+                               {:number-of-cards number-of-cards}))})
+    (when landmark {:landmark (merge (select-keys landmark [:name :type :chosen-cards])
+                                     {:name-ui (ut/format-name (:name landmark))})})
+    (when state {:state {:name    (:name state)
+                         :name-ui (ut/format-name (:name state))
+                         :types   #{(:type state)}}})))
+
 (defn view-player [{{:keys [name
                             phase
                             actions
@@ -354,6 +368,7 @@
                             villagers
                             boons
                             states
+                            score
                             victory-points
                             winner]
                      :as   player} :player
@@ -406,15 +421,17 @@
                                                      :types   #{type}}
                                                     (choice-interaction name :artifacts choice)))))})
          (when (not-empty states)
-           {:states (->> states (map (fn [{:keys [name type]}] {:name    name
-                                                                :name-ui (ut/format-name name)
-                                                                :types   #{type}})))})
+           {:states (->> states (map (fn [{:keys [name type]}]
+                                       {:name    name
+                                        :name-ui (ut/format-name name)
+                                        :types   #{type}})))})
          (when choice
            {:choice (view-choice choice)})
          (when boons
            {:boons (map (partial view-boon choice :boons) boons)})
-         (when victory-points
-           {:victory-points victory-points})
+         (when score
+           {:score          (map view-score score)
+            :victory-points victory-points})
          (when-not (nil? winner)
            {:winner? winner})))
 

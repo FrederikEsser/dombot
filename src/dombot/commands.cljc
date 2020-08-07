@@ -37,7 +37,6 @@
 
 ; Front End:
 ; improve Game Setup with better randomize options (pick n random sets), select all / none
-; improve score view with points per card, vp-tokens and landmarks/states
 ; show Actions as unbuyable when Deluded (and in action phase)
 ; hide revealed cards on any movement (Border Guard)
 ; show face-down cards in trash (Necromancer)

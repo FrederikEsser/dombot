@@ -1039,47 +1039,71 @@
   (if (keyword? victory-points)
     (let [vp-fn (effects/get-effect victory-points)]
       (vp-fn cards))
-    victory-points))
+    {:victory-points victory-points}))
 
 (defn put-all-cards-in-hands [game]
   (update game :players (partial mapv (fn [player]
-                                        (-> player
-                                            (assoc :hand (all-cards player))
-                                            (dissoc :deck :discard :play-area :island-mat :native-village-mat :exile)
-                                            (assoc :phase :end-of-game))))))
+                                        (let [all-cards (all-cards player)]
+                                          (-> player
+                                              (cond-> (not-empty all-cards) (assoc :hand all-cards))
+                                              (dissoc :deck :discard :play-area :island-mat :native-village-mat :exile)))))))
 
-(defn calculate-victory-points [{:keys [landmarks] :as game}]
-  (let [update-fn (fn [{:keys [hand vp-tokens states] :as player}]
-                    (let [vp-from-cards     (->> hand
-                                                 (filter :victory-points)
-                                                 (keep (partial get-victory-points hand))
-                                                 (apply +))
-                          vp-from-tokens    (or vp-tokens 0)
-                          vp-from-landmarks (->> landmarks
-                                                 vals
-                                                 (keep (fn [{:keys [when-scoring]}]
-                                                         (when-let [scoring-fn (when when-scoring (effects/get-effect when-scoring))]
-                                                           (scoring-fn hand game))))
-                                                 (apply +))
-                          vp-from-states    (->> states
-                                                 (keep :victory-points)
-                                                 (apply +))]
-                      (assoc player :victory-points (+ vp-from-cards vp-from-tokens vp-from-landmarks vp-from-states))))]
-    (update game :players (partial mapv update-fn))))
+(defn calculate-score [game]
+  (let [{:keys [landmarks] :as game} (put-all-cards-in-hands game)
+        calculate-player-score (fn calculate-player-score [{:keys [hand vp-tokens states] :as player}]
+                                 (let [score-from-cards     (->> hand
+                                                                 (map #(dissoc % :id))
+                                                                 frequencies
+                                                                 (keep (fn [[{:keys [victory-points] :as card} number-of-cards]]
+                                                                         (when victory-points
+                                                                           (let [{vp-per-card :victory-points
+                                                                                  notes       :notes} (get-victory-points hand card)]
+                                                                             (merge {:card            card
+                                                                                     :vp-per-card     vp-per-card
+                                                                                     :number-of-cards number-of-cards
+                                                                                     :victory-points  (* number-of-cards vp-per-card)}
+                                                                                    (when notes
+                                                                                      {:notes notes})))))))
+                                       score-from-tokens    (when vp-tokens
+                                                              [{:description    "VP tokens"
+                                                                :victory-points vp-tokens}])
+                                       score-from-landmarks (->> landmarks
+                                                                 vals
+                                                                 (mapcat (fn [{:keys [when-scoring]}]
+                                                                           (when-let [scoring-fn (when when-scoring (effects/get-effect when-scoring))]
+                                                                             (scoring-fn hand game)))))
+                                       score-from-states    (->> states
+                                                                 (keep (fn [{:keys [victory-points] :as state}]
+                                                                         (when victory-points
+                                                                           {:state           state
+                                                                            :vp-per-card     -2
+                                                                            :number-of-cards (/ victory-points -2)
+                                                                            :victory-points  victory-points}))))
+                                       score                (->> (concat score-from-cards
+                                                                         score-from-tokens
+                                                                         score-from-landmarks
+                                                                         score-from-states)
+                                                                 (sort-by (juxt :vp-per-card (comp :name :card))))
+                                       vp                   (->> score
+                                                                 (map :victory-points)
+                                                                 (apply + 0))]
+                                   (assoc player :score score
+                                                 :victory-points vp)))]
+    (update game :players (partial mapv calculate-player-score))))
 
 (defn- declare-winner [{:keys [players] :as game}]
   (let [score-fn   (juxt :victory-points (comp - :number-of-turns))
         best-score (->> players (map score-fn) sort last)]
     (update game :players (partial mapv (fn [player]
-                                          (assoc player :winner (= best-score (score-fn player))))))))
+                                          (assoc player :winner (= best-score (score-fn player))
+                                                        :phase :end-of-game))))))
 
 (defn check-game-ended [game args]
   (case (get-game-status game)
     :active game
     :ending (assoc game :game-ending? true)
     :finished (-> game
-                  put-all-cards-in-hands
-                  calculate-victory-points
+                  calculate-score
                   declare-winner)))
 
 (effects/register {:check-game-ended check-game-ended})

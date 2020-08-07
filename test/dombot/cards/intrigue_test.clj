@@ -539,12 +539,26 @@
 
 (deftest duke-test
   (testing "Duke"
-    (doseq [duchies (range 9)
-            dukes   (range 9)]
+    (doseq [duchies (range 0 9)
+            dukes   (range 0 9)]
       (is (= (calc-victory-points {:deck (concat (repeat duchies duchy)
                                                  (repeat dukes duke))})
              (+ (* dukes duchies)
-                (* duchies 3)))))))
+                (* duchies 3))))
+      (is (= (calc-score {:deck (concat (repeat duchies duchy)
+                                        (repeat dukes duke))})
+             (->> (concat (when (pos? duchies)
+                            [{:card            duchy
+                              :vp-per-card     3
+                              :number-of-cards duchies
+                              :victory-points  (* duchies 3)}])
+                          (when (pos? dukes)
+                            [{:card            duke
+                              :vp-per-card     duchies
+                              :number-of-cards dukes
+                              :victory-points  (* dukes duchies)
+                              :notes           (str duchies (if (= 1 duchies) " Duchy" " Duchies"))}]))
+                  (sort-by :vp-per-card)))))))
 
 (deftest harem-test
   (testing "Harem"

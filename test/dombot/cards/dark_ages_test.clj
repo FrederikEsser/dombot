@@ -555,7 +555,48 @@
              2))
       (is (= (calc-victory-points {:deck (concat [feodum feodum]
                                                  (repeat 6 silver))})
-             4)))))
+             4)))
+    (testing "score"
+      (is (= (calc-score {:deck [feodum]})
+             [{:card            feodum
+               :vp-per-card     0
+               :number-of-cards 1
+               :victory-points  0
+               :notes           "0 Silvers"}]))
+      (is (= (calc-score {:deck [feodum silver]})
+             [{:card            feodum
+               :vp-per-card     0
+               :number-of-cards 1
+               :victory-points  0
+               :notes           "1 Silver"}]))
+      (is (= (calc-score {:deck (concat [feodum]
+                                        (repeat 2 silver))})
+             [{:card            feodum
+               :vp-per-card     0
+               :number-of-cards 1
+               :victory-points  0
+               :notes           "2 Silvers"}]))
+      (is (= (calc-score {:deck (concat [feodum]
+                                        (repeat 3 silver))})
+             [{:card            feodum
+               :vp-per-card     1
+               :number-of-cards 1
+               :victory-points  1
+               :notes           "3 Silvers"}]))
+      (is (= (calc-score {:deck (concat [feodum feodum]
+                                        (repeat 5 silver))})
+             [{:card            feodum
+               :vp-per-card     1
+               :number-of-cards 2
+               :victory-points  2
+               :notes           "5 Silvers"}]))
+      (is (= (calc-score {:deck (concat [feodum feodum]
+                                        (repeat 6 silver))})
+             [{:card            feodum
+               :vp-per-card     2
+               :number-of-cards 2
+               :victory-points  4
+               :notes           "6 Silvers"}])))))
 
 (deftest forager-test
   (let [forager (assoc forager :id 0)]

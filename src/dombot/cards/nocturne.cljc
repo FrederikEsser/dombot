@@ -1379,9 +1379,11 @@
                   :setup    [[:setup-extra-cards {:extra-cards [wish-pile]}]]})
 
 (defn pasture-victory-points [cards]
-  (->> cards
-       (filter (comp #{:estate} :name))
-       count))
+  (let [estate-count (->> cards
+                          (filter (comp #{:estate} :name))
+                          count)]
+    {:victory-points estate-count
+     :notes          (str estate-count " Estate" (when (not= 1 estate-count) "s"))}))
 
 (effects/register {::pasture-victory-points pasture-victory-points})
 

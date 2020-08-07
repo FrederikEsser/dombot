@@ -24,7 +24,32 @@
     (is (= (calc-victory-points {:deck [fairgrounds copper silver gold hamlet fairgrounds]})
            4))
     (is (= (calc-victory-points {:deck cornucopia/kingdom-cards})
-           4))))
+           4)))
+  (testing "Fairgrounds"
+    (is (= (calc-score {:deck [fairgrounds copper silver gold]})
+           [{:card            fairgrounds
+             :vp-per-card     0
+             :number-of-cards 1
+             :victory-points  0
+             :notes           "4 differently named cards"}]))
+    (is (= (calc-score {:deck [fairgrounds copper silver gold hamlet]})
+           [{:card            fairgrounds
+             :vp-per-card     2
+             :number-of-cards 1
+             :victory-points  2
+             :notes           "5 differently named cards"}]))
+    (is (= (calc-score {:deck [fairgrounds copper silver gold hamlet fairgrounds]})
+           [{:card            fairgrounds
+             :vp-per-card     2
+             :number-of-cards 2
+             :victory-points  4
+             :notes           "5 differently named cards"}]))
+    (is (= (calc-score {:deck cornucopia/kingdom-cards})
+           [{:card            fairgrounds
+             :vp-per-card     4
+             :number-of-cards 1
+             :victory-points  4
+             :notes           "13 differently named cards"}]))))
 
 (deftest farming-village-test
   (testing "Farming Village"

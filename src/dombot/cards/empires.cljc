@@ -2,7 +2,8 @@
   (:require [dombot.operations :refer [push-effect-stack give-choice attack-other-players gain]]
             [dombot.cards.common :refer [give-victory-points add-trigger]]
             [dombot.utils :as ut]
-            [dombot.effects :as effects]))
+            [dombot.effects :as effects]
+            [dombot.cards.base-cards :as base-cards]))
 
 (defn- place-vp-token [game {:keys [card-name]}]
   (let [{:keys [idx]} (ut/get-pile-idx game card-name)]
@@ -101,9 +102,11 @@
               :trigger-mode :auto})
 
 (defn humble-castle-victory-points [cards]
-  (->> cards
-       (filter (comp :castle :types))
-       count))
+  (let [castle-count (->> cards
+                          (filter (comp :castle :types))
+                          count)]
+    {:victory-points castle-count
+     :notes          (str castle-count " Castle" (when (not= 1 castle-count) "s"))}))
 
 (def humble-castle {:name           :humble-castle
                     :set            :empires
@@ -219,10 +222,11 @@
                    :on-gain        [[::grand-castle-on-gain]]})
 
 (defn kings-castle-victory-points [cards]
-  (->> cards
-       (filter (comp :castle :types))
-       count
-       (* 2)))
+  (let [castle-count (->> cards
+                          (filter (comp :castle :types))
+                          count)]
+    {:victory-points (* 2 castle-count)
+     :notes          (str castle-count " Castle" (when (not= 1 castle-count) "s"))}))
 
 (def kings-castle {:name           :king's-castle
                    :set            :empires
@@ -1199,16 +1203,30 @@
             :setup [[::setup-landmark-vp {:landmark-name :arena}]
                     [:all-players {:effects [[:add-trigger {:trigger arena-trigger}]]}]]})
 
-(defn- bandit-ford-scoring [cards _]
-  (->> cards
-       (filter (comp #{:silver :gold} :name))
-       count
-       (* -2)))
-
 (def bandit-ford {:name         :bandit-ford
                   :set          :empires
                   :type         :landmark
                   :when-scoring ::bandit-ford-scoring})
+
+(defn- bandit-ford-scoring [cards _]
+  (let [silver-count (->> cards
+                          (filter (comp #{:silver} :name))
+                          count)
+        gold-count   (->> cards
+                          (filter (comp #{:gold} :name))
+                          count)]
+    (concat (when (pos? silver-count)
+              [{:landmark        bandit-ford
+                :card            base-cards/silver
+                :vp-per-card     -2
+                :number-of-cards silver-count
+                :victory-points  (* -2 silver-count)}])
+            (when (pos? gold-count)
+              [{:landmark        bandit-ford
+                :card            base-cards/gold
+                :vp-per-card     -2
+                :number-of-cards gold-count
+                :victory-points  (* -2 gold-count)}]))))
 
 (defn- basilica-on-buy [game {:keys [player-no card-name]}]
   (let [coins-left (get-in game [:players player-no :coins])]
@@ -1340,39 +1358,41 @@
                              [:all-players {:effects [[:add-trigger {:trigger defiled-shrine-action-trigger}]
                                                       [:add-trigger {:trigger defiled-shrine-curse-trigger}]]}]]})
 
-(defn- fountain-scoring [cards _]
-  (let [number-of-coppers (->> cards
-                               (filter (comp #{:copper} :name))
-                               count)]
-    (if (<= 10 number-of-coppers)
-      15
-      0)))
-
 (def fountain {:name         :fountain
                :set          :empires
                :type         :landmark
                :when-scoring ::fountain-scoring})
 
+(defn- fountain-scoring [cards _]
+  (let [number-of-coppers (->> cards
+                               (filter (comp #{:copper} :name))
+                               count)]
+    [{:landmark       fountain
+      :victory-points (if (<= 10 number-of-coppers) 15 0)
+      :notes          (str number-of-coppers " Copper" (when (not= 1 number-of-coppers) "s"))}]))
+
+(def keep-lm {:name         :keep
+              :set          :empires
+              :type         :landmark
+              :when-scoring ::keep-scoring})
+
 (defn- keep-scoring [cards {:keys [players]}]
   (let [count-treasures (fn [cards]
                           (->> cards
                                (filter (comp :treasure :types))
-                               (map :name)
+                               (map #(dissoc % :id))
                                frequencies))
         most-treasures  (->> players
                              (map (comp count-treasures :hand))
                              (apply merge-with max))]
     (->> cards
          count-treasures
-         (filter (fn [[card-name num]]
-                   (= num (get most-treasures card-name))))
-         count
-         (* 5))))
-
-(def keep-lm {:name         :keep
-              :set          :empires
-              :type         :landmark
-              :when-scoring ::keep-scoring})
+         (keep (fn [[card num]]
+                 (when (= num (get most-treasures card))
+                   {:landmark        keep-lm
+                    :card            card
+                    :number-of-cards num
+                    :victory-points  5}))))))
 
 (defn- labyrinth-on-gain [game {:keys [player-no]}]
   (let [gained-cards (get-in game [:players player-no :gained-cards])]
@@ -1394,24 +1414,33 @@
                 :setup [[::setup-landmark-vp {:landmark-name :labyrinth}]
                         [:all-players {:effects [[:add-trigger {:trigger labyrinth-trigger}]]}]]})
 
-(defn- museum-scoring [cards _]
-  (->> cards
-       (map :name)
-       set
-       count
-       (* 2)))
-
 (def museum {:name         :museum
              :set          :empires
              :type         :landmark
              :when-scoring ::museum-scoring})
 
+(defn- museum-scoring [cards _]
+  (let [different-cards (->> cards
+                             (map :name)
+                             set
+                             count)]
+    [{:landmark        museum
+      :vp-per-card     2
+      :number-of-cards different-cards
+      :victory-points  (* 2 different-cards)}]))
+
 (defn- obelisk-scoring [cards {:keys [landmarks]}]
   (let [{:keys [chosen-cards]} (:obelisk landmarks)]
     (->> cards
+         (map #(dissoc % :id))
          (filter (comp chosen-cards :name))
-         count
-         (* 2))))
+         frequencies
+         (map (fn [[card number-of-cards]]
+                {:landmark        (:obelisk landmarks)
+                 :card            card
+                 :vp-per-card     2
+                 :number-of-cards number-of-cards
+                 :victory-points  (* 2 number-of-cards)})))))
 
 (defn- obelisk-setup [{:keys [supply] :as game} _]
   (let [{:keys [card split-pile]} (->> supply
@@ -1434,37 +1463,43 @@
               :when-scoring ::obelisk-scoring
               :setup        [[::obelisk-setup]]})
 
-(defn- orchard-scoring [cards _]
-  (->> cards
-       (filter (comp :action :types))
-       (map :name)
-       frequencies
-       vals
-       (filter (partial <= 3))
-       count
-       (* 4)))
-
 (def orchard {:name         :orchard
               :set          :empires
               :type         :landmark
               :when-scoring ::orchard-scoring})
 
-(defn- palace-scoring [cards _]
-  (let [coppers (->> cards
-                     (filter (comp #{:copper} :name))
-                     count)
-        silvers (->> cards
-                     (filter (comp #{:silver} :name))
-                     count)
-        golds   (->> cards
-                     (filter (comp #{:gold} :name))
-                     count)]
-    (* 3 (min coppers silvers golds))))
+(defn- orchard-scoring [cards _]
+  (->> cards
+       (filter (comp :action :types))
+       (map #(dissoc % :id))
+       frequencies
+       (filter (comp (partial <= 3) second))
+       (map (fn [[card number-of-cards]]
+              {:landmark        orchard
+               :card            card
+               :number-of-cards number-of-cards
+               :victory-points  4}))))
 
 (def palace {:name         :palace
              :set          :empires
              :type         :landmark
              :when-scoring ::palace-scoring})
+
+(defn- palace-scoring [cards _]
+  (let [coppers  (->> cards
+                      (filter (comp #{:copper} :name))
+                      count)
+        silvers  (->> cards
+                      (filter (comp #{:silver} :name))
+                      count)
+        golds    (->> cards
+                      (filter (comp #{:gold} :name))
+                      count)
+        csg-sets (min coppers silvers golds)]
+    [{:landmark        palace
+      :vp-per-card     3
+      :number-of-cards csg-sets
+      :victory-points  (* 3 csg-sets)}]))
 
 (def tomb-trigger {:name     :tomb
                    :duration :game
@@ -1476,6 +1511,11 @@
            :type  :landmark
            :setup [[:all-players {:effects [[:add-trigger {:trigger tomb-trigger}]]}]]})
 
+(def tower {:name         :tower
+            :set          :empires
+            :type         :landmark
+            :when-scoring ::tower-scoring})
+
 (defn- tower-scoring [cards {:keys [supply] :as game}]
   (->> cards
        (remove (comp :victory :types))
@@ -1485,51 +1525,63 @@
                         ut/access-top-card
                         :pile-size
                         zero?))))
-       count))
-
-(def tower {:name         :tower
-            :set          :empires
-            :type         :landmark
-            :when-scoring ::tower-scoring})
-
-(defn- triumphal-arch-scoring [cards _]
-  (let [action-count (or (->> cards
-                              (filter (comp :action :types))
-                              (map :name)
-                              frequencies
-                              vals
-                              (sort >)
-                              second)
-                         0)]
-    (* 3 action-count)))
+       (map #(dissoc % :id))
+       frequencies
+       (map (fn [[card number-of-cards]]
+              {:landmark        tower
+               :card            card
+               :vp-per-card     1
+               :number-of-cards number-of-cards
+               :victory-points  number-of-cards}))))
 
 (def triumphal-arch {:name         :triumphal-arch
                      :set          :empires
                      :type         :landmark
                      :when-scoring ::triumphal-arch-scoring})
 
-(defn- wall-scoring [cards _]
-  (let [cards-after-15 (drop 15 cards)]
-    (- (count cards-after-15))))
+(defn- triumphal-arch-scoring [cards _]
+  (let [[card number-of-cards] (->> cards
+                                    (filter (comp :action :types))
+                                    (map #(dissoc % :id))
+                                    frequencies
+                                    (sort-by second >)
+                                    second)]
+    (when card
+      [{:landmark        triumphal-arch
+        :card            card
+        :vp-per-card     3
+        :number-of-cards number-of-cards
+        :victory-points  (* 3 number-of-cards)}])))
 
 (def wall {:name         :wall
            :set          :empires
            :type         :landmark
            :when-scoring ::wall-scoring})
 
-(defn- wolf-den-scoring [cards _]
-  (->> cards
-       (map :name)
-       frequencies
-       vals
-       (filter #{1})
-       count
-       (* -3)))
+(defn- wall-scoring [cards _]
+  (let [cards-over-15 (count (drop 15 cards))]
+    [{:landmark        wall
+      :vp-per-card     -1
+      :number-of-cards cards-over-15
+      :victory-points  (- cards-over-15)
+      :notes           (str (count cards) " cards")}]))
 
 (def wolf-den {:name         :wolf-den
                :set          :empires
                :type         :landmark
                :when-scoring ::wolf-den-scoring})
+
+(defn- wolf-den-scoring [cards _]
+  (->> cards
+       (map #(dissoc % :id))
+       frequencies
+       (filter (comp #{1} second))
+       (map (fn [[card number-of-cards]]
+              {:landmark        wolf-den
+               :card            card
+               :vp-per-card     -3
+               :number-of-cards number-of-cards             ; always 1
+               :victory-points  (* -3 number-of-cards)}))))
 
 (effects/register {::bandit-ford-scoring    bandit-ford-scoring
                    ::fountain-scoring       fountain-scoring

@@ -686,10 +686,16 @@
                  (receive-hex {:player-no 0}))
              {:hexes   {:discard [misery]}
               :players [{:states [twice-miserable]}]}))
-      (is (= (calc-victory-points {:states [miserable]})
-             -2))
-      (is (= (calc-victory-points {:states [twice-miserable]})
-             -4)))
+      (is (= (calc-score {:states [miserable]})
+             [{:state           miserable
+               :vp-per-card     -2
+               :number-of-cards 1
+               :victory-points  -2}]))
+      (is (= (calc-score {:states [twice-miserable]})
+             [{:state           twice-miserable
+               :vp-per-card     -2
+               :number-of-cards 2
+               :victory-points  -4}])))
     (testing "Plague"
       (let [curse (assoc curse :id 0)]
         (is (= (-> {:hexes   {:deck [plague]}
@@ -3187,7 +3193,44 @@
       (is (= (calc-victory-points {:deck [pasture estate estate]})
              4))
       (is (= (calc-victory-points {:deck [pasture estate estate estate]})
-             6)))))
+             6)))
+    (testing "Pasture"
+      (is (= (calc-score {:deck [pasture]})
+             [{:card            pasture
+               :vp-per-card     0
+               :number-of-cards 1
+               :victory-points  0
+               :notes           "0 Estates"}]))
+      (is (= (calc-score {:deck [pasture estate]})
+             [{:card            estate
+               :vp-per-card     1
+               :number-of-cards 1
+               :victory-points  1}
+              {:card            pasture
+               :vp-per-card     1
+               :number-of-cards 1
+               :victory-points  1
+               :notes           "1 Estate"}]))
+      (is (= (calc-score {:deck [pasture estate estate]})
+             [{:card            estate
+               :vp-per-card     1
+               :number-of-cards 2
+               :victory-points  2}
+              {:card            pasture
+               :vp-per-card     2
+               :number-of-cards 1
+               :victory-points  2
+               :notes           "2 Estates"}]))
+      (is (= (calc-score {:deck [pasture estate estate estate]})
+             [{:card            estate
+               :vp-per-card     1
+               :number-of-cards 3
+               :victory-points  3}
+              {:card            pasture
+               :vp-per-card     3
+               :number-of-cards 1
+               :victory-points  3
+               :notes           "3 Estates"}])))))
 
 (deftest skulk-test
   (let [skulk (assoc skulk :id 0)]

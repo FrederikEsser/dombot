@@ -321,10 +321,11 @@
                  :setup   [[::setup-ruins]]})
 
 (defn feodum-victory-points [cards]
-  (quot (->> cards
-             (filter (comp #{:silver} :name))
-             count)
-        3))
+  (let [silver-count (->> cards
+                          (filter (comp #{:silver} :name))
+                          count)]
+    {:victory-points (quot silver-count 3)
+     :notes          (str silver-count " Silver" (when (not= 1 silver-count) "s"))}))
 
 (effects/register {::feodum-victory-points feodum-victory-points})
 

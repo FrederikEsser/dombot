@@ -574,11 +574,23 @@
                        :buys            0
                        :number-of-turns 9
                        :phase           :end-of-game
+                       :score           [{:card            {:name :estate :victory-points 1}
+                                          :vp-per-card     1
+                                          :number-of-cards 3
+                                          :victory-points  3}
+                                         {:card            {:name :duchy :victory-points 3}
+                                          :vp-per-card     3
+                                          :number-of-cards 1
+                                          :victory-points  3}]
                        :victory-points  6
                        :winner          true}
                       {:hand            [{:name :duchy :victory-points 3}]
                        :number-of-turns 9
                        :phase           :end-of-game
+                       :score           [{:card            {:name :duchy :victory-points 3}
+                                          :vp-per-card     3
+                                          :number-of-cards 1
+                                          :victory-points  3}]
                        :victory-points  3
                        :winner          false}]}))
     (is (= (-> {:supply  [{:card {:name :province} :pile-size 0}]
@@ -599,11 +611,23 @@
                        :buys            0
                        :number-of-turns 10
                        :phase           :end-of-game
+                       :score           [{:card            {:name :estate :victory-points 1}
+                                          :vp-per-card     1
+                                          :number-of-cards 3
+                                          :victory-points  3}
+                                         {:card            {:name :duchy :victory-points 3}
+                                          :vp-per-card     3
+                                          :number-of-cards 1
+                                          :victory-points  3}]
                        :victory-points  6
                        :winner          true}
                       {:hand            [{:name :duchy :victory-points 3}]
                        :number-of-turns 9
                        :phase           :end-of-game
+                       :score           [{:card            {:name :duchy :victory-points 3}
+                                          :vp-per-card     3
+                                          :number-of-cards 1
+                                          :victory-points  3}]
                        :victory-points  3
                        :winner          false}]}))
     (is (= (-> {:supply  [{:card {:name :province} :pile-size 0}]
@@ -624,11 +648,23 @@
                        :buys            0
                        :number-of-turns 9
                        :phase           :end-of-game
+                       :score           [{:card            {:name :estate :victory-points 1}
+                                          :vp-per-card     1
+                                          :number-of-cards 3
+                                          :victory-points  3}
+                                         {:card            {:name :duchy :victory-points 3}
+                                          :vp-per-card     3
+                                          :number-of-cards 1
+                                          :victory-points  3}]
                        :victory-points  6
                        :winner          true}
                       {:hand            [{:name :province :victory-points 6}]
                        :number-of-turns 9
                        :phase           :end-of-game
+                       :score           [{:card            {:name :province :victory-points 6}
+                                          :vp-per-card     6
+                                          :number-of-cards 1
+                                          :victory-points  6}]
                        :victory-points  6
                        :winner          true}]}))
     (is (= (-> {:supply  [{:card {:name :province} :pile-size 0}]
@@ -649,11 +685,23 @@
                        :buys            0
                        :number-of-turns 10
                        :phase           :end-of-game
+                       :score           [{:card            {:name :estate :victory-points 1}
+                                          :vp-per-card     1
+                                          :number-of-cards 3
+                                          :victory-points  3}
+                                         {:card            {:name :duchy :victory-points 3}
+                                          :vp-per-card     3
+                                          :number-of-cards 1
+                                          :victory-points  3}]
                        :victory-points  6
                        :winner          false}
                       {:hand            [{:name :province :victory-points 6}]
                        :number-of-turns 9
                        :phase           :end-of-game
+                       :score           [{:card            {:name :province :victory-points 6}
+                                          :vp-per-card     6
+                                          :number-of-cards 1
+                                          :victory-points  6}]
                        :victory-points  6
                        :winner          true}]}))))
 
@@ -677,3 +725,47 @@
            63))
     (is (= (calc-victory-points {:triggers [{:set-aside [estate]}]})
            1))))
+
+(deftest calc-score-test
+  (testing "Calculate score"
+    (is (= (calc-score {:hand [estate]})
+           [{:card            estate
+             :vp-per-card     1
+             :number-of-cards 1
+             :victory-points  1}]))
+    (is (= (calc-score {:hand [duchy duchy]})
+           [{:card            duchy
+             :vp-per-card     3
+             :number-of-cards 2
+             :victory-points  6}]))
+    (is (= (calc-score {:hand [province province province]})
+           [{:card            province
+             :vp-per-card     6
+             :number-of-cards 3
+             :victory-points  18}]))
+    (is (= (calc-score {:hand [estate duchy province]})
+           [{:card            estate
+             :vp-per-card     1
+             :number-of-cards 1
+             :victory-points  1}
+            {:card            duchy
+             :vp-per-card     3
+             :number-of-cards 1
+             :victory-points  3}
+            {:card            province
+             :vp-per-card     6
+             :number-of-cards 1
+             :victory-points  6}]))
+    (is (= (calc-score {:hand [province duchy estate]})
+           [{:card            estate
+             :vp-per-card     1
+             :number-of-cards 1
+             :victory-points  1}
+            {:card            duchy
+             :vp-per-card     3
+             :number-of-cards 1
+             :victory-points  3}
+            {:card            province
+             :vp-per-card     6
+             :number-of-cards 1
+             :victory-points  6}]))))
