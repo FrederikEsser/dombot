@@ -768,6 +768,45 @@
            :on-trash [[:draw 1]]
            :setup    [[::rats-20]]})
 
+(defn- rebuild-revealed [game {:keys [player-no card-name]}]
+  (let [{:keys [revealed deck discard]} (get-in game [:players player-no])
+        {:keys [name] :as card} (last revealed)
+        types    (ut/get-types game card)
+        max-cost (-> (ut/get-cost game card)
+                     (ut/add-to-cost 3))]
+    (cond (and (:victory types)
+               (not= name card-name)) (push-effect-stack game {:player-no player-no
+                                                               :effects   [[:trash-from-revealed {:card-name name}]
+                                                                           [:discard-all-revealed]
+                                                                           [:give-choice {:text    (str "Gain a Victory costing up to " (ut/format-cost max-cost) ".")
+                                                                                          :choice  :gain
+                                                                                          :options [:supply {:type     :victory
+                                                                                                             :max-cost max-cost}]
+                                                                                          :min     1
+                                                                                          :max     1}]]})
+          (not-empty (concat deck discard)) (push-effect-stack game {:player-no player-no
+                                                                     :effects   [[:reveal-from-deck 1]
+                                                                                 [::rebuild-revealed {:card-name card-name}]]})
+          :else game)))
+
+(defn- rebuild-reveal [game {:keys [player-no choice]}]
+  (let [{:keys [card-name]} choice]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:reveal-from-deck 1]
+                                         [::rebuild-revealed {:card-name card-name}]
+                                         [:discard-all-revealed]]})))
+
+(effects/register {::rebuild-revealed rebuild-revealed
+                   ::rebuild-reveal   rebuild-reveal})
+
+(def rebuild {:name    :rebuild
+              :set     :dark-ages
+              :types   #{:action}
+              :cost    5
+              :effects [[:give-actions 1]
+                        [:peek-deck 1]
+                        [:name-a-card {:effect ::rebuild-reveal}]]})
+
 (defn- rogue-gain-or-attack [game {:keys [player-no]}]
   (let [cards-in-trash? (->> game
                              :trash
@@ -1001,6 +1040,7 @@
                     pillage
                     poor-house
                     rats
+                    rebuild
                     rogue
                     sage
                     scavenger

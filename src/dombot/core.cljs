@@ -444,7 +444,7 @@
                                                  victory-points]
                                                 [:td {:style {:border :none}}
                                                  (cond
-                                                   notes (str "(" notes ")")
+                                                   notes [:nobr (str "(" notes ")")]
                                                    (and card landmark) (view-landmark landmark))]])))]
                                  [:tr
                                   [:td {:style {:border      :none

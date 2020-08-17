@@ -1525,6 +1525,104 @@
                    setup-game)
                {:supply [{:card rats :pile-size 20}]}))))))
 
+(deftest rebuild-test
+  (let [rebuild (assoc rebuild :id 0)
+        duchy   (assoc duchy :id 1)]
+    (testing "Rebuild"
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:hand    [rebuild]
+                             :deck    [estate]
+                             :actions 1}]}
+                 (play 0 :rebuild)
+                 (choose {:area :supply :card-name :duchy})
+                 (choose :duchy))
+             {:supply  [{:card duchy :pile-size 7}]
+              :players [{:play-area [rebuild]
+                         :discard   [duchy]
+                         :actions   1}]
+              :trash   [estate]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:hand    [rebuild]
+                             :deck    [duchy estate]
+                             :actions 1}]}
+                 (play 0 :rebuild)
+                 (choose {:area :supply :card-name :duchy})
+                 (choose :duchy))
+             {:supply  [{:card duchy :pile-size 7}]
+              :players [{:play-area [rebuild]
+                         :discard   [duchy duchy]
+                         :actions   1}]
+              :trash   [estate]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:hand    [rebuild]
+                             :deck    [copper estate]
+                             :actions 1}]}
+                 (play 0 :rebuild)
+                 (choose {:area :supply :card-name :duchy})
+                 (choose :duchy))
+             {:supply  [{:card duchy :pile-size 7}]
+              :players [{:play-area [rebuild]
+                         :discard   [copper duchy]
+                         :actions   1}]
+              :trash   [estate]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:hand    [rebuild]
+                             :deck    [copper]
+                             :discard [estate]
+                             :actions 1}]}
+                 (play 0 :rebuild)
+                 (choose {:area :supply :card-name :duchy})
+                 (choose :duchy))
+             {:supply  [{:card duchy :pile-size 7}]
+              :players [{:play-area [rebuild]
+                         :discard   [copper duchy]
+                         :actions   1}]
+              :trash   [estate]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:hand    [rebuild]
+                             :deck    [copper silver]
+                             :discard [estate]
+                             :actions 1}]}
+                 (play 0 :rebuild)
+                 (choose {:area :supply :card-name :duchy})
+                 (choose :duchy))
+             {:supply  [{:card duchy :pile-size 7}]
+              :players [{:play-area [rebuild]
+                         :discard   [copper silver duchy]
+                         :actions   1}]
+              :trash   [estate]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:hand    [rebuild]
+                             :discard [estate]
+                             :actions 1}]}
+                 (play 0 :rebuild)
+                 (choose {:area :supply :card-name :duchy})
+                 (choose :duchy))
+             {:supply  [{:card duchy :pile-size 7}]
+              :players [{:play-area [rebuild]
+                         :discard   [duchy]
+                         :actions   1}]
+              :trash   [estate]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:hand    [rebuild]
+                             :actions 1}]}
+                 (play 0 :rebuild))
+             {:supply  [{:card duchy :pile-size 8}]
+              :players [{:play-area [rebuild]
+                         :actions   1}]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:hand    [rebuild]
+                             :deck    [copper]
+                             :discard [silver]
+                             :actions 1}]}
+                 (play 0 :rebuild)
+                 (choose {:area :supply :card-name :duchy}))
+             {:supply  [{:card duchy :pile-size 8}]
+              :players [{:play-area      [rebuild]
+                         :discard        [copper silver]
+                         :revealed-cards {:discard 2}
+                         :actions        1}]})))))
+
 (deftest rogue-test
   (let [rogue  (assoc rogue :id 0)
         silver (assoc silver :id 1)
