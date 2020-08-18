@@ -1157,7 +1157,7 @@
                             :min       1
                             :max       1}
                            {:player-no 0
-                            :effect    [:register-repeated-play {:target-id nil}]}]}))
+                            :effect    [:register-repeated-play {:card nobles}]}]}))
     (is (= (calc-victory-points {:deck [nobles]})
            2))))
 

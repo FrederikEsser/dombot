@@ -291,7 +291,7 @@
         card-ids-in-play      (->> play-area (keep :id) set)
         repeated-card-ids     (->> repeated-play
                                    (filter (comp #{id} :source))
-                                   (filter (comp card-ids-in-play :target))
+                                   #_(filter (comp card-ids-in-play :target))
                                    (map :target)
                                    set)
         stay-in-play-triggers (filter (comp #{:at-start-turn :at-end-turn :play-action} :event) triggers)]

@@ -1025,10 +1025,10 @@
                                 :effect    [:attack {:effects [[:discard-down-to 3]]}]}
                                {:player-no 1
                                 :effect    [:clear-unaffected {:works :once}]}
-                               {:effect    [:card-effect {:card militia}]
-                                :player-no 0}
                                {:player-no 0
-                                :effect    [:register-repeated-play {:target-id nil}]}]}))
+                                :effect    [:card-effect {:card militia}]}
+                               {:player-no 0
+                                :effect    [:register-repeated-play {:card militia}]}]}))
         (is (= (-> {:players [{:hand    [throne-room militia]
                                :actions 1
                                :coins   0}
@@ -1053,7 +1053,7 @@
                                {:player-no 1
                                 :effect    [:clear-unaffected {:works :once}]}
                                {:player-no 0
-                                :effect    [:register-repeated-play {:target-id nil}]}]}))
+                                :effect    [:register-repeated-play {:card militia}]}]}))
         (testing "vs Minion"
           (is (= (-> {:players [{:hand    [minion]
                                  :actions 1}
@@ -1580,7 +1580,7 @@
                               :effect    [:card-effect {:card throne-room}]}
                              {:player-no 0
                               :card-id   0
-                              :effect    [:register-repeated-play {:target-id 0}]}]}))
+                              :effect    [:register-repeated-play {:card throne-room}]}]}))
       (ut/reset-ids!)
       (is (= (-> {:players [{:deck    [witch copper copper silver]
                              :hand    [throne-room throne-room merchant]
@@ -1603,7 +1603,7 @@
                               :max       1}
                              {:player-no 0
                               :card-id   0
-                              :effect    [:register-repeated-play {:target-id 0}]}]}))
+                              :effect    [:register-repeated-play {:card throne-room}]}]}))
       (is (= (-> {:supply  [{:card curse :pile-size 10}]
                   :players [{:deck    [witch copper copper silver]
                              :hand    [throne-room throne-room merchant]

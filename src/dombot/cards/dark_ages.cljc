@@ -161,6 +161,27 @@
                                       :min     1
                                       :max     1}]]})
 
+(defn- misfits-give-choice [game {:keys [player-no card-id]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})
+        cost (ut/get-cost game card)]
+    (push-effect-stack game {:player-no player-no
+                             :card-id   card-id
+                             :effects   [[:give-choice {:text    (str "Play a non-Command Action card from the Supply that costs less than " (ut/format-cost cost) ".")
+                                                        :choice  :play-from-supply
+                                                        :options [:supply {:type            :action
+                                                                           :not-type        :command
+                                                                           :costs-less-than cost}]
+                                                        :min     1
+                                                        :max     1}]]})))
+
+(effects/register {::misfits-give-choice misfits-give-choice})
+
+(def band-of-misfits {:name    :band-of-misfits
+                      :set     :dark-ages
+                      :types   #{:action :command}
+                      :cost    5
+                      :effects [[::misfits-give-choice]]})
+
 (def bandit-camp {:name    :bandit-camp
                   :set     :dark-ages
                   :types   #{:action}
@@ -1018,6 +1039,7 @@
 
 (def kingdom-cards [altar
                     armory
+                    band-of-misfits
                     bandit-camp
                     beggar
                     catacombs

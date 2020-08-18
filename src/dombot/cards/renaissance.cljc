@@ -358,7 +358,7 @@
     (push-effect-stack game {:player-no player-no
                              :card-id   card-id
                              :effects   [[:card-effect {:card card}]
-                                         [:register-repeated-play {:target-id (:id card)}]]})))
+                                         [:register-repeated-play {:card card}]]})))
 
 (defn- scepter-choice [game {:keys [player-no card-id choice]}]
   (let [played-card-ids (set (get-in game [:players player-no :actions-played]))]

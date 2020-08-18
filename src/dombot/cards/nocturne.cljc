@@ -6,14 +6,14 @@
             [dombot.effects :as effects]))
 
 (defn- ghost-repeat-action [game {:keys [player-no card-id set-aside]}]
-  (let [{:keys [id] :as card} (first set-aside)]
+  (let [card (first set-aside)]
     (-> game
         (update-in [:players player-no :play-area] concat set-aside)
         (push-effect-stack {:player-no player-no
                             :card-id   card-id
                             :effects   [[:card-effect {:card card}]
                                         [:card-effect {:card card}]
-                                        [:register-repeated-play {:target-id id}]]}))))
+                                        [:register-repeated-play {:card card}]]}))))
 
 (def ghost-trigger {:event    :at-start-turn
                     :duration :once

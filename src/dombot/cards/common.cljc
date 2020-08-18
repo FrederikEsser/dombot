@@ -100,12 +100,11 @@
 
 (effects/register {:play-from-revealed play-from-revealed})
 
-(defn register-repeated-play [game {:keys [player-no card-id target-id]}]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id target-id})
-        types (ut/get-types game card)]
+(defn register-repeated-play [game {:keys [player-no card-id card]}]
+  (let [types (ut/get-types game card)]
     (cond-> game
             (:duration types) (update-in [:players player-no :repeated-play] conj {:source card-id
-                                                                                   :target target-id}))))
+                                                                                   :target (:id card)}))))
 
 (effects/register {:register-repeated-play register-repeated-play})
 
@@ -117,7 +116,7 @@
                                      :effects   (concat
                                                   [[:put-in-play {:card-name card-name}]]
                                                   (repeat times [:card-effect {:card card}])
-                                                  [[:register-repeated-play {:target-id (:id card)}]])}))))
+                                                  [[:register-repeated-play {:card card}]])}))))
 
 (effects/register {:repeat-action repeat-action})
 
@@ -128,6 +127,16 @@
                                             :to            :play-area}))))
 
 (effects/register {:play-from-discard play-from-discard})
+
+(defn play-from-supply [game {:keys [player-no card-id card-name]}]
+  (let [{:keys [card]} (ut/get-pile-idx game card-name)
+        card (assoc card :id (ut/next-id!))]
+    (push-effect-stack game {:player-no player-no
+                             :card-id   card-id
+                             :effects   [[:card-effect {:card card}]
+                                         [:register-repeated-play {:card card}]]})))
+
+(effects/register {:play-from-supply play-from-supply})
 
 (defn discard-from-hand [game {:keys [card-name card-names] :as args}]
   (cond-> game

@@ -581,7 +581,8 @@
                  (choose :inventor))                        ; put Inventor on vanished Cargo Ship
              {:supply  [{:card inventor :pile-size 9}]
               :players [{:hand          [copper copper copper copper copper]
-                         :discard       [throne-room improve]
+                         :play-area     [throne-room]       ; House rules makes Throne Room stay in play even though Cargo Ship did not
+                         :discard       [improve]
                          :actions       0
                          :coins         0
                          :buys          0
@@ -609,12 +610,13 @@
                  (choose :inventor))                        ; put Inventor on vanished Cargo Ship
              {:current-player 0
               :supply         [{:card inventor :pile-size 9}]
-              :players        [{:hand    [copper copper copper copper copper inventor]
-                                :discard [throne-room improve]
-                                :actions 1
-                                :coins   0
-                                :buys    1
-                                :phase   :action}]
+              :players        [{:hand      [copper copper copper copper copper inventor]
+                                :play-area [throne-room]    ; House rules makes Throne Room stay in play even though Cargo Ship did not
+                                :discard   [improve]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]
               :trash          [cargo-ship]})))
     (ut/reset-ids!)
     (is (= (-> {:players [{:hand    [cargo-ship throne-room]

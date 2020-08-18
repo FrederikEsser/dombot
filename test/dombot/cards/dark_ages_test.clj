@@ -7,6 +7,7 @@
             [dombot.cards.dark-ages :as dark-ages :refer :all]
             [dombot.cards.dominion :refer [militia throne-room]]
             [dombot.cards.intrigue :refer [harem lurker]]
+            [dombot.cards.seaside :refer [caravan]]
             [dombot.cards.adventures :refer [warrior]]
             [dombot.cards.empires :refer [engineer fortune]]
             [dombot.cards.menagerie :refer [village-green]]
@@ -74,6 +75,201 @@
              {:supply  [{:card duchy :pile-size 8}]
               :players [{:play-area [armory]
                          :actions   0}]})))))
+
+(deftest band-of-misfits-test
+  (let [band-of-misfits (assoc band-of-misfits :id 0)]
+    (testing "Band of Misfits"
+      (is (= (-> {:supply  [{:card fortress :pile-size 10}]
+                  :players [{:hand    [band-of-misfits]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :band-of-misfits)
+                 (choose :fortress))
+             {:supply  [{:card fortress :pile-size 10}]
+              :players [{:hand      [copper]
+                         :play-area [band-of-misfits]
+                         :deck      [copper]
+                         :actions   2}]}))
+      (is (= (-> {:supply  [{:split-pile [{:card sir-martin :pile-size 1}
+                                          {:card sir-destry :pile-size 1}]}]
+                  :players [{:hand    [band-of-misfits]
+                             :actions 1
+                             :buys    1}]}
+                 (play 0 :band-of-misfits)
+                 (choose :sir-martin))
+             {:supply  [{:split-pile [{:card sir-martin :pile-size 1}
+                                      {:card sir-destry :pile-size 1}]}]
+              :players [{:play-area [band-of-misfits]
+                         :actions   0
+                         :buys      3}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}
+                            {:card engineer :pile-size 10}
+                            {:card fortress :pile-size 0}
+                            {:card band-of-misfits :pile-size 9}
+                            {:card bandit-camp :pile-size 10}
+                            {:split-pile [{:card sir-destry :pile-size 1}
+                                          {:card sir-martin :pile-size 1}]}]
+                  :players [{:hand    [band-of-misfits]
+                             :actions 1}]}
+                 (play 0 :band-of-misfits))
+             {:supply  [{:card silver :pile-size 40}
+                        {:card engineer :pile-size 10}
+                        {:card fortress :pile-size 0}
+                        {:card band-of-misfits :pile-size 9}
+                        {:card bandit-camp :pile-size 10}
+                        {:split-pile [{:card sir-destry :pile-size 1}
+                                      {:card sir-martin :pile-size 1}]}]
+              :players [{:play-area [band-of-misfits]
+                         :actions   0}]}))
+      (is (= (-> {:cost-reductions [{:reduction 1}]
+                  :supply          [{:card fortress :pile-size 10}]
+                  :players         [{:hand    [band-of-misfits]
+                                     :deck    [copper copper]
+                                     :actions 1}]}
+                 (play 0 :band-of-misfits)
+                 (choose :fortress))
+             {:cost-reductions [{:reduction 1}]
+              :supply          [{:card fortress :pile-size 10}]
+              :players         [{:hand      [copper]
+                                 :play-area [band-of-misfits]
+                                 :deck      [copper]
+                                 :actions   2}]}))
+      (is (= (-> {:cost-reductions [{:reduction 1}]
+                  :supply          [{:card silver :pile-size 40}
+                                    {:card engineer :pile-size 10}
+                                    {:card band-of-misfits :pile-size 9}
+                                    {:card bandit-camp :pile-size 10}]
+                  :players         [{:hand    [band-of-misfits]
+                                     :actions 1}]}
+                 (play 0 :band-of-misfits))
+             {:cost-reductions [{:reduction 1}]
+              :supply          [{:card silver :pile-size 40}
+                                {:card engineer :pile-size 10}
+                                {:card band-of-misfits :pile-size 9}
+                                {:card bandit-camp :pile-size 10}]
+              :players         [{:play-area [band-of-misfits]
+                                 :actions   0}]}))
+      (is (= (-> {:cost-reductions [{:reduction 5}]
+                  :supply          [{:card fortress :pile-size 10}]
+                  :players         [{:hand    [band-of-misfits]
+                                     :actions 1}]}
+                 (play 0 :band-of-misfits))
+             {:cost-reductions [{:reduction 5}]
+              :supply          [{:card fortress :pile-size 10}]
+              :players         [{:play-area [band-of-misfits]
+                                 :actions   0}]}))
+      (is (= (-> {:supply  [{:card death-cart :pile-size 10}]
+                  :players [{:hand    [band-of-misfits ruined-village]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :band-of-misfits)
+                 (choose :death-cart)
+                 (choose {:area :hand :card-name :ruined-village}))
+             {:supply  [{:card death-cart :pile-size 10}]
+              :players [{:play-area [band-of-misfits]
+                         :actions   0
+                         :coins     5}]
+              :trash   [ruined-village]}))
+      (is (= (-> {:supply  [{:card death-cart :pile-size 10}]
+                  :players [{:hand    [band-of-misfits]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :band-of-misfits)
+                 (choose :death-cart))
+             {:supply  [{:card death-cart :pile-size 10}]
+              :players [{:play-area [band-of-misfits]
+                         :actions   0
+                         :coins     0}]}))
+      (is (= (-> {:supply  [{:card throne-room :pile-size 10}]
+                  :players [{:hand    [band-of-misfits fortress]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :band-of-misfits)
+                 (choose :throne-room)
+                 (choose :fortress))
+             {:supply  [{:card throne-room :pile-size 10}]
+              :players [{:hand      [copper copper]
+                         :play-area [band-of-misfits fortress]
+                         :actions   4}]}))
+      (ut/reset-ids!)
+      (is (= (-> {:supply  [{:card caravan :pile-size 10}]
+                  :players [{:hand    [band-of-misfits]
+                             :deck    [copper copper]
+                             :actions 1}]}
+                 (play 0 :band-of-misfits)
+                 (choose :caravan))
+             {:supply  [{:card caravan :pile-size 10}]
+              :players [{:hand          [copper]
+                         :play-area     [band-of-misfits]
+                         :deck          [copper]
+                         :actions       1
+                         :triggers      [(get-trigger (assoc caravan :id 1) 2)]
+                         :repeated-play [{:source 0 :target 1}]}]}))
+      (is (= (-> {:supply  [{:card caravan :pile-size 10}]
+                  :players [{:hand    [band-of-misfits]
+                             :deck    [silver copper copper copper copper copper]
+                             :actions 1
+                             :phase   :action}]}
+                 (play 0 :band-of-misfits)
+                 (choose :caravan)
+                 (end-turn 0))
+             {:current-player 0
+              :supply         [{:card caravan :pile-size 10}]
+              :players        [{:hand      [copper copper copper copper copper silver]
+                                :play-area [band-of-misfits]
+                                :actions   1
+                                :coins     0
+                                :buys      1
+                                :phase     :action}]}))
+      (ut/reset-ids!)
+      #_(let [caravan (assoc caravan :id 42)]
+          (is (= (-> {:supply  [{:card throne-room :pile-size 10}]
+                      :players [{:hand    [band-of-misfits caravan]
+                                 :deck    [copper copper]
+                                 :actions 1}]}
+                     (play 0 :band-of-misfits)
+                     (choose :throne-room)
+                     (choose :caravan))
+                 {:supply  [{:card throne-room :pile-size 10}]
+                  :players [{:hand          [copper copper]
+                             :play-area     [band-of-misfits caravan]
+                             :actions       2
+                             :triggers      [(get-trigger caravan 2)
+                                             (get-trigger caravan 3)]
+                             :repeated-play [{:source 0 :target 42}]}]}))
+          (is (= (-> {:supply  [{:card throne-room :pile-size 10}]
+                      :players [{:hand    [band-of-misfits caravan]
+                                 :deck    [silver silver copper copper copper copper copper]
+                                 :actions 1
+                                 :phase   :action}]}
+                     (play 0 :band-of-misfits)
+                     (choose :throne-room)
+                     (choose :caravan)
+                     (end-turn 0))
+                 {:supply  [{:card throne-room :pile-size 10}]
+                  :players [{:hand      [copper copper copper copper copper silver silver]
+                             :play-area [band-of-misfits caravan]
+                             :actions   1
+                             :coins     0
+                             :buys      1
+                             :phase     :action}]}))))
+    (is (= (-> {:supply  [{:card poor-house :pile-size 10}
+                          {:card fortress :pile-size 10}]
+                :players [{:hand    [throne-room band-of-misfits]
+                           :deck    [silver silver]
+                           :actions 1
+                           :coins   0}]}
+               (play 0 :throne-room)
+               (choose :band-of-misfits)
+               (choose :poor-house)
+               (choose :fortress))
+           {:supply  [{:card poor-house :pile-size 10}
+                      {:card fortress :pile-size 10}]
+            :players [{:hand      [silver]
+                       :play-area [throne-room band-of-misfits]
+                       :deck      [silver]
+                       :actions   2
+                       :coins     4}]}))))
 
 (deftest bandit-camp-test
   (let [bandit-camp (assoc bandit-camp :id 0)]
