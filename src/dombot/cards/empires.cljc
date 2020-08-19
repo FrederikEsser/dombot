@@ -679,6 +679,18 @@
                                          :options [:player :hand {:name :gold}]
                                          :max     1}]]})
 
+(def overlord {:name    :overlord
+               :set     :empires
+               :types   #{:action :command}
+               :cost    {:debt-cost 8}
+               :effects [[:give-choice {:text    "Play a non-Command Action card from the Supply costing up to $5."
+                                        :choice  :play-from-supply
+                                        :options [:supply {:type     :action
+                                                           :not-type :command
+                                                           :max-cost 5}]
+                                        :min     1
+                                        :max     1}]]})
+
 (defn- patrician-take-card [game {:keys [player-no]}]
   (let [revealed (get-in game [:players player-no :revealed])
         {:keys [name] :as card} (first revealed)
@@ -862,6 +874,7 @@
                     gladiator
                     groundskeeper
                     legionary
+                    overlord
                     patrician
                     royal-blacksmith
                     sacrifice
