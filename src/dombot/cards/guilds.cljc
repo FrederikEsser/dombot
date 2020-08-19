@@ -127,7 +127,8 @@
              :set     :guilds
              :types   #{:action}
              :cost    3
-             :effects [[:name-a-card {:effect ::doctor-reveal}]]
+             :effects [[:peek-deck 1]
+                       [:name-a-card {:effect ::doctor-reveal}]]
              :overpay ::doctor-overpay})
 
 (defn- herald-play-action [game {:keys [player-no]}]
@@ -180,7 +181,8 @@
                  :set     :guilds
                  :types   #{:action}
                  :cost    5
-                 :effects [[:name-a-card {:effect ::journeyman-reveal}]]})
+                 :effects [[:peek-deck 1]
+                           [:name-a-card {:effect ::journeyman-reveal}]]})
 
 (defn- masterpiece-overpay [game {:keys [player-no amount]}]
   (push-effect-stack game {:player-no player-no

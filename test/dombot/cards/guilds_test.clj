@@ -161,6 +161,17 @@
               :trash   [copper copper copper]}))
       (is (= (-> {:supply  (base/supply 2 8)
                   :players [{:hand    [doctor]
+                             :discard [copper copper copper copper]
+                             :actions 1}]}
+                 (play 0 :doctor)
+                 (choose {:area :supply :card-name :copper}))
+             {:supply  (base/supply 2 8)
+              :players [{:play-area [doctor]
+                         :deck      [copper]
+                         :actions   0}]
+              :trash   [copper copper copper]}))
+      (is (= (-> {:supply  (base/supply 2 8)
+                  :players [{:hand    [doctor]
                              :deck    [silver estate copper copper]
                              :actions 1}]}
                  (play 0 :doctor)
@@ -366,6 +377,29 @@
                        :discard        [estate estate]
                        :revealed-cards {:hand    2
                                         :discard 2}
+                       :actions        0}]}))
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand    [journeyman]
+                           :discard [copper copper copper copper]
+                           :actions 1}]}
+               (play 0 :journeyman)
+               (choose {:area :supply :card-name :estate}))
+           {:supply  (base/supply 2 8)
+            :players [{:hand           [copper copper copper]
+                       :play-area      [journeyman]
+                       :deck           [copper]
+                       :revealed-cards {:hand 3}
+                       :actions        0}]}))
+    (is (= (-> {:supply  (base/supply 2 8)
+                :players [{:hand    [journeyman]
+                           :discard [copper copper copper copper]
+                           :actions 1}]}
+               (play 0 :journeyman)
+               (choose {:area :supply :card-name :copper}))
+           {:supply  (base/supply 2 8)
+            :players [{:play-area      [journeyman]
+                       :discard        [copper copper copper copper]
+                       :revealed-cards {:discard 4}
                        :actions        0}]}))))
 
 (deftest masterpiece-test

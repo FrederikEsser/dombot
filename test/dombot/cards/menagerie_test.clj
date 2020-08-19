@@ -1461,6 +1461,19 @@
             :players [{:deck           [silver silver silver silver silver]
                        :revealed-cards {:deck 4}
                        :coins          0
+                       :buys           1}]}))
+    (is (= (-> {:events  {:pursue pursue}
+                :supply  [{:card silver :pile-size 43}]
+                :players [{:discard  [silver silver silver silver silver]
+                           :coins 2
+                           :buys  1}]}
+               (buy-event 0 :pursue)
+               (choose {:area :supply :card-name :silver}))
+           {:events  {:pursue pursue}
+            :supply  [{:card silver :pile-size 43}]
+            :players [{:deck           [silver silver silver silver silver]
+                       :revealed-cards {:deck 4}
+                       :coins          0
                        :buys           1}]}))))
 
 (deftest reap-test

@@ -11,7 +11,7 @@
 ; Check card effects at clean up at every iteration. Travellers need trigger-conditions
 ; fix Throne Room / Improve
 ; fix Captain / Improve
-; show set-aside cards where their carrier has disappeared (Cargo Ship / Improve) & Save
+; show set-aside cards where their carrier has disappeared (Cargo Ship / Improve) & Save / Reap
 ; show Throne Room'ed Durations with set-aside cards as separate cards
 ; choose by trigger id when set aside cards - show different cards
 

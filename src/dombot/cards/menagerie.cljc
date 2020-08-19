@@ -592,6 +592,7 @@
              :type   :event
              :cost   2
              :on-buy [[:give-buys 1]
+                      [:peek-deck 1]
                       [:name-a-card {:text   "Name a card. Reveal the top 4 cards from your deck. Put the matches back and discard the rest."
                                      :effect ::pursue-reveal}]]})
 
