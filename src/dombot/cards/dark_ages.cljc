@@ -759,6 +759,33 @@
                            [:reveal-hand]
                            [::poor-house-lose-coins]]})
 
+(defn procession-repeat-action [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        cost (-> (ut/get-cost game card)
+                 (ut/add-to-cost 1))]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:repeat-action {:card-name card-name :times 2}]
+                                                 [:trash-from-play-area {:trash-card-id (:id card)}]
+                                                 [:give-choice {:text    (str "Gain an Action card costing exactly " (ut/format-cost cost) ".")
+                                                                :choice  :gain
+                                                                :options [:supply {:type :action
+                                                                                   :cost cost}]
+                                                                :min     1
+                                                                :max     1}]]}))))
+
+(effects/register {::procession-repeat-action procession-repeat-action})
+
+(def procession {:name    :procession
+                 :set     :dark-ages
+                 :types   #{:action}
+                 :cost    4
+                 :effects [[:give-choice {:text    "You may play an non-Duration Action card from your hand twice."
+                                          :choice  ::procession-repeat-action
+                                          :options [:player :hand {:type     :action
+                                                                   :not-type :duration}]
+                                          :max     1}]]})
+
 (defn- rats-trash [game {:keys [player-no]}]
   (let [all-rats? (->> (get-in game [:players player-no :hand])
                        (every? (comp #{:rats} :name)))]
@@ -1061,6 +1088,7 @@
                     mystic
                     pillage
                     poor-house
+                    procession
                     rats
                     rebuild
                     rogue

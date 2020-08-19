@@ -6,7 +6,7 @@
             [dombot.cards.common :refer :all]
             [dombot.cards.dark-ages :as dark-ages :refer :all]
             [dombot.cards.dominion :refer [militia throne-room]]
-            [dombot.cards.intrigue :refer [harem lurker]]
+            [dombot.cards.intrigue :refer [harem lurker mining-village]]
             [dombot.cards.seaside :refer [caravan]]
             [dombot.cards.adventures :refer [warrior]]
             [dombot.cards.empires :refer [engineer fortune]]
@@ -1606,6 +1606,107 @@
                    setup-game)
                {:extra-cards [{:card spoils :pile-size 15}]
                 :supply      [{:card pillage :pile-size 10}]}))))))
+
+(deftest procession-test
+  (let [procession      (assoc procession :id 0)
+        vagrant         (assoc vagrant :id 1)
+        poor-house      (assoc poor-house :id 2)
+        mining-village  (assoc mining-village :id 3)
+        band-of-misfits (assoc band-of-misfits :id 4)
+        fortress        (assoc fortress :id 5)]
+    (testing "Procession"
+      (is (= (-> {:supply  [{:card vagrant :pile-size 10}]
+                  :players [{:hand    [procession poor-house]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :procession)
+                 (choose :poor-house)
+                 (choose :vagrant))
+             {:supply  [{:card vagrant :pile-size 9}]
+              :players [{:play-area [procession]
+                         :discard   [vagrant]
+                         :actions   0
+                         :coins     8}]
+              :trash   [poor-house]}))
+      (is (= (-> {:supply  [{:card :estate :pile-size 8}
+                            {:card poor-house :pile-size 9}
+                            {:card forager :pile-size 10}]
+                  :players [{:hand    [procession poor-house]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :procession)
+                 (choose :poor-house))
+             {:supply  [{:card :estate :pile-size 8}
+                        {:card poor-house :pile-size 9}
+                        {:card forager :pile-size 10}]
+              :players [{:play-area [procession]
+                         :actions   0
+                         :coins     8}]
+              :trash   [poor-house]}))
+      (is (= (-> {:players [{:hand    [procession poor-house copper copper copper copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :procession)
+                 (choose nil))
+             {:players [{:hand      [poor-house copper copper copper copper]
+                         :play-area [procession]
+                         :actions   0
+                         :coins     0}]}))
+      (is (= (-> {:supply  [{:card band-of-misfits :pile-size 10}]
+                  :players [{:hand    [procession mining-village]
+                             :deck    [copper copper copper]
+                             :actions 1
+                             :coins   0}]}
+                 (play 0 :procession)
+                 (choose :mining-village)
+                 (choose :mining-village)                   ; Trash Mining Village for +$2
+                 (choose :band-of-misfits))                 ; Gain Band of Misfits
+             {:supply  [{:card band-of-misfits :pile-size 9}]
+              :players [{:hand      [copper copper]
+                         :play-area [procession]
+                         :deck      [copper]
+                         :discard   [band-of-misfits]
+                         :actions   4
+                         :coins     2}]
+              :trash   [mining-village]}))
+      (is (= (-> {:supply  [{:card band-of-misfits :pile-size 10}]
+                  :players [{:hand    [procession fortress]
+                             :deck    [copper copper copper]
+                             :actions 1}]}
+                 (play 0 :procession)
+                 (choose :fortress)
+                 (choose :band-of-misfits))                 ; Gain Band of Misfits
+             {:supply  [{:card band-of-misfits :pile-size 9}]
+              :players [{:hand      [copper copper fortress]
+                         :play-area [procession]
+                         :deck      [copper]
+                         :discard   [band-of-misfits]
+                         :actions   4}]}))
+      (let [procession-2 (assoc procession :id 2)]
+        (is (= (-> {:supply  [{:card band-of-misfits :pile-size 10}]
+                    :players [{:hand    [procession procession-2 fortress]
+                               :deck    [copper copper copper copper copper]
+                               :actions 1}]}
+                   (play 0 :procession)
+                   (choose :procession)                     ; Play second Procession twice
+                   (choose :fortress)                       ; Procession on Fortress
+                   (choose :band-of-misfits)                ; Gain Band of Misfits for trashed Fortress once
+                   (choose :fortress)                       ; Procession on Fortress again
+                   (choose :band-of-misfits)                ; Gain Band of Misfits for trashed Fortress twice
+                   (choose :band-of-misfits))               ; Gain Band of Misfits for trashed Procession
+               {:supply  [{:card band-of-misfits :pile-size 7}]
+                :players [{:hand      [copper copper copper copper fortress]
+                           :play-area [procession]
+                           :deck      [copper]
+                           :discard   [band-of-misfits band-of-misfits band-of-misfits]
+                           :actions   8}]
+                :trash   [procession-2]})))
+      (is (= (-> {:players [{:hand    [procession copper estate caravan]
+                             :actions 1}]}
+                 (play 0 :procession))
+             {:players [{:hand      [copper estate caravan]
+                         :play-area [procession]
+                         :actions   0}]})))))
 
 (deftest poor-house-test
   (let [poor-house (assoc poor-house :id 0)]

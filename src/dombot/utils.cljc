@@ -235,7 +235,8 @@
                          :harvest :tournament :trusty-steed
                          :forager :storeroom :ironmonger :mercenary
                          :giant :miser :teacher
-                         :chariot-race :farmers'-market :sacrifice} name)))
+                         :chariot-race :farmers'-market :sacrifice
+                         :scrap :bounty-hunter} name)))
     (conj types :treasure)
     types))
 
