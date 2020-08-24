@@ -531,6 +531,15 @@
                        [::exile-from-supply {:card-name :duchy}]]
               :setup  [[:all-players {:effects [[::add-exile-trigger]]}]]})
 
+(def enhance {:name   :enhance
+              :set    :menagerie
+              :type   :event
+              :cost   3
+              :on-buy [[:give-choice {:text    "You may trash a non-Victory card from your hand."
+                                      :choice  [:trash-and-gain {:extra-cost 2}]
+                                      :options [:player :hand {:not-type :victory}]
+                                      :max     1}]]})
+
 (defn- gamble-handle-revealed [game {:keys [player-no]}]
   (let [{:keys [name] :as card} (get-in game [:players player-no :revealed 0])
         types (ut/get-types game card)]
@@ -700,6 +709,7 @@
              demand
              desperation
              enclave
+             enhance
              gamble
              populate
              pursue

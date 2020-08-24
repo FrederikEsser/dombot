@@ -1277,6 +1277,56 @@
                          :coins   0
                          :buys    0}]})))))
 
+(deftest enhance-test
+  (let [province (assoc province :id 1)]
+    (testing "Enhance"
+      (is (= (-> {:events  {:enhance enhance}
+                  :supply  [{:card province :pile-size 8}]
+                  :players [{:hand  [gold]
+                             :coins 3
+                             :buys  1}]}
+                 (buy-event 0 :enhance)
+                 (choose :gold)
+                 (choose :province))
+             {:events  {:enhance enhance}
+              :supply  [{:card province :pile-size 7}]
+              :players [{:discard [province]
+                         :coins   0
+                         :buys    0}]
+              :trash   [gold]}))
+      (is (= (-> {:events  {:enhance enhance}
+                  :supply  [{:card province :pile-size 8}]
+                  :players [{:hand  [livery]
+                             :coins 3
+                             :buys  1}]}
+                 (buy-event 0 :enhance)
+                 (choose :livery))
+             {:events  {:enhance enhance}
+              :supply  [{:card province :pile-size 8}]
+              :players [{:coins 0
+                         :buys  0}]
+              :trash   [livery]}))
+      (is (= (-> {:events  {:enhance enhance}
+                  :supply  [{:card province :pile-size 8}]
+                  :players [{:hand  [estate nobles]
+                             :coins 3
+                             :buys  1}]}
+                 (buy-event 0 :enhance))
+             {:events  {:enhance enhance}
+              :supply  [{:card province :pile-size 8}]
+              :players [{:hand  [estate nobles]
+                         :coins 0
+                         :buys  0}]}))
+      (is (= (-> {:events  {:enhance enhance}
+                  :supply  [{:card province :pile-size 8}]
+                  :players [{:coins 3
+                             :buys  1}]}
+                 (buy-event 0 :enhance))
+             {:events  {:enhance enhance}
+              :supply  [{:card province :pile-size 8}]
+              :players [{:coins 0
+                         :buys  0}]})))))
+
 (deftest gamble-test
   (let [livery (assoc livery :id 1)]
     (testing "Gamble"
@@ -1464,9 +1514,9 @@
                        :buys           1}]}))
     (is (= (-> {:events  {:pursue pursue}
                 :supply  [{:card silver :pile-size 43}]
-                :players [{:discard  [silver silver silver silver silver]
-                           :coins 2
-                           :buys  1}]}
+                :players [{:discard [silver silver silver silver silver]
+                           :coins   2
+                           :buys    1}]}
                (buy-event 0 :pursue)
                (choose {:area :supply :card-name :silver}))
            {:events  {:pursue pursue}
