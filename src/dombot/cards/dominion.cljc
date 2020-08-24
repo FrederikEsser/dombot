@@ -320,8 +320,7 @@
         {:keys [name] :as card} (last discard)]
     (cond-> game
             (= name card-name) (-> (push-effect-stack {:player-no player-no
-                                                       :effects   [[:play-from-discard {:card-name card-name}]
-                                                                   [:card-effect {:card card}]]})))))
+                                                       :effects   [[:play-from-discard {:card-name card-name}]]})))))
 
 (effects/register {::vassal-play-action vassal-play-action})
 

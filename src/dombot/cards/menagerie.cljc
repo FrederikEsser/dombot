@@ -562,6 +562,15 @@
                       [::gamble-handle-revealed]
                       [:discard-all-revealed]]})
 
+(def march {:name   :march
+            :set    :menagerie
+            :type   :event
+            :cost   3
+            :on-buy [[:give-choice {:text    "You may play an Action card from your discard pile."
+                                    :choice  :play-from-discard
+                                    :options [:player :discard {:type :action}]
+                                    :max     1}]]})
+
 (defn- populate-gain-actions [{:keys [supply] :as game} {:keys [player-no]}]
   (let [action-cards (->> supply
                           (map (comp :card ut/access-top-card))
@@ -711,6 +720,7 @@
              enclave
              enhance
              gamble
+             march
              populate
              pursue
              reap

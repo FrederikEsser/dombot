@@ -183,10 +183,13 @@
           first))))
 
 (defn get-card-idx [game path criteria]
-  (->> (get-in game path)
-       (keep-indexed (fn [idx card]
-                       (when ((match criteria) card) {:idx idx :card card})))
-       first))
+  (let [select-fn (if (= :discard (last path))
+                    last
+                    first)]
+    (->> (get-in game path)
+         (keep-indexed (fn [idx card]
+                         (when ((match criteria) card) {:idx idx :card card})))
+         select-fn)))
 
 (defn get-trigger-idx [game path criteria]
   (->> (get-in game path)

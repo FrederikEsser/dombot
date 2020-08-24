@@ -1391,6 +1391,41 @@
               :players [{:coins 3
                          :buys  1}]})))))
 
+(deftest march-test
+  (testing "March"
+    (is (= (-> {:events  {:march march}
+                :players [{:discard [cardinal estate]
+                           :coins   3
+                           :buys    1}]}
+               (buy-event 0 :march)
+               (choose :cardinal))
+           {:events  {:march march}
+            :players [{:play-area [cardinal]
+                       :discard   [estate]
+                       :coins     2
+                       :buys      0}]}))
+    (is (= (-> {:events  {:march march}
+                :players [{:discard [cardinal estate]
+                           :coins   3
+                           :buys    1}]}
+               (buy-event 0 :march)
+               (choose nil))
+           {:events  {:march march}
+            :players [{:discard        [cardinal estate]
+                       :revealed-cards {:discard 2}
+                       :coins          0
+                       :buys           0}]}))
+    (is (= (-> {:events  {:march march}
+                :players [{:discard [gold estate]
+                           :coins   3
+                           :buys    1}]}
+               (buy-event 0 :march))
+           {:events  {:march march}
+            :players [{:discard        [gold estate]
+                       :revealed-cards {:discard 2}
+                       :coins          0
+                       :buys           0}]}))))
+
 (deftest populate-test
   (let [livery        (assoc livery :id 1)
         crown         (assoc crown :id 2)

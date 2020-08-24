@@ -120,11 +120,14 @@
 
 (effects/register {:repeat-action repeat-action})
 
-(defn play-from-discard [game {:keys [card-name] :as args}]
-  (cond-> game
-          card-name (move-card (merge args {:from          :discard
-                                            :from-position :bottom
-                                            :to            :play-area}))))
+(defn play-from-discard [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :discard] {:name card-name})]
+    (cond-> game
+            card-name (push-effect-stack {:player-no player-no
+                                          :effects   [[:move-card {:card-name card-name
+                                                                   :from      :discard
+                                                                   :to        :play-area}]
+                                                      [:card-effect {:card card}]]}))))
 
 (effects/register {:play-from-discard play-from-discard})
 

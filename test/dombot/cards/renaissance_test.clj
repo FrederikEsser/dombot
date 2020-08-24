@@ -3250,9 +3250,9 @@
                            :triggers [(get-project-trigger star-chart)]}]}
                (play 0 :lackeys)
                (choose :copper))
-           {:players [{:hand      [copper copper]
+           {:players [{:hand      [copper silver]
                        :play-area [lackeys]
-                       :deck      [copper silver]
+                       :deck      [copper copper]
                        :actions   0
                        :triggers  [(get-project-trigger star-chart)]}]}))
     (is (= (-> {:players [{:hand     [lackeys]
