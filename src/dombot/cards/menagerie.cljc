@@ -202,16 +202,16 @@
                                         [:give-choice {:text    (str "Gain a differently named card costing up to " (ut/format-cost max-cost) ".")
                                                        :choice  :gain
                                                        :options [:supply {:not-names #{(:name card)}
-                                                                          :max-cost max-cost}]
+                                                                          :max-cost  max-cost}]
                                                        :min     1
                                                        :max     1}]]}))))
 
 (effects/register {::displace-exile displace-exile})
 
-(def displace {:name :displace
-               :set :menagerie
-               :types #{:action}
-               :cost 5
+(def displace {:name    :displace
+               :set     :menagerie
+               :types   #{:action}
+               :cost    5
                :effects [[:give-choice {:text    "Exile a card from your hand."
                                         :choice  ::displace-exile
                                         :options [:player :hand]
@@ -315,6 +315,23 @@
                                                      :choice  [:repeat-action {:times 3}]
                                                      :options [:player :hand {:type :action}]
                                                      :max     1}]]}})
+
+(defn- paddock-give-actions [game {:keys [player-no]}]
+  (let [empty-piles (ut/empty-supply-piles game)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:give-actions empty-piles]]})))
+
+(effects/register {::paddock-give-actions paddock-give-actions})
+
+(def paddock {:name    :paddock
+              :set     :menagerie
+              :types   #{:action}
+              :cost    5
+              :effects [[:give-coins 2]
+                        [:gain {:card-name :horse :from :extra-cards}]
+                        [:gain {:card-name :horse :from :extra-cards}]
+                        [::paddock-give-actions]]
+              :setup   [[:setup-extra-cards {:extra-cards [{:card horse :pile-size 30}]}]]})
 
 (def sanctuary {:name    :sanctuary
                 :set     :menagerie
@@ -498,6 +515,7 @@
                     kiln
                     livery
                     mastermind
+                    paddock
                     sanctuary
                     scrap
                     sleigh

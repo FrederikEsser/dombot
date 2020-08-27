@@ -769,6 +769,61 @@
                                 :buys      1
                                 :phase     :action}]})))))
 
+(deftest paddock-test
+  (let [paddock (assoc paddock :id 0)
+        horse   (assoc horse :id 1)]
+    (testing "Paddock"
+      (is (= (-> {:extra-cards [{:card horse :pile-size 30}]
+                  :supply      [{:card estate :pile-size 8}]
+                  :players     [{:hand    [paddock]
+                                 :actions 1
+                                 :coins   0}]}
+                 (play 0 :paddock))
+             {:extra-cards [{:card horse :pile-size 28}]
+              :supply      [{:card estate :pile-size 8}]
+              :players     [{:play-area [paddock]
+                             :discard   [horse horse]
+                             :actions   0
+                             :coins     2}]}))
+      (is (= (-> {:extra-cards [{:card horse :pile-size 30}]
+                  :supply      [{:card estate :pile-size 0}]
+                  :players     [{:hand    [paddock]
+                                 :actions 1
+                                 :coins   0}]}
+                 (play 0 :paddock))
+             {:extra-cards [{:card horse :pile-size 28}]
+              :supply      [{:card estate :pile-size 0}]
+              :players     [{:play-area [paddock]
+                             :discard   [horse horse]
+                             :actions   1
+                             :coins     2}]}))
+      (is (= (-> {:extra-cards [{:card horse :pile-size 30}]
+                  :supply      [{:card estate :pile-size 0}
+                                {:card paddock :pile-size 0}]
+                  :players     [{:hand    [paddock]
+                                 :actions 1
+                                 :coins   0}]}
+                 (play 0 :paddock))
+             {:extra-cards [{:card horse :pile-size 28}]
+              :supply      [{:card estate :pile-size 0}
+                            {:card paddock :pile-size 0}]
+              :players     [{:play-area [paddock]
+                             :discard   [horse horse]
+                             :actions   2
+                             :coins     2}]}))
+      (is (= (-> {:extra-cards [{:card horse :pile-size 1}]
+                  :supply      [{:card estate :pile-size 0}]
+                  :players     [{:hand    [paddock]
+                                 :actions 1
+                                 :coins   0}]}
+                 (play 0 :paddock))
+             {:extra-cards [{:card horse :pile-size 0}]
+              :supply      [{:card estate :pile-size 0}]
+              :players     [{:play-area [paddock]
+                             :discard   [horse]
+                             :actions   1
+                             :coins     2}]})))))
+
 (deftest sanctuary-test
   (let [sanctuary (assoc sanctuary :id 0)]
     (testing "Sanctuary"
