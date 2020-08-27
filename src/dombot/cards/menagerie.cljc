@@ -192,6 +192,33 @@
                       [:attack {:effects [[::coven-curse]]}]]
             :setup   [[:all-players {:effects [[::add-exile-trigger]]}]]})
 
+(defn displace-exile [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        max-cost (-> (ut/get-cost game card)
+                     (ut/add-to-cost 2))]
+    (-> game
+        (push-effect-stack {:player-no player-no
+                            :effects   [[::exile-from-hand {:card-name card-name}]
+                                        [:give-choice {:text    (str "Gain a differently named card costing up to " (ut/format-cost max-cost) ".")
+                                                       :choice  :gain
+                                                       :options [:supply {:not-names #{(:name card)}
+                                                                          :max-cost max-cost}]
+                                                       :min     1
+                                                       :max     1}]]}))))
+
+(effects/register {::displace-exile displace-exile})
+
+(def displace {:name :displace
+               :set :menagerie
+               :types #{:action}
+               :cost 5
+               :effects [[:give-choice {:text    "Exile a card from your hand."
+                                        :choice  ::displace-exile
+                                        :options [:player :hand]
+                                        :min     1
+                                        :max     1}]]
+               :setup   [[:all-players {:effects [[::add-exile-trigger]]}]]})
+
 (defn groom-gain [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-pile-idx game card-name)
         types (ut/get-types game card)]
@@ -312,8 +339,7 @@
                                          (when (:buy (set choices)) [:give-buys 1])
                                          (when (:coin (set choices)) [:give-coins 1])
                                          (when (:silver (set choices)) [:gain {:card-name :silver}])
-                                         (when (:horse (set choices)) [:gain {:card-name :horse
-                                                                              :from      :extra-cards}])]})))
+                                         (when (:horse (set choices)) [:gain {:card-name :horse :from :extra-cards}])]})))
 
 (defn scrap-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
@@ -466,6 +492,7 @@
                     cardinal
                     cavalry
                     coven
+                    displace
                     groom
                     hunting-lodge
                     kiln

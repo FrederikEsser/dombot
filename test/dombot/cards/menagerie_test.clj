@@ -326,6 +326,48 @@
                         {:exile (repeat 7 curse)}
                         {:discard (repeat 6 curse)}]})))))
 
+(deftest displace-test
+  (let [duchy (assoc duchy :id 1)]
+    (testing "Displace"
+      (is (= (play {:players [{:hand    [displace]
+                               :actions 1}]}
+                   0 :displace)
+             {:players [{:play-area [displace]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card estate :pile-size 0}
+                            {:card silver :pile-size 40}]
+                  :players [{:hand    [displace copper estate]
+                             :actions 1}]}
+                 (play 0 :displace)
+                 (choose :copper))
+             {:supply  [{:card estate :pile-size 0}
+                        {:card silver :pile-size 40}]
+              :players [{:hand      [estate]
+                         :play-area [displace]
+                         :exile     [copper]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 8}]
+                  :players [{:hand    [displace silver estate]
+                             :actions 1}]}
+                 (play 0 :displace)
+                 (choose :silver)
+                 (choose :duchy))
+             {:supply  [{:card duchy :pile-size 7}]
+              :players [{:hand      [estate]
+                         :play-area [displace]
+                         :discard   [duchy]
+                         :exile     [silver]
+                         :actions   0}]}))
+      (is (= (-> {:supply  [{:card duchy :pile-size 7}]
+                  :players [{:hand    [displace duchy]
+                             :actions 1}]}
+                 (play 0 :displace)
+                 (choose :duchy))
+             {:supply  [{:card duchy :pile-size 7}]
+              :players [{:play-area [displace]
+                         :exile     [duchy]
+                         :actions   0}]})))))
+
 (deftest groom-test
   (let [groom  (assoc groom :id 0)
         estate (assoc estate :id 1)
