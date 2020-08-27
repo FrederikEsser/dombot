@@ -833,6 +833,75 @@
                              :buys      2}]
               :trash       [gold]})))))
 
+(deftest sleigh-test
+  (testing "Sleigh"
+    (let [sleigh (assoc sleigh :id 0)
+          horse  (assoc horse :id 1)
+          silver (assoc silver :id 2)]
+      (is (= (-> {:extra-cards [{:card horse :pile-size 30}]
+                  :players     [{:hand    [sleigh]
+                                 :actions 1}]}
+                 (play 0 :sleigh))
+             {:extra-cards [{:card horse :pile-size 28}]
+              :players     [{:play-area [sleigh]
+                             :discard   [horse horse]
+                             :actions   0}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand [sleigh]}]}
+                 (gain {:player-no 0 :card-name :silver})
+                 (choose :sleigh)
+                 (choose :hand))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:hand    [silver]
+                         :discard [sleigh]}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand [sleigh]}]}
+                 (gain {:player-no 0 :card-name :silver})
+                 (choose :sleigh)
+                 (choose :deck))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:deck    [silver]
+                         :discard [sleigh]}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand [sleigh]}]}
+                 (gain {:player-no 0 :card-name :silver})
+                 (choose nil))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:hand    [sleigh]
+                         :discard [silver]}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand [sleigh sleigh]}]}
+                 (gain {:player-no 0 :card-name :silver})
+                 (choose :sleigh)
+                 (choose :hand))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:hand    [sleigh silver]
+                         :discard [sleigh]}]}))
+      (is (= (-> {:supply  [{:card silver :pile-size 40}]
+                  :players [{:hand [sleigh sleigh]}]}
+                 (gain {:player-no 0 :card-name :silver})
+                 (choose nil)
+                 (choose nil))
+             {:supply  [{:card silver :pile-size 39}]
+              :players [{:hand    [sleigh sleigh]
+                         :discard [silver]}]}))
+      (is (= (-> {:extra-cards [{:card horse :pile-size 30}]
+                  :players     [{:hand    [sleigh sleigh]
+                                 :actions 1}]}
+                 (play 0 :sleigh)
+                 (choose :sleigh)
+                 (choose :deck))
+             {:extra-cards [{:card horse :pile-size 28}]
+              :players     [{:play-area [sleigh]
+                             :deck      [horse]
+                             :discard   [sleigh horse]
+                             :actions   0}]})))
+    (testing "setup"
+      (is (= (-> {:supply [{:card sleigh :pile-size 10}]}
+                 setup-game)
+             {:extra-cards [{:card horse :pile-size 30}]
+              :supply      [{:card sleigh :pile-size 10}]})))))
+
 (deftest snowy-village-test
   (let [snowy-village (assoc snowy-village :id 0)]
     (testing "Snowy Village"

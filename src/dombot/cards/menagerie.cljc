@@ -348,6 +348,53 @@
                                      :max     1}]]
             :setup   [[:setup-extra-cards {:extra-cards [{:card horse :pile-size 30}]}]]})
 
+(defn sleigh-move-card [game {:keys [player-no choice gained-card-id]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (case choice
+                                        :hand [[:move-card {:move-card-id gained-card-id
+                                                            :from         :gaining
+                                                            :to           :hand}]]
+                                        :deck [[:move-card {:move-card-id gained-card-id
+                                                            :from         :gaining
+                                                            :to           :deck
+                                                            :to-position  :top}]])}))
+
+(defn sleigh-give-choice [game {:keys [player-no card-name gained-card-id] :as args}]
+  (let [{{:keys [name]} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
+    (cond-> game
+            card-name (push-effect-stack {:player-no player-no
+                                          :effects   [[:discard-from-hand {:card-name :sleigh}]
+                                                      [:give-choice {:player-no player-no
+                                                                     :text      (str "Put the gained " (ut/format-name name) " into your hand or onto your deck.")
+                                                                     :choice    [::sleigh-move-card {:gained-card-id gained-card-id}]
+                                                                     :options   [:special
+                                                                                 {:option :hand :text "Into hand"}
+                                                                                 {:option :deck :text "Onto deck"}]
+                                                                     :min       1
+                                                                     :max       1}]]}))))
+
+(defn sleigh-discard [game {:keys [player-no gained-card-id] :as args}]
+  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
+    (cond-> game
+            card (give-choice {:player-no player-no
+                               :text      (str "You may discard a Sleigh from your hand, to put the gained " (ut/format-name name) " into your hand or onto your deck.")
+                               :choice    [::sleigh-give-choice {:gained-card-id gained-card-id}]
+                               :options   [:player :hand {:name :sleigh}]
+                               :max       1}))))
+
+(effects/register {::sleigh-move-card   sleigh-move-card
+                   ::sleigh-give-choice sleigh-give-choice
+                   ::sleigh-discard     sleigh-discard})
+
+(def sleigh {:name     :sleigh
+             :set      :menagerie
+             :types    #{:action :reaction}
+             :cost     2
+             :effects  [[:gain {:card-name :horse :from :extra-cards}]
+                        [:gain {:card-name :horse :from :extra-cards}]]
+             :reaction {:on-gain [[::sleigh-discard]]}
+             :setup    [[:setup-extra-cards {:extra-cards [{:card horse :pile-size 30}]}]]})
+
 (defn- ignore-actions [game {:keys [player-no]}]
   (assoc-in game [:players player-no :ignore-actions?] true))
 
@@ -426,6 +473,7 @@
                     mastermind
                     sanctuary
                     scrap
+                    sleigh
                     snowy-village
                     stockpile
                     supplies
