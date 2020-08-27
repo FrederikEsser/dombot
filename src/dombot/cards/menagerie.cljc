@@ -245,6 +245,28 @@
                                      :max     1}]]
             :setup   [[:setup-extra-cards {:extra-cards [{:card horse :pile-size 30}]}]]})
 
+(defn- hostelry-discard [game {:keys [player-no card-names]}]
+  (let [cards-discarded (count card-names)]
+    (cond-> game
+            (pos? cards-discarded) (push-effect-stack {:player-no player-no
+                                                       :effects   (concat [[:reveal-from-hand {:card-names card-names}]
+                                                                           [:discard-from-revealed {:card-names card-names}]]
+                                                                          (repeat cards-discarded
+                                                                                  [:gain {:card-name :horse :from :extra-cards}]))}))))
+
+(effects/register {::hostelry-discard hostelry-discard})
+
+(def hostelry {:name    :hostelry
+               :set     :menagerie
+               :types   #{:action}
+               :cost    4
+               :effects [[:draw 1]
+                         [:give-actions 2]]
+               :on-gain [[:give-choice {:text    "You may discard any number of Treasures to gain that many Horses."
+                                        :choice  ::hostelry-discard
+                                        :options [:player :hand {:type :treasure}]}]]
+               :setup   [[:setup-extra-cards {:extra-cards [{:card horse :pile-size 30}]}]]})
+
 (defn- hunting-lodge-discard [game {:keys [player-no choice]}]
   (cond-> game
           (= :yes choice) (push-effect-stack {:player-no player-no
@@ -489,7 +511,7 @@
 (def village-green {:name       :village-green
                     :set        :menagerie
                     :types      #{:action :duration :reaction}
-                    :cost       3
+                    :cost       4
                     :effects    [[:give-choice {:text    "Either now or at the start of your next turn, +1 Card and +2 Actions."
                                                 :choice  ::village-green-choice
                                                 :options [:special
@@ -511,6 +533,7 @@
                     coven
                     displace
                     groom
+                    hostelry
                     hunting-lodge
                     kiln
                     livery

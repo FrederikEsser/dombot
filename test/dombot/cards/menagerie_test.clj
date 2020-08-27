@@ -10,6 +10,7 @@
             [dombot.cards.prosperity :refer [royal-seal colony platinum]]
             [dombot.cards.empires :refer [crown]]
             [dombot.cards.nocturne :refer [exorcist]]
+            [dombot.cards.renaissance :refer [patron capitalism]]
             [dombot.cards.kingdom :refer [setup-game]]
             [dombot.utils :as ut]))
 
@@ -471,6 +472,68 @@
                              :play-area [throne-room]
                              :deck      [copper]
                              :actions   2}]})))))
+
+(deftest hostelry-test
+  (testing "Hostelry"
+    (let [hostelry (assoc hostelry :id 0)
+          horse    (assoc horse :id 1)]
+      (is (= (-> {:players [{:deck    [copper copper]
+                             :hand    [hostelry]
+                             :actions 1}]}
+                 (play 0 :hostelry))
+             {:players [{:deck      [copper]
+                         :hand      [copper]
+                         :play-area [hostelry]
+                         :actions   2}]}))
+      (is (= (-> {:extra-cards [{:card horse :pile-size 30}]
+                  :supply      [{:card hostelry :pile-size 10}]
+                  :players     [{:hand [copper]}]}
+                 (gain {:player-no 0 :card-name :hostelry})
+                 (choose :copper))
+             {:extra-cards [{:card horse :pile-size 29}]
+              :supply      [{:card hostelry :pile-size 9}]
+              :players     [{:discard [copper horse hostelry]}]}))
+      (is (= (-> {:extra-cards [{:card horse :pile-size 30}]
+                  :supply      [{:card hostelry :pile-size 10}]
+                  :players     [{:hand [copper copper]}]}
+                 (gain {:player-no 0 :card-name :hostelry})
+                 (choose [:copper :copper]))
+             {:extra-cards [{:card horse :pile-size 28}]
+              :supply      [{:card hostelry :pile-size 9}]
+              :players     [{:discard [copper copper horse horse hostelry]}]}))
+      (is (= (-> {:extra-cards [{:card horse :pile-size 30}]
+                  :supply      [{:card hostelry :pile-size 10}]
+                  :players     [{:hand [copper copper]}]}
+                 (gain {:player-no 0 :card-name :hostelry})
+                 (choose nil))
+             {:extra-cards [{:card horse :pile-size 30}]
+              :supply      [{:card hostelry :pile-size 9}]
+              :players     [{:hand    [copper copper]
+                             :discard [hostelry]}]}))
+      (is (= (-> {:extra-cards [{:card horse :pile-size 30}]
+                  :supply      [{:card hostelry :pile-size 10}]
+                  :players     [{:hand [estate]}]}
+                 (gain {:player-no 0 :card-name :hostelry}))
+             {:extra-cards [{:card horse :pile-size 30}]
+              :supply      [{:card hostelry :pile-size 9}]
+              :players     [{:hand    [estate]
+                             :discard [hostelry]}]}))
+      (is (= (-> {:projects    {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+                  :extra-cards [{:card horse :pile-size 30}]
+                  :supply      [{:card hostelry :pile-size 10}]
+                  :players     [{:hand [patron]}]}
+                 (gain {:player-no 0 :card-name :hostelry})
+                 (choose :patron))
+             {:projects    {:capitalism (assoc capitalism :participants [{:player-no 0}])}
+              :extra-cards [{:card horse :pile-size 29}]
+              :supply      [{:card hostelry :pile-size 9}]
+              :players     [{:discard [patron horse hostelry]
+                             :coffers 1}]})))
+    (testing "setup"
+      (is (= (-> {:supply [{:card hostelry :pile-size 10}]}
+                 setup-game)
+             {:extra-cards [{:card horse :pile-size 30}]
+              :supply      [{:card hostelry :pile-size 10}]})))))
 
 (deftest hunting-lodge-test
   (let [hunting-lodge (assoc hunting-lodge :id 1)]
