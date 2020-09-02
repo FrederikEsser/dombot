@@ -22,10 +22,12 @@
                                                               :to           :exile}]]}))))
 
 (defn- exile-from-supply [game {:keys [player-no card-name]}]
-  (push-effect-stack game {:player-no player-no
-                           :effects   [[:move-card {:card-name card-name
-                                                    :from      :supply
-                                                    :to        :exile}]]}))
+  (let [{:keys [pile-size]} (ut/get-pile-idx game card-name)]
+    (cond-> game
+            (pos? pile-size) (push-effect-stack {:player-no player-no
+                                                 :effects   [[:move-card {:card-name card-name
+                                                                          :from      :supply
+                                                                          :to        :exile}]]}))))
 
 (defn- exile-from-hand [game {:keys [player-no card-name card-names]}]
   (let [card-names (cond card-name [card-name]

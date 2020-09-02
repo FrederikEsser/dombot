@@ -1504,7 +1504,31 @@
               :players [{:discard [gold]
                          :exile   [duchy]
                          :coins   0
-                         :buys    0}]})))))
+                         :buys    0}]}))
+      (is (= (-> {:events  {:enclave enclave}
+                  :supply  [{:card duchy :pile-size 0}
+                            {:card gold :pile-size 30}]
+                  :players [{:coins 8
+                             :buys  1}]}
+                 (buy-event 0 :enclave))
+             {:events  {:enclave enclave}
+              :supply  [{:card duchy :pile-size 0}
+                        {:card gold :pile-size 29}]
+              :players [{:discard [gold]
+                         :coins   0
+                         :buys    0}]}))
+      (is (= (-> {:events  {:enclave enclave}
+                  :supply  [{:card duchy :pile-size 8}
+                            {:card gold :pile-size 0}]
+                  :players [{:coins 8
+                             :buys  1}]}
+                 (buy-event 0 :enclave))
+             {:events  {:enclave enclave}
+              :supply  [{:card duchy :pile-size 7}
+                        {:card gold :pile-size 0}]
+              :players [{:exile [duchy]
+                         :coins 0
+                         :buys  0}]})))))
 
 (deftest enhance-test
   (let [province (assoc province :id 1)]
