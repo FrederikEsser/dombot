@@ -671,7 +671,7 @@
         cost            (ut/get-cost game card)
         on-buy-effects  (concat (get-on-buy-effects game player-no name)
                                 (get-on-buy-effects game player-no :changeling))
-        on-gain-effects (->> (get-on-gain-effects game player-no name)
+        on-gain-effects (->> (get-on-gain-effects game player-no card)
                              (remove #{[::changeling-on-gain]}))
         ignore-gain?    (or (= :changeling name)
                             (and bought

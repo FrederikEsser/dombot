@@ -11,6 +11,7 @@
             [dombot.cards.nocturne :refer [sea-gift lost-in-the-woods]]
             [dombot.cards.adventures :refer [amulet]]
             [dombot.cards.promos :refer [captain stash]]
+            [dombot.cards.menagerie :refer [supplies horse]]
             [dombot.cards.renaissance :as renaissance :refer :all]
             [dombot.utils :as ut])
   (:refer-clojure :exclude [key]))
@@ -2338,7 +2339,20 @@
                          :coins     0
                          :buys      0
                          :villagers 2
-                         :triggers  [(get-project-trigger academy)]}]})))))
+                         :triggers  [(get-project-trigger academy)]}]}))
+      (let [supplies (assoc supplies :id 0)
+            horse    (assoc horse :id 1)]
+        (is (= (-> {:extra-cards [{:card horse :pile-size 30}]
+                    :players     [{:hand     [supplies]
+                                   :coins    0
+                                   :triggers [(get-project-trigger academy)]}]}
+                   (play 0 :supplies))
+               {:extra-cards [{:card horse :pile-size 29}]
+                :players     [{:play-area [supplies]
+                               :deck      [horse]
+                               :coins     1
+                               :villagers 1
+                               :triggers  [(get-project-trigger academy)]}]}))))))
 
 (deftest barracks-test
   (testing "Barracks"

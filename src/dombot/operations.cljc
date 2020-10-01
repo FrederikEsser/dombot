@@ -372,9 +372,8 @@
         (update-in game [to-path idx] ut/add-top-card card))
       (update-in game to-path add-card-to-coll card))))
 
-(defn get-on-gain-effects [game player-no card-name]
-  (let [{:keys [card tokens]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})
-        {:keys [on-gain]} card
+(defn get-on-gain-effects [game player-no {:keys [name on-gain] :as card}]
+  (let [{:keys [tokens]} (ut/get-pile-idx game :supply name #{:include-empty-split-piles})
         types                 (ut/get-types game card)
         token-effects         (->> tokens
                                    vals
@@ -383,7 +382,7 @@
                                                (apply concat (repeat number-of-tokens on-gain))))))
         while-in-play-effects (->> (get-in game [:players player-no :play-area])
                                    (mapcat (comp :on-gain :while-in-play))
-                                   (map (partial ut/add-effect-args {:card-name card-name})))
+                                   (map (partial ut/add-effect-args {:card-name name})))
         trigger-effects       (->> (get-in game [:players player-no :triggers])
                                    (filter (fn [{:keys [event type]}]
                                              (and (= :on-gain event)
@@ -413,7 +412,7 @@
         reaction-effects (->> hand
                               (mapcat (comp :on-gain :reaction))
                               (map (partial ut/add-effect-args {:gained-card-id gained-card-id})))
-        on-gain-effects  (->> (get-on-gain-effects game player-no name)
+        on-gain-effects  (->> (get-on-gain-effects game player-no card)
                               (map (partial ut/add-effect-args (merge args
                                                                       {:card-name      name
                                                                        :gained-card-id gained-card-id}))))]
