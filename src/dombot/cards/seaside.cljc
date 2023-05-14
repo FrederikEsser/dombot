@@ -220,11 +220,13 @@
                     :set     :seaside
                     :types   #{:action :duration}
                     :cost    5
-                    :effects [[:give-coins 2]]
+                    :effects [[:give-coins 2]
+                              [:give-buys 1]]
                     :trigger {:event    :at-start-turn
                               :duration :once
                               :mode     :auto
-                              :effects  [[:give-coins 2]]}})
+                              :effects  [[:give-coins 2]
+                                         [:give-buys 1]]}})
 
 (defn native-village-choice [game {:keys [player-no choice]}]
   (let [native-village-cards (->> (get-in game [:players player-no :native-village-mat])
@@ -544,13 +546,11 @@
             :set     :seaside
             :types   #{:action :duration}
             :cost    5
-            :effects [[:draw 2]
-                      [:give-buys 1]]
+            :effects [[:draw 2]]
             :trigger {:event    :at-start-turn
                       :duration :once
                       :mode     :semi
-                      :effects  [[:draw 2]
-                                 [:give-buys 1]]}})
+                      :effects  [[:draw 2]]}})
 
 (def kingdom-cards [#_ambassador
                     bazaar

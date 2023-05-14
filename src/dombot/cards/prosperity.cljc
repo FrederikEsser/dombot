@@ -26,7 +26,8 @@
            :set             :prosperity
            :types           #{:treasure}
            :cost            7
-           :effects         [[::bank-give-coins]]
+           :effects         [[:give-buys 1]
+                             [::bank-give-coins]]
            :auto-play-index 3})
 
 (defn- bishop-trash [game {:keys [player-no card-name]}]
