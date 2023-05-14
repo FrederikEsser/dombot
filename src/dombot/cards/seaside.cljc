@@ -1,5 +1,5 @@
 (ns dombot.cards.seaside
-  (:require [dombot.operations :refer [move-card move-cards give-choice push-effect-stack]]
+  (:require [dombot.operations :refer [move-card move-cards give-choice push-effect-stack state-maintenance]]
             [dombot.cards.common :refer [reveal-hand gain-to-hand discard-all-look-at trash-from-revealed set-aside=>hand-trigger]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
@@ -398,6 +398,48 @@
                   :cost    4
                   :effects [[::pirate-ship-give-choice]]})
 
+(defn sailor-play-duration [game {:keys [player-no card-name gained-card-id trigger-id]}]
+  (if card-name
+    (-> game
+        (update-in [:players player-no :triggers] (partial remove (comp #{trigger-id} :id)))
+        (push-effect-stack {:player-no player-no
+                            :effects   [[:play-from-gained {:gained-card-id gained-card-id}]]})
+        (state-maintenance player-no :gaining :sailor))
+    game))
+
+(defn sailor-give-choice [game {:keys [player-no card-id gained-card-id trigger-id]}]
+  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
+        {:keys [trigger]} (ut/get-trigger-idx game [:players player-no :triggers] {:id trigger-id})]
+    (cond-> game
+            (and card trigger) (give-choice {:player-no player-no
+                                             :card-id   card-id
+                                             :text      (str "You may play the gained " (ut/format-name name) " due to Sailor.")
+                                             :choice    [::sailor-play-duration {:gained-card-id gained-card-id
+                                                                                 :trigger-id     trigger-id}]
+                                             :options   [:player :gaining {:id gained-card-id}]
+                                             :max       1}))))
+
+(effects/register {::sailor-play-duration sailor-play-duration
+                   ::sailor-give-choice   sailor-give-choice})
+
+(def sailor {:name    :sailor
+             :set     :seaside
+             :types   #{:action :duration}
+             :cost    4
+             :effects [[:give-actions 1]
+                       [:add-trigger {:trigger {:event    :on-gain
+                                                :type     :duration
+                                                :duration :turn
+                                                :effects  [[::sailor-give-choice]]}}]]
+             :trigger {:event    :at-start-turn
+                       :duration :once
+                       :mode     :manual
+                       :effects  [[:give-coins 2]
+                                  [:give-choice {:text    "You may trash a card from your hand."
+                                                 :choice  :trash-from-hand
+                                                 :options [:player :hand]
+                                                 :max     1}]]}})
+
 (defn salvager-trash [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         {:keys [coin-cost]} (ut/get-cost game card)]
@@ -601,6 +643,7 @@
                     outpost
                     #_pearl-diver
                     #_pirate-ship
+                    sailor
                     salvager
                     sea-chart
                     #_sea-hag

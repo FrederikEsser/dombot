@@ -100,6 +100,18 @@
 
 (effects/register {:play-from-revealed play-from-revealed})
 
+(defn play-from-gained [game {:keys [player-no gained-card-id]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
+    (cond-> game
+            gained-card-id (push-effect-stack {:player-no player-no
+                                               :effects   [[:move-card {:move-card-id gained-card-id
+                                                                        :from         :gaining
+                                                                        :to           :play-area}]
+                                                           [:card-effect {:card card}]]}))))
+
+
+(effects/register {:play-from-gained play-from-gained})
+
 (defn register-repeated-play [game {:keys [player-no card-id card]}]
   (let [types (ut/get-types game card)]
     (cond-> game
