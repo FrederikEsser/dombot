@@ -414,6 +414,13 @@
 
 (effects/register-options {:projects options-from-projects})
 
+(defn options-from-events [{:keys [events] :as game} player-no card-id & [{:keys [names]}]]
+  (cond->> (vals events)
+           names (filter (comp names :name))
+           :always (map (comp :name))))
+
+(effects/register-options {:events options-from-events})
+
 (defn options-from-artifacts [{:keys [artifacts] :as game} player-no card-id & [{:keys [names]}]]
   (cond->> (vals artifacts)
            names (filter (comp names :name))

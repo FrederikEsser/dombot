@@ -140,7 +140,8 @@
                                     coins (<= coin-cost coins)
                                     (not debt)
                                     (not (contains? bought-events name)))
-                           {:interaction :buyable}))))))))
+                           {:interaction :buyable})
+                         (choice-interaction name :events choice))))))))
 
 (defn view-landmarks [{:keys [landmarks]}]
   (->> landmarks

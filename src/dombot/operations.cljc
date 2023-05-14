@@ -95,7 +95,8 @@
                                                  [:player :tavern-mat {:names trigger-names}]
                                                  [:player :boons {:names trigger-names}]
                                                  [:artifacts {:names trigger-names}]
-                                                 [:projects {:names trigger-names}]]
+                                                 [:projects {:names trigger-names}]
+                                                 [:events {:names trigger-names}]]
                                        :max     1}
                                       (when (not-every? :optional? manual-triggers)
                                         {:min 1}))]])

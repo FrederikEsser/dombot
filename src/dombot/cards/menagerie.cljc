@@ -1,9 +1,10 @@
 (ns dombot.cards.menagerie
-  (:require [dombot.operations :refer [push-effect-stack gain give-choice]]
+  (:require [dombot.operations :refer [push-effect-stack gain give-choice move-card]]
             [dombot.cards.common :refer [add-trigger]]
             [dombot.cards.dominion :as dominion]
             [dombot.utils :as ut]
-            [dombot.effects :as effects]))
+            [dombot.effects :as effects])
+  (:refer-clojure :exclude [delay]))
 
 (def horse {:name    :horse
             :set     :menagerie
@@ -607,6 +608,46 @@
                :cost   5
                :on-buy [[::commerce-gain-gold]]})
 
+(defn- delay-play-action [game {:keys [player-no set-aside]}]
+  (-> game
+      (update-in [:players player-no :play-area] concat set-aside)
+      (push-effect-stack {:player-no player-no
+                          :effects   (for [card set-aside]
+                                       [:card-effect {:card card}])})))
+(def delay-trigger {:name     :delay
+                    :event    :at-start-turn
+                    :mode     :complex
+                    :duration :once
+                    :effects  [[::delay-play-action]]})
+
+(defn- delay-setup-trigger [game {:keys [player-no]}]
+  (let [set-aside (get-in game [:players player-no :delay-set-aside])]
+    (cond-> game
+            (not-empty set-aside) (-> (update-in [:players player-no] dissoc :delay-set-aside)
+                                      (add-trigger {:player-no player-no
+                                                    :trigger   (merge delay-trigger {:set-aside set-aside})})))))
+
+(defn- delay-set-aside [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (-> (push-effect-stack {:player-no player-no
+                                            :effects   [[:move-card {:card-name card-name
+                                                                     :from      :hand
+                                                                     :to        :delay-set-aside}]
+                                                        [::delay-setup-trigger]]}))))
+
+(effects/register {::delay-play-action   delay-play-action
+                   ::delay-setup-trigger delay-setup-trigger
+                   ::delay-set-aside     delay-set-aside})
+
+(def delay {:name   :delay
+            :set    :menagerie
+            :type   :event
+            :cost   0
+            :on-buy [[:give-choice {:text    "You may set aside an Action card from your hand."
+                                    :choice  ::delay-set-aside
+                                    :options [:player :hand {:type :action}]
+                                    :max     1}]]})
+
 (def demand {:name   :demand
              :set    :menagerie
              :type   :event
@@ -833,6 +874,7 @@
              banish
              bargain
              commerce
+             delay
              demand
              desperation
              enclave

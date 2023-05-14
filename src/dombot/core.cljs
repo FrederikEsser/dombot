@@ -130,14 +130,15 @@
      card)))
 
 (defn view-event
-  [{:keys [name name-ui type mixed-cost interaction]}]
+  [{:keys [name name-ui choice-value type mixed-cost interaction]}]
   (let [disabled (nil? interaction)]
     [:div
      [:button {:style    (button-style disabled #{type} 1)
                :disabled disabled
                :on-click (when interaction
                            (fn [] (case interaction
-                                    :buyable (swap! state assoc :game (cmd/buy-event name)))))}
+                                    :buyable (swap! state assoc :game (cmd/buy-event name))
+                                    :quick-choosable (swap! state assoc :game (cmd/choose choice-value)))))}
       (str name-ui
            (when mixed-cost (str " (" (ut/format-cost mixed-cost) ")")))]]))
 
