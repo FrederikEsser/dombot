@@ -494,6 +494,21 @@
                 :cost    5
                 :effects [[::tactician-discard]]})
 
+(def tide-pools {:name    :tide-pools
+                 :set     :seaside
+                 :types   #{:action :duration}
+                 :cost    4
+                 :effects [[:draw 3]
+                           [:give-actions 1]]
+                 :trigger {:event    :at-start-turn
+                           :duration :once
+                           :mode     :complex
+                           :effects  [[:give-choice {:text    "Discard 2 cards."
+                                                     :choice  :discard-from-hand
+                                                     :options [:player :hand]
+                                                     :min     2
+                                                     :max     2}]]}})
+
 (defn treasure-map-trash [game {:keys [player-no card-id] :as args}]
   (let [{this-treasure-map :card} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})
         {another-treasure-map :card} (ut/get-card-idx game [:players player-no :hand] {:name :treasure-map})]
@@ -575,6 +590,7 @@
                     #_sea-hag
                     smugglers
                     tactician
+                    tide-pools
                     treasure-map
                     treasury
                     warehouse
