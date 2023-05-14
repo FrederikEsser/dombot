@@ -416,6 +416,26 @@
                                         :min     1
                                         :max     1}]]})
 
+(defn sea-chart-put-in-hand [game {:keys [player-no]}]
+  (let [{:keys [name]} (last (get-in game [:players player-no :revealed]))
+        take-card? (->> (get-in game [:players player-no :play-area])
+                        (some (comp #{name} :name)))]
+    (cond-> game
+            take-card? (push-effect-stack {:player-no player-no
+                                           :effects   [[:take-from-revealed {:card-name name}]]}))))
+
+(effects/register {::sea-chart-put-in-hand sea-chart-put-in-hand})
+
+(def sea-chart {:name    :sea-chart
+                :set     :seaside
+                :types   #{:action}
+                :cost    3
+                :effects [[:draw 1]
+                          [:give-actions 1]
+                          [:reveal-from-deck 1]
+                          [::sea-chart-put-in-hand]
+                          [:topdeck-all-revealed]]})
+
 (def sea-hag {:name    :sea-hag
               :set     :seaside
               :types   #{:action :attack}
@@ -532,26 +552,27 @@
                       :effects  [[:draw 2]
                                  [:give-buys 1]]}})
 
-(def kingdom-cards [ambassador
+(def kingdom-cards [#_ambassador
                     bazaar
                     caravan
                     cutpurse
-                    embargo
-                    explorer
+                    #_embargo
+                    #_explorer
                     fishing-village
-                    ghost-ship
+                    #_ghost-ship
                     haven
                     island
                     lighthouse
                     lookout
                     merchant-ship
                     native-village
-                    navigator
+                    #_navigator
                     outpost
-                    pearl-diver
-                    pirate-ship
+                    #_pearl-diver
+                    #_pirate-ship
                     salvager
-                    sea-hag
+                    sea-chart
+                    #_sea-hag
                     smugglers
                     tactician
                     treasure-map

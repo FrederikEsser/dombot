@@ -466,25 +466,25 @@
 (def kingdom-cards [bank
                     bishop
                     city
-                    contraband
-                    counting-house
+                    #_contraband
+                    #_counting-house
                     expand
                     forge
-                    goons
+                    #_goons
                     grand-market
                     hoard
                     kings-court
-                    loan
+                    #_loan
                     mint
                     monument
-                    mountebank
+                    #_mountebank
                     peddler
                     quarry
                     rabble
-                    royal-seal
-                    talisman
-                    trade-route
+                    #_royal-seal
+                    #_talisman
+                    #_trade-route
                     vault
-                    venture
+                    #_venture
                     watchtower
                     workers-village])
