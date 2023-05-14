@@ -445,6 +445,22 @@
               :effects [[:attack {:effects [[:discard-from-topdeck 1]
                                             [:gain-to-topdeck {:card-name :curse}]]}]]})
 
+(def sea-witch {:name    :sea-witch
+                :set     :seaside
+                :types   #{:action :duration :attack}
+                :cost    5
+                :effects [[:draw 2]
+                          [:attack {:effects [[:gain {:card-name :curse}]]}]]
+                :trigger {:event    :at-start-turn
+                          :duration :once
+                          :mode     :manual
+                          :effects  [[:draw 2]
+                                     [:give-choice {:text    "Discard 2 cards."
+                                                    :choice  :discard-from-hand
+                                                    :options [:player :hand]
+                                                    :min     2
+                                                    :max     2}]]}})
+
 (defn smugglers-give-choice [{:keys [players] :as game} {:keys [player-no] :as args}]
   (let [prev-player      (mod (dec player-no) (count players))
         valid-card-names (->> (get-in game [:players prev-player :gained-cards])
@@ -588,6 +604,7 @@
                     salvager
                     sea-chart
                     #_sea-hag
+                    sea-witch
                     smugglers
                     tactician
                     tide-pools
