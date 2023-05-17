@@ -14,6 +14,29 @@
                :cost       9
                :coin-value 5})
 
+(defn- anvil-discard [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:discard-from-hand {:card-name card-name}]
+                                                    [:give-choice {:text    "Gain a card costing up to $4."
+                                                                   :choice  :gain
+                                                                   :options [:supply {:max-cost 4}]
+                                                                   :min     1
+                                                                   :max     1}]]})))
+
+(effects/register {::anvil-discard anvil-discard})
+
+(def anvil {:name            :anvil
+            :set             :prosperity
+            :types           #{:treasure}
+            :cost            3
+            :coin-value      1
+            :effects         [[:give-choice {:text    "You may discard a Treasure to gain a card costing up to $4."
+                                             :choice  ::anvil-discard
+                                             :options [:player :hand {:type :treasure}]
+                                             :max     1}]]
+            :auto-play-index -1})
+
 (defn- bank-give-coins [game {:keys [player-no]}]
   (let [number-of-treasures-in-play (->> (get-in game [:players player-no :play-area])
                                          (filter (comp :treasure (partial ut/get-types game)))
@@ -464,7 +487,8 @@
                                 [:give-actions 2]
                                 [:give-buys 1]]})
 
-(def kingdom-cards [bank
+(def kingdom-cards [anvil
+                    bank
                     bishop
                     city
                     #_contraband
