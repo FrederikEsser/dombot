@@ -377,6 +377,20 @@
                :coin-value    1
                :while-in-play {:on-buy [[::talisman-on-buy]]}})
 
+(def tiara {:name            :tiara
+            :set             :prosperity
+            :types           #{:treasure}
+            :cost            4
+            :effects         [[:give-buys 1]
+                              [:add-trigger {:trigger {:event    :on-gain
+                                                       :duration :turn
+                                                       :effects  [[:topdeck-gained-choice]]}}]
+                              [:give-choice {:text    "You may play a Treasure from your hand twice."
+                                             :choice  [:repeat-action {:times 2}]
+                                             :options [:player :hand {:type :treasure}]
+                                             :max     1}]]
+            :auto-play-index -1})
+
 (defn- trade-route-give-coins [{:keys [trade-route-mat] :as game} {:keys [player-no]}]
   (cond-> game
           trade-route-mat (give-coins {:player-no player-no :arg trade-route-mat})))
@@ -528,6 +542,7 @@
                     rabble
                     #_royal-seal
                     #_talisman
+                    tiara
                     #_trade-route
                     vault
                     #_venture
