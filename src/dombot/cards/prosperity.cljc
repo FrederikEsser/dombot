@@ -255,6 +255,22 @@
                         [::loan-reveal]
                         [:discard-all-revealed]]})
 
+(defn- magnate-draw [game {:keys [player-no]}]
+  (let [treasures-in-hand (->> (get-in game [:players player-no :hand])
+                               (filter (comp :treasure (partial ut/get-types game)))
+                               count)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:draw treasures-in-hand]]})))
+
+(effects/register {::magnate-draw magnate-draw})
+
+(def magnate {:name    :magnate
+              :set     :prosperity
+              :types   #{:action}
+              :cost    5
+              :effects [[:reveal-hand]
+                        [::magnate-draw]]})
+
 (def mint {:name    :mint
            :set     :prosperity
            :types   #{:action}
@@ -534,6 +550,7 @@
                     hoard
                     kings-court
                     #_loan
+                    magnate
                     mint
                     monument
                     #_mountebank
