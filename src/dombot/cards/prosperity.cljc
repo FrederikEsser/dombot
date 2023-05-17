@@ -1,6 +1,6 @@
 (ns dombot.cards.prosperity
-  (:require [dombot.operations :refer [push-effect-stack give-choice move-card move-cards draw]]
-            [dombot.cards.common :refer [give-coins discard-from-hand]]
+  (:require [dombot.operations :refer [push-effect-stack give-choice move-card move-cards]]
+            [dombot.cards.common :refer [give-coins discard-from-hand give-victory-points]]
             [dombot.utils :as ut]
             [dombot.effects :as effects]))
 
@@ -96,6 +96,25 @@
            :types   #{:action}
            :cost    5
            :effects [[::city-effects]]})
+
+(defn- collection-on-gain [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-pile-idx game :supply card-name #{:include-empty-split-piles})
+        types (ut/get-types game card)]
+    (cond-> game
+            (:action types) (give-victory-points {:player-no player-no :arg 1}))))
+
+(effects/register {::collection-on-gain collection-on-gain})
+
+(def collection {:name       :collection
+                 :set        :prosperity
+                 :types      #{:treasure}
+                 :cost       5
+                 :coin-value 2
+                 :effects    [[:give-buys 1]]
+                 :trigger    {:event    :on-gain
+                              :duration :turn
+                              :mode     :auto
+                              :effects  [[::collection-on-gain]]}})
 
 (defn contraband-give-choice [{:keys [players] :as game} {:keys [player-no]}]
   (let [next-player (mod (inc player-no) (count players))]
@@ -491,6 +510,7 @@
                     bank
                     bishop
                     city
+                    collection
                     #_contraband
                     #_counting-house
                     expand
