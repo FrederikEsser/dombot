@@ -41,6 +41,7 @@
                                   :else :black)
           :font-weight      :bold
           :background-color (cond
+                              (:curse types) "#B890D7"
                               (:night types) "#464040"
                               (:duration types) "#FF9E37"
                               (:reaction types) "#A8BFD3"
@@ -49,7 +50,6 @@
                               (:action types) "#F3EEDF"
                               (:treasure types) "#FFE64F"
                               (:victory types) "#9FD688"
-                              (:curse types) "#B890D7"
                               (:artifact types) "#F9CD88"
                               (:event types) "#C6C8C5"
                               (:landmark types) "#60B574"
@@ -59,10 +59,10 @@
                               (:state types) "#F1EBEB")
           :border-color     (cond
                               (zero? number-of-cards) :red
-                              (:curse types) "#9F76B8"
                               (:shelter types) "#E76F59"
                               (:victory types) "#6DB954"
                               (:treasure types) "#EFD34E"
+                              (:curse types) "#9F76B8"
                               (:reaction types) "#6295CE"
                               (:reserve types) "#C6A85C"
                               (:duration types) "#F1820E"

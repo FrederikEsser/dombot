@@ -78,6 +78,22 @@
                                                                  :options [:player :hand]
                                                                  :max     1}]]}]]})
 
+(defn curse->treasure [game _]
+  (let [{:keys [idx]} (ut/get-pile-idx game :curse)]
+    (update-in game [:supply idx :card] assoc
+               :types #{:curse :treasure}
+               :coin-value 1)))
+
+(effects/register {::curse->treasure curse->treasure})
+
+(def charlatan {:name    :charlatan
+                :set     :prosperity
+                :types   #{:action :attack}
+                :cost    5
+                :effects [[:give-coins 3]
+                          [:attack {:effects [[:gain {:card-name :curse}]]}]]
+                :setup   [[::curse->treasure]]})
+
 (defn- city-effects [game {:keys [player-no]}]
   (let [empty-piles (ut/empty-supply-piles game)]
     (push-effect-stack game {:player-no player-no
@@ -539,6 +555,7 @@
 (def kingdom-cards [anvil
                     bank
                     bishop
+                    charlatan
                     city
                     collection
                     #_contraband
