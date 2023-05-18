@@ -100,6 +100,18 @@
 
 (effects/register {:play-from-revealed play-from-revealed})
 
+(defn play-from-look-at [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :look-at] {:name card-name})]
+    (cond-> game
+            card-name (push-effect-stack {:player-no player-no
+                                          :effects   [[:move-card {:card-name card-name
+                                                                   :from      :look-at
+                                                                   :to        :play-area}]
+                                                      [:card-effect {:card card}]]}))))
+
+
+(effects/register {:play-from-look-at play-from-look-at})
+
 (defn play-from-gained [game {:keys [player-no gained-card-id]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
     (cond-> game

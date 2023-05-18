@@ -450,7 +450,7 @@
 (effects/register-options {:druid-boons options-from-druid})
 
 (defn special-options [game player-no card-id & options]
-  options)
+  (remove nil? options))
 
 (effects/register-options {:special special-options})
 

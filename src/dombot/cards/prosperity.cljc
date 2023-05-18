@@ -160,6 +160,42 @@
                                               :choice  :take-from-discard
                                               :options [:player :discard {:name :copper}]}]]})
 
+(defn crystal-ball-choice [game {:keys [player-no choice card-name]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [(if (= :play choice)
+                                         [:play-from-look-at {:card-name card-name}]
+                                         [:move-card {:card-name   card-name
+                                                      :from        :look-at
+                                                      :to          choice
+                                                      :to-position (if (= :deck choice) :top :bottom)}])]}))
+
+(defn crystal-ball-give-choice [game {:keys [player-no]}]
+  (let [[{:keys [name] :as card}] (get-in game [:players player-no :look-at])
+        types (ut/get-types game card)]
+    (cond-> game
+            card (give-choice {:player-no player-no
+                               :text      (str "Look at the " (ut/format-name name) " on top of your deck. You may:")
+                               :choice    [::crystal-ball-choice {:card-name name}]
+                               :options   [:special
+                                           {:option :trash :text (str "Trash it.")}
+                                           {:option :discard :text (str "Discard it.")}
+                                           (when (or (:action types) (:treasure types))
+                                             {:option :play :text (str "Play it.")})
+                                           {:option :deck :text (str "Leave it.")}]
+                               :min       1
+                               :max       1}))))
+
+(effects/register {::crystal-ball-choice      crystal-ball-choice
+                   ::crystal-ball-give-choice crystal-ball-give-choice})
+
+(def crystal-ball {:name       :crystal-ball
+                   :set        :prosperity
+                   :types      #{:treasure}
+                   :cost       5
+                   :coin-value 1
+                   :effects    [[:look-at 1]
+                                [::crystal-ball-give-choice]]})
+
 (def expand {:name    :expand
              :set     :prosperity
              :types   #{:action}
@@ -560,6 +596,7 @@
                     collection
                     #_contraband
                     #_counting-house
+                    crystal-ball
                     expand
                     forge
                     #_goons
