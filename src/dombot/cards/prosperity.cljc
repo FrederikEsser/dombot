@@ -273,6 +273,46 @@
             :coin-value    2
             :while-in-play {:on-buy [[::hoard-on-buy]]}})
 
+(defn- investment-choices [game {:keys [player-no choice victory-points card-id]}]
+  (push-effect-stack game {:player-no player-no
+                           :card-id   card-id
+                           :effects   (case choice
+                                        :coin [[:give-coins 1]]
+                                        :trash [[:trash-this]
+                                                [:reveal-hand]
+                                                [:give-victory-points victory-points]])}))
+
+(defn investment-give-choice [game {:keys [player-no card-id]}]
+  (let [different-treasures (->> (get-in game [:players player-no :hand])
+                                 (filter (comp :treasure (partial ut/get-types game)))
+                                 (map :name)
+                                 distinct
+                                 count)]
+    (give-choice game {:player-no player-no
+                       :card-id   card-id
+                       :text      "Choose one:"
+                       :choice    [::investment-choices {:victory-points different-treasures}]
+                       :options   [:special
+                                   {:option :coin :text "+$1"}
+                                   {:option :trash :text (str "Trash this for +" different-treasures " VP.")}]
+                       :min       1
+                       :max       1})))
+
+(effects/register {::investment-choices     investment-choices
+                   ::investment-give-choice investment-give-choice})
+
+(def investment {:name            :investment
+                 :set             :prosperity
+                 :types           #{:treasure}
+                 :cost            4
+                 :effects         [[:give-choice {:text    "Trash a card from your hand."
+                                                  :choice  :trash-from-hand
+                                                  :options [:player :hand]
+                                                  :min     1
+                                                  :max     1}]
+                                   [::investment-give-choice]]
+                 :auto-play-index -1})
+
 (def kings-court {:name    :king's-court
                   :set     :prosperity
                   :types   #{:action}
@@ -602,6 +642,7 @@
                     #_goons
                     grand-market
                     hoard
+                    investment
                     kings-court
                     #_loan
                     magnate
