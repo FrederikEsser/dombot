@@ -25,6 +25,18 @@
                                           :min     1
                                           :max     1}]]})
 
+(def astrolabe {:name    :astrolabe
+                :set     :seaside
+                :types   #{:treasure :duration}
+                :cost    3
+                :effects [[:give-coins 1]
+                          [:give-buys 1]]
+                :trigger {:event    :at-start-turn
+                          :duration :once
+                          :mode     :auto
+                          :effects  [[:give-coins 1]
+                                     [:give-buys 1]]}})
+
 (def bazaar {:name    :bazaar
              :set     :seaside
              :types   #{:action}
@@ -626,6 +638,7 @@
                       :effects  [[:draw 2]]}})
 
 (def kingdom-cards [#_ambassador
+                    astrolabe
                     bazaar
                     caravan
                     cutpurse
