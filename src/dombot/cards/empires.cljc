@@ -1407,10 +1407,11 @@
                     :number-of-cards num
                     :victory-points  5}))))))
 
-(defn- labyrinth-on-gain [game {:keys [player-no]}]
+(defn- labyrinth-on-gain [{:keys [current-player] :as game} {:keys [player-no]}]
   (let [gained-cards (get-in game [:players player-no :gained-cards])]
     (cond-> game
-            (= 1 (count gained-cards)) (take-landmark-vp {:player-no     player-no
+            (and (= player-no current-player)
+                 (= 1 (count gained-cards))) (take-landmark-vp {:player-no     player-no
                                                           :landmark-name :labyrinth
                                                           :num-vp        2}))))
 

@@ -618,8 +618,7 @@
                       [:give-choice {:text    "Gain a card costing up to $4 onto your deck."
                                      :choice  [:gain {:to          :deck
                                                       :to-position :top}]
-                                     :options [:supply {:not-type :victory
-                                                        :max-cost 4}]
+                                     :options [:supply {:max-cost 4}]
                                      :min     1
                                      :max     1}]]
              :setup  [[:setup-extra-cards {:extra-cards [{:card horse :pile-size 30}]}]]})
